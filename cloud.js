@@ -174,20 +174,21 @@
       const PR = C.profiles || {};
       const byEmail = em => Object.entries(PR).find(([, p]) => norm(p.email) === norm(em)) || null;
       const linked = new Set();
-      const coaches = (st.coaches || []).map(c => { const e = (c.uid && PR[c.uid] && [c.uid, PR[c.uid]]) || (c.email && byEmail(c.email)); if (!e) return c; linked.add(e[0]); const p = e[1], pj = dec(p) || {}; return Object.assign({}, c, { name: p.name || c.name, avatar: pj.avatar || c.avatar, poder: pj.poder || c.poder, pizarra: pj.pizarra || c.pizarra, estilo: pj.estilo || c.estilo, uid: c.uid || e[0], visto: p.ts || 0 }); });
+      const coaches = (st.coaches || []).map(c => { const e = (c.uid && PR[c.uid] && [c.uid, PR[c.uid]]) || (c.email && byEmail(c.email)); if (!e) return c; linked.add(e[0]); const p = e[1], pj = dec(p) || {}; return Object.assign({}, c, { name: p.name || c.name, avatar: pj.avatar || c.avatar, poder: pj.poder || c.poder, pizarra: pj.pizarra || c.pizarra, estilo: pj.estilo || c.estilo, club: pj.club || c.club, uid: c.uid || e[0], visto: p.ts || 0 }); });
       // todo el que tiene acceso está en el vestuario: su personaje y su poder se guardan solos, sin mandar nada a la DT
       const S = C.state, isMem = (u, p) => (S.memberUids || []).includes(u) || (S.dtUids || []).includes(u) || DT_UIDS.includes(u) || (S.memberEmails || []).includes(norm(p.email));
       Object.entries(PR).forEach(([u, p]) => {
         if (linked.has(u) || !isMem(u, p)) return;
         const name = String(p.name || p.nameHint || '').trim(); if (!name) return;
         const pj = dec(p) || {}, ex = coaches.find(c => norm(c.name) === norm(name));
-        if (ex) Object.assign(ex, { avatar: pj.avatar || ex.avatar, poder: pj.poder || ex.poder, pizarra: pj.pizarra || ex.pizarra, estilo: pj.estilo || ex.estilo, uid: ex.uid || u, visto: p.ts || ex.visto || 0 }); else coaches.push({ name, uid: u, avatar: pj.avatar, poder: pj.poder, pizarra: pj.pizarra, estilo: pj.estilo, bonus: [], visto: p.ts || 0 });
+        if (ex) Object.assign(ex, { avatar: pj.avatar || ex.avatar, poder: pj.poder || ex.poder, pizarra: pj.pizarra || ex.pizarra, estilo: pj.estilo || ex.estilo, club: pj.club || ex.club, uid: ex.uid || u, visto: p.ts || ex.visto || 0 }); else coaches.push({ name, uid: u, avatar: pj.avatar, poder: pj.poder, pizarra: pj.pizarra, estilo: pj.estilo, bonus: [], visto: p.ts || 0 , club: pj.club });
       });
       bank.coaches = coaches;
       // amistosos: cada uno guarda los suyos en su perfil; aquí se juntan los de todos
       const am = new Map(); Object.values(PR).forEach(p => (((dec(p) || {}).amis) || []).forEach(x => { if (x && x.id && x.r) am.set(x.id, x); }));
       bank.amistosos = [...am.values()].sort((a, b) => b.ts - a.ts).slice(0, 80);
-      const sh = (C.shared || []).map(x => ({ id: x.id, k: x.data.k || 'ses', autor: x.data.autor || '', ts: x.data.ts || 0, mine: !!me && x.data.uid === me.uid, d: dec(x.data) })).filter(x => x.d);
+      const sh = (C.shared || []).map(x => ({ id: x.id, k: x.data.k || 'ses', uid: x.data.uid, autor: x.data.autor || '', ts: x.data.ts || 0, mine: !!me && x.data.uid === me.uid, d: dec(x.data) })).filter(x => x.d);
+      bank.mkOf = sh.filter(x => x.k === 'of'); bank.mkAc = sh.filter(x => x.k === 'ac');
       bank.sesClub = sh.filter(x => x.k === 'ses' && Array.isArray(x.d.bloques)).map(x => ({ id: x.id, autor: x.autor, ts: x.ts, mine: x.mine, s: x.d }));
       bank.ejClub = sh.filter(x => x.k === 'ej' && x.d.id).map(x => ({ id: x.id, autor: x.autor, ts: x.ts, mine: x.mine, t: x.d }));
       bank.planClub = sh.filter(x => x.k === 'plan').map(x => ({ id: x.id, autor: x.autor, mine: x.mine, plan: x.d.plan || {} }));
@@ -317,7 +318,7 @@
     readLS(LS.mine, []).forEach(t => { if (t && t.id && (t.title || '').trim() && !t.borrador) add('ej', t, t.ts); });
     // la planificación (mesociclo) de cada uno, en un solo documento
     const pl = readLS(LS.plan, {}); if (Object.keys(pl).length) add('plan', { id: 'plan', plan: pl }, Date.now());
-    mineDocs.forEach((v, id) => { if (!keep.has(id)) ops.push({ op: 'del', path: 'shared/' + id }); });
+    mineDocs.forEach((v, id) => { if (!keep.has(id) && !['of', 'ac'].includes(v.k)) ops.push({ op: 'del', path: 'shared/' + id }); });
     if (ops.length) await B.batch(ops).catch(() => {});
   }
   async function pushProfile() {
@@ -329,6 +330,7 @@
     if (g && Array.isArray(g.amis) && g.amis.length) pj.amis = g.amis.slice(-10);
     if (g && g.pizarra) pj.pizarra = g.pizarra;
     if (g && g.estilo) pj.estilo = g.estilo;
+    try { const cp = window.SMB && window.SMB.clubPublic && window.SMB.clubPublic(); if (cp) pj.club = cp; } catch (e) {}
     if (Object.keys(pj).length) Object.assign(d, enc(pj));
     await B.merge('profiles/' + me.uid, d);
   }
@@ -359,6 +361,12 @@
   // ---------- piezas de pantalla para la app ----------
   window.SMB_CLOUD = {
     push,
+    // fichajes entre entrenadores: ofertas (k 'of', las escribe el comprador) y respuestas (k 'ac', las escribe el vendedor) en el directorio compartido
+    mk: {
+      me: () => me && me.uid,
+      put: async (k, localId, obj) => { const id = me.uid + '_' + k + '_' + String(localId).replace(/[^\w.-]/g, '_'); await B.set('shared/' + id, { uid: me.uid, k, autor: localStorage.getItem(LS.autor) || '', ts: Date.now(), j: JSON.stringify(obj) }); return id; },
+      del: id => B.del('shared/' + id),
+    },
     match: {
       me: () => me && me.uid,
       create: m => B.set('partidas/' + m.id, Object.assign({}, m, { ts: Date.now() })),
