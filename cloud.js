@@ -103,7 +103,9 @@
       else if (a === 'prereg') { const n = v('cl-pre-name').trim(), em = norm(v('cl-pre-email')); if (!n || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { window.SMB.toast('Pon el nombre y un email válido.'); return; } await prereg(n, em); }
       else if (a === 'unprereg') await unprereg(b.dataset.email);
       else if (a === 'out') { await B.signOut(); clearPersonal(); setTimeout(() => location.reload(), 60); }
-      else if (a === 'name') { const n = v('cl-name').trim(); if (!n) return; try { localStorage.setItem(LS.autor, n); } catch (er) {} await pushProfile(); say('Nombre guardado.'); }
+      else if (a === 'name') { const n = v('cl-name').trim(); if (!n) return; const old = localStorage.getItem(LS.autor) || ''; try { localStorage.setItem(LS.autor, n); localStorage.setItem(LS_NAMETS, String(Date.now())); } catch (er) {} renameLocal(old, n); await pushProfile(); push('meta'); say('Nombre guardado. Cambia en todo el club en cuanto la Dirección Técnica abra la app.'); }
+      else if (a === 'ren') { const li = b.closest('li'); if (!li || li.querySelector('.cl-ren')) return; const uid = b.dataset.uid, cur = b.dataset.name || ''; const f = document.createElement('div'); f.className = 'cl-ren'; f.innerHTML = `<input type="text" id="cl-ren-${uid}" value="${esc(cur)}" aria-label="Nombre nuevo"><button class="btn small primary" type="button" data-cl="ren-ok" data-uid="${esc(uid)}" data-name="${esc(cur)}">Guardar</button>`; li.appendChild(f); const i = f.querySelector('input'); i.focus(); i.select(); }
+      else if (a === 'ren-ok') { const uid = b.dataset.uid, from = b.dataset.name || '', to = v('cl-ren-' + uid).trim(); if (!to || to === from) { const f = b.closest('.cl-ren'); if (f) f.remove(); return; } await window.SMB.renameCoach(uid, from, to); }
       else if (a === 'import') { const f = document.getElementById('cl-bankfile').files[0]; if (!f) return say('Elige el archivo.', true); const j = JSON.parse(await f.text()); await importBank(j); say('Banco importado.'); }
       else if (a === 'empty') await importBank({ updated: '', tasks: [] });
       else if (a === 'grant') await grant(b.dataset.uid);
@@ -159,6 +161,41 @@
     readyResolve();
   }
 
+  // ---------- nombres ----------
+  const LS_NAMETS = 'smb-banco-nombre-ts', LS_NAMEACK = 'smb-banco-nombre-dt';
+  // el nombre con el que sale cada uno: el que puso la DT, salvo que él lo haya cambiado después
+  function shownName(uid, p) {
+    const c = ((lastBank || {}).coaches || []).find(x => x.uid === uid);
+    return (c && c.name) || p.name || p.nameHint || '';
+  }
+  // cambia el nombre en lo guardado en este móvil (ejercicios, sesiones, juego)
+  function renameLocal(from, to) {
+    if (!from || !to || !window.SMB || !window.SMB.renameDeep) return;
+    [LS.mine, LS.sessions, LS.game].forEach(k => { const v = readLS(k, null); if (v) try { localStorage.setItem(k, JSON.stringify(window.SMB.renameDeep(v, from, to))); } catch (e) {} });
+  }
+  // si la DT me ha cambiado el nombre, lo adopto
+  function adoptName(st) {
+    if (!me || !pulled) return;
+    const c = (st.coaches || []).find(x => x.uid === me.uid); if (!c || !c.nameSet || !c.name) return;
+    const ack = +(localStorage.getItem(LS_NAMEACK) || 0), nts = +(localStorage.getItem(LS_NAMETS) || 0);
+    if (c.nameSet <= ack || nts > c.nameSet) return;
+    const old = localStorage.getItem(LS.autor) || '';
+    try { localStorage.setItem(LS_NAMEACK, String(c.nameSet)); if (old !== c.name) localStorage.setItem(LS.autor, c.name); } catch (e) {}
+    if (old && old !== c.name) { renameLocal(old, c.name); if (window.SMB) { window.SMB.reloadLocal(); window.SMB.toast('Tu nombre en el club ahora es ' + c.name + '.'); } }
+    push('mine'); push('sessions'); push('meta');
+  }
+  // la DT pasa al club el nombre que un entrenador se ha cambiado él mismo
+  const propagated = new Set();
+  function propagateNames(st) {
+    if (!isDT || !window.SMB || !window.SMB.renameCoach) return;
+    const PR = C.profiles || {};
+    (st.coaches || []).forEach(c => {
+      const p = c.uid && PR[c.uid]; if (!p || !p.name || !p.nameTs || p.nameTs <= (c.nameSet || 0) || norm(p.name) === norm(c.name)) return;
+      const key = c.uid + '|' + p.nameTs; if (propagated.has(key)) return; propagated.add(key);
+      window.SMB.renameCoach(c.uid, c.name, p.name, `${c.name} ahora firma como ${p.name}.`).catch(() => {});
+    });
+  }
+
   // ---------- banco: leer ----------
   function assemble() {
     clearTimeout(assembleT);
@@ -174,7 +211,7 @@
       const PR = C.profiles || {};
       const byEmail = em => Object.entries(PR).find(([, p]) => norm(p.email) === norm(em)) || null;
       const linked = new Set();
-      const coaches = (st.coaches || []).map(c => { const e = (c.uid && PR[c.uid] && [c.uid, PR[c.uid]]) || (c.email && byEmail(c.email)); if (!e) return c; linked.add(e[0]); const p = e[1], pj = dec(p) || {}; return Object.assign({}, c, { name: p.name || c.name, avatar: pj.avatar || c.avatar, poder: pj.poder || c.poder, pizarra: pj.pizarra || c.pizarra, estilo: pj.estilo || c.estilo, club: pj.club || c.club, lgJoin: pj.lgJoin || c.lgJoin, lgs: pj.lgs || c.lgs, uid: c.uid || e[0], visto: p.ts || 0 }); });
+      const coaches = (st.coaches || []).map(c => { const e = (c.uid && PR[c.uid] && [c.uid, PR[c.uid]]) || (c.email && byEmail(c.email)); if (!e) return c; linked.add(e[0]); const p = e[1], pj = dec(p) || {}; return Object.assign({}, c, { name: (c.nameSet && !((p.nameTs || 0) > c.nameSet)) ? c.name : (p.name || c.name), avatar: pj.avatar || c.avatar, poder: pj.poder || c.poder, pizarra: pj.pizarra || c.pizarra, estilo: pj.estilo || c.estilo, club: pj.club || c.club, lgJoin: pj.lgJoin || c.lgJoin, lgs: pj.lgs || c.lgs, uid: c.uid || e[0], visto: p.ts || 0 }); });
       // todo el que tiene acceso está en el vestuario: su personaje y su poder se guardan solos, sin mandar nada a la DT
       const S = C.state, isMem = (u, p) => (S.memberUids || []).includes(u) || (S.dtUids || []).includes(u) || DT_UIDS.includes(u) || (S.memberEmails || []).includes(norm(p.email));
       Object.entries(PR).forEach(([u, p]) => {
@@ -194,6 +231,7 @@
       bank.planClub = sh.filter(x => x.k === 'plan').map(x => ({ id: x.id, autor: x.autor, mine: x.mine, plan: x.d.plan || {} }));
       lastBank = bank;
       if (window.SMB) window.SMB.setBank(bank);
+      adoptName(st); propagateNames(st);
     }, 60);
   }
 
@@ -211,7 +249,7 @@
     diff('historial', next.historial || [], h => String(h.id).replace(/[^\w.-]/g, '_'), prev.historial);
     diff('liga', next.liga || [], j => 'j' + j.n, prev.liga);
     const rest = Object.assign({}, next); ['tasks', 'historial', 'liga', 'memberUids', 'dtUids', 'memberEmails', 'amistosos', 'sesClub', 'ejClub', 'planClub'].forEach(k => delete rest[k]);
-    rest.coaches = (rest.coaches || []).map(c => (c.uid || c.email) ? Object.assign({ name: c.name, bonus: c.bonus || [] }, c.uid ? { uid: c.uid } : {}, c.email ? { email: c.email } : {}) : (({ pizarra, ...x }) => x)(c));
+    rest.coaches = (rest.coaches || []).map(c => (c.uid || c.email) ? Object.assign({ name: c.name, bonus: c.bonus || [] }, c.uid ? { uid: c.uid } : {}, c.email ? { email: c.email } : {}, c.nameSet ? { nameSet: c.nameSet } : {}) : (({ pizarra, ...x }) => x)(c));
     delete rest.memberEmails;
     ops.push({ op: 'set', path: 'club/state', data: Object.assign(enc(rest), { memberUids: next.memberUids || prev.memberUids || [], memberEmails: next.memberEmails || prev.memberEmails || [], dtUids: next.dtUids || prev.dtUids || [me.uid] }) });
     await B.batch(ops);
@@ -280,6 +318,7 @@
     }
     pulled = true;
     if (window.SMB) window.SMB.reloadLocal();
+    if (C.state) adoptName(dec(C.state) || {});
     // lo local que no estaba en la nube se sube
     push('mine'); push('sessions'); if (!m) push('meta');
   }
@@ -326,6 +365,7 @@
     const g = readLS(LS.game, null), name = localStorage.getItem(LS.autor) || '';
     const d = { email: me.email || '', ts: Date.now() };
     if (name) d.name = name; else if (me.name && !pulled) d.nameHint = me.name;
+    const nts = +(localStorage.getItem(LS_NAMETS) || 0); if (nts) d.nameTs = nts;
     const pj = {}; if (g && g.av) { pj.avatar = g.av; pj.poder = g.poder || ''; }
     if (g && Array.isArray(g.amis) && g.amis.length) pj.amis = g.amis.slice(-10);
     if (g && g.pizarra) pj.pizarra = g.pizarra;
@@ -390,7 +430,7 @@
       const all = Object.entries(C.profiles);
       const memE = new Set(b.memberEmails || []), has = ([uid, p]) => mem.has(uid) || memE.has(norm(p.email));
       const isDTu = u => DT_UIDS.includes(u) || (b.dtUids || []).includes(u), pend = all.filter(x => !has(x) && !isDTu(x[0])), ok = all.filter(x => has(x));
-      const row = ([uid, p], btn) => `<li class="dt-row"><span class="dt-thumb cl-ini">${esc((p.name || p.nameHint || p.email || '?').slice(0, 1).toUpperCase())}</span><span class="dt-txt"><b>${esc(p.name || p.nameHint || 'Sin nombre')}${me && uid === me.uid ? ' (tú)' : ''}</b><small>${esc(p.email || '')}</small></span>${btn}</li>`;
+      const row = ([uid, p], btn) => `<li class="dt-row"><span class="dt-thumb cl-ini">${esc((shownName(uid, p) || p.email || '?').slice(0, 1).toUpperCase())}</span><span class="dt-txt"><b>${esc(shownName(uid, p) || 'Sin nombre')}${me && uid === me.uid ? ' (tú)' : ''}</b><small>${esc(p.email || '')}</small></span>${btn}</li>`;
       const emailsIn = new Set(Object.values(C.profiles).map(p => norm(p.email)));
       const pre = (b.memberEmails || []).filter(e => !emailsIn.has(e)).map(e => ({ e, c: (b.coaches || []).find(x => norm(x.email) === e) }));
       return `<section class="ses-sec"><h2 class="h-sec">Acceso</h2>
@@ -399,7 +439,7 @@
         <div class="cl-pre"><input type="text" id="cl-pre-name" placeholder="Nombre, como firma sus ejercicios" aria-label="Nombre"><input type="email" id="cl-pre-email" placeholder="email@ejemplo.com" aria-label="Email"><button class="btn primary" type="button" data-cl="prereg">Dar de alta</button></div>
         ${pre.length ? `<h3 class="h-sub">Dados de alta, todavía sin entrar (${pre.length})</h3><ul class="dt-list">${pre.map(({ e, c }) => `<li class="dt-row"><span class="dt-thumb cl-ini">${esc(((c && c.name) || e).slice(0, 1).toUpperCase())}</span><span class="dt-txt"><b>${esc((c && c.name) || 'Sin nombre')}</b><small>${esc(e)}</small></span><button class="btn small ghost" type="button" data-cl="unprereg" data-email="${esc(e)}">Quitar</button></li>`).join('')}</ul>` : ''}
         ${pend.length ? `<h3 class="h-sub">Esperando acceso (${pend.length})</h3><ul class="dt-list">${pend.map(x => row(x, `<button class="btn small primary" type="button" data-cl="grant" data-uid="${esc(x[0])}">Dar acceso</button>`)).join('')}</ul>` : '<p class="sub">Nadie esperando. Cuando un entrenador crea su cuenta, aparece aquí.</p>'}
-        ${ok.length ? `<details><summary>Con acceso (${ok.length})</summary><ul class="dt-list">${ok.map(x => row(x, `<button class="btn small ghost" type="button" data-cl="revoke" data-uid="${esc(x[0])}">Quitar acceso</button>`)).join('')}</ul></details>` : ''}
+        ${ok.length ? `<details><summary>Con acceso (${ok.length})</summary><ul class="dt-list">${ok.map(x => row(x, `<span class="actions cl-acts"><button class="btn small" type="button" data-cl="ren" data-uid="${esc(x[0])}" data-name="${esc(shownName(x[0], x[1]))}">Nombre</button><button class="btn small ghost" type="button" data-cl="revoke" data-uid="${esc(x[0])}">Quitar acceso</button></span>`)).join('')}</ul></details>` : ''}
       </section>`;
     },
     restoreHTML: () => `<h3 class="h-sub">Restaurar el banco</h3><p class="sub">Sustituye el banco por una copia descargada antes. Los accesos se mantienen.</p>
