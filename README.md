@@ -4,9 +4,10 @@ App del cuerpo técnico de hockey del CHP Santa María la Blanca: banco de ejerc
 
 ## Cómo está hecho
 
-- **Una sola plantilla** (`src/template.html`) genera las dos versiones:
-  - `build.py` → el artifact de claude.ai (banco en `data/banco.json`, votos en la base de datos del artifact).
-  - `build_web.py` → esta web (GitHub Pages + Firebase).
+- **Una sola plantilla** (`fuente/plantilla.html`) genera las dos versiones:
+  - `fuente/construir_artifact.py` → el artifact de claude.ai (banco en `data/banco.json`, votos en la base de datos del artifact).
+  - `fuente/construir_web.py` → esta web (GitHub Pages + Firebase).
+- El código fuente, las pruebas y cómo trabajar están en `fuente/` y en `CLAUDE.md`.
 - **`cloud.js`** es la capa web. Le da a la app lo mismo que le daba claude.ai (`window.claude.use('artifact' | 'user' | 'db' | 'downloads')`) pero con Firebase por debajo:
   - Cuentas: Firebase Authentication (Google y email con contraseña).
   - Datos: Cloud Firestore. Cada objeto se guarda como texto JSON en el campo `j` (Firestore no admite listas dentro de listas).
@@ -30,9 +31,9 @@ Reglas en `firestore.rules`. `DT_UID` se sustituye por el código de usuario de 
 
 ## Publicar un cambio
 
-1. Cambiar `src/template.html` (o `cloud.js`).
-2. `python3 build_web.py dist/` y probar con `t6/web_test.py` (backend simulado `fakefb.js`, mismas reglas que Firestore).
-3. Subir a `pruebas/` para revisarlo en el móvil; cuando la DT dé el visto bueno, a la raíz. GitHub Pages publica en uno o dos minutos.
+1. Cambiar `fuente/plantilla.html` (o `fuente/web/cloud.js`).
+2. `python3 fuente/pruebas/correr.py` (backend simulado `fakefb.js`, banco inventado).
+3. `python3 fuente/construir_web.py`, commit y push. GitHub Pages publica en uno o dos minutos.
 4. `sw.js` lleva la versión en el nombre de la caché: cada build nuevo se actualiza solo en los móviles.
 
 ## Instalar en el móvil

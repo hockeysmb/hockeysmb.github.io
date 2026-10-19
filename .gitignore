@@ -1,0 +1,5 @@
+fuente/_web/
+fuente/_artifact/
+fuente/_capturas/
+__pycache__/
+*.pyc
