@@ -2127,7 +2127,7 @@ function firstSteps() {
   const name = readAuthor();
   return [
     { ok: !!name, t: 'Pon tu nombre', d: 'Firma tus ejercicios y tus sesiones.', btn: '', act: '' },
-    { ok: !!(name && coachOf(name)), t: window.SMB_CLOUD ? 'Crea tu personaje' : 'Crea tu personaje y mándalo a la DT', d: 'Así entras en el vestuario del club y en la liga de los lunes.', btn: 'Crear mi personaje', act: 'perfil' },
+    { ok: !!(name && coachOf(name)), t: window.SMB_CLOUD ? 'Crea tu personaje' : 'Crea tu personaje y mándalo a la DT', d: 'Así entras en el vestuario del club y en la liga.', btn: 'Crear mi personaje', act: 'perfil' },
     { ok: sessions.length > 0, t: 'Prepara tu primera sesión', d: 'Un ejercicio por bloque de la plantilla del club, y el PDF listo.', btn: 'Preparar sesión', act: 'new-ses' },
   ];
 }
@@ -4344,7 +4344,6 @@ function renderVestuario() {
         <li><span>Ejercicio tuyo que entra en el banco del club (suman los ${BANCO_SEMANA} primeros de cada semana)</span><b>+${PTS.banco}</b></li>
         <li><span>…con la parte «En SMB» completa y validada</span><b>+${PTS.smb}</b></li>
         <li><span>Ejercicio o sesión de la semana, por votación</span><b>+${PTS_SEM.semana}</b></li>
-        <li><span>Duelo ganado en la jornada del lunes</span><b>+${PTS_SEM.duelo}</b></li>
         <li><span>Premios de la Dirección Técnica</span><b>varía</b></li></ul>
         <h3 class="h-sub">Monedas extra (este móvil)</h3><ul class="pts-list">
         <li><span>Crear un ejercicio</span><b>+${PTS.ejercicio}</b></li>
@@ -4911,19 +4910,20 @@ function poderesHTML(name) {
   const myD = J && J.duels.find(d => normName(d.a.name) === normName(name) || normName(d.b.name) === normName(name));
   const forma = myD ? (normName(myD.a.name) === normName(name) ? myD.a.forma : myD.b.forma) : 0;
   const clubP = c && c.poder;
-  return `<div class="pw-stats"><div><span>Nivel ${lvl}</span><b>+${duelLvl(lvl)}</b><small>Suma en cada jugada</small></div><div><span>Forma</span><b>${forma}</b><small>Última jornada</small></div><div><span>Récord</span><b>${ligaWins(name)}–${ligaPlayed(name) - ligaWins(name)}</b><small>Victorias–derrotas</small></div></div>
+  const sqS = clSummary(clubOf()); let lgRow = null;
+  try { const N = lgNow(); if (N.cur) lgRow = lgTable(N.cur, N.fx).find(r => normName(r.name) === normName(name)) || null; } catch (e) {}
+  return `<div class="pw-stats"><div><span>Nivel ${lvl}</span><b>+${duelLvl(lvl)}</b><small>Suma en cada jugada</small></div><div><span>Plantilla</span><b>${sqS ? sqS.atk + '/' + sqS.def : '—'}</b><small>Ataque/defensa</small></div><div><span>Liga</span><b>${lgRow ? lgRow.g + '–' + lgRow.p : '—'}</b><small>${lgRow ? lgRow.pts + ' puntos esta temporada' : 'Victorias–derrotas'}</small></div></div>
     ${myD ? `<div class="actions"><button class="btn" type="button" data-vpw-duel="${J.duels.indexOf(myD)}">Ver mi duelo de la jornada ${J.n} · ${scoreTxt(myD)}</button></div>` : ''}
     <h3 class="h-sub">Tu poder ${infoBtn('poderes')}</h3>
     ${AUTO_PJ() ? '<p class="sub">Eliges uno y se guarda solo: cuenta en la próxima jornada y en los amistosos.</p>' : `<p class="sub">Eliges uno. Para que cuente en la jornada, manda tu personaje a la DT («Mandar a la DT», arriba): el poder va dentro.${c ? ` Ahora mismo en el vestuario del club tienes «${esc(poderOf(clubP).n)}».` : ' Todavía no estás en el vestuario del club.'}</p>
     ${c && clubP !== cur && (clubP || cur !== 'garra') && !pjSentNow() ? '<p class="notice-s">Has cambiado de poder: vuelve a enviar tu personaje para que cuente.</p>' : ''}`}
     <div class="pw-list">${PODERES.map(p => { const lock = p.lv > lvl; return `<button class="pw${cur === p.id ? ' on' : ''}" type="button" data-pw="${p.id}" aria-pressed="${cur === p.id}"${lock ? ' disabled' : ''}><b>${esc(p.n)}</b><span>${esc(p.d)}</span>${lock ? `<small>Desde «${esc(LEVELS[p.lv].n)}»</small>` : cur === p.id ? '<small>Elegido</small>' : ''}</button>`; }).join('')}</div>
-    <h3 class="h-sub">Cómo es la jornada</h3>
-    <ul class="pts-list"><li><span>Cada lunes la Dirección Técnica juega la jornada: todos contra todos a lo largo de la temporada, un duelo por semana.</span></li>
+    <h3 class="h-sub">Cómo es un partido de liga</h3>
+    <ul class="pts-list"><li><span>Un partido cada día a las ${LG_HOUR}:00. Juega lo que tengas a esa hora: pizarra, poder, nivel y alineación.</span></li>
       <li><span>8 posesiones, 4 cada uno. Con bola juega tu ataque y sin bola tu defensa. Ataque más alto que defensa: gol.</span></li>
-      <li><span>Puede haber tarjeta azul, falta directa o penalti.</span></li>
-      <li><span>Forma: +2 por cada partido del fin de semana ganado o, en equipos de formación, con el objetivo del partido cumplido. Máximo +4. Lo apunta la Dirección Técnica.</span></li>
-      <li><span>Empate: penaltis a un dado.</span></li>
-      <li><span>Ganar el duelo</span><b>+${PTS_SEM.duelo}</b></li><li><span>Tu ejercicio o tu sesión, elegidos de la semana por votación</span><b>+${PTS_SEM.semana}</b></li></ul>`;
+      <li><span>Tu plantilla suma o resta hasta 2 en cada jugada: tu ataque contra la defensa del rival.</span></li>
+      <li><span>Puede haber tarjeta azul, falta directa o penalti. Empate: penaltis a un dado.</span></li>
+      <li><span>Ganar un partido de liga (monedas)</span><b>+${LG_WIN}</b></li><li><span>Tu ejercicio o tu sesión, elegidos de la semana por votación</span><b>+${PTS_SEM.semana}</b></li></ul>`;
 }
 document.getElementById('v-vestuario').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -5442,7 +5442,7 @@ function openMatchV2(cfg) {
 // ================= botón «i»: poco texto a la vista y la explicación completa para quien la quiera =================
 const infoBtn = k => `<button class="info-b" type="button" data-info="${k}" aria-label="Más información">i</button>`;
 const INFO = {
-  liga: () => ['Liga', `<p>Una liga entre todo el cuerpo técnico, a lo Online Soccer Manager: <b>un partido cada día a las ${LG_HOUR}:00</b>, contra cada entrenador a ida y vuelta.</p><ul><li><b>Antes de las ${LG_HOUR}:00</b> deja lista tu alineación (Mi plantilla), tu pizarra y tu poder. Lo que tengas a esa hora es lo que juega.</li><li><b>Puntos:</b> victoria 3; si se decide en los penaltis, 2 al que gana y 1 al que pierde.</li><li><b>Monedas:</b> +${LG_WIN} por victoria (+${LG_WINP} en los penaltis, +${LG_LOSSP} si pierdes en los penaltis). Al acabar la temporada: ${LG_PRIZE.join(', ')} a los tres primeros y un cofre al campeón.</li><li><b>Temporada:</b> dura lo que tarda en jugar todos contra todos dos veces; la siguiente empieza el lunes. Entra todo el que haya abierto la liga antes de que empiece.</li><li><b>Amistosos:</b> cuando quieras, contra quien quieras, aparte de la liga.</li></ul>`],
+  liga: () => ['Liga', `<p>Una liga entre todo el cuerpo técnico, a lo Online Soccer Manager: <b>un partido cada día a las ${LG_HOUR}:00</b>, contra cada entrenador a ida y vuelta.</p><ul><li><b>Antes de las ${LG_HOUR}:00</b> deja lista tu alineación, tu pizarra y tu poder (pestaña Equipo). Lo que tengas a esa hora es lo que juega.</li><li><b>Puntos:</b> victoria 3; si se decide en los penaltis, 2 al que gana y 1 al que pierde.</li><li><b>Monedas:</b> +${LG_WIN} por victoria (+${LG_WINP} en los penaltis, +${LG_LOSSP} si pierdes en los penaltis). Al acabar la temporada: ${LG_PRIZE.join(', ')} a los tres primeros y un cofre al campeón.</li><li><b>Temporada:</b> dura lo que tarda en jugar todos contra todos dos veces; la siguiente empieza el lunes. Entra todo el que haya abierto la liga antes de que empiece.</li><li><b>Amistosos:</b> cuando quieras, contra quien quieras, aparte de la liga.</li></ul>`],
   partido: () => ['Cómo es un partido', `<ul><li><b>8 posesiones</b>, 4 para cada uno, alternas.</li>
     <li><b>Con bola</b> eliges cómo atacar y <b>sin bola</b> cómo defender. Cada jugada tira su dado.</li>
     <li><b>Gol</b> si tu ataque suma más que su defensa. Si no, para el portero (o algo peor, según la jugada).</li>
@@ -5452,7 +5452,7 @@ const INFO = {
     <li><b>Empate:</b> tanda de penaltis a un dado.</li></ul>`],
   jugadas: () => ['Qué hace cada jugada', `<ul class="jug-legend">${[...ATAQUES, ...DEFENSAS].map(j => `<li>${jugIcon(j.ic)}<b>${esc(j.n)}</b><span class="dz">${ATAQUES.includes(j) ? 'Con bola' : 'Sin bola'} · dado ${esc(j.dado)}</span><small>${esc(j.d)}</small></li>`).join('')}</ul>
     <p class="sub">Ninguna gana siempre: la presión castiga el tiro exterior, el directo se salta la presión, la zona frena el directo y el tiro, la individual anula la ensayada…</p>`],
-  pizarra: () => ['Tu pizarra', `<p>Es lo que juega tu personaje cuando no estás delante: en la <b>jornada del lunes</b> y cuando alguien te <b>reta</b> y no contestas.</p>
+  pizarra: () => ['Tu pizarra', `<p>Es lo que juega tu equipo cuando no estás delante: en el <b>partido de liga de cada día</b> (a las ${LG_HOUR}:00) y cuando alguien te <b>reta</b> y no contestas.</p>
     <ul><li><b>Con bola:</b> tu ataque de siempre. La jugada ensayada solo se usa una vez; después, posicional.</li>
     <li><b>Sin bola:</b> tu defensa de siempre. Tengo arriba, una vez; después, presión alta.</li>
     <li><b>Si vas perdiendo al final:</b> «A la desesperada» se la juega en tu último ataque.</li></ul><p class="sub">Sin pizarra tu personaje juega variado al azar.</p>`],
