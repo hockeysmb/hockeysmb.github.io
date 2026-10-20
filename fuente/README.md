@@ -29,6 +29,7 @@ Necesitan Python 3 con `playwright` y Chromium (`pip install playwright && playw
 | `art_tecnica` | Técnica y táctica individual por categoría | `tec2/test.py` |
 | `art_autoguardado` | Sesiones que se guardan solas | `tec2/auto_test.py` |
 | `art_pizarra` | Pizarra a pantalla completa en el móvil | `bd/test.py` |
+| `art_pizarra_pc` | Pizarra en el ordenador (panel lateral, Esc, aviso de pista vacía) | nueva |
 | `art_plantilla` | Plantilla, entrenar, mercado | `club/test_art.py` |
 | `art_alineacion` | Alineación y formaciones | `al/test.py` |
 

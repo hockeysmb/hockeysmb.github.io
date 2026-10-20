@@ -1226,11 +1226,33 @@ h1 { color: var(--fg); font-weight: 800; }
 /* ---------- pizarra a pantalla completa (10 oct): menú abajo y pista girada en vertical ---------- */
 .bd-top, .bd-bar, .bd-sheet, .bd-finish { display: none; }
 .bd-open { display: none; }
-@media (max-width: 760px) { .editor:not(.board) .ed-tools, .editor:not(.board) #ed-hint, .editor:not(.board) #ed-big { display: none; } .editor:not(.board) .props:empty { display: none; } }
-@media (max-width: 760px), (pointer: coarse) {
-  .editor:not(.board) .canvas-box { position: relative; }
-  .editor:not(.board) .bd-open { display: block; width: 100%; margin-top: 8px; border: 0; border-radius: 12px; padding: 12px; background: var(--accent); color: #fff; font: 700 15px/1.2 var(--font-body); cursor: pointer; }
+/* 20 oct: también en el ordenador se dibuja siempre en la pizarra grande (la barra de 18 herramientas liaba) */
+.editor:not(.board) .ed-tools, .editor:not(.board) #ed-hint, .editor:not(.board) .props, .editor:not(.board) .legend-d { display: none; }
+.editor:not(.board) #ed-big { display: none; }
+.editor:not(.board) .canvas-box { position: relative; }
+.editor:not(.board) #canvas { cursor: pointer; }
+.editor:not(.board) .bd-open { display: block; width: 100%; margin-top: 8px; border: 0; border-radius: 12px; padding: 13px; background: var(--accent); color: #fff; font: 700 16px/1.2 var(--font-body); cursor: pointer; }
+.bd-panel, .bd-empty, .bd-wide-only, .bd-ic-l { display: none; }
+.editor.board .bd-empty:not([hidden]) { display: block; position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 3; margin: 0; max-width: min(440px, 80%); padding: 14px 18px; border-radius: 14px; background: rgba(31, 42, 53, .88); color: #fff; font: 700 16px/1.4 var(--font-body); text-align: center; pointer-events: none; }
+@media (min-width: 900px) and (pointer: fine) {
+  #editor.board .ed-main { grid-template-columns: 312px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  #editor.board .bd-bar, .editor.board .bd-sheet { display: none !important; }
+  #editor.board .bd-panel { display: block; grid-row: 1; grid-column: 1; overflow-y: auto; padding: 4px 8px 16px 14px; }
+  #editor.board .canvas-box { grid-column: 2; }
+  #editor.board .bd-wide-only { display: inline; }
+  #editor.board .bd-ic { width: auto; padding: 0 12px; gap: 6px; grid-auto-flow: column; }
+  #editor.board .bd-ic-l { display: inline; font: 700 14px/1 var(--font-body); }
+  #editor.board .bd-cur { font-size: 17px; color: #fff; }
+  #editor.board .hint { font-size: 15px; color: #e3e9ef; max-height: 3em; padding-bottom: 8px; }
 }
+.bd-g { margin: 10px 0 6px; font: 800 12px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: #a9b6c4; }
+.bd-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.bd-tile { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 40px; border: 0; border-radius: 12px; padding: 6px 8px; background: rgba(255, 255, 255, .08); color: #fff; font: 700 13.5px/1.15 var(--font-body); text-align: left; cursor: pointer; }
+.bd-tile svg { flex: none; width: 34px; height: 24px; background: #fff; border-radius: 6px; padding: 2px; }
+.bd-tile span { min-width: 0; overflow-wrap: anywhere; }
+.bd-tile:hover { background: rgba(255, 255, 255, .16); }
+.bd-tile[aria-pressed="true"] { background: #fff; color: #1f2a35; box-shadow: 0 0 0 2px #fff; }
+.bd-tile.wide { grid-column: 1 / -1; }
 .editor.board { overflow: hidden; background: #1f2a35; color: #fff; }
 .editor.board .ed-wrap { position: fixed; inset: 0; max-width: none; margin: 0; padding: 0; gap: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .editor.board .ed-bar, .editor.board .ed-tools, .editor.board .legend-d, .editor.board .rotate-hint, .editor.board .ed-side, .editor.board .bd-open { display: none !important; }
@@ -1470,18 +1492,18 @@ h1 { color: var(--fg); font-weight: 800; }
     <div class="ed-bar">
       <h2 id="ed-title">Editar ejercicio</h2>
       <div class="actions">
-        <button class="btn primary" id="ed-big" type="button" aria-pressed="false">Pizarra grande</button>
+        <button class="btn primary" id="ed-big" type="button" aria-pressed="false">Dibujar en la pizarra</button>
         <button class="btn" id="ed-skip" type="button" hidden>Saltar esta</button>
         <button class="btn ghost" id="ed-cancel" type="button">Cerrar sin guardar</button>
       </div>
     </div>
     <div class="bd-top" id="bd-top">
-      <button class="bd-done" type="button" data-bd="done">Listo</button>
+      <button class="bd-done" type="button" data-bd="done">Listo<span class="bd-wide-only">: volver a la ficha</span></button>
       <span class="bd-cur" id="bd-cur" aria-live="polite"></span>
       <span class="bd-icons">
-        <button class="bd-ic" type="button" data-bd="undo" aria-label="Deshacer" title="Deshacer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M4.5 12H15a5 5 0 0 1 0 10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="bd-ic" type="button" data-bd="redo" aria-label="Rehacer" title="Rehacer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5M19.5 12H9a5 5 0 0 0 0 10h3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="bd-ic" type="button" data-bd="del" aria-label="Borrar lo seleccionado" title="Borrar lo seleccionado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="bd-ic" type="button" data-bd="undo" aria-label="Deshacer" title="Deshacer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M4.5 12H15a5 5 0 0 1 0 10h-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bd-ic-l">Deshacer</span></button>
+        <button class="bd-ic" type="button" data-bd="redo" aria-label="Rehacer" title="Rehacer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5M19.5 12H9a5 5 0 0 0 0 10h3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bd-ic-l">Rehacer</span></button>
+        <button class="bd-ic" type="button" data-bd="del" aria-label="Borrar lo seleccionado" title="Borrar lo seleccionado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bd-ic-l">Borrar</span></button>
       </span>
     </div>
     <div class="ed-tools" id="ed-tools" role="toolbar" aria-label="Herramientas del gráfico"></div>
@@ -1489,10 +1511,12 @@ h1 { color: var(--fg); font-weight: 800; }
     <details class="legend-d"><summary>¿Qué significa cada símbolo?</summary><div class="legend" id="legend"></div></details>
     <div class="rotate-hint">Gira el móvil en horizontal para tener la pista más grande.</div>
     <div class="ed-main">
+      <div class="bd-panel" id="bd-panel" role="toolbar" aria-label="Qué poner en la pista"></div>
       <div class="canvas-box">
         <svg id="canvas" viewBox="-2 -2 104 54" aria-label="Pista editable"></svg>
+        <p class="bd-empty" id="bd-empty" hidden></p>
         <div class="props" id="props"></div>
-        <button class="bd-open" type="button" data-bd="open">Toca para dibujar a pantalla completa</button>
+        <button class="bd-open" type="button" data-bd="open">Dibujar el gráfico en la pizarra grande</button>
         <button class="bd-finish" type="button" data-bd="finish" hidden>Terminar flecha</button>
       </div>
       <div class="bd-bar" id="bd-bar" role="toolbar" aria-label="Qué poner en la pista"></div>
@@ -2770,18 +2794,25 @@ function drawBoard() {
   sh.hidden = !G;
   sh.innerHTML = G ? `<div class="bd-sh-h"><span>${esc(G[1])}</span><button type="button" data-bd="shx" aria-label="Cerrar">×</button></div><div class="bd-grid">${G[2].map(id => `<button class="bd-pick" type="button" data-bdt="${id}" aria-pressed="${t === id}"><svg viewBox="0 0 26 18" aria-hidden="true">${bdIcon(id)}</svg>${esc(bdName(id))}</button>`).join('')}</div>` : '';
   document.getElementById('bd-cur').textContent = t === 'select' ? 'Mover y seleccionar' : 'Poniendo: ' + bdName(t);
+  const tile = (id, l, cls) => `<button class="bd-tile${cls ? ' ' + cls : ''}" type="button" ${id === 'select' ? 'data-bd="select"' : `data-bdt="${id}"`} aria-pressed="${t === id}"><svg viewBox="0 0 26 18" aria-hidden="true">${bdIcon(id)}</svg><span>${esc(l)}</span></button>`;
+  document.getElementById('bd-panel').innerHTML = tile('select', 'Mover o elegir', 'wide')
+    + BD_GROUPS.map(([k, l, ids]) => `<p class="bd-g">${esc(l)}</p><div class="bd-tiles">${ids.map(id => tile(id, bdName(id))).join('')}</div>`).join('');
 }
+const bdWide = () => window.matchMedia('(min-width: 900px) and (pointer: fine)').matches;
 function bdState() {
   if (!ed) return;
   const q = k => document.querySelector(`#bd-top [data-bd="${k}"]`);
   q('undo').disabled = !ed.history.length; q('redo').disabled = !(ed.future || []).length; q('del').disabled = !ed.sel;
   document.querySelector('.bd-finish').hidden = !ed.drawing;
+  const d = ed.task.diagram, emp = document.getElementById('bd-empty'), empty = !((d.items || []).length || (d.arrows || []).length);
+  emp.hidden = !empty || !editor.classList.contains('board') || ed.tool !== 'select';
+  if (!emp.hidden) emp.textContent = bdWide() ? 'Elige a la izquierda qué quieres poner (un jugador, un cono, una flecha…) y pulsa en la pista.' : 'Elige abajo qué quieres poner y toca la pista.';
 }
 function setBoard(on) {
   editor.classList.toggle('board', on);
   bdOpen = '';
   try {
-    if (on && editor.requestFullscreen && !document.fullscreenElement) editor.requestFullscreen().catch(() => {});
+    if (on && !bdWide() && editor.requestFullscreen && !document.fullscreenElement) editor.requestFullscreen().catch(() => {});
     else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   } catch (e) {}
   if (ed) { drawCanvas(); drawBoard(); }
@@ -2804,7 +2835,7 @@ editor.addEventListener('click', e => {
 // en el móvil, tocar la pista pequeña abre la pizarra grande
 canvas.addEventListener('pointerdown', e => {
   if (!ed || editor.classList.contains('board')) return;
-  if (window.matchMedia('(max-width: 760px), (pointer: coarse)').matches) { e.preventDefault(); e.stopImmediatePropagation(); setBoard(true); }
+  e.preventDefault(); e.stopImmediatePropagation(); setBoard(true);
 }, true);
 window.addEventListener('resize', () => { if (ed && editor.classList.contains('board')) drawCanvas(); });
 document.getElementById('ed-big').addEventListener('click', () => setBoard(!editor.classList.contains('board')));
@@ -2856,21 +2887,21 @@ function setTool(t) {
   ed.tool = t;
   document.querySelectorAll('#ed-tools .tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tool === t || (b.dataset.tool === 'mat' && MATERIALS.includes(t)))));
   const hints = {
-    select: 'Arrastra cualquier elemento para moverlo. Toca una flecha para seleccionarla y arrastra sus puntos blancos para cambiar el recorrido.',
-    atk: 'Toca la pista para colocar un atacante. Se numera solo; puedes cambiar el número abajo.',
-    def: 'Toca la pista para colocar un defensor. Se numera solo; puedes cambiar el número abajo.',
-    gk: 'Toca la pista para colocar un portero.', coach: 'Toca la pista para colocar al entrenador.',
-    ball: 'Toca la pista para colocar una bola.', cone: 'Elige el color abajo y toca la pista para colocar un cono.', bidon: 'Toca la pista para colocar un bidón.',
-    goal: 'Toca la pista para colocar una portería portátil. Abajo puedes girarla en cualquier dirección.',
-    chino: 'Elige el color abajo y toca la pista para colocar un chino.', aro: 'Elige el color abajo y toca la pista para colocar un aro.', pica: 'Elige el color abajo y toca la pista para colocar una pica.',
-    valla: 'Toca la pista para colocar una valla. Abajo eliges el color y la giras.', stick: 'Toca la pista para colocar un stick en el suelo. Abajo puedes girarlo.', escalera: 'Toca la pista para colocar una escalera de coordinación. Abajo puedes girarla.',
-    label: 'Toca la pista donde quieras el texto y escríbelo abajo. Por ejemplo: «Zona 1», «salida», «3 toques».',
-    text: 'Toca la pista para poner un número de orden. Abajo puedes cambiarlo.',
-    pase: 'Toca donde empieza el pase y donde acaba. Pulsa «Terminar flecha».',
-    tiro: 'Toca donde empieza el tiro y donde acaba. Pulsa «Terminar flecha».',
-    cond: 'Toca los puntos del recorrido de la conducción (2 o más) y pulsa «Terminar flecha». Elige abajo el color del equipo.',
+    select: 'Arrastra para mover. Pulsa algo para elegirlo y cambiarlo o borrarlo (en una flecha, arrastra sus puntos blancos).',
+    atk: 'Pulsa en la pista para colocar un atacante. Se numera solo; puedes cambiar el número abajo.',
+    def: 'Pulsa en la pista para colocar un defensor. Se numera solo; puedes cambiar el número abajo.',
+    gk: 'Pulsa en la pista para colocar un portero.', coach: 'Pulsa en la pista para colocar al entrenador.',
+    ball: 'Pulsa en la pista para colocar una bola.', cone: 'Elige el color abajo y pulsa en la pista para colocar un cono.', bidon: 'Pulsa en la pista para colocar un bidón.',
+    goal: 'Pulsa en la pista para colocar una portería portátil. Abajo puedes girarla en cualquier dirección.',
+    chino: 'Elige el color abajo y pulsa en la pista para colocar un chino.', aro: 'Elige el color abajo y pulsa en la pista para colocar un aro.', pica: 'Elige el color abajo y pulsa en la pista para colocar una pica.',
+    valla: 'Pulsa en la pista para colocar una valla. Abajo eliges el color y la giras.', stick: 'Pulsa en la pista para colocar un stick en el suelo. Abajo puedes girarlo.', escalera: 'Pulsa en la pista para colocar una escalera de coordinación. Abajo puedes girarla.',
+    label: 'Pulsa en la pista donde quieras el texto y escríbelo abajo. Por ejemplo: «Zona 1», «salida», «3 toques».',
+    text: 'Pulsa en la pista para poner un número de orden. Abajo puedes cambiarlo.',
+    pase: 'Pulsa donde empieza el pase y luego donde acaba.',
+    tiro: 'Pulsa donde empieza el tiro y luego donde acaba.',
+    cond: 'Pulsa los puntos del recorrido de la conducción (2 o más) y pulsa «Terminar flecha». Elige abajo el color del equipo.',
     draw: 'Arrastra el dedo o el ratón sobre la pista para dibujar. Elige abajo el color y si lleva punta de flecha.',
-    mov: 'Toca los puntos del recorrido (2 o más) y pulsa «Terminar flecha». Elige abajo el color del equipo.',
+    mov: 'Pulsa los puntos del recorrido (2 o más) y pulsa «Terminar flecha». Elige abajo el color del equipo.',
   };
   document.getElementById('ed-hint').textContent = hints[t] || '';
   if (t !== 'select' && ed.sel) { ed.sel = null; drawCanvas(); }
@@ -3078,6 +3109,7 @@ document.addEventListener('keydown', e => {
   const inField = /INPUT|TEXTAREA/.test(document.activeElement && document.activeElement.tagName);
   if (e.key === 'Enter' && ed.drawing) { e.preventDefault(); finishArrow(); }
   else if (e.key === 'Escape' && ed.drawing) { ed.drawing = null; drawCanvas(); }
+  else if (e.key === 'Escape' && editor.classList.contains('board') && !bdOpen && ed.tool !== 'select') setTool('select');
   else if (e.key === 'Escape' && editor.classList.contains('board') && !bdOpen) setBoard(false);
   else if (e.key === 'Escape' && bdOpen) { bdOpen = ''; drawBoard(); }
   else if ((e.key === 'Delete' || e.key === 'Backspace') && !inField && ed.sel) { e.preventDefault(); deleteSel(); }
@@ -6004,7 +6036,7 @@ function lgSync() {
     if (pos >= 0 && pos < 3) { game.log.push({ key: 'lgfin:' + S.s, pts: LG_PRIZE[pos], why: `Liga · temporada ${S.s}: ${['campeón', 'subcampeón', 'tercero'][pos]}`, date: isoToday() }); if (pos === 0) cofreGrant('lgfin:' + S.s, 'campeón de la liga'); news.push(`Temporada ${S.s}: ¡${['campeón', 'subcampeón', 'tercero'][pos]}! +${LG_PRIZE[pos]}`); }
     paid.add(key);
   });
-  if (news.length) { game.lgPaid = [...paid].slice(-120); saveGame(); toast(news.slice(-2).join(' · ')); }
+  if (news.length) { game.lgPaid = [...paid].slice(-120); saveGame(); if (sesBox.hidden && editor.hidden) toast(news.slice(-2).join(' · ')); }
   // la DT congela en el club los equipos de cada temporada y los resultados ya jugados
   if (canWriteBank && window.SMB_CLOUD && artifactApi && !lgFreezing) {
     const F = JSON.parse(JSON.stringify(lgFrozen())); F.seasons = F.seasons || {}; F.res = F.res || {}; let ch = false;
@@ -6119,7 +6151,7 @@ function cofresSync() {
   const J = lastJornada(), d = J && J.duels.find(x => normName(x.a.name) === normName(me) || normName(x.b.name) === normName(me));
   if (d && normName(d.win) === normName(me) && cofreGrant('j' + J.n, 'jornada ' + J.n, true)) n++;
   bank.tasks.filter(t => t.source !== 'oller' && t.author && normName(t.author) === normName(me) && (t.alta || '') >= '2026-10-10').forEach(t => { if (cofreGrant('bk:' + t.id, 'ejercicio en el banco', true)) n++; });
-  if (n) { saveGame(); toast(n === 1 ? 'Tienes un cofre nuevo: tira el penalti.' : `Tienes ${n} cofres nuevos: tira los penaltis.`); }
+  if (n) { saveGame(); if (sesBox.hidden && editor.hidden) toast(n === 1 ? 'Tienes un cofre nuevo: tira el penalti.' : `Tienes ${n} cofres nuevos: tira los penaltis.`); }
 }
 const cofresN = () => (game.cofres || {}).n || 0;
 // penalti gratis cada 12 h y penalti de pago (10 oct)
