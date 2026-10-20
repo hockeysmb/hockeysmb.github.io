@@ -11,8 +11,15 @@ ART_PORT = 8770
 def _art_server():
     with socket.socket() as s:
         if s.connect_ex(('127.0.0.1', ART_PORT)) == 0: return
-    code = ("import http.server, functools, sys; H = http.server.SimpleHTTPRequestHandler; "
-            "H.extensions_map['.html'] = 'text/html; charset=utf-8'; "
+    # sirve la página como la publica claude.ai: con doctype y meta viewport (sin ellos el móvil se emula a 980 px)
+    code = ("import http.server, functools, sys\n"
+            "SK = b'<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1,viewport-fit=cover\"></head><body>'\n"
+            "class H(http.server.SimpleHTTPRequestHandler):\n"
+            "    def do_GET(self):\n"
+            "        if self.path.split('?')[0] in ('/', '/index.html'):\n"
+            "            b = SK + open(sys.argv[2] + '/index.html', 'rb').read() + b'</body></html>'\n"
+            "            self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(b))); self.end_headers(); self.wfile.write(b); return\n"
+            "        return super().do_GET()\n"
             "http.server.ThreadingHTTPServer(('', int(sys.argv[1])), functools.partial(H, directory=sys.argv[2])).serve_forever()")
     p = subprocess.Popen(['python3', '-c', code, str(ART_PORT), F + '_artifact'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     atexit.register(p.terminate); time.sleep(0.6)

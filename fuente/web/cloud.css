@@ -1,6 +1,6 @@
 /* versión web: pantalla de acceso */
 html.cl-locked, html.cl-locked body { overflow: hidden; }
-.cl-gate { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+.cl-gate { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: grid; justify-items: center; align-items: safe center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); overflow-y: auto; }
 .cl-card { width: min(100%, 420px); display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 14px; padding: 22px 20px; }
 .cl-card > img { width: 64px; height: 64px; border-radius: 50%; background: #fff; justify-self: center; }
 .cl-eyebrow { font: 600 12px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; }
