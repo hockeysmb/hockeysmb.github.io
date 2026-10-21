@@ -1281,6 +1281,52 @@ h1 { color: var(--fg); font-weight: 800; }
   #editor.board .bd-pick svg { width: 44px; height: 30px; }
   #editor.board .bd-empty:not([hidden]) { font-size: 14px; padding: 10px 14px; }
 }
+/* 21 oct: revisión de ejercicios (semáforo, mesa de la DT, notas) */
+.rv-dot { display: inline-flex; align-items: center; gap: 6px; flex: none; font: 700 12px/1 var(--font-body); padding: 4px 8px 4px 7px; border-radius: 999px; white-space: nowrap; }
+.rv-dot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.rv-ok { color: #1f7a45; } .rv-dot.rv-ok { background: #e3f4e9; }
+.rv-warn { color: #9a6200; } .rv-dot.rv-warn { background: #fdf0d5; }
+.rv-bad { color: #b3261e; } .rv-dot.rv-bad { background: #fbe4e2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rv-dot.rv-ok { background: #173d27; color: #8fd8ab; } :root:not([data-theme="light"]) .rv-dot.rv-warn { background: #45330a; color: #f2c46b; } :root:not([data-theme="light"]) .rv-dot.rv-bad { background: #4a1714; color: #f3a29b; } }
+:root[data-theme="dark"] .rv-dot.rv-ok { background: #173d27; color: #8fd8ab; } :root[data-theme="dark"] .rv-dot.rv-warn { background: #45330a; color: #f2c46b; } :root[data-theme="dark"] .rv-dot.rv-bad { background: #4a1714; color: #f3a29b; }
+.rv-items { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; line-height: 1.35; color: var(--fg); }
+.rv-items li::marker { color: currentColor; } .rv-items li.rv-bad { color: var(--fg); font-weight: 600; }
+.rv-allok { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.rv-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 900px) { .rv-grid { grid-template-columns: 300px minmax(0, 1fr); align-items: start; } .rv-list { position: sticky; top: 70px; max-height: calc(100vh - 100px); overflow-y: auto; } }
+.rv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+@media (max-width: 899px) { .rv-list { max-height: 240px; overflow-y: auto; } }
+.rv-row { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; row-gap: 2px; align-items: center; text-align: left; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--surface); color: var(--fg); font: inherit; cursor: pointer; }
+.rv-row b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-row small { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; }
+.rv-row .rv-dot { font-size: 0; padding: 0; background: none !important; } .rv-row .rv-dot::before { width: 11px; height: 11px; }
+.rv-row.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.rv-main { display: grid; gap: 12px; min-width: 0; scroll-margin-top: 70px; }
+.rv-head h3 { margin: 2px 0 4px; font-size: 22px; }
+.rv-k { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.rv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; } .rv-tags span { font-size: 12.5px; padding: 3px 8px; border-radius: 999px; background: var(--fill); }
+.rv-check { border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
+.rv-check.rv-c-bad { border-color: #e2a39d; } .rv-check.rv-c-warn { border-color: #e7c983; } .rv-check.rv-c-ok { border-color: #9fd3b2; }
+.rv-body { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .rv-body { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } }
+.rv-fig { display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--g-paper); cursor: zoom-in; overflow: hidden; }
+.rv-fig svg { display: block; width: 100%; height: auto; }
+.rv-txt h4 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); }
+.rv-txt h4:not(:first-child) { margin-top: 12px; }
+.rv-txt ol, .rv-txt ul { margin: 0; padding-left: 20px; display: grid; gap: 3px; font-size: 14.5px; line-height: 1.4; }
+.rv-txt p { margin: 0; font-size: 14.5px; line-height: 1.4; }
+.rv-dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; font-size: 14.5px; line-height: 1.4; }
+.rv-dl dt { font-weight: 700; font-size: 13px; color: var(--muted); margin-top: 6px; } .rv-dl dd { margin: 0; }
+.rv-empty { color: var(--muted); }
+.rv-acts kbd { font: 700 11px/1 var(--font-body); padding: 2px 5px; border-radius: 4px; border: 1px solid currentColor; opacity: .7; margin-left: 4px; }
+@media (pointer: coarse) { .rv-acts kbd, .rv-keys { display: none; } }
+.rv-note { display: grid; gap: 8px; } .rv-note textarea { min-height: 6em; }
+.ed-rv { border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
+.ed-rv:empty { display: none; }
+.ed-rv.rv-c-bad { border-color: #e2a39d; } .ed-rv.rv-c-warn { border-color: #e7c983; } .ed-rv.rv-c-ok { border-color: #9fd3b2; }
+.ed-rv-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ed-nota { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; }
+.ed-nota p { margin: 0; } .ed-nota-t { white-space: pre-line; font-size: 15px; }
 /* el notch del iPhone en horizontal: nada de contenido debajo */
 html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
 .editor:not(.board), .viewer, .picker, .sheet, .detail, .cofre, .pista, .live, .club-ov, .pz-big, .pz-stopov { left: env(safe-area-inset-left, 0px); right: env(safe-area-inset-right, 0px); }
@@ -1559,6 +1605,7 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
       <div class="bd-bar" id="bd-bar" role="toolbar" aria-label="Qué poner en la pista"></div>
       <div class="bd-sheet" id="bd-sheet" hidden></div>
       <div class="ed-side">
+        <div class="ed-nota" id="ed-nota" hidden></div>
         <label for="f-title">Nombre del ejercicio<input id="f-title" type="text"></label>
         <div class="ed-class" id="ed-class"></div>
         <label for="f-rules">Normas (una por línea)<textarea id="f-rules"></textarea></label>
@@ -1573,6 +1620,7 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
           <label class="ed-check" for="f-smb-ok" id="f-smb-ok-l"><input id="f-smb-ok" type="checkbox"> Validado por la Dirección Técnica</label>
         </div>
         <label for="f-author"><span id="f-author-l">Tu nombre</span><input id="f-author" type="text" placeholder="Para saber de quién es la propuesta"></label>
+        <div class="ed-rv" id="ed-rv" aria-live="polite"></div>
         <div class="ed-save">
           <button class="btn primary" id="ed-save-mine" type="button">Guardar en mis ejercicios</button>
           <button class="btn" id="ed-save-draft" type="button">Guardar a medias</button>
@@ -1663,6 +1711,53 @@ const tecList = (f, cats) => [...new Set(CATS.map(c => c[0]).filter(k => !cats |
 const TEC_ALL = new Set(TEC_NAMES.flatMap(f => tecList(f)));
 const tecFund = c => TEC_NAMES.find(f => tecList(f).includes(c)) || '';
 const worksOf = t => [...(t.contenidos || []), ...(t.tec || [])];
+
+// ================= revisión automática (21 oct): el semáforo de cada ejercicio =================
+// Mira estructura y redacción con lo que ya hay en la app (tipos de tarea, modelo de juego, objetivos por categoría). No juzga si el ejercicio es bueno.
+const RV_ABIERTA = /(^|[\s¿¡])(qu[eé]|c[oó]mo|cu[aá]ndo|d[oó]nde|ad[oó]nde|por ?qu[eé]|cu[aá]l(es)?|qui[eé]n(es)?|cu[aá]nt[oa]s?|para qu[eé])(?=[\s?,]|$)/i;
+const RV_DECIDE = /(^|\s)(si |elige|eligen|decide|deciden|según|puede[n]? (pasar|tirar|conducir|elegir)|opción|opciones)/i;
+const rvShort = q => q.length > 60 ? q.slice(0, 57) + '…' : q;
+function rvCount(t) { const it = (t.diagram && t.diagram.items) || []; const n = k => it.filter(i => i.type === k).length; return { atk: n('atk'), def: n('def'), gk: n('gk') }; }
+const rvSig = t => ((t.diagram && t.diagram.items) || []).filter(i => ['atk', 'def', 'gk', 'ball'].includes(i.type)).map(i => i.type + Math.round(i.x / 5) + '.' + Math.round(i.y / 5)).sort().join('|');
+function rvDup(t) {
+  const same = b => b.id === t.id || (b.orig && b.orig === t.id) || (t.orig && t.orig === b.id);
+  const ti = deacc(t.title || '').trim(), sg = rvSig(t), np = sg ? sg.split('|').length : 0;
+  return bank.tasks.find(b => !same(b) && ((ti && deacc(b.title || '').trim() === ti) || (np >= 3 && rvSig(b) === sg))) || null;
+}
+function checkTask(t) {
+  const L = [], add = (lvl, txt) => L.push({ lvl, txt });
+  const m = t.smb || {}, n = rvCount(t), rules = (t.rules || []).filter(x => String(x).trim()), qs = (m.preguntas || []).filter(x => String(x).trim());
+  const cats = t.cats || [], tec = t.tec || [];
+  // completo
+  if (!(t.title || '').trim()) add('bad', 'Sin nombre.');
+  if (!n.atk && !n.def && !n.gk) add('bad', 'El gráfico no tiene jugadores.');
+  if (!rules.length) add('bad', 'Sin normas.');
+  if (!t.tipo) add('bad', 'Sin tipo de tarea (calentamiento, técnico-táctico, toma de decisión…).');
+  if (!cats.length) add('warn', 'Sin categoría: no se puede comprobar si encaja con la edad.');
+  if (!(t.fases || []).length && !tec.length) add('warn', 'No dice qué trabaja: marca una fase del juego o un contenido técnico.');
+  if (cats.length && tec.length) { const out = tec.filter(c => !TEC_NAMES.some(f => tecList(f, cats).includes(c))); if (out.length) add('warn', `Contenido técnico que no es de ${cats.map(catName).join(' ni ')}: ${out.join(', ')}.`); }
+  // encaja con el tipo
+  if (t.tipo === 'decision') { if (!n.def || n.atk < 2) add('warn', 'Toma de decisión sin oposición: pide atacantes y defensores (de 3c3 a 4c4).'); else if (Math.max(n.atk, n.def) > 4) add('warn', `Toma de decisión con ${n.atk}c${n.def}: el máximo es 4c4.`); }
+  if (t.tipo === 'tecnico' && !n.def && !rules.some(r => RV_DECIDE.test(r))) add('warn', 'Técnico-táctico sin oposición ni ninguna norma que obligue a elegir.');
+  if (t.tipo === 'global' && (n.atk < 3 || n.def < 3)) add('warn', `Juego global con ${n.atk}c${n.def}: pide al menos 3 por equipo.`);
+  // feedback interrogativo y progresión
+  if (qs.length < 2) add('warn', qs.length ? 'Solo una pregunta para parar la tarea: pon al menos dos.' : 'Sin preguntas para parar la tarea (feedback interrogativo).');
+  qs.forEach(q => { if (!/\?/.test(q)) add('warn', `No parece una pregunta: «${rvShort(q)}».`); else if (!RV_ABIERTA.test(q) && !/\s[ou]\s/i.test(q)) add('warn', `Pregunta de sí o no: «${rvShort(q)}». Mejor abierta: ¿qué…?, ¿cuándo…?, ¿cómo…?`); });
+  if (!(m.lee || '').trim()) add('warn', 'Falta qué tiene que leer el jugador.');
+  if (!(m.facil || '').trim() || !(m.dificil || '').trim()) add('warn', 'Falta la versión más fácil o la más difícil.');
+  // que se pueda explicar el martes en pista
+  if (rules.length > 6) add('warn', `${rules.length} normas: demasiadas para explicarlas en pista.`);
+  const long = rules.filter(r => String(r).split(/\s+/).length > 30).length;
+  if (long) add('warn', long === 1 ? 'Una norma muy larga (más de 30 palabras).' : `${long} normas muy largas (más de 30 palabras).`);
+  // repetidos
+  const dup = rvDup(t); if (dup) add('warn', `Se parece mucho a «${dup.title || 'sin nombre'}» del banco${dup.num ? ' (nº ' + dup.num + ')' : ''}.`);
+  return { lvl: L.some(x => x.lvl === 'bad') ? 'bad' : L.length ? 'warn' : 'ok', items: L };
+}
+const RV_LBL = { ok: 'Cumple', warn: 'Revisar', bad: 'Falta algo' };
+const rvDot = r => `<span class="rv-dot rv-${r.lvl}">${RV_LBL[r.lvl]}${r.items.length ? ' · ' + r.items.length : ''}</span>`;
+const rvListHTML = r => r.items.length ? `<ul class="rv-items">${r.items.map(x => `<li class="rv-${x.lvl}">${esc(x.txt)}</li>`).join('')}</ul>` : '<p class="rv-allok">Todo en orden según las comprobaciones automáticas.</p>';
+// notas de la DT a los entrenadores (van en el club; las ve el autor en su app)
+const notasDe = tid => (bank.notas || []).filter(x => x.tid === tid);
 
 const OLLER = 'Marc Oller (libro)';
 const tipoName = v => (TIPOS.find(x => x.v === v) || {}).n || '';
@@ -2215,7 +2310,7 @@ function renderHome() {
       <div class="hchips"><button class="hc" type="button" data-go="liga" title="Tu nivel">${HC_IC.lv}${esc(LEVELS[levelOf(cp)].n)}</button><button class="hc" type="button" data-go="liga" title="Puntos de club">${HC_IC.pt}${cp}<small>pts</small></button><button class="hc" type="button" data-go="liga" title="Monedas">${HC_IC.mo}${balance()}</button></div></div>`
       : `<div class="hello"><div><h1>Banco de situaciones SMB</h1><p class="sub">Ejercicios del club, sesiones con la plantilla del club y la liga del cuerpo técnico.</p></div></div>`}
     ${pend ? `<button class="notice" type="button" data-go="dt">Tienes ${pend} ${pend === 1 ? 'cosa pendiente' : 'cosas pendientes'} en Dirección Técnica${ejNuevos().length ? ` (${ejNuevos().length} ${ejNuevos().length === 1 ? 'ejercicio nuevo' : 'ejercicios nuevos'} del cuerpo técnico)` : ''} <span aria-hidden="true">→</span></button>` : ''}
-    ${name ? penNoticeHTML() : ''}
+    ${name ? notasHomeHTML() : ''}${name ? penNoticeHTML() : ''}
     ${drafts.length ? `<button class="notice" type="button" data-home="draft" data-id="${esc(drafts[drafts.length - 1].id)}">${drafts.length === 1 ? `Tienes un ejercicio a medias${drafts[0].title ? ': «' + esc(drafts[0].title) + '»' : ''}` : `Tienes ${drafts.length} ejercicios a medias`}. Seguir <span aria-hidden="true">→</span></button>` : ''}
     ${hero}
     ${guide}
@@ -2352,7 +2447,7 @@ function dtRow(t) {
     <button class="btn small" type="button" data-dt-edit="${esc(t.id)}">Abrir</button></li>`;
 }
 let dtTab = 'resumen';
-const DT_TABS = [['resumen', 'Resumen'], ['banco', 'Banco'], ['equipo', 'Cuerpo técnico'], ['lunes', 'Liga y votación'], ['horario', 'Horario']];
+const DT_TABS = [['resumen', 'Resumen'], ['revisar', 'Revisar'], ['banco', 'Banco'], ['equipo', 'Cuerpo técnico'], ['lunes', 'Liga y votación'], ['horario', 'Horario']];
 function dtState() {
   const CL = window.SMB_CLOUD, t = isoToday(), d = dateOf(t); d.setDate(d.getDate() + 6);
   return { CL, pend: pendingDT(), nuevos: ejNuevos(), inbox: CL && CL.inboxCount ? CL.inboxCount() : 0, espera: CL && CL.waitingCount ? CL.waitingCount() : 0,
@@ -2363,8 +2458,8 @@ function dtResumenHTML(X) {
   const items = [], it = (n, t, sub, btn, calm) => items.push(`<li${calm ? ' class="calm"' : ''}><span class="dt-n">${n}</span><span class="dt-txt"><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</span>${btn}</li>`);
   const go = (tab, label, prim) => `<button class="btn small${prim ? ' primary' : ''}" type="button" data-dtgo="${tab}">${label}</button>`;
   if (X.inbox) it(X.inbox, 'Recibido de los entrenadores', 'Ejercicios o sesiones que te han mandado', go('banco', 'Revisar', true));
-  if (X.nuevos.length) it(X.nuevos.length, 'Ejercicios nuevos del cuerpo técnico', 'De ' + esc([...new Set(X.nuevos.map(t => (t.author || '').split(' ')[0]).filter(Boolean))].join(', ')) + '. Aún no están en el banco', go('banco', 'Revisar', true));
-  if (X.pend.length) { const nt = X.pend.filter(t => !t.tipo).length; it(X.pend.length, 'Fichas por validar', [nt ? `${nt} sin clasificar` : '', X.pend.length - nt ? `${X.pend.length - nt} con «En SMB» sin validar` : ''].filter(Boolean).join(' · '), `<button class="btn small primary" type="button" id="dt-serie">Validar en serie</button>`); }
+  if (X.nuevos.length) it(X.nuevos.length, 'Ejercicios nuevos del cuerpo técnico', 'De ' + esc([...new Set(X.nuevos.map(t => (t.author || '').split(' ')[0]).filter(Boolean))].join(', ')) + '. Aún no están en el banco', go('revisar', 'Revisar', true));
+  if (X.pend.length) { const nt = X.pend.filter(t => !t.tipo).length; it(X.pend.length, 'Fichas por validar', [nt ? `${nt} sin clasificar` : '', X.pend.length - nt ? `${X.pend.length - nt} con «En SMB» sin validar` : ''].filter(Boolean).join(' · '), go('revisar', 'Revisar', true)); }
   if (X.espera) it(X.espera, X.espera === 1 ? 'Entrenador esperando acceso' : 'Entrenadores esperando acceso', 'Han creado su cuenta y no tienen acceso', go('equipo', 'Dar acceso', true));
   const S = sem(), nc = S ? (S.ej || []).length + (S.ses || []).length : 0;
   if (!nc) it(0, 'Votación sin candidatos', 'Propón un ejercicio o una sesión para que se vote esta semana', `<button class="btn small" type="button" data-dtdo="cand-ej">Proponer</button>`);
@@ -2374,7 +2469,7 @@ function dtResumenHTML(X) {
   const B = (k, l, prim) => `<button class="btn${prim ? ' primary' : ''}" type="button" data-dtdo="${k}">${l}</button>`;
   return `<section class="ses-sec"><h2 class="h-sec">Te toca ${infoBtn('resumen')}</h2>${items.length ? `<ul class="dt-todo">${items.join('')}</ul>` : '<p class="dt-ok">Todo al día.</p>'}</section>
     <section class="ses-sec"><h2 class="h-sec">Qué puedes hacer</h2><div class="dt-acts">
-      <div class="dt-grp"><h3>Banco</h3>${B('new', 'Crear un ejercicio')}${X.pend.length ? B('serie', `Validar en serie · ${X.pend.length}`) : ''}${B('bank', 'Ver el banco completo')}${B('code', 'Pegar un código')}${B('backup', 'Descargar copia del banco')}</div>
+      <div class="dt-grp"><h3>Banco</h3>${B('new', 'Crear un ejercicio')}${X.pend.length + X.nuevos.length ? `<button class="btn small primary" type="button" data-dtgo="revisar">Revisar · ${rvQueue().list.length}</button>` : ''}${B('bank', 'Ver el banco completo')}${B('code', 'Pegar un código')}${B('backup', 'Descargar copia del banco')}</div>
       <div class="dt-grp"><h3>Cuerpo técnico</h3>${B('seg', 'Seguimiento por entrenador')}${B('alta', X.CL ? 'Dar de alta a un entrenador' : 'Añadir entrenador al vestuario')}${B('puntos', 'Dar puntos')}</div>
       <div class="dt-grp"><h3>Liga y votación</h3>${B('cand-ej', 'Proponer un ejercicio')}${B('cand-ses', 'Proponer una sesión')}${B('jornada', 'Jugar la jornada')}</div>
       <div class="dt-grp"><h3>Horario</h3>${B('hz-add', 'Añadir un entreno')}${B('hz-sin', 'Añadir días sin entreno')}${B('hz', 'Ver el horario')}</div>
@@ -2396,6 +2491,92 @@ function dtBancoHTML(X) {
       <details class="dt-more"><summary>Copia de seguridad</summary><p class="sub">Descarga una copia de vez en cuando por si alguien quita algo por error.</p>
       <div class="actions"><button class="btn" type="button" id="dt-backup">Descargar copia del banco</button></div>${X.CL && X.CL.restoreHTML ? X.CL.restoreHTML() : ''}</details></section>`;
 }
+// ---------- mesa de revisión (21 oct): todo lo pendiente en una pantalla, con el semáforo ----------
+let rvSel = '', rvNoteOpen = false;
+function rvQueue() {
+  const no = bank.rvNo || {}, notas = bank.notas || [], list = [], waiting = [];
+  ejNuevos().forEach(t => {
+    const ts = t._ts || t.ts || 0;
+    if (no[t.id] && no[t.id] >= ts) return;
+    const nt = notas.filter(x => x.tid === t.id).sort((a, b) => b.ts - a.ts)[0];
+    if (nt && ts <= nt.ts) { waiting.push({ t, nt }); return; }
+    list.push({ k: 'c:' + t.id, kind: 'coach', t, ts, corrected: !!nt });
+  });
+  list.sort((a, b) => b.ts - a.ts);
+  pendingDT().forEach(t => list.push({ k: 'b:' + t.id, kind: 'bank', t, ts: 0 }));
+  list.forEach(x => { x.r = checkTask(x.t); });
+  return { list, waiting };
+}
+function dtRevisarHTML() {
+  const Q = rvQueue(), L = Q.list;
+  if (!L.some(x => x.k === rvSel)) rvSel = L[0] ? L[0].k : '';
+  const cur = L.find(x => x.k === rvSel), i = L.indexOf(cur);
+  const row = x => `<li><button class="rv-row${x.k === rvSel ? ' on' : ''}" type="button" data-rv="sel" data-k="${esc(x.k)}">${rvDot(x.r)}<b>${esc(x.t.title || 'Sin nombre')}</b><small>${x.kind === 'coach' ? 'Propuesta de ' + esc(x.t.author || 'un entrenador') + (x.corrected ? ' · corregida' : '') : 'Banco · ' + (!x.t.tipo ? 'sin clasificar' : 'sin validar')}</small></button></li>`;
+  const wait = Q.waiting.length ? `<details class="dt-more rv-wait"><summary>${Q.waiting.length} ${Q.waiting.length === 1 ? 'devuelto, esperando' : 'devueltos, esperando'} a que su autor lo cambie</summary><ul class="dt-list">${Q.waiting.map(({ t, nt }) => `<li class="dt-row"><span class="dt-txt"><b>${esc(t.title || 'Sin nombre')}</b><small>${esc(t.author || '')} · «${esc(rvShort(nt.txt))}»</small></span><button class="btn small ghost" type="button" data-rv="unnote" data-tid="${esc(t.id)}">Quitar la nota</button></li>`).join('')}</ul></details>` : '';
+  if (!cur) return `<section class="ses-sec rv"><h2 class="h-sec">Revisar</h2><p class="sub">No hay nada pendiente: todo el banco está validado y no hay propuestas nuevas.</p>${wait}</section>`;
+  const t = cur.t, m = t.smb || {}, tags = [tipoName(t.tipo), ...(t.fases || []), ...(t.cats || []).map(catName)].filter(Boolean);
+  const txt = (lab, v) => v ? `<dt>${lab}</dt><dd>${esc(v)}</dd>` : `<dt>${lab}</dt><dd class="rv-empty">—</dd>`;
+  const sugg = cur.r.items.map(x => '· ' + x.txt).join('\n');
+  const acts = cur.kind === 'bank'
+    ? `<button class="btn primary" type="button" data-rv="ok"${t.tipo ? '' : ' disabled title="Clasifícala antes con Editar"'}>Validar y siguiente <kbd>V</kbd></button><button class="btn" type="button" data-rv="edit">Editar <kbd>E</kbd></button>`
+    : `<button class="btn primary" type="button" data-rv="ok">Meter en el banco y validar <kbd>V</kbd></button><button class="btn" type="button" data-rv="in">Meter sin validar</button><button class="btn" type="button" data-rv="note">Devolver con una nota <kbd>N</kbd></button><button class="btn ghost" type="button" data-rv="no">Descartar</button>`;
+  return `<section class="ses-sec rv"><div class="lt-head"><h2 class="h-sec">Revisar · ${L.length}</h2><span class="sub rv-keys">← → para moverte · V valida${cur.kind === 'bank' ? ' · E edita' : ' · N nota'}</span></div>
+    <div class="rv-grid"><ol class="rv-list">${L.map(row).join('')}</ol>
+    <div class="rv-main" id="rv-main">
+      <div class="rv-head"><span class="rv-k">${cur.kind === 'coach' ? `Propuesta de ${esc(t.author || 'un entrenador')}${cur.ts ? ' · ' + haceTxt(cur.ts) : ''}${cur.corrected ? ' · corregida tras tu nota' : ''}` : 'Banco · pendiente de validar'} · ${i + 1} de ${L.length}</span>
+        <h3>${t.num ? 'nº ' + t.num + ' · ' : ''}${esc(t.title || 'Sin nombre')}</h3>${tags.length ? `<p class="rv-tags">${tags.map(x => `<span>${esc(x)}</span>`).join('')}</p>` : ''}${worksOf(t).length ? `<p class="sub">Trabaja: ${esc(worksOf(t).join(' · '))}</p>` : ''}</div>
+      <div class="rv-check rv-c-${cur.r.lvl}">${rvDot(cur.r)}${rvListHTML(cur.r)}</div>
+      <div class="actions rv-acts">${acts}<button class="btn ghost" type="button" data-rv="next">Saltar →</button></div>
+      <div class="rv-note"${rvNoteOpen && cur.kind === 'coach' ? '' : ' hidden'}><label class="ses-f">Nota para ${esc(t.author || 'el autor')} (la verá en su app, junto al ejercicio)<textarea id="rv-note-t" rows="4">${esc(sugg)}</textarea></label><div class="actions"><button class="btn primary" type="button" data-rv="note-ok">Dejar la nota y siguiente</button><button class="btn ghost" type="button" data-rv="note-x">Cancelar</button></div></div>
+      <div class="rv-body"><button class="rv-fig" type="button" data-rv="big" aria-label="Ver el gráfico en grande">${diagramSVG(t.diagram || {}, t.title || '')}</button>
+        <div class="rv-txt"><h4>Normas</h4>${(t.rules || []).length ? `<ol>${t.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol>` : '<p class="rv-empty">Sin normas.</p>'}${t.notes ? `<h4>Notas y variantes</h4><p>${esc(t.notes)}</p>` : ''}
+          <h4>En SMB</h4><dl class="rv-dl">${txt('Del modelo de juego', m.modelo)}${txt('Qué lee el jugador', m.lee)}<dt>Preguntas</dt><dd>${(m.preguntas || []).length ? `<ul>${m.preguntas.map(q => `<li>${esc(q)}</li>`).join('')}</ul>` : '<span class="rv-empty">—</span>'}</dd>${txt('Más fácil', m.facil)}${txt('Más difícil', m.dificil)}</dl></div></div>
+      <p class="msg" id="rv-msg" aria-live="polite"></p>
+    </div></div>${wait}</section>`;
+}
+function rvMove(d) { const L = rvQueue().list, i = L.findIndex(x => x.k === rvSel); if (!L.length) return; rvSel = L[(i + d + L.length) % L.length].k; rvNoteOpen = false; render(); const mm = document.getElementById('rv-main'); if (mm && window.innerWidth < 900) mm.scrollIntoView({ block: 'start' }); }
+function rvAfter() { const L = rvQueue().list, i = L.findIndex(x => x.k === rvSel); const nx = L[i + 1] || L[i - 1]; return nx ? nx.k : ''; }
+function rvAction(a, b) {
+  const L = rvQueue().list, cur = L.find(x => x.k === rvSel), msg = document.getElementById('rv-msg');
+  if (a === 'sel') { rvSel = b.dataset.k; rvNoteOpen = false; render(); const mm = document.getElementById('rv-main'); if (mm && window.innerWidth < 900) mm.scrollIntoView({ block: 'start' }); return; }
+  if (a === 'unnote') { saveBank(bank.tasks, 'Nota quitada: vuelve a la cola.', msg, { notas: (bank.notas || []).filter(x => x.tid !== b.dataset.tid) }); return; }
+  if (!cur) return;
+  const t = cur.t;
+  if (a === 'next') return rvMove(1);
+  if (a === 'big') return openViewer(t);
+  if (a === 'edit' && cur.kind === 'bank') return openEditor(clone(bank.tasks.find(x => x.id === t.id)), 'bank');
+  if (a === 'note') { rvNoteOpen = true; render(); const ta = document.getElementById('rv-note-t'); if (ta) { ta.focus(); ta.select(); } return; }
+  if (a === 'note-x') { rvNoteOpen = false; render(); return; }
+  const next = rvAfter();
+  if (a === 'ok' && cur.kind === 'bank') {
+    if (!t.tipo) return;
+    rvSel = next;
+    saveBank(bank.tasks.map(x => x.id === t.id ? Object.assign({}, x, { smb: Object.assign({}, x.smb || {}, { validado: true }) }) : x), `Validado: «${t.title || 'ejercicio'}».`, null);
+  } else if ((a === 'ok' || a === 'in') && cur.kind === 'coach') {
+    const c = clone(t); delete c._club; delete c._ts; delete c.basedOn;
+    c.orig = t.id; c.id = 'club-' + uid(); c.source = 'club'; c.updated = today(); c.smb = Object.assign({}, c.smb || {}, { validado: a === 'ok' && !!c.tipo });
+    rvSel = next;
+    saveBank([...bank.tasks, c], `«${t.title || 'Ejercicio'}» ya está en el banco${c.smb.validado ? ' y validado' : ''} (+${PTS.banco} puntos para ${t.author || 'su autor'}).`, null, { notas: (bank.notas || []).filter(x => x.tid !== t.id) });
+  } else if (a === 'no' && cur.kind === 'coach') {
+    rvSel = next;
+    saveBank(bank.tasks, 'Descartado. Si su autor lo cambia, vuelve a la cola.', null, { rvNo: Object.assign({}, bank.rvNo || {}, { [t.id]: Date.now() }) });
+  } else if (a === 'note-ok' && cur.kind === 'coach') {
+    const txt = (document.getElementById('rv-note-t').value || '').trim(); if (!txt) return;
+    rvSel = next; rvNoteOpen = false;
+    const nota = { id: uid(), tid: t.id, autor: t.author || '', titulo: t.title || '', txt, ts: Date.now() };
+    saveBank(bank.tasks, `Nota para ${t.author || 'el autor'} guardada. Lo verá en su app.`, null, { notas: [...(bank.notas || []).filter(x => x.tid !== t.id), nota] });
+  }
+}
+document.addEventListener('keydown', e => {
+  if (view.zone !== 'dt' || dtTab !== 'revisar' || !editor.hidden || !modal.hidden || document.querySelector('.viewer')) return;
+  if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '') || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'arrowright' || k === 'arrowdown' || k === 'j') { e.preventDefault(); rvMove(1); }
+  else if (k === 'arrowleft' || k === 'arrowup' || k === 'k') { e.preventDefault(); rvMove(-1); }
+  else if (k === 'v') { const b = document.querySelector('#rv-main [data-rv="ok"]:not([disabled])'); if (b) rvAction('ok', b); }
+  else if (k === 'e') rvAction('edit');
+  else if (k === 'n') rvAction('note');
+});
 // ---------- seguimiento por entrenador ----------
 function planFor(it, name) {
   if (isMe(name) && !planEmpty(plan[it.key])) return plan[it.key];
@@ -2437,13 +2618,14 @@ function renderDT() {
   if (!DT_TABS.some(([k]) => k === dtTab)) dtTab = 'resumen';
   const X = dtState(), CL = X.CL, nb = X.pend.length + X.nuevos.length + X.inbox;
   document.getElementById('st-dt').textContent = `${bank.tasks.length} ejercicios en el banco · ${(bank.coaches || []).length} en el vestuario`;
-  const badge = { banco: nb, equipo: X.espera };
+  const badge = { banco: X.inbox, revisar: rvQueue().list.length, equipo: X.espera };
   tabs.innerHTML = `<div class="seg wrap" role="group" aria-label="Partes de la Dirección Técnica">${DT_TABS.map(([k, l]) => `<button type="button" data-dttab="${k}" aria-pressed="${dtTab === k}">${l}${badge[k] ? ` · ${badge[k]}` : ''}</button>`).join('')}</div>`;
   rv.hidden = dtTab !== 'banco';
   if (!CL && !rv.dataset.init) { rv.open = true; rv.dataset.init = '1'; }
   document.getElementById('dt-pre').innerHTML = CL && dtTab === 'banco' && X.inbox ? CL.inboxHTML() : '';
   let h = '';
   if (dtTab === 'resumen') h = dtResumenHTML(X);
+  else if (dtTab === 'revisar') h = dtRevisarHTML();
   else if (dtTab === 'banco') h = dtBancoHTML(X);
   else if (dtTab === 'lunes') h = dtSemanaHTML();
   else if (dtTab === 'equipo') h = dtSeguimientoHTML() + (CL ? CL.accessHTML() : '') + dtVestHTML();
@@ -2526,7 +2708,8 @@ document.getElementById('v-dt').addEventListener('click', async e => {
   if (b.dataset.dtgo) { goDT(b.dataset.dtgo); return; }
   if (b.dataset.dtAlias !== undefined) { setAlias(b.dataset.dtAlias, b.dataset.to); return; }
   if (b.dataset.dtdo) { dtDo(b.dataset.dtdo); return; }
-  if (b.id === 'dt-serie') { startSerie(); return; }
+  if (b.id === 'dt-serie') { dtTab = 'revisar'; render(); scrollTo({ top: 0 }); return; }
+  if (b.dataset.rv) { rvAction(b.dataset.rv, b); return; }
   if (b.dataset.dtEdit) { const t = bank.tasks.find(x => x.id === b.dataset.dtEdit); if (t) openEditor(clone(t), 'bank'); }
   else if (b.dataset.dtSee) { const t = ejClub().find(x => x.id === b.dataset.dtSee); if (t) openDetail(t, 'club'); }
   else if (b.dataset.dtTobank) { const t = ejClub().find(x => x.id === b.dataset.dtTobank); if (t) { b.disabled = true; toBank(t, document.getElementById('dt-msg')).then(ok => { if (!ok) b.disabled = false; }); } }
@@ -2766,7 +2949,7 @@ function openEditor(task, mode, opts = {}) {
   document.getElementById('ed-skip').hidden = true;
   if (task.borrador && !opts.title) document.getElementById('ed-title').textContent = 'Seguir el ejercicio a medias';
   editor.hidden = false; document.body.style.overflow = 'hidden';
-  setTool('select'); drawCanvas(); drawClass();
+  setTool('select'); drawCanvas(); drawClass(); edNota(); edRv(true);
   ed.sig = edSig();
 }
 function drawClass() {
@@ -2786,6 +2969,7 @@ function drawClass() {
       <div class="opts" role="group" aria-label="Fundamento técnico"><span class="sub">Fundamento:</span>${TEC_NAMES.map(f => { const k = t.tec.filter(c => tecList(f).includes(c)).length; return `<button class="chip sm tf" type="button" data-tf="${esc(f)}" aria-expanded="${ed.tecOpen.includes(f)}">${esc(f)}${k ? ` · ${k}` : ''}</button>`; }).join('')}</div>
       ${ed.tecOpen.map(f => { const L = tecList(f, t.cats), extra = t.tec.filter(c => tecList(f).includes(c) && !L.includes(c)); return `<div class="opts" role="group" aria-label="${esc(f)}"><span class="sub">${esc(f)}${t.cats.length ? '' : ' (todas las categorías)'}:</span>${[...L, ...extra].map(c => `<button class="chip sm" type="button" data-tec="${esc(c)}" ${pressed(t.tec.includes(c))}>${esc(c)}</button>`).join('')}</div>`; }).join('')}
     </div>`;
+  edRv();
   box.querySelectorAll('[data-tipo]').forEach(b => b.onclick = () => { t.tipo = b.dataset.tipo; drawClass(); });
   box.querySelectorAll('[data-tcat]').forEach(b => b.onclick = () => { const k = b.dataset.tcat; t.cats = t.cats.includes(k) ? t.cats.filter(x => x !== k) : CATS.map(c => c[0]).filter(x => x === k || t.cats.includes(x)); drawClass(); });
   box.querySelectorAll('[data-tf]').forEach(b => b.onclick = () => { const f = b.dataset.tf; ed.tecOpen = ed.tecOpen.includes(f) ? ed.tecOpen.filter(x => x !== f) : [...ed.tecOpen, f]; drawClass(); });
@@ -2896,6 +3080,7 @@ function closeEditor() {
   if (editor.classList.contains('big')) setBig(false); if (editor.classList.contains('board')) setBoard(false); editor.hidden = true; document.body.style.overflow = ''; ed = null;
   if (back) { sesBox.hidden = false; document.body.style.overflow = 'hidden'; }
 }
+document.querySelector('#editor .ed-side').addEventListener('input', () => edRv());
 document.getElementById('ed-cancel').addEventListener('click', () => {
   if (serieGet()) { serieSet(null); toast('Serie parada. Puedes seguir otro día desde Dirección Técnica.'); closeEditor(); return; }
   if (!ed || ed.sig === edSig()) { closeEditor(); return; }
@@ -2998,6 +3183,7 @@ function drawCanvas() {
   document.getElementById('tool-undo').disabled = !ed.history.length;
   document.getElementById('tool-redo').disabled = !(ed.future || []).length;
   document.getElementById('tool-finish').hidden = true;
+  if (!editor.hidden) edRv();
 }
 function drawProps() {
   const box = document.getElementById('props'); if (!ed) return;
@@ -3203,6 +3389,25 @@ document.addEventListener('keydown', e => {
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !inField) { e.preventDefault(); undo(); }
 });
 
+// el semáforo del editor se calcula con lo que hay escrito, sin guardar nada
+function edDraftTask() {
+  const v = id => (document.getElementById(id) || {}).value || '';
+  return Object.assign({}, ed.task, { title: v('f-title').trim(), rules: v('f-rules').split('\n').map(x => x.trim()).filter(Boolean), notes: v('f-notes').trim(),
+    smb: { modelo: v('f-smb-modelo').trim(), lee: v('f-smb-lee').trim(), preguntas: v('f-smb-q').split('\n').map(x => x.trim()).filter(Boolean), facil: v('f-smb-facil').trim(), dificil: v('f-smb-dificil').trim() } });
+}
+let edRvT = 0;
+function edRv(now) {
+  clearTimeout(edRvT);
+  const go = () => { if (!ed) return; const box = document.getElementById('ed-rv'), r = checkTask(edDraftTask());
+    box.className = 'ed-rv rv-c-' + r.lvl;
+    box.innerHTML = `<div class="ed-rv-h"><b>Revisión automática</b>${rvDot(r)}</div>${r.items.length ? rvListHTML(r) : '<p class="rv-allok">Cumple lo que se pide. La DT lo revisará igualmente.</p>'}`; };
+  if (now) go(); else edRvT = setTimeout(go, 350);
+}
+function edNota() {
+  const box = document.getElementById('ed-nota'), N = ed ? notasDe(ed.task.id) : [];
+  box.hidden = !N.length || ed.mode === 'bank';
+  if (!box.hidden) box.innerHTML = N.map(n => `<p><b>Nota de la Dirección Técnica</b> · ${esc(haceTxt(n.ts))}</p><p class="ed-nota-t">${esc(n.txt)}</p>`).join('') + '<p class="sub">Cuando lo cambies y lo guardes, la DT lo vuelve a ver.</p>';
+}
 function collectText() {
   const t = ed.task;
   t.title = document.getElementById('f-title').value.trim();
@@ -6245,6 +6450,14 @@ const PEN_FREE_H = 12, PEN_PRICE = 50;
 const penFreeIn = () => Math.max(0, (game.penAt || 0) + PEN_FREE_H * 3600e3 - Date.now());
 const penFree = () => penFreeIn() === 0;
 const penCd = ms => { const m = Math.ceil(ms / 60000), h = Math.floor(m / 60); return h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`; };
+function misNotas() { const ids = new Set(mine.map(t => t.id)); return (bank.notas || []).filter(n => ids.has(n.tid)); }
+function notasHomeHTML() {
+  const N = misNotas(); if (!N.length) return '';
+  const pend = N.filter(n => { const t = mine.find(x => x.id === n.tid); return t && (t.ts || 0) <= n.ts; });
+  if (!pend.length) return '';
+  return `<button class="notice nota-n" type="button" data-nota="${esc(pend[0].tid)}">La DT te ha dejado ${pend.length === 1 ? `una nota en «${esc(pend[0].titulo || 'tu ejercicio')}»` : pend.length + ' notas en tus ejercicios'}: ábrelo <span aria-hidden="true">→</span></button>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-nota]'); if (!b) return; const t = mine.find(x => x.id === b.dataset.nota); if (t) openEditor(clone(t), 'mine'); });
 function penNoticeHTML() {
   const n = cofresN();
   if (n) return `<button class="notice cofre-n" type="button" data-cofre>Tienes ${n === 1 ? 'un cofre' : n + ' cofres'}: tira el penalti <span aria-hidden="true">→</span></button>`;

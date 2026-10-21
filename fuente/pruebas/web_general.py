@@ -77,7 +77,7 @@ async def main():
       await pg.click('[data-nav="dt"]'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=f'resumen{W}.png', full_page=True)
       print('5 te toca', (await pg.inner_text('.dt-todo')).replace('\n',' | ')[:200])
-      await pg.click('[data-dtgo="banco"]'); await pg.wait_for_timeout(300)
+      await pg.click('[data-dttab="banco"]'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=f'bandeja{W}.png', full_page=True)
       print('5 nuevos', (await pg.inner_text('#dt-dyn'))[:120].replace('\n',' | '))
       await pg.click('[data-dt-tobank]'); await pg.wait_for_timeout(800)
