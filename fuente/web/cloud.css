@@ -18,3 +18,4 @@ html.cl-locked, html.cl-locked body { overflow: hidden; }
 .dt-row > .cl-acts { grid-column: 2 / -1; justify-self: start; display: flex; gap: 6px; flex-wrap: wrap; }
 .dt-row > .cl-ren { grid-column: 1 / -1; display: flex; gap: 8px; }
 .cl-ren input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); }
+.cl-twin { display: block; margin-top: 4px; color: #9a6200; font-weight: 600; white-space: normal; }

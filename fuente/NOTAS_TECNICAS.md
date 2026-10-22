@@ -40,3 +40,9 @@ Mapa del código de `fuente/plantilla.html` y `fuente/web/cloud.js`: qué hace c
   - **En el club (`club/state`):** `bank.notas` [{id, tid, autor, titulo, txt, ts}] y `bank.rvNo` {tid: ts}. Una propuesta devuelta sale de la cola hasta que su autor la guarda de nuevo (`ts` mayor que el de la nota) y vuelve como «corregida». Al meterla en el banco se borran sus notas.
   - **Lado del entrenador:** `#ed-rv` (semáforo en vivo, `edDraftTask` + `edRv`), `#ed-nota` (`edNota`) y el aviso en Inicio (`notasHomeHTML`, `[data-nota]`). Las notas están en `club/state`, que pueden leer todos los entrenadores, aunque la app solo se la enseña al autor.
   - **Pruebas:** `art_revisar` y `web_revisar`. Los límites por categoría (jugadores y superioridades por edad) están pendientes de que la DT valide la tabla.
+
+- **Equipos y entrenadores (22 oct):**
+  - DT → Cuerpo técnico, primera sección (`dtEquiposHTML`, `equiposMap`, `eqModal`). Los equipos salen del horario (`hzTeams` separa «+» y «,»).
+  - El entrenador de un equipo es `bank.equipos[equipo]` si la DT lo ha fijado. Si no, el que más se repite en sus entrenos propios. Avisa de los entrenos propios que no coinciden con él.
+  - Al cambiarlo se reescribe `ent` en los entrenos marcados. En los entrenos conjuntos se propone la unión de los entrenadores de cada equipo, y se puede editar.
+- **Cuentas repetidas (22 oct):** en Acceso, una cuenta que espera acceso con el mismo nombre que una que ya lo tiene muestra un aviso (`.cl-twin`). «Descartar» la guarda en `bank.ocultos` (no sale ni cuenta como pendiente) y «Recuperar» la devuelve.

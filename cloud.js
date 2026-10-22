@@ -110,6 +110,8 @@
       else if (a === 'empty') await importBank({ updated: '', tasks: [] });
       else if (a === 'grant') await grant(b.dataset.uid);
       else if (a === 'revoke') await revoke(b.dataset.uid);
+      else if (a === 'hide') await window.SMB.saveBankExtra({ ocultos: [...new Set([...((lastBank || {}).ocultos || []), b.dataset.uid])] }, 'Cuenta descartada. Si vuelve a entrar con ella, seguirá sin acceso.');
+      else if (a === 'unhide') await window.SMB.saveBankExtra({ ocultos: ((lastBank || {}).ocultos || []).filter(x => x !== b.dataset.uid) }, 'Cuenta recuperada: vuelve a «Esperando acceso».');
       else if (a === 'rv') window.SMB.review(C.inbox.find(x => x.id === b.dataset.id).code);
       else if (a === 'done') await B.merge('inbox/' + b.dataset.id, { estado: 'hecho' });
       else if (a === 'restore') { const f = document.getElementById('cl-restorefile').files[0]; if (!f) return; const j = JSON.parse(await f.text()); if (!Array.isArray(j.tasks)) throw new Error('bad'); await importBank(Object.assign({}, j, { memberUids: (lastBank || {}).memberUids || [], dtUids: (lastBank || {}).dtUids || [] })); window.SMB.toast('Banco restaurado.'); }
@@ -424,12 +426,13 @@
       return `<section class="ses-sec"><h2 class="h-sec">Recibido · ${C.inbox.length}</h2><ul class="env-list">${C.inbox.map(x => `<li><span class="env-k">${K[x.kind] || x.kind}</span><span class="env-t"><b>${esc(x.title)}</b><small>De ${esc(x.autor || 'un entrenador')} · ${new Date(x.ts).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</small></span><span class="actions"><button class="btn small primary" type="button" data-cl="rv" data-id="${esc(x.id)}">Revisar</button><button class="btn small ghost" type="button" data-cl="done" data-id="${esc(x.id)}">Hecho</button></span></li>`).join('')}</ul></section>`;
     },
     inboxCount: () => C.inbox.length,
-    waitingCount: () => { const b = lastBank || {}, mem = new Set(b.memberUids || []), memE = new Set(b.memberEmails || []); return Object.entries(C.profiles).filter(([uid, p]) => !mem.has(uid) && !memE.has(norm(p.email)) && !(b.dtUids || []).includes(uid) && !DT_UIDS.includes(uid)).length; },
+    waitingCount: () => { const b = lastBank || {}, mem = new Set(b.memberUids || []), memE = new Set(b.memberEmails || []), oc = new Set(b.ocultos || []); return Object.entries(C.profiles).filter(([uid, p]) => !mem.has(uid) && !memE.has(norm(p.email)) && !(b.dtUids || []).includes(uid) && !DT_UIDS.includes(uid) && !oc.has(uid)).length; },
     accessHTML: () => {
       const b = lastBank || {}, mem = new Set(b.memberUids || []);
       const all = Object.entries(C.profiles);
       const memE = new Set(b.memberEmails || []), has = ([uid, p]) => mem.has(uid) || memE.has(norm(p.email));
-      const isDTu = u => DT_UIDS.includes(u) || (b.dtUids || []).includes(u), pend = all.filter(x => !has(x) && !isDTu(x[0])), ok = all.filter(x => has(x));
+      const isDTu = u => DT_UIDS.includes(u) || (b.dtUids || []).includes(u), oc = new Set(b.ocultos || []), pend = all.filter(x => !has(x) && !isDTu(x[0]) && !oc.has(x[0])), ok = all.filter(x => has(x)), desc = all.filter(x => !has(x) && oc.has(x[0]));
+      const twin = ([uid, p]) => { const n = norm(p.name || p.nameHint || ''); const o = n && ok.find(([u2, p2]) => u2 !== uid && norm(shownName(u2, p2)).split(' ')[0] === n.split(' ')[0]); return o ? `<small class="cl-twin">Se llama igual que ${esc(shownName(o[0], o[1]))} (${esc(o[1].email || '')}), que ya tiene acceso: seguramente es la misma persona con otro correo. Si es así, descártala y dile que entre siempre con ${esc(o[1].email || 'su otra cuenta')}.</small>` : ''; };
       const row = ([uid, p], btn) => `<li class="dt-row"><span class="dt-thumb cl-ini">${esc((shownName(uid, p) || p.email || '?').slice(0, 1).toUpperCase())}</span><span class="dt-txt"><b>${esc(shownName(uid, p) || 'Sin nombre')}${me && uid === me.uid ? ' (tú)' : ''}</b><small>${esc(p.email || '')}</small></span>${btn}</li>`;
       const emailsIn = new Set(Object.values(C.profiles).map(p => norm(p.email)));
       const pre = (b.memberEmails || []).filter(e => !emailsIn.has(e)).map(e => ({ e, c: (b.coaches || []).find(x => norm(x.email) === e) }));
@@ -438,7 +441,8 @@
         <p class="sub">Con el email con el que va a entrar (su Gmail, si entra con Google). Al entrar tendrá acceso directo y aparecerá en el cuerpo técnico con este nombre.</p>
         <div class="cl-pre"><input type="text" id="cl-pre-name" placeholder="Nombre, como firma sus ejercicios" aria-label="Nombre"><input type="email" id="cl-pre-email" placeholder="email@ejemplo.com" aria-label="Email"><button class="btn primary" type="button" data-cl="prereg">Dar de alta</button></div>
         ${pre.length ? `<h3 class="h-sub">Dados de alta, todavía sin entrar (${pre.length})</h3><ul class="dt-list">${pre.map(({ e, c }) => `<li class="dt-row"><span class="dt-thumb cl-ini">${esc(((c && c.name) || e).slice(0, 1).toUpperCase())}</span><span class="dt-txt"><b>${esc((c && c.name) || 'Sin nombre')}</b><small>${esc(e)}</small></span><button class="btn small ghost" type="button" data-cl="unprereg" data-email="${esc(e)}">Quitar</button></li>`).join('')}</ul>` : ''}
-        ${pend.length ? `<h3 class="h-sub">Esperando acceso (${pend.length})</h3><ul class="dt-list">${pend.map(x => row(x, `<button class="btn small primary" type="button" data-cl="grant" data-uid="${esc(x[0])}">Dar acceso</button>`)).join('')}</ul>` : '<p class="sub">Nadie esperando. Cuando un entrenador crea su cuenta, aparece aquí.</p>'}
+        ${pend.length ? `<h3 class="h-sub">Esperando acceso (${pend.length})</h3><ul class="dt-list">${pend.map(x => row(x, `<span class="actions cl-acts"><button class="btn small primary" type="button" data-cl="grant" data-uid="${esc(x[0])}">Dar acceso</button><button class="btn small ghost" type="button" data-cl="hide" data-uid="${esc(x[0])}">Descartar</button></span>`).replace('</span><span class="actions', twin(x) + '</span><span class="actions')).join('')}</ul>` : '<p class="sub">Nadie esperando. Cuando un entrenador crea su cuenta, aparece aquí.</p>'}
+        ${desc.length ? `<details><summary>Cuentas descartadas (${desc.length})</summary><ul class="dt-list">${desc.map(x => row(x, `<button class="btn small ghost" type="button" data-cl="unhide" data-uid="${esc(x[0])}">Recuperar</button>`)).join('')}</ul></details>` : ''}
         ${ok.length ? `<details><summary>Con acceso (${ok.length})</summary><ul class="dt-list">${ok.map(x => row(x, `<span class="actions cl-acts"><button class="btn small" type="button" data-cl="ren" data-uid="${esc(x[0])}" data-name="${esc(shownName(x[0], x[1]))}">Nombre</button><button class="btn small ghost" type="button" data-cl="revoke" data-uid="${esc(x[0])}">Quitar acceso</button></span>`)).join('')}</ul></details>` : ''}
       </section>`;
     },
