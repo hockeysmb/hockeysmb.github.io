@@ -46,3 +46,6 @@ Mapa del código de `fuente/plantilla.html` y `fuente/web/cloud.js`: qué hace c
   - El entrenador de un equipo es `bank.equipos[equipo]` si la DT lo ha fijado. Si no, el que más se repite en sus entrenos propios. Avisa de los entrenos propios que no coinciden con él.
   - Al cambiarlo se reescribe `ent` en los entrenos marcados. En los entrenos conjuntos se propone la unión de los entrenadores de cada equipo, y se puede editar.
 - **Cuentas repetidas (22 oct):** en Acceso, una cuenta que espera acceso con el mismo nombre que una que ya lo tiene muestra un aviso (`.cl-twin`). «Descartar» la guarda en `bank.ocultos` (no sale ni cuenta como pendiente) y «Recuperar» la devuelve.
+- **Quién prepara un entreno conjunto (22 oct):**
+  - En los entrenos con varios entrenadores, `g.prep` guarda el entrenador que prepara la sesión o `'*turno'` (se turnan cada semana, en el orden de `ent`, según `semIdx`). Se elige en el modal del horario («Quién prepara la sesión») o desde «¿quién la prepara?» en Equipos.
+  - `prepOf(it)` y `meToca(it, quien)`: al que no le toca no le cuenta como pendiente (agenda de Inicio, calendario, seguimiento). En su agenda sale «La prepara X», con un botón «Prepararla yo».

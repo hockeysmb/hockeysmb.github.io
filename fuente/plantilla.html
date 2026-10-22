@@ -1333,6 +1333,7 @@ h1 { color: var(--fg); font-weight: 800; }
 .eq-row { grid-template-columns: minmax(0, 1fr) auto auto !important; }
 .eq-ents { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
 .eq-raro { color: #9a6200; font-weight: 600; }
+.eq-prep { display: block; text-align: left; font-size: 13px; margin-top: 2px; }
 @media (max-width: 600px) { .eq-row { grid-template-columns: minmax(0, 1fr) auto !important; } .eq-ents { grid-column: 1 / -1; justify-content: flex-start; } }
 .eq-fr { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; max-height: 40vh; overflow-y: auto; }
 .eq-fr li { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
@@ -2603,8 +2604,8 @@ function dtSeguimientoHTML() {
   const semana = entrenos(mon, isoOf(sun)), prox = entrenos(t, isoOf(d7)), quin = entrenos(t, isoOf(d14));
   const of = (L, n) => L.filter(it => it.g.ent.some(e => deacc(e) === deacc(n)));
   const rows = names.sort((a, b) => a.localeCompare(b, 'es')).map(n => {
-    const c = (bank.coaches || []).find(x => isMe(n, x.name)), W = of(semana, n), P = of(prox, n), Q = of(quin, n);
-    const prep = W.filter(it => sesDe(it)).length, sin = P.filter(it => !sesDe(it)), pl = Q.filter(it => planFor(it, n)).length;
+    const c = (bank.coaches || []).find(x => isMe(n, x.name)), W = of(semana, n).filter(it => meToca(it, n)), P = of(prox, n), Q = of(quin, n);
+    const prep = W.filter(it => sesDe(it)).length, sin = P.filter(it => !sesDe(it) && meToca(it, n)), pl = Q.filter(it => planFor(it, n)).length;
     const ej = bank.tasks.filter(x => x.source !== 'oller' && x.author && isMe(n, x.author)).length, ejN = ejNuevos().filter(x => x.author && isMe(n, x.author)).length;
     const acc = !c ? 'Sin cuenta' : c.uid ? 'Dentro' + (c.visto ? ' · ' + haceTxt(c.visto) : '') : c.email ? 'Dado de alta, sin entrar' : 'En el vestuario';
     const cell = (lab, val, cls) => `<span class="sg-c${cls ? ' ' + cls : ''}"><small>${lab}</small><b>${val}</b></span>`;
@@ -3603,7 +3604,7 @@ function calendarHTML(shown, club) {
   const agAll = entrenos(`${y}-${String(m).padStart(2, '0')}-01`, `${y}-${String(m).padStart(2, '0')}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`)
     .filter(it => club ? (!clubAutor || it.g.ent.some(e => isMe(e, clubAutor))) : esMio(it));
   const agDay = {}; agAll.forEach(it => { (agDay[it.fecha] = agDay[it.fecha] || []).push(it); });
-  const todoOf = k => (agDay[k] || []).filter(it => k >= t && !sesDe(it));
+  const todoOf = k => (agDay[k] || []).filter(it => k >= t && !sesDe(it) && (club ? true : meToca(it)));
   const iso = d => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   const cells = [];
   for (let i = 0; i < start; i++) cells.push('<span class="cal-cell out" aria-hidden="true"></span>');
@@ -6887,6 +6888,16 @@ function sesDe(it) {
   return pool.find(s => s.fecha === it.fecha && it.g.eq.some(t => eqMatch(s.equipo, t))) || null;
 }
 const esMio = it => it.g.ent.some(e => isMe(e));
+// 22 oct: en los entrenos con varios entrenadores, la DT dice quién prepara la sesión (o que se turnan cada semana)
+const semIdx = iso => Math.floor((dateOf(iso).getTime() / 864e5 + 3) / 7);
+function prepOf(it) {
+  const g = it.g; if (!g.prep || g.ent.length < 2) return '';
+  if (g.prep === '*turno') return g.ent[((semIdx(it.fecha) % g.ent.length) + g.ent.length) % g.ent.length];
+  return g.ent.find(e => deacc(e) === deacc(g.prep)) || '';
+}
+// ¿le toca preparar este entreno a «quien»? (sin «quien»: a mí)
+const meToca = (it, quien) => { const p = prepOf(it); return !p || (quien ? isMe(p, quien) || deacc(p) === deacc(quien) : isMe(p)); };
+const prepTxt = g => !g.prep || g.ent.length < 2 ? '' : g.prep === '*turno' ? 'se turnan cada semana' : 'la prepara ' + g.prep;
 const entTxt = g => g.ent.length ? g.ent.join(' y ') : 'Sin entrenador asignado';
 function agRowHTML(it, showWho) {
   const s = sesDe(it), mine = esMio(it), t = isoToday(), past = it.fecha < t;
@@ -6894,7 +6905,8 @@ function agRowHTML(it, showWho) {
   let st, act = '';
   if (s && !s._club) { st = `<span class="ag-st ok">Preparada${isDone(s) ? ' · hecha' : ''}</span>`; act = `<button class="btn small" type="button" data-ag="open" data-sid="${esc(s.id)}">Abrir</button>`; }
   else if (s) { st = `<span class="ag-st ok">Preparada por ${esc((s._club.autor || '').split(' ')[0])}</span>`; act = `<button class="btn small" type="button" data-ag="see" data-cid="${esc(s._club.id)}">Ver</button>`; }
-  else { st = `<span class="ag-st ${past ? '' : 'todo'}">${past ? 'Sin sesión' : 'Sin preparar'}</span>`; if (mine && !past) act = `<button class="btn small primary" type="button" data-ag="prep" data-key="${esc(it.key)}">Prepararla</button>`; }
+  else if (prepOf(it) && mine && !meToca(it)) { st = `<span class="ag-st">La prepara ${esc(prepOf(it))}</span>`; if (!past) act = `<button class="btn small ghost" type="button" data-ag="prep" data-key="${esc(it.key)}">Prepararla yo</button>`; }
+  else { st = `<span class="ag-st ${past ? '' : 'todo'}">${past ? 'Sin sesión' : 'Sin preparar'}${prepOf(it) && !mine ? ' · la prepara ' + esc(prepOf(it)) : ''}</span>`; if (mine && !past) act = `<button class="btn small primary" type="button" data-ag="prep" data-key="${esc(it.key)}">Prepararla</button>`; }
   const pl = planDe(it);
   return `<li class="ag-row${mine ? ' mine' : ''}"><span class="ag-when">${esc(when)}</span><span class="ag-t"><b>${esc(gLabel(it.g))}</b><small>${showWho ? esc(entTxt(it.g)) + ' · ' : ''}${esc(it.g.ini)}–${esc(it.g.fin)}</small>${pl ? `<small class="ag-plan">Plan: ${esc(planTxt(pl.p))}</small>` : ''}</span>${st}${act}</li>`;
 }
@@ -6902,7 +6914,7 @@ function myWeekHTML() {
   if (!readAuthor()) return '';
   const t = isoToday(), d = dateOf(t); d.setDate(d.getDate() + 6);
   const L = entrenos(t, isoOf(d)).filter(esMio); if (!L.length) return '';
-  const todo = L.filter(it => !sesDe(it)).length;
+  const todo = L.filter(it => !sesDe(it) && meToca(it)).length;
   return `<section class="ses-sec agenda"><div class="lt-head"><h2 class="h-sec">Tus entrenos de esta semana ${infoBtn('agenda')}</h2><span class="sub">${todo ? `${todo} sin preparar` : 'Todo preparado'}</span></div>
     <ul class="ag-list">${L.slice(0, 3).map(it => agRowHTML(it, false)).join('')}</ul>
     ${L.length > 3 ? `<details class="dt-more ag-more"><summary>Ver ${L.length - 3} más</summary><ul class="ag-list">${L.slice(3).map(it => agRowHTML(it, false)).join('')}</ul></details>` : ''}</section>`;
@@ -6910,7 +6922,7 @@ function myWeekHTML() {
 function dtSinPrepararHTML() {
   const t = isoToday(), d = dateOf(t); d.setDate(d.getDate() + 6);
   const L = entrenos(t, isoOf(d)).filter(it => !sesDe(it)); if (!L.length) return '';
-  const by = {}; L.forEach(it => { const k = entTxt(it.g); (by[k] = by[k] || []).push(it); });
+  const by = {}; L.forEach(it => { const k = prepOf(it) || entTxt(it.g); (by[k] = by[k] || []).push(it); });
   return `<section class="ses-sec"><div class="lt-head"><h2 class="h-sec">Sin preparar en los próximos 7 días · ${L.length}</h2></div>
     <p class="sub">Entrenos del horario sin sesión preparada. Se tachan solos en cuanto el entrenador guarda la sesión de ese equipo para ese día.</p>
     ${Object.keys(by).sort((a, b) => a.localeCompare(b, 'es')).map(k => `<h3 class="h-sub">${esc(k)} · ${by[k].length}</h3><ul class="ag-list">${by[k].map(it => agRowHTML(it, false)).join('')}</ul>`).join('')}</section>`;
@@ -6982,7 +6994,7 @@ function dtEquiposHTML() {
     <p class="sub">Quién lleva cada equipo. Al cambiarlo se cambia en el horario, en la agenda de cada entrenador y en el seguimiento.</p>
     <ul class="eq-by">${[...by.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, T]) => `<li><b>${esc(c)}</b><span>${T.map(esc).join(' · ')}</span></li>`).join('')}</ul>
     <details class="dt-more"${L.some(x => x.raros.length) ? ' open' : ''}><summary>Por equipo · ${L.length}${L.some(x => x.raros.length) ? ` · ${L.filter(x => x.raros.length).length} con algún día distinto` : ''}</summary>
-    <ul class="dt-list">${L.map(x => `<li class="dt-row eq-row"><span class="dt-txt"><b>${esc(x.t)}</b><small>${x.franjas.map(fr).join(' · ')}</small>${x.raros.length ? `<small class="eq-raro">No coincide: ${x.raros.map(g => `${esc(fr(g))} lo lleva ${esc(g.ent.join(' y ') || 'nadie')}`).join('; ')}</small>` : ''}</span><span class="eq-ents">${x.coaches.length ? x.coaches.map(c => `<span class="chip sm">${esc(c)}</span>`).join('') : '<span class="sub">Sin entrenador</span>'}</span><button class="btn small" type="button" data-eq="edit" data-team="${esc(x.t)}">Cambiar</button></li>`).join('')}</ul></details></section>`;
+    <ul class="dt-list">${L.map(x => `<li class="dt-row eq-row"><span class="dt-txt"><b>${esc(x.t)}</b><small>${x.franjas.map(fr).join(' · ')}</small>${x.franjas.filter(g => g.ent.length > 1).map(g => `<button class="linkb eq-prep" type="button" data-hz="edit" data-id="${esc(g.id)}">${esc(fr(g))} · ${esc(gLabel(g))}: ${prepTxt(g) ? esc(prepTxt(g)) : '<b>¿quién la prepara?</b>'}</button>`).join('')}${x.raros.length ? `<small class="eq-raro">No coincide: ${x.raros.map(g => `${esc(fr(g))} lo lleva ${esc(g.ent.join(' y ') || 'nadie')}`).join('; ')}</small>` : ''}</span><span class="eq-ents">${x.coaches.length ? x.coaches.map(c => `<span class="chip sm">${esc(c)}</span>`).join('') : '<span class="sub">Sin entrenador</span>'}</span><button class="btn small" type="button" data-eq="edit" data-team="${esc(x.t)}">Cambiar</button></li>`).join('')}</ul></details></section>`;
 }
 function eqModal(team) {
   const H = horario(), L = equiposMap(H), x = L.find(y => y.t === team); if (!x) return;
@@ -7019,16 +7031,20 @@ function hzModal(g) {
     <label class="ses-f">Día<select id="m-dia">${[1, 2, 3, 4, 5, 6].map(dd => `<option value="${dd}"${dd === v.dia ? ' selected' : ''}>${DIAS[dd]}</option>`).join('')}</select></label>
     <label class="ses-f">Empieza<input type="time" id="m-ini" value="${esc(v.ini)}"></label><label class="ses-f">Acaba<input type="time" id="m-fin" value="${esc(v.fin)}"></label>
     <label class="ses-f hz-wide">Equipos (si entrenan juntos, sepáralos con «+»)<input type="text" id="m-eq" value="${esc(v.eq.join(' + '))}" placeholder="Benjamín A + Alevín A"></label>
-    <label class="ses-f hz-wide">Entrenadores (si son varios, sepáralos con «,»)<input type="text" id="m-ent" value="${esc(v.ent.join(', '))}" placeholder="Jorge"></label></div>
+    <label class="ses-f hz-wide">Entrenadores (si son varios, sepáralos con «,»)<input type="text" id="m-ent" value="${esc(v.ent.join(', '))}" placeholder="Jorge"></label>
+    <label class="ses-f hz-wide" id="m-prep-l"${v.ent.length > 1 ? '' : ' hidden'}>Quién prepara la sesión<select id="m-prep"><option value="">Cualquiera (cuenta como pendiente para todos)</option>${v.ent.map(e => `<option value="${esc(e)}"${v.prep === e ? ' selected' : ''}>${esc(e)}</option>`).join('')}<option value="*turno"${v.prep === '*turno' ? ' selected' : ''}>Se turnan cada semana</option></select><span class="sub">Al que no le toca no le sale como pendiente.</span></label></div>
     <div class="row">${g ? '<button class="btn ghost" id="m-del" type="button">Quitar del horario</button>' : ''}<button class="btn" id="m-no" type="button">Cancelar</button><button class="btn primary" id="m-ok" type="button">${g ? 'Guardar' : 'Añadir'}</button></div>`);
   const q = id => modalCard.querySelector(id).value;
+  modalCard.querySelector('#m-ent').oninput = () => { const ent = q('#m-ent').split(/,| y /).map(x => x.trim()).filter(Boolean), l = modalCard.querySelector('#m-prep-l'), sel = modalCard.querySelector('#m-prep'), cur = sel.value;
+    l.hidden = ent.length < 2; sel.innerHTML = `<option value="">Cualquiera (cuenta como pendiente para todos)</option>${ent.map(e => `<option value="${esc(e)}"${cur === e ? ' selected' : ''}>${esc(e)}</option>`).join('')}<option value="*turno"${cur === '*turno' ? ' selected' : ''}>Se turnan cada semana</option>`; };
   modalCard.querySelector('#m-no').onclick = closeModal;
   if (g) modalCard.querySelector('#m-del').onclick = () => { closeModal(); const H = clone(horario()); H.g = H.g.filter(x => x.id !== g.id); saveHorario(H, 'Entreno quitado del horario.'); };
   modalCard.querySelector('#m-ok').onclick = () => {
     const eq = q('#m-eq').split('+').map(x => x.trim()).filter(Boolean), ent = q('#m-ent').split(/,| y /).map(x => x.trim()).filter(Boolean), dia = +q('#m-dia'), ini = q('#m-ini'), fin = q('#m-fin');
     if (!eq.length || !ini || !fin) { toast('Pon al menos el equipo y las horas.'); return; }
+    const pr = (modalCard.querySelector('#m-prep') || {}).value || '', prep = ent.length > 1 && (pr === '*turno' || ent.includes(pr)) ? pr : '';
     const H = clone(horario()); closeModal();
-    if (g) { const x = H.g.find(y => y.id === g.id); if (!x) return; Object.assign(x, { dia, ini, fin, eq, ent }); saveHorario(H, `Guardado: ${DIAS[dia]} ${ini} · ${gLabel(x)}.`); }
+    if (g) { const x = H.g.find(y => y.id === g.id); if (!x) return; Object.assign(x, { dia, ini, fin, eq, ent }); if (prep) x.prep = prep; else delete x.prep; saveHorario(H, `Guardado: ${DIAS[dia]} ${ini} · ${gLabel(x)}.`); }
     else { const n = HG(dia, ini, fin, eq, ent); if (H.g.some(x => x.id === n.id)) n.id += '-' + uid().slice(0, 3); H.g.push(n); saveHorario(H, `Añadido: ${DIAS[dia]} ${ini} · ${gLabel(n)}.`); }
   };
 }
