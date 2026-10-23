@@ -1,6 +1,6 @@
 /* Seguimiento SMB · Femenino
    App de las jugadoras de los equipos femeninos: cómo llegan (bienestar), cómo entrenan (carga) y cómo se ven
-   (autoevaluación y metas). Solo la Dirección Técnica ve los datos de todas; cada jugadora ve y borra los suyos.
+   (diario de la semana) y un personaje que sube de nivel por responder. Solo la Dirección Técnica ve los datos de todas; cada jugadora ve y borra los suyos.
    Datos en un proyecto de Firebase propio (no el del banco). Reglas en firestore.rules. */
 (() => {
   'use strict';
@@ -281,7 +281,7 @@
     const p = U.perfil || {};
     gate(`<h2>Antes de empezar</h2>
       <div class="info"><p>Esta app sirve para que la Dirección Técnica cuide cómo llegas a los entrenos y cómo los vives, y para que tú veas tu evolución.</p>
-      <ul><li><b>Qué se guarda:</b> tu nombre, tu equipo y lo que respondes (cómo llegas, esfuerzo del entreno, autoevaluación y metas).</li>
+      <ul><li><b>Qué se guarda:</b> tu nombre, tu equipo y lo que respondes (cómo llegas, esfuerzo del entreno y tu diario de la semana) y cómo es tu personaje.</li>
       <li><b>Quién lo ve:</b> solo Carlos Manzano, Director Técnico. Tú ves lo tuyo.</li>
       <li><b>Hasta cuándo:</b> hasta el 30 de junio de 2027. Puedes borrarlo todo antes desde «Mis datos».</li>
       <li><b>Es voluntario:</b> quien no la usa entrena y juega igual.</li></ul>

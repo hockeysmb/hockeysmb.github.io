@@ -21,7 +21,7 @@ App web del cuerpo técnico de hockey sobre patines del Colegio Santa María la 
 
 ## App de jugadoras (`femenino/`)
 
-- Otra app, para las jugadoras de Sub17 y Senior Fem: bienestar antes del entreno, esfuerzo después (carga = esfuerzo × minutos), autoevaluación semanal (decide / ejecuta) y metas. Se publica en https://hockeysmb.github.io/femenino/.
+- Otra app, para las jugadoras de Sub17 y Senior Fem: bienestar antes del entreno, esfuerzo después (carga = esfuerzo × minutos), diario semanal (qué tal ha ido, lo mejor, lo que cambiaría y un compromiso) y un personaje que sube de nivel por responder (los puntos nunca dependen de lo que contestan). Se publica en https://hockeysmb.github.io/femenino/.
 - **No tiene paso de construcción:** `femenino/index.html` + `femenino/app.js` son lo publicado. Usa su propio proyecto de Firebase (`femenino/firebase-config.js`, `femenino/firestore.rules`), no el del banco.
 - **Solo la DT (`SMBF_ADMIN`) ve los datos de todas;** cada jugadora ve y borra los suyos. Las cuentas se activan a mano cuando hay consentimiento firmado (en menores, por la familia). Los datos se borran el 30 de junio de 2027.
 - **Son datos de salud y hay menores:** no añadas campos nuevos de salud (ciclo menstrual, lesiones, medicación…) sin que la DT lo pida y sin actualizar la hoja de información y el consentimiento.
