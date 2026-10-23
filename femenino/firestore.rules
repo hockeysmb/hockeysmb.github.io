@@ -1,11 +1,11 @@
 rules_version = '2';
 // App de seguimiento de jugadoras · reglas de acceso
-// ADMIN_UID: el código de usuario de la Dirección Técnica (sale en la app al entrar por primera vez).
+// Lista de administración: el código de usuario de la Dirección Técnica (sale en la app al entrar por primera vez).
 // Solo la DT ve los datos de todas; cada jugadora ve y borra los suyos.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && request.auth.uid in ['ADMIN_UID']; }
+    function isAdmin() { return signedIn() && request.auth.uid in ['qWzNUUHZWuYVqne7xqAidYRrCtN2']; }
     function acc() { return get(/databases/$(database)/documents/acceso/$(request.auth.uid)).data; }
     function activa() { return signedIn() && exists(/databases/$(database)/documents/acceso/$(request.auth.uid)) && acc().activa == true; }
 

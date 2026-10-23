@@ -8,4 +8,4 @@ window.SMBF_FIREBASE = {
   appId: '1:818611565939:web:b62f5983b21d96aa3a0106',
 };
 // Código de usuario de quien ve los datos (la Dirección Técnica). Sale en la app al entrar por primera vez.
-window.SMBF_ADMIN = [];
+window.SMBF_ADMIN = ['qWzNUUHZWuYVqne7xqAidYRrCtN2'];
