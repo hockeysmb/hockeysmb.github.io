@@ -54,5 +54,5 @@ Mapa del código de `fuente/plantilla.html` y `fuente/web/cloud.js`: qué hace c
 
 - Proyecto `smb-femenino` (Spark), Firestore en europe-southwest1, entrada con Google y con correo. `hockeysmb.github.io` está en los dominios autorizados.
 - Administración: el código de usuario de la DT está en `femenino/firebase-config.js` (`SMBF_ADMIN`) y en `femenino/firestore.rules` (`isAdmin`). Para añadir otra persona, hay que ponerla en los dos sitios y volver a publicar las reglas.
-- Las reglas se publican a mano en la consola (Firestore → Reglas). El editor es CodeMirror 6: se puede pegar el archivo entero sin que meta llaves de más.
+- Las reglas se publican a mano en la consola (Firestore → Reglas).
 - Cada cambio en `femenino/` sube la versión en `index.html` (`?v=`) y en `sw.js` (`VERSION`) para que los móviles se actualicen.
