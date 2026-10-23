@@ -49,3 +49,10 @@ Mapa del código de `fuente/plantilla.html` y `fuente/web/cloud.js`: qué hace c
 - **Quién prepara un entreno conjunto (22 oct):**
   - En los entrenos con varios entrenadores, `g.prep` guarda el entrenador que prepara la sesión o `'*turno'` (se turnan cada semana, en el orden de `ent`, según `semIdx`). Se elige en el modal del horario («Quién prepara la sesión») o desde «¿quién la prepara?» en Equipos.
   - `prepOf(it)` y `meToca(it, quien)`: al que no le toca no le cuenta como pendiente (agenda de Inicio, calendario, seguimiento). En su agenda sale «La prepara X», con un botón «Prepararla yo».
+
+## App de jugadoras · Firebase (23 oct)
+
+- Proyecto `smb-femenino` (Spark), Firestore en europe-southwest1, entrada con Google y con correo. `hockeysmb.github.io` está en los dominios autorizados.
+- Administración: el código de usuario de la DT está en `femenino/firebase-config.js` (`SMBF_ADMIN`) y en `femenino/firestore.rules` (`isAdmin`). Para añadir otra persona, hay que ponerla en los dos sitios y volver a publicar las reglas.
+- Las reglas se publican a mano en la consola (Firestore → Reglas). El editor es CodeMirror 6: se puede pegar el archivo entero sin que meta llaves de más.
+- Cada cambio en `femenino/` sube la versión en `index.html` (`?v=`) y en `sw.js` (`VERSION`) para que los móviles se actualicen.
