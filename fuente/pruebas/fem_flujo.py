@@ -57,10 +57,12 @@ async def main():
       await pg.screenshot(path=O + '2a_hoy.png', full_page=True)
       await pg.click('[data-a="startantes"]'); await pg.wait_for_timeout(200)
       await pg.screenshot(path=O + '2_antes.png')
-      for k, v in (('sueno', 2), ('fatiga', 2), ('dolor', 2), ('estres', 3), ('animo', 3)):
+      for k, v in (('sueno', 4), ('fatiga', 4), ('dolor', 3), ('estres', 5), ('animo', 6)):
         await pg.click(f'[data-fw="{k}"][data-v="{v}"]'); await pg.wait_for_timeout(450)
+      await pg.fill('#f-nota', 'Esta semana tengo exámenes y voy agobiada'); await pg.screenshot(path=O + '2b_nota.png')
+      await pg.click('[data-a="saveantes"]'); await pg.wait_for_timeout(500)
       print('tras antes:', await pg.text_content('.toast'))
-      await pg.click('[data-lvl="3"]'); await pg.click('[data-minc="otro"]'); await pg.click('[data-min="-5"]'); await pg.fill('#s-nota', 'Me molestaba el gemelo')
+      await pg.click('[data-rpe="7"]'); await pg.click('[data-minc="otro"]'); await pg.click('[data-min="-5"]'); await pg.fill('#s-nota', 'Me molestaba el gemelo')
       await pg.screenshot(path=O + '3_despues.png', full_page=True)
       await pg.click('[data-a="saveses"]'); await pg.wait_for_timeout(500)
       await pg.click('[data-a="gosemana"]'); await pg.wait_for_timeout(200)
@@ -73,7 +75,7 @@ async def main():
       await pg.click('[data-v="hoy"]'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=O + '4_hoy_hecho.png', full_page=True)
       d = await pg.evaluate(f"window.__fake.db()['registros/{uid}/dias/2026-10-26']"); s = await pg.evaluate(f"window.__fake.db()['registros/{uid}/semanas/2026-10-26']")
-      print('guardado hoy:', d['antes']['sueno'], d['ses'][0]['rpe'], d['ses'][0]['min'], '| semana:', s and (s['tiempo'], s['compromiso'], s['area'], s['cumplida']))
+      print('guardado hoy:', d['antes']['sueno'], d['antes'].get('esc'), d['antes'].get('nota'), d['ses'][0]['rpe'], d['ses'][0]['min'], '| semana:', s and (s['tiempo'], s['compromiso'], s['area'], s['cumplida']))
       if not s or s['compromiso'] != 'Mirar antes de recibir' or s['cumplida'] != 'medias': errs.append('no se guarda el diario')
       await pg.click('[data-v="yo"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '5_jugadora.png', full_page=True)
       print('nivel:', ' '.join((await pg.text_content('.me-info')).split())[:90])

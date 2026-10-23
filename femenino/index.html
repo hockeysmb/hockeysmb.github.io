@@ -181,6 +181,14 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--fill); }
 .al-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .al-row { width: 100%; display: grid; gap: 2px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 12px; padding: 10px 12px; cursor: pointer; font-size: 13.5px; }
 .al-row b { font-size: 15px; } .al-row span { color: var(--muted); }
+/* escaleras del 1 al 10 */
+.ladder { display: grid; gap: 3px; }
+.step { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px 0 6px; border-radius: 10px; border: 1.5px solid transparent; background: transparent; color: var(--fg); font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; }
+.step .n { width: 36px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+.step[aria-pressed="true"] { background: var(--surface); border-color: var(--accent); font-weight: 700; }
+.nota-in { width: 100%; min-height: 140px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 12px 14px; font: 500 24px/30px "Caveat", "Segoe Print", cursive; color: var(--fg); resize: vertical; }
+.nota-p { margin: 0; font: 500 21px/26px "Caveat", "Segoe Print", cursive; color: var(--fg); }
+td.nota-td { white-space: normal; min-width: 200px; }
 /* diario de la semana */
 .row.between { justify-content: space-between; } .row.tight { gap: 5px; flex-wrap: nowrap; } .grow { flex: 1; }
 .diary-hero { background: var(--accent); color: var(--accent-ink); border-radius: 18px; padding: 14px 16px 16px; display: grid; gap: 10px; }
@@ -223,9 +231,9 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--fill); }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261023g"></script>
-<script src="firebase-config.js?v=20261023g"></script>
-<script src="app.js?v=20261023g"></script>
+<script src="lib/avatar.js?v=20261023h"></script>
+<script src="firebase-config.js?v=20261023h"></script>
+<script src="app.js?v=20261023h"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

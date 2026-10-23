@@ -74,8 +74,14 @@
   ];
   // escala CR-10 de esfuerzo percibido (Foster), agrupada en cinco niveles que se afinan con un segundo toque
   const RPE = ['Reposo', 'Muy suave', 'Suave', 'Normal', 'Algo duro', 'Duro', 'Duro', 'Muy duro', 'Muy duro', 'Al límite', 'Al límite'];
-  const NIV_RPE = [{ n: 'Paseo', r: [1, 2] }, { n: 'Cómodo', r: [3, 4] }, { n: 'Exigente', r: [5, 6] }, { n: 'Muy duro', r: [7, 8] }, { n: 'Al límite', r: [9, 10] }];
-  const nivRpe = v => NIV_RPE.findIndex(x => x.r.includes(v));
+  // todas las escaleras van del 1 al 10 (decidido el 23 oct). Bienestar: 10 = lo mejor. Esfuerzo: 10 = al límite.
+  const RAMP = ['#f6eef0', '#efdfe2', '#e6cdd2', '#dbb8bf', '#cea1aa', '#bf8692', '#ad6a78', '#974e5d', '#823645', '#681825'];
+  const ANCLA = { 10: 4, 8: 3, 5: 2, 3: 1, 1: 0 };          // escalón → palabra de WELL[].o
+  // lo guardado antes del 23 oct iba de 1 a 5 (sin «esc»): se pasa a 1–10 para compararlo
+  const diez = (v, a) => v >= 1 ? (a && a.esc === 10 ? v : (v - 1) * 2.25 + 1) : null;
+  function escalera(attrs, val, label) {
+    return `<div class="ladder">${[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(v => `<button type="button" class="step" ${attrs(v)} aria-pressed="${val === v}"><span class="n" style="background:${RAMP[v - 1]};color:${v > 5 ? '#fff' : '#221c1d'}">${v}</span><span class="w">${esc(label(v) || '')}</span></button>`).join('')}</div>`;
+  }
   const TIPOS = [{ k: 'entreno', n: 'Entreno', min: 90 }, { k: 'partido', n: 'Partido', min: 50 }, { k: 'otro', n: 'Otro', min: 60 }];
   const MINS = [50, 60, 75, 90, 120];
   // caras de 1 (peor) a 5 (mejor)
@@ -164,7 +170,7 @@
   const META_OK = [['si', 'Sí'], ['medias', 'A medias'], ['no', 'No']];
 
   // ================= cálculos =================
-  const wellScore = a => { if (!a) return null; const v = WELL.map(w => a[w.k]).filter(x => x >= 1); return v.length === WELL.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  const wellScore = a => { if (!a) return null; const v = WELL.map(w => diez(a[w.k], a)).filter(x => x != null); return v.length === WELL.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
   const dayLoad = d => ((d && d.ses) || []).reduce((s, x) => s + (+x.rpe || 0) * (+x.min || 0), 0);
   const lastAnswer = dias => Object.keys(dias).filter(k => dias[k] && (dias[k].antes || (dias[k].ses || []).length)).sort().pop() || '';
   function baseline(dias, ref) {
@@ -183,9 +189,10 @@
   function estado(dias, ref) {
     const R = [], add = (lvl, txt) => R.push({ lvl, txt });
     const a = (dias[ref] || {}).antes, s = wellScore(a), base = baseline(dias, ref), L = loads(dias, ref), last = lastAnswer(dias);
-    if (s != null && s <= 2.5) add('bad', `Llega mal hoy (${fmt1(s)} de 5).`);
-    else if (s != null && base != null && s <= base - 0.8) add('warn', `Hoy está por debajo de lo normal en ella (${fmt1(s)}; suele estar en ${fmt1(base)}).`);
-    if (a && a.dolor <= 2) add('warn', 'Molestias musculares altas.');
+    if (s != null && s <= 4.5) add('bad', `Llega mal hoy (${fmt1(s)} de 10).`);
+    else if (s != null && base != null && s <= base - 1.8) add('warn', `Hoy está por debajo de lo normal en ella (${fmt1(s)}; suele estar en ${fmt1(base)}).`);
+    if (a && diez(a.dolor, a) <= 3) add('warn', 'Molestias musculares altas.');
+    if (a && a.nota) add('info', `Ha escrito: «${a.nota}»`);
     if (L.ratio != null && L.ratio > 1.5) add('bad', `La carga de esta semana se dispara: ${fmt1(L.ratio)} veces su media del mes.`);
     else if (L.ratio != null && L.ratio > 1.3) add('warn', `Carga alta esta semana: ${fmt1(L.ratio)} veces su media del mes.`);
     else if (L.ratio != null && L.ratio < 0.8) add('warn', `Carga baja esta semana: ${fmt1(L.ratio)} veces su media del mes.`);
@@ -207,17 +214,17 @@
   function tip(x, y, txt, W) { const w = Math.max(40, txt.length * 6.4 + 14), tx = Math.min(Math.max(x - w / 2, 0), W - w); return `<g class="tipg"><rect x="${tx}" y="${y - 30}" width="${w}" height="22" rx="6"/><text x="${tx + w / 2}" y="${y - 15}" text-anchor="middle">${esc(txt)}</text></g>`; }
   function wellChart(dias, ref, n = 28) {
     const W = 360, H = 170, L = 22, Rr = 6, T = 30, Bt = 22, iw = W - L - Rr, ih = H - T - Bt;
-    const X = i => L + (n === 1 ? iw / 2 : i * iw / (n - 1)), Y = v => T + (5 - v) / 4 * ih;
+    const X = i => L + (n === 1 ? iw / 2 : i * iw / (n - 1)), Y = v => T + (10 - v) / 9 * ih;
     const pts = []; for (let i = 0; i < n; i++) { const day = addDays(ref, i - n + 1), s = wellScore((dias[day] || {}).antes); pts.push({ i, day, s }); }
     // los días sin respuesta no cortan la línea: se responde los días de entreno
     let path = ''; pts.filter(p => p.s != null).forEach((p, k) => { path += `${k ? 'L' : 'M'}${X(p.i).toFixed(1)},${Y(p.s).toFixed(1)}`; });
     const base = baseline(dias, ref);
-    const grid = [1, 3, 5].map(v => `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`).join('');
+    const grid = [1, 4, 7, 10].map(v => `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`).join('');
     const xl = [0, Math.floor((n - 1) / 2), n - 1].map(i => `<text x="${X(i)}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${fmtShort(addDays(ref, i - n + 1))}</text>`).join('');
-    const band = base != null ? `<rect class="band" x="${L}" y="${Y(Math.min(5, base + 0.4))}" width="${iw}" height="${Y(Math.max(1, base - 0.4)) - Y(Math.min(5, base + 0.4))}"/>` : '';
+    const band = base != null ? `<rect class="band" x="${L}" y="${Y(Math.min(10, base + 0.9))}" width="${iw}" height="${Y(Math.max(1, base - 0.9)) - Y(Math.min(10, base + 0.9))}"/>` : '';
     const marks = pts.filter(p => p.s != null).map(p => `<g class="m"><circle class="hit" cx="${X(p.i)}" cy="${Y(p.s)}" r="11"/><circle class="dot" cx="${X(p.i)}" cy="${Y(p.s)}" r="4"/>${tip(X(p.i), Y(p.s), `${fmtShort(p.day)}: ${fmt1(p.s)}`, W)}</g>`).join('');
     const has = pts.some(p => p.s != null);
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cómo llega a los entrenos, últimos ${n} días, de 1 a 5">${grid}${band}${has ? `<path class="ln" d="${path}"/>` : `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">Sin respuestas en estos días</text>`}${marks}${xl}</svg>`;
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cómo llega a los entrenos, últimos ${n} días, de 1 a 10">${grid}${band}${has ? `<path class="ln" d="${path}"/>` : `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">Sin respuestas en estos días</text>`}${marks}${xl}</svg>`;
   }
   function loadChart(dias, ref, weeks = 8) {
     const W = 360, H = 170, L = 34, Rr = 6, T = 30, Bt = 22, iw = W - L - Rr, ih = H - T - Bt;
@@ -329,30 +336,33 @@
   function antesHTML() {
     const a = diaHoy().antes;
     if (a && !draft.editAntes) return `<section class="card done"><div class="card-h"><h2>Antes del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>
-      <div class="faces">${WELL.map(w => `<span class="mf">${face(a[w.k])}<b>${esc(w.s)}</b><small>${esc(w.o[a[w.k] - 1] || '')}</small></span>`).join('')}</div><button class="btn small" type="button" data-a="editantes">Cambiar</button></section>`;
+      <div class="faces">${WELL.map(w => { const v = Math.round(diez(a[w.k], a)); return `<span class="mf">${face(Math.ceil(v / 2))}<b>${esc(w.s)}</b><small>${v} de 10</small></span>`; }).join('')}</div>${a.nota ? `<p class="nota-p">«${esc(a.nota)}»</p>` : ''}<button class="btn small" type="button" data-a="editantes">Cambiar</button></section>`;
     const n = WELL.filter(w => draft.antes[w.k] >= 1).length;
     return `<section class="card" id="c-antes"><div class="card-h"><h2>Antes del entreno</h2><span class="sub">¿Cómo llegas hoy?</span></div>
       <button class="btn primary big" type="button" data-a="startantes">${n ? `Seguir · ${n} de 5` : 'Empezar · 15 segundos'}</button></section>`;
   }
   // antes del entreno: una pregunta por pantalla; al tocar pasa sola a la siguiente y guarda al acabar
   function antesFlowView() {
-    const i = Math.min(draft.paso || 0, WELL.length - 1), w = WELL[i], d = draft.antes;
+    const N = WELL.length, i = Math.min(draft.paso || 0, N), d = draft.antes, nota = i === N, w = WELL[i];
     root.innerHTML = `<div class="flow"><header class="flow-top"><button class="btn ghost small" type="button" data-a="flowback"${i ? '' : ' style="visibility:hidden"'}>Atrás</button>
-        <div class="dots" role="img" aria-label="Pregunta ${i + 1} de ${WELL.length}">${WELL.map((_, k) => `<span${k <= i ? ' class="on"' : ''}></span>`).join('')}</div>
+        <div class="dots" role="img" aria-label="Paso ${i + 1} de ${N + 1}">${Array.from({ length: N + 1 }, (_, k) => `<span${k <= i ? ' class="on"' : ''}></span>`).join('')}</div>
         <button class="btn ghost small" type="button" data-a="flowclose">Cerrar</button></header>
-      <main class="wrap flow-in"><div><span class="kicker">Antes del entreno · ${i + 1} de ${WELL.length}</span><h1 class="flow-q">${esc(w.q)}</h1></div>
-        <div class="opts" role="group" aria-label="${esc(w.q)}">${[5, 4, 3, 2, 1].map(v => `<button type="button" class="opt" data-fw="${w.k}" data-v="${v}" aria-pressed="${d[w.k] === v}">${face(v)}<span>${esc(w.o[v - 1])}</span></button>`).join('')}</div>
-        <p class="sub center">Al tocar una, pasa sola a la siguiente.</p></main></div>`;
+      <main class="wrap flow-in">${nota ? `<div><span class="kicker">Antes del entreno · para acabar</span><h1 class="flow-q">¿Algo que quieras contar?</h1></div>
+        <p class="sub">Lo que quieras, con tus palabras: cómo estás, algo que te preocupa o algo que te ha pasado. Es opcional y solo lo lee Carlos.</p>
+        <textarea class="nota-in" id="f-nota" maxlength="500" rows="5" placeholder="Escribe aquí…" aria-label="Algo que quieras contar">${esc(d.nota || '')}</textarea>
+        <button class="btn primary big" type="button" data-a="saveantes">Guardar</button><p class="sub center">Si no quieres escribir nada, pulsa Guardar igualmente.</p>`
+      : `<div><span class="kicker">Antes del entreno · ${i + 1} de ${N}</span><h1 class="flow-q">${esc(w.q)}</h1></div>
+        ${escalera(v => `data-fw="${w.k}" data-v="${v}"`, d[w.k], v => ANCLA[v] != null ? w.o[ANCLA[v]] : '')}
+        <p class="sub center">Del 1 al 10. Al tocar, pasa sola a la siguiente.</p>`}</main></div>`;
   }
   function despuesHTML() {
     const L = diaHoy().ses || [], d = draft.ses;
-    const done = L.length ? `<ul class="list">${L.map((s, i) => `<li class="li"><span><b>${esc((TIPOS.find(t => t.k === s.tipo) || TIPOS[0]).n)} · ${esc((NIV_RPE[nivRpe(s.rpe)] || { n: RPE[s.rpe] }).n)} (${s.rpe})</b><small>${s.min} min${s.nota ? ' · ' + esc(s.nota) : ''}</small></span><button class="btn ghost small" type="button" data-a="delses" data-i="${i}">Quitar</button></li>`).join('')}</ul>` : '';
+    const done = L.length ? `<ul class="list">${L.map((s, i) => `<li class="li"><span><b>${esc((TIPOS.find(t => t.k === s.tipo) || TIPOS[0]).n)} · esfuerzo ${s.rpe} de 10 (${esc(RPE[s.rpe] || '')})</b><small>${s.min} min${s.nota ? ' · ' + esc(s.nota) : ''}</small></span><button class="btn ghost small" type="button" data-a="delses" data-i="${i}">Quitar</button></li>`).join('')}</ul>` : '';
     if (L.length && !draft.moreSes) return `<section class="card done"><div class="card-h"><h2>Después del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>${done}<button class="btn small" type="button" data-a="moreses">Añadir otra sesión de hoy</button></section>`;
-    const k = d.rpe == null ? -1 : nivRpe(d.rpe), otro = d.otroMin || !MINS.includes(d.min);
+    const otro = d.otroMin || !MINS.includes(d.min);
     return `<section class="card" id="c-desp"><div class="card-h"><h2>Después del entreno</h2><span class="sub">¿Qué tal ha sido?</span></div>${done}
       <div class="seg" role="group" aria-label="Tipo">${TIPOS.map(t => `<button type="button" data-tipo="${t.k}" aria-pressed="${d.tipo === t.k}">${t.n}</button>`).join('')}</div>
-      <div class="lvls" role="group" aria-label="Lo duro que ha sido">${NIV_RPE.map((x, i) => `<button type="button" class="lvl" data-lvl="${i}" aria-pressed="${k === i}">${bars(i)}<span>${x.n}</span><small>${x.r.join('–')}</small></button>`).join('')}</div>
-      ${k >= 0 ? `<div class="q"><div class="q-h"><span>Afina, si quieres</span><small>de 0 a 10</small></div><div class="seg">${NIV_RPE[k].r.map(v => `<button type="button" data-rpe="${v}" aria-pressed="${d.rpe === v}">${v}</button>`).join('')}</div></div>` : ''}
+      <div class="q"><div class="q-h"><span>¿Lo duro que ha sido?</span><small>del 1 al 10</small></div>${escalera(v => `data-rpe="${v}"`, d.rpe, v => ({ 10: 'Al límite', 7: 'Muy duro', 5: 'Duro', 4: 'Algo duro', 3: 'Normal', 2: 'Suave', 1: 'Muy suave' })[v])}</div>
       <div class="q"><div class="q-h"><span>Minutos</span></div><div class="seg" role="group" aria-label="Minutos">${MINS.map(m => `<button type="button" data-minc="${m}" aria-pressed="${!otro && d.min === m}">${m}</button>`).join('')}<button type="button" data-minc="otro" aria-pressed="${otro}">Otro</button></div>
         ${otro ? `<span class="stepper"><button type="button" data-min="-5" aria-label="5 minutos menos">−</button><output id="min-o">${d.min}</output><button type="button" data-min="5" aria-label="5 minutos más">+</button></span>` : ''}</div>
       <label class="field">¿Algo que contar? (opcional)<input type="text" id="s-nota" value="${esc(d.nota)}" maxlength="200" placeholder="Por ejemplo: me molestaba el tobillo"></label>
@@ -411,7 +421,7 @@
         <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li>
         <li><span>Escribir tu diario de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si cumpliste tu compromiso</span><b>+${PTS.revisar}</b></li></ul>
         <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos.</p></section>
-      <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, de 1 a 5, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
+      <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, del 1 al 10, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
       <section class="card"><h2>Tu carga por semana</h2><p class="sub">Esfuerzo × minutos de cada sesión, sumado por semana. La barra clara es la semana en curso.</p>${loadChart(U.dias, t)}</section>
       <section class="card"><h2>Tus compromisos</h2>${sem.length ? `<ul class="list">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<li class="li"><span><b>${esc(compOf(x) || '—')}</b><small>Semana del ${esc(fmtShort(k))}${nx && nx.cumplida ? ' · ' + esc(STAMP[nx.cumplida] || '') : ''}</small></span></li>`; }).join('')}</ul>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`, { nav: navJ() });
   }
@@ -460,12 +470,14 @@
   }
   const firstEmpty = () => { const i = WELL.findIndex(w => !(draft.antes[w.k] >= 1)); return i < 0 ? 0 : i; };
   actions.startantes = async () => { draft.paso = firstEmpty(); view = 'antes'; render(); scrollTo({ top: 0 }); };
-  actions.editantes = async () => { draft.editAntes = true; draft.antes = clone(diaHoy().antes || {}); delete draft.antes.ts; draft.paso = 0; view = 'antes'; render(); scrollTo({ top: 0 }); };
-  actions.flowback = async () => { if (draft.paso > 0) { draft.paso--; render(); } else actions.flowclose(); };
-  actions.flowclose = async () => { view = 'hoy'; draft.editAntes = false; render(); };
+  actions.editantes = async () => { draft.editAntes = true; const a0 = diaHoy().antes || {}; draft.antes = { nota: a0.nota || '' }; WELL.forEach(w => { if (a0[w.k] >= 1) draft.antes[w.k] = Math.round(diez(a0[w.k], a0)); }); draft.paso = 0; view = 'antes'; render(); scrollTo({ top: 0 }); };
+  actions.flowback = async () => { keepFNota(); if (draft.paso > 0) { draft.paso--; render(); } else actions.flowclose(); };
+  const keepFNota = () => { const el = document.getElementById('f-nota'); if (el) draft.antes.nota = el.value; };
+  actions.saveantes = async () => { keepFNota(); await saveAntes(); };
+  actions.flowclose = async () => { keepFNota(); view = 'hoy'; draft.editAntes = false; render(); };
   async function saveAntes() {
     const d = draft.antes; if (WELL.some(w => !(d[w.k] >= 1))) { draft.paso = firstEmpty(); render(); return; }
-    const p0 = puntos(U.dias, U.semanas), a = Object.assign({}, d, { ts: Date.now() });
+    const p0 = puntos(U.dias, U.semanas), a = Object.assign({}, d, { esc: 10, nota: String(d.nota || '').trim(), ts: Date.now() });
     await B.merge(`registros/${me.uid}/dias/${today()}`, { antes: a, ts: Date.now() });
     U.dias[today()] = Object.assign({}, U.dias[today()] || {}, { antes: a });
     draft.editAntes = false; draft.antes = {}; view = 'hoy'; premio(p0); render(); scrollTo({ top: 0 });
@@ -513,11 +525,10 @@
       if (draft.busy) return;
       draft.antes[b.dataset.fw] = +b.dataset.v; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
       draft.busy = true;
-      setTimeout(async () => { try { if (draft.paso < WELL.length - 1) { draft.paso++; render(); } else await saveAntes(); } catch (er) { console.error(er); toast('No se ha podido guardar. Revisa la conexión e inténtalo otra vez.'); } finally { draft.busy = false; } }, 230);
+      setTimeout(async () => { try { draft.paso++; render(); } catch (er) { console.error(er); toast('No se ha podido guardar. Revisa la conexión e inténtalo otra vez.'); } finally { draft.busy = false; } }, 230);
       return;
     }
     const keepNota = () => { draft.ses.nota = ($('#s-nota') || {}).value || ''; };
-    if (b.dataset.lvl) { keepNota(); draft.ses.rpe = NIV_RPE[+b.dataset.lvl].r[0]; render(); return; }
     if (b.dataset.rpe) { draft.ses.rpe = +b.dataset.rpe; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
     if (b.dataset.tipo) { keepNota(); draft.ses.tipo = b.dataset.tipo; draft.ses.min = (TIPOS.find(t => t.k === b.dataset.tipo) || TIPOS[0]).min; draft.ses.otroMin = false; render(); return; }
     if (b.dataset.minc) { keepNota(); if (b.dataset.minc === 'otro') draft.ses.otroMin = true; else { draft.ses.min = +b.dataset.minc; draft.ses.otroMin = false; } render(); return; }
@@ -560,7 +571,7 @@
       <div class="seg" role="group" aria-label="Equipo">${[['todas', 'Todas'], ...EQUIPOS.map(e => [e.id, e.n])].map(([k, l]) => `<button type="button" data-aeq="${k}" aria-pressed="${A.eq === k}">${l}</button>`).join('')}</div>
       <section class="card">${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Jugadora</th><th>Estado</th><th class="num">Llega hoy</th><th class="num">Su media</th><th class="num">Carga 7 días</th><th class="num">Semana / mes</th><th>Última respuesta</th><th>Semana</th></tr></thead><tbody>
         ${rows.map(({ u, e }) => `<tr class="click" data-jug="${u}" tabindex="0"><td><b>${esc(A.jug[u].nombre)}</b><br><span class="sub">${esc(eqName(eqDe(u)))}</span></td><td>${stHTML(e.lvl)}</td><td class="num">${fmt1(e.s)}</td><td class="num">${fmt1(e.base)}</td><td class="num">${fmtInt(e.L.acute)}</td><td class="num">${e.L.ratio == null ? '—' : fmt1(e.L.ratio)}</td><td>${e.last ? esc(e.last === t ? 'hoy' : fmtShort(e.last)) : '—'}</td><td>${semDe(u)[lunes] ? 'Hecha' : '—'}</td></tr>`).join('')}</tbody></table></div>
-        <p class="chart-note">«Llega hoy»: media de sus cinco respuestas de hoy (1 a 5). «Semana / mes»: carga de los últimos 7 días dividida por su media semanal del último mes; avisa por encima de 1,3 o por debajo de 0,8 (necesita 3 semanas de datos).</p>` : `<p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p>`}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+        <p class="chart-note">«Llega hoy»: media de sus cinco respuestas de hoy (1 a 10). «Semana / mes»: carga de los últimos 7 días dividida por su media semanal del último mes; avisa por encima de 1,3 o por debajo de 0,8 (necesita 3 semanas de datos).</p>` : `<p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p>`}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   // resumen de un equipo: cuántas han respondido, cómo llega el equipo, su esfuerzo y a quién mirar
   const mean = v => v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
@@ -572,7 +583,7 @@
     const media = mean(us.map(u => wellScore((diasDe(u)[ref] || {}).antes)).filter(x => x != null));
     // el equipo como si fuera una jugadora: su media de cada día
     const teamDias = {};
-    for (let i = 0; i < 40; i++) { const d = addDays(t, -i), m = mean(us.map(u => wellScore((diasDe(u)[d] || {}).antes)).filter(x => x != null)); if (m != null) teamDias[d] = { antes: Object.fromEntries(WELL.map(w => [w.k, m])) }; }
+    for (let i = 0; i < 40; i++) { const d = addDays(t, -i), m = mean(us.map(u => wellScore((diasDe(u)[d] || {}).antes)).filter(x => x != null)); if (m != null) teamDias[d] = { antes: Object.assign(Object.fromEntries(WELL.map(w => [w.k, m])), { esc: 10 }) }; }
     const base = baseline(teamDias, ref);
     let acute = 0, chronic = 0, conDatos = 0; us.forEach(u => { const L = loads(diasDe(u), t); acute += L.acute; chronic += L.chronic; if (L.span >= 21) conDatos++; });
     const ratio = chronic > 0 && conDatos ? acute / chronic : null, pctC = ratio == null ? null : Math.round((ratio - 1) * 100);
@@ -584,9 +595,10 @@
       <div class="seg" role="group" aria-label="Equipo">${EQUIPOS.map(x => `<button type="button" data-req="${x.id}" aria-pressed="${eq === x.id}">${x.n}</button>`).join('')}</div>
       ${us.length ? `<div class="tiles">
         <div class="tile"><span class="k">Han respondido${ref === t ? ' hoy' : ''}</span><b class="v">${resp}/${us.length}</b><span class="s">${Math.round(resp / us.length * 100)} %</span></div>
-        <div class="tile"><span class="k">Cómo llega el equipo</span><b class="v">${fmt1(media)}</b><span class="s">${base != null ? 'Suele ' + fmt1(base) : 'de 1 a 5'}</span></div>
+        <div class="tile"><span class="k">Cómo llega el equipo</span><b class="v">${fmt1(media)}</b><span class="s">${base != null ? 'Suele ' + fmt1(base) : 'del 1 al 10'}</span></div>
         <div class="tile"><span class="k">Esfuerzo de la semana</span><b class="v">${pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + ' %'}</b><span class="s">${pctC == null ? 'Faltan semanas de datos' : 'frente a su mes'}</span></div></div>
       <section class="card"><h2>Cómo llega el equipo · 4 semanas</h2><p class="sub">Media del equipo en cada entreno.${base != null ? ' La franja es lo normal en el equipo.' : ''}</p>${wellChart(teamDias, t)}</section>
+      ${(() => { const ns = us.filter(u => ((diasDe(u)[ref] || {}).antes || {}).nota); return ns.length ? `<section class="card"><h2>Lo que te han contado${ref === t ? ' hoy' : ''}</h2><ul class="al-list">${ns.map(u => `<li><button type="button" class="al-row" data-jug="${u}"><b>${esc((A.jug[u].nombre || '').split(' ')[0])}</b><span>«${esc(diasDe(u)[ref].antes.nota)}»</span></button></li>`).join('')}</ul></section>` : ''; })()}
       <section class="card"><h2>A quién mirar</h2>
         ${bad.length ? `<div class="al-h bad">${ST_IC.bad}Habla con ella · ${bad.length}</div><ul class="al-list">${bad.map(al).join('')}</ul>` : ''}
         ${warn.length ? `<div class="al-h warn">${ST_IC.warn}Échale un ojo · ${warn.length}</div><ul class="al-list">${warn.map(al).join('')}</ul>` : ''}
@@ -607,11 +619,11 @@
       <div><span class="kicker">${esc(eqName(eqDe(u)))}</span><h1>${esc(J.nombre)}</h1></div>
       <section class="card"><div class="card-h"><h2>Hoy</h2>${stHTML(e.lvl)}</div>${e.R.length ? `<ul class="info" style="padding-left:18px;margin:0">${e.R.map(x => `<li>${esc(x.txt)}</li>`).join('')}</ul>` : '<p class="sub">Nada que destacar.</p>'}</section>
       <div class="two">
-        <section class="card"><h2>Cómo llega</h2><p class="sub">Media de 1 a 5, últimos 28 días.${e.base != null ? ' Franja: lo normal en ella.' : ''}</p>${wellChart(D, t)}</section>
+        <section class="card"><h2>Cómo llega</h2><p class="sub">Media del 1 al 10, últimos 28 días.${e.base != null ? ' Franja: lo normal en ella.' : ''}</p>${wellChart(D, t)}</section>
         <section class="card"><h2>Carga por semana</h2><p class="sub">Esfuerzo × minutos. Barra clara: semana en curso.</p>${loadChart(D, t)}</section>
       </div>
       <section class="card"><h2>Últimos 14 días</h2><div class="tbl-wrap"><table><thead><tr><th>Día</th>${WELL.map(w => `<th class="num">${w.n.split(' ')[0]}</th>`).join('')}<th class="num">Esfuerzo</th><th class="num">Min</th><th class="num">Carga</th><th>Nota</th></tr></thead><tbody>
-        ${last14.map(k => { const d = D[k] || {}, a = d.antes || {}, L = d.ses || []; if (!d.antes && !L.length) return ''; return `<tr><td>${esc(fmtShort(k))}</td>${WELL.map(w => `<td class="num">${a[w.k] || '—'}</td>`).join('')}<td class="num">${L.map(s => s.rpe).join(' + ') || '—'}</td><td class="num">${L.map(s => s.min).join(' + ') || '—'}</td><td class="num">${L.length ? fmtInt(dayLoad(d)) : '—'}</td><td>${esc(L.map(s => s.nota).filter(Boolean).join(' · '))}</td></tr>`; }).join('') || `<tr><td colspan="${WELL.length + 5}" class="sub">Sin respuestas en estos 14 días.</td></tr>`}</tbody></table></div></section>
+        ${last14.map(k => { const d = D[k] || {}, a = d.antes || {}, L = d.ses || []; if (!d.antes && !L.length) return ''; return `<tr><td>${esc(fmtShort(k))}</td>${WELL.map(w => `<td class="num">${a[w.k] >= 1 ? fmtInt(diez(a[w.k], a)) : '—'}</td>`).join('')}<td class="num">${L.map(s => s.rpe).join(' + ') || '—'}</td><td class="num">${L.map(s => s.min).join(' + ') || '—'}</td><td class="num">${L.length ? fmtInt(dayLoad(d)) : '—'}</td><td class="nota-td">${esc([a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · '))}</td></tr>`; }).join('') || `<tr><td colspan="${WELL.length + 5}" class="sub">Sin respuestas en estos 14 días.</td></tr>`}</tbody></table></div></section>
       <section class="card"><h2>Su diario</h2>
         ${semanas.length ? semanas.map(k => { const x = S[k]; return `<div class="obj"><span class="kicker">Semana del ${esc(fmtShort(k))}</span>
           ${x.tiempo ? `<span class="wx-line">${wx(x.tiempo)}${esc(TIEMPO[x.tiempo - 1][1])}</span>` : ''}
@@ -651,7 +663,7 @@
   actions.csv = async () => {
     const rows = [['jugadora', 'equipo', 'fecha', ...WELL.map(w => w.n), 'bienestar (media)', 'sesiones', 'esfuerzo', 'minutos', 'carga', 'notas']];
     activas().concat(desactivadas()).forEach(u => Object.keys(diasDe(u)).sort().forEach(k => { const d = diasDe(u)[k], a = d.antes || {}, L = d.ses || [];
-      rows.push([A.jug[u].nombre, eqName(eqDe(u)), k, ...WELL.map(w => a[w.k] || ''), wellScore(a) == null ? '' : r1(wellScore(a)), L.map(s => s.tipo).join(' + '), L.map(s => s.rpe).join(' + '), L.map(s => s.min).join(' + '), L.length ? dayLoad(d) : '', L.map(s => s.nota).filter(Boolean).join(' · ')]); }));
+      rows.push([A.jug[u].nombre, eqName(eqDe(u)), k, ...WELL.map(w => a[w.k] >= 1 ? r1(diez(a[w.k], a)) : ''), wellScore(a) == null ? '' : r1(wellScore(a)), L.map(s => s.tipo).join(' + '), L.map(s => s.rpe).join(' + '), L.map(s => s.min).join(' + '), L.length ? dayLoad(d) : '', [a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · ')]); }));
     const csv = '﻿' + rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `smb-femenino-${today()}.csv`; document.body.appendChild(a); a.click(); a.remove();
   };
