@@ -1,0 +1,39 @@
+rules_version = '2';
+// App de seguimiento de jugadoras · reglas de acceso
+// ADMIN_UID: el código de usuario de la Dirección Técnica (sale en la app al entrar por primera vez).
+// Solo la DT ve los datos de todas; cada jugadora ve y borra los suyos.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.uid in ['ADMIN_UID']; }
+    function acc() { return get(/databases/$(database)/documents/acceso/$(request.auth.uid)).data; }
+    function activa() { return signedIn() && exists(/databases/$(database)/documents/acceso/$(request.auth.uid)) && acc().activa == true; }
+
+    // Ficha de alta de cada jugadora (nombre, equipo, aceptación de la información)
+    match /jugadoras/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+    // Acceso: solo la DT activa una cuenta, cuando tiene el consentimiento firmado
+    match /acceso/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+    // Objetivos y pregunta de la semana de cada equipo
+    match /equipos/{eq} {
+      allow read: if isAdmin() || (activa() && acc().equipo == eq);
+      allow write: if isAdmin();
+    }
+    // Lo que responde cada jugadora
+    match /registros/{uid}/{rest=**} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if activa() && request.auth.uid == uid;
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+    // Lo que valora la DT de cada jugadora: solo la DT
+    match /valoraciones/{uid}/{rest=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

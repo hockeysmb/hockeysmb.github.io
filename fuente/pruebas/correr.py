@@ -6,7 +6,7 @@ P = os.path.dirname(os.path.abspath(__file__)) + '/'
 F = os.path.dirname(P.rstrip('/')) + '/'
 subprocess.run([sys.executable, F + 'construir_web.py', F + '_web'], check=True)
 subprocess.run([sys.executable, F + 'construir_artifact.py'], check=True)
-names = sys.argv[1:] or sorted(os.path.basename(x)[:-3] for x in glob.glob(P + 'web_*.py') + glob.glob(P + 'art_*.py'))
+names = sys.argv[1:] or sorted(os.path.basename(x)[:-3] for x in glob.glob(P + 'web_*.py') + glob.glob(P + 'art_*.py') + glob.glob(P + 'fem_*.py'))
 bad = []
 for n in names:
     t = time.time()

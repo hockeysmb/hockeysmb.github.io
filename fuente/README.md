@@ -16,6 +16,7 @@ Necesitan Python 3 con `playwright` y Chromium (`pip install playwright && playw
 
 | Prueba | Qué comprueba | Antes se llamaba |
 |---|---|---|
+| `fem_flujo` | App de jugadoras: alta, activación, respuestas, panel de la DT, CSV y borrado | nueva |
 | `web_general` | Entrada, accesos, perfil, bandeja, vestuario | `t6/web_test.py` |
 | `web_altas` | Alta previa de entrenadores por email | `t6/prereg_test.py` |
 | `web_directo` | Amistoso en directo entre dos navegadores | `t6/live_test.py` |
