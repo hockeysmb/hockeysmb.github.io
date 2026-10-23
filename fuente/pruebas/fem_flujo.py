@@ -43,13 +43,13 @@ async def main():
       await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
       print('pendiente:', ' '.join((await pg.text_content('.list .li')).split()))
       await pg.click(f'[data-a="activar"][data-u="{uid}"]'); await pg.wait_for_timeout(500)
-      await pg.click('[data-av="semana"]'); await pg.wait_for_timeout(300)
-      await pg.fill('#o-sub17-0', 'Presionar al pase atrás'); await pg.fill('#o-sub17-1', 'Fijar y pasar en el 2c1'); await pg.click('[data-a="saveobj"][data-eq="sub17"]'); await pg.wait_for_timeout(400)
       print('acceso:', json.dumps(await pg.evaluate(f"window.__fake.db()['acceso/{uid}']"))[:120])
       # historial de 4 semanas para Ana (como si lo hubiera ido respondiendo), con la última semana más cargada
       await pg.evaluate("""uid => { const d0 = new Date(2026, 9, 26); for (let i = 1; i <= 30; i++) { const d = new Date(d0); d.setDate(d.getDate() - i); const dow = d.getDay(); if (![1, 2, 6].includes(dow)) continue;
         const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); const hard = i <= 7;
-        window.__fake.put('registros/' + uid + '/dias/' + k, { antes: { sueno: 4, fatiga: hard ? 3 : 4, dolor: 4, estres: 4, animo: 4, ts: 1 }, ses: [{ tipo: dow === 6 ? 'partido' : 'entreno', rpe: hard ? 8 : 5, min: dow === 6 ? 50 : 90, nota: '', ts: 1 }], ts: 1 }); } }""", uid)
+        window.__fake.put('registros/' + uid + '/dias/' + k, { antes: { sueno: 4, fatiga: hard ? 3 : 4, dolor: 4, estres: 4, animo: 4, ts: 1 }, ses: [{ tipo: dow === 6 ? 'partido' : 'entreno', rpe: hard ? 8 : 5, min: dow === 6 ? 50 : 90, nota: '', ts: 1 }], ts: 1 }); }
+        window.__fake.put('registros/' + uid + '/semanas/2026-10-12', { tiempo: 3, mejor: '', cambiar: '', compromiso: 'Hablar más en defensa', area: 'Equipo', cumplida: '', ts: 1 });
+        window.__fake.put('registros/' + uid + '/semanas/2026-10-19', { tiempo: 4, mejor: 'Buen 2c1', cambiar: '', compromiso: 'Pedir la bola de cara', area: 'Técnica', cumplida: 'si', ts: 1 }); }""", uid)
       await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
       # 3. Ana responde hoy
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
@@ -63,12 +63,18 @@ async def main():
       await pg.click('[data-lvl="3"]'); await pg.click('[data-minc="otro"]'); await pg.click('[data-min="-5"]'); await pg.fill('#s-nota', 'Me molestaba el gemelo')
       await pg.screenshot(path=O + '3_despues.png', full_page=True)
       await pg.click('[data-a="saveses"]'); await pg.wait_for_timeout(500)
-      for i in (0, 1):
-        await pg.click(f'[data-so="{i}"][data-sk="decide"][data-v="2"]'); await pg.click(f'[data-so="{i}"][data-sk="ejecuta"][data-v="{i + 2}"]')
-      await pg.fill('#s-resp', 'Ver antes de recibir.'); await pg.fill('#s-meta', 'Pedir la bola de cara'); await pg.click('[data-a="savesem"]'); await pg.wait_for_timeout(500)
+      await pg.click('[data-a="gosemana"]'); await pg.wait_for_timeout(200)
+      await pg.click('[data-a="savesem"]'); await pg.wait_for_timeout(100); print('sin tiempo:', await pg.text_content('#msg'))
+      await pg.click('[data-tiempo="4"]'); await pg.fill('#d-mejor', 'Robé dos balones presionando el pase atrás'); await pg.click('[data-cumplida="medias"]')
+      await pg.fill('#d-comp', 'Mirar antes de recibir'); await pg.click('[data-area="Decisión"]')
+      await pg.screenshot(path=O + '4a_diario.png', full_page=True)
+      await pg.click('[data-a="savesem"]'); await pg.wait_for_timeout(500)
+      await pg.screenshot(path=O + '4b_diario_hecho.png', full_page=True)
+      await pg.click('[data-v="hoy"]'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=O + '4_hoy_hecho.png', full_page=True)
       d = await pg.evaluate(f"window.__fake.db()['registros/{uid}/dias/2026-10-26']"); s = await pg.evaluate(f"window.__fake.db()['registros/{uid}/semanas/2026-10-26']")
-      print('guardado hoy:', d['antes']['sueno'], d['ses'][0]['rpe'], d['ses'][0]['min'], '| semana:', s and s['meta'])
+      print('guardado hoy:', d['antes']['sueno'], d['ses'][0]['rpe'], d['ses'][0]['min'], '| semana:', s and (s['tiempo'], s['compromiso'], s['area'], s['cumplida']))
+      if not s or s['compromiso'] != 'Mirar antes de recibir' or s['cumplida'] != 'medias': errs.append('no se guarda el diario')
       await pg.click('[data-v="yo"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '5_jugadora.png', full_page=True)
       print('nivel:', ' '.join((await pg.text_content('.me-info')).split())[:90])
       await pg.click('[data-a="editav"]'); await pg.wait_for_timeout(200)
@@ -93,8 +99,7 @@ async def main():
       await pg.screenshot(path=O + '6_dt_tabla.png', full_page=True)
       await pg.click('tbody tr'); await pg.wait_for_timeout(400)
       print('motivos:', await pg.evaluate("[...document.querySelectorAll('.card ul.info li')].map(l=>l.textContent)"))
-      await pg.click('[data-val="2026-10-26|0|decide|3"]'); await pg.wait_for_timeout(300)
-      print('valoración DT:', await pg.evaluate(f"JSON.stringify(window.__fake.db()['valoraciones/{uid}/semanas/2026-10-26'])"))
+      print('diario en la ficha:', ' '.join((await pg.locator('.card').last.inner_text()).split())[:160])
       await pg.screenshot(path=O + '7_dt_detalle.png', full_page=True)
       await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
       async with pg.expect_download() as dl: await pg.click('[data-a="csv"]')

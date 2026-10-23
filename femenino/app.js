@@ -84,12 +84,12 @@
   const bars = k => `<span class="bars" aria-hidden="true">${[6, 11, 16, 20, 24].map((h, i) => `<i style="height:${h}px"${i <= k ? ' class="f"' : ''}></i>`).join('')}</span>`;
 
   // ================= juego: puntos por responder (nunca por lo que se responde) =================
-  const PTS = { antes: 10, despues: 10, semana: 20, resp: 15 };
+  const PTS = { antes: 10, despues: 10, semana: 20, revisar: 15 };
   const NIVELES = [['Novata', 0], ['Calentando', 30], ['En pista', 80], ['Titular', 150], ['Imprescindible', 250], ['Referente', 380], ['Capitana', 550], ['Veterana', 750], ['Mito', 1000], ['Leyenda del SMB', 1300]];
   function puntos(dias, semanas) {
     let p = 0;
     Object.values(dias || {}).forEach(d => { if (!d) return; if (d.antes) p += PTS.antes; if ((d.ses || []).length) p += PTS.despues; });
-    Object.values(semanas || {}).forEach(s => { if (!s) return; p += PTS.semana; if (String(s.resp || '').trim()) p += PTS.resp; });
+    Object.values(semanas || {}).forEach(s => { if (!s) return; p += PTS.semana; if (s.cumplida || String(s.resp || '').trim()) p += PTS.revisar; });
     return p;
   }
   const nivelDe = p => { let i = 0; NIVELES.forEach(([, m], k) => { if (p >= m) i = k; }); return i; };
@@ -148,14 +148,18 @@
     }
     return `<svg class="av" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(label || 'Tu jugadora')}"><clipPath id="${id}c"><rect width="280" height="280" rx="32"/></clipPath><g clip-path="url(#${id}c)">${fondoSVG(a.fondo, id)}${body}</g>${marcoSVG(a.marco)}</svg>`;
   }
-  const ESC3 = ['Todavía no', 'A veces', 'Casi siempre'];
-  const PREGUNTAS = [
-    '¿Qué te ha funcionado esta semana?',
-    '¿En qué momento de un entreno decidiste mejor? ¿Qué viste?',
-    '¿Qué harías distinto la próxima vez que te pase lo mismo?',
-    '¿Qué te ha costado más y por qué crees que ha sido?',
-    '¿Qué has aprendido de una compañera esta semana?',
+  // diario de la semana: el tiempo que ha hecho en la pista (1 tormenta … 5 sol), lo mejor, lo que cambiaría y un compromiso
+  const TIEMPO = [
+    [1, 'Tormenta', '<path d="M7 15a4 4 0 1 1 1-7.9A5 5 0 0 1 17.6 9 3.5 3.5 0 0 1 17 15z"/><path d="M12 14l-2 4h3l-2 4"/>'],
+    [2, 'Lluvia', '<path d="M7 14a4 4 0 1 1 1-7.9A5 5 0 0 1 17.6 8 3.5 3.5 0 0 1 17 14z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>'],
+    [3, 'Nublado', '<path d="M7 18a4.5 4.5 0 1 1 1.2-8.8A5.5 5.5 0 0 1 18.5 11 3.5 3.5 0 0 1 18 18z"/>'],
+    [4, 'Sol y nubes', '<circle cx="9" cy="8" r="3"/><path d="M9 2v1.5M3 8h1.5M4.8 3.8l1 1M13.2 3.8l-1 1"/><path d="M9 19a3.5 3.5 0 1 1 .9-6.9A4.5 4.5 0 0 1 18.4 13 3 3 0 0 1 18 19z"/>'],
+    [5, 'Sol', '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>'],
   ];
+  const wx = v => `<svg class="wx-i" viewBox="0 0 24 24" aria-hidden="true">${(TIEMPO[v - 1] || TIEMPO[2])[2]}</svg>`;
+  const AREAS = ['Patinaje', 'Técnica', 'Decisión', 'Actitud', 'Equipo'];
+  const STAMP = { si: 'Cumplido', medias: 'A medias', no: 'No' };
+  const compOf = x => x ? (x.compromiso || x.meta || '') : '';   // «meta» es el nombre de antes del diario
   const INFO_V = '2026-10-23';
   const META_OK = [['si', 'Sí'], ['medias', 'A medias'], ['no', 'No']];
 
@@ -354,25 +358,33 @@
       <label class="field">¿Algo que contar? (opcional)<input type="text" id="s-nota" value="${esc(d.nota)}" maxlength="200" placeholder="Por ejemplo: me molestaba el tobillo"></label>
       <div class="row"><button class="btn primary" type="button" data-a="saveses">Guardar</button>${L.length ? '<button class="btn ghost" type="button" data-a="lessses">Cancelar</button>' : ''}</div></section>`;
   }
-  function semanaHTML(full) {
-    const lunes = mondayOf(today()), E = (U.equipo && U.equipo.sem && U.equipo.sem[lunes]) || null, mine = U.semanas[lunes];
-    const prev = U.semanas[addDays(lunes, -7)], metaPrev = prev && prev.meta;
-    if (!E || !(E.obj || []).filter(Boolean).length) return full ? `<section class="card"><h2>Esta semana</h2><p class="sub">Carlos todavía no ha puesto los objetivos de esta semana.</p>${metaPrev ? `<p><b>Tu meta para esta semana:</b> ${esc(metaPrev)}</p>` : ''}</section>` : (metaPrev ? `<section class="card"><span class="kicker">Tu meta de esta semana</span><p>${esc(metaPrev)}</p></section>` : '');
-    if (mine && !draft.editSem && !full) return `<section class="card done"><div class="card-h"><h2>Esta semana</h2>${stHTML('ok').replace('Bien', 'Hecha')}</div><p class="sub">Tu meta para la semana que viene: ${esc(mine.meta || '—')}</p></section>`;
-    if (!draft.sem || draft.sem.lunes !== lunes) draft.sem = Object.assign({ lunes, obj: E.obj.map(() => ({})), meta: '', cumplida: '', resp: '' }, mine ? clone(mine) : {}, { lunes });
-    const d = draft.sem;
-    if (mine && !draft.editSem) return `<section class="card done"><div class="card-h"><h2>Esta semana</h2>${stHTML('ok').replace('Bien', 'Hecha')}</div>
-      ${E.obj.filter(Boolean).map((o, i) => `<div class="obj"><b>${esc(o)}</b><span class="sub">Decido: ${esc(ESC3[(mine.obj[i] || {}).decide - 1] || '—')} · Ejecuto: ${esc(ESC3[(mine.obj[i] || {}).ejecuta - 1] || '—')}</span></div>`).join('')}
-      <p><b>Tu meta para la semana que viene:</b> ${esc(mine.meta || '—')}</p><button class="btn small" type="button" data-a="editsem">Cambiar</button></section>`;
-    const preg = E.pregunta || PREGUNTAS[Math.floor(daysBetween('2026-01-05', lunes) / 7) % PREGUNTAS.length];
-    return `<section class="card" id="c-sem"><div class="card-h"><h2>Esta semana</h2><span class="sub">Cómo te ves. Mejor al final de la semana.</span></div>
-      ${E.obj.filter(Boolean).map((o, i) => `<div class="obj"><b>${esc(o)}</b>
-        <div class="q"><div class="q-h"><span>Decido bien</span><small>¿Eliges la buena opción?</small></div><div class="scale s3">${ESC3.map((t, k) => `<button type="button" data-so="${i}" data-sk="decide" data-v="${k + 1}" aria-pressed="${(d.obj[i] || {}).decide === k + 1}">${t}</button>`).join('')}</div></div>
-        <div class="q"><div class="q-h"><span>Lo ejecuto bien</span><small>¿Te sale como querías?</small></div><div class="scale s3">${ESC3.map((t, k) => `<button type="button" data-so="${i}" data-sk="ejecuta" data-v="${k + 1}" aria-pressed="${(d.obj[i] || {}).ejecuta === k + 1}">${t}</button>`).join('')}</div></div></div>`).join('')}
-      ${metaPrev ? `<div class="q"><div class="q-h"><span>Tu meta era: «${esc(metaPrev)}». ¿La has cumplido?</span></div><div class="seg">${META_OK.map(([k, l]) => `<button type="button" data-cumplida="${k}" aria-pressed="${d.cumplida === k}">${l}</button>`).join('')}</div></div>` : ''}
-      <label class="field">${esc(preg)}<textarea id="s-resp" maxlength="600">${esc(d.resp)}</textarea></label>
-      <label class="field">Tu meta para la semana que viene<input type="text" id="s-meta" maxlength="160" value="${esc(d.meta)}" placeholder="Algo concreto que quieras mejorar"></label>
-      <div class="row"><button class="btn primary" type="button" data-a="savesem" data-preg="${esc(preg)}">Guardar</button>${mine ? '<button class="btn ghost" type="button" data-a="noeditsem">Cancelar</button>' : ''}</div><p class="msg" id="msg"></p></section>`;
+  function racha() { let n = 0, k = mondayOf(today()); if (!U.semanas[k]) k = addDays(k, -7); while (U.semanas[k]) { n++; k = addDays(k, -7); } return n; }
+  function semanaMini() {
+    const mine = U.semanas[mondayOf(today())];
+    if (mine) return `<section class="card done"><div class="card-h"><h2>Tu diario</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div><p class="sub">La semana que viene vas a: ${esc(compOf(mine))}</p></section>`;
+    return `<section class="card"><div class="card-h"><h2>Tu diario</h2><span class="sub">1 minuto</span></div><p class="sub">Qué tal ha ido la semana y a qué te comprometes. Mejor al final de la semana.</p><button class="btn" type="button" data-a="gosemana">Escribir mi semana</button></section>`;
+  }
+  function diarioView() {
+    const lunes = mondayOf(today()), mine = U.semanas[lunes], prevK = addDays(lunes, -7), edit = !mine || draft.editSem;
+    if (edit && (!draft.sem || draft.sem.lunes !== lunes)) draft.sem = Object.assign({ tiempo: 0, mejor: '', cambiar: '', compromiso: '', area: '', cumplida: '' }, mine ? clone(mine) : {}, { lunes });
+    const d = edit ? draft.sem : mine, n = Object.keys(U.semanas).length + (mine ? 0 : 1), r = racha();
+    const hist = Object.keys(U.semanas).filter(k => k < lunes && compOf(U.semanas[k])).sort().reverse().slice(0, 8);
+    const nextOf = k => k === prevK ? d : U.semanas[addDays(k, 7)];
+    const evald = hist.filter(k => (nextOf(k) || {}).cumplida), si = evald.filter(k => nextOf(k).cumplida === 'si').length;
+    const ticket = k => { const ask = k === prevK && edit, c = (nextOf(k) || {}).cumplida;
+      return `<div class="tk"><span class="d">${esc(fmtShort(k))}${ask ? ' · ¿Lo hiciste?' : ''}</span><span class="t">${esc(compOf(U.semanas[k]))}</span>${ask ? `<div class="row tight">${META_OK.map(([v, l]) => `<button type="button" class="mini" data-cumplida="${v}" aria-pressed="${d.cumplida === v}">${l}</button>`).join('')}</div>` : c ? `<span class="stamp ${c}">${esc(STAMP[c])}</span>` : ''}</div>`; };
+    const pg = (id, ic, tit, val) => `<section class="pg"><div class="pg-h"><i>${ic}</i>${tit}</div>${edit ? `<textarea class="ln" id="${id}" rows="2" maxlength="300" placeholder="Toca para escribir…" aria-label="${tit}">${esc(val)}</textarea>` : `<p class="ln">${esc(val) || '—'}</p>`}</section>`;
+    shell(`<section class="diary-hero"><div class="row between"><span class="kicker">Mi diario · semana ${n}</span>${r > 1 ? `<span class="sm">${r} semanas seguidas</span>` : ''}</div>
+        <h1>¿Qué tiempo ha hecho en la pista?</h1>
+        <div class="wxs" role="group" aria-label="Qué tiempo ha hecho">${TIEMPO.map(([v, l]) => `<button type="button" class="wx" data-tiempo="${v}" aria-pressed="${d.tiempo === v}" aria-label="${l}"${edit ? '' : ' disabled'}>${wx(v)}</button>`).join('')}</div>
+        <span class="wx-l">${d.tiempo ? esc(TIEMPO[d.tiempo - 1][1]) : 'De tormenta a sol: elige uno'}</span></section>
+      ${pg('d-mejor', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>', 'Lo mejor', d.mejor || '')}
+      ${pg('d-cambiar', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>', 'Lo que cambiaría', d.cambiar || '')}
+      <section class="pledge"><div class="row between"><span class="pl-h">La semana que viene voy a…</span>${!edit && d.area ? `<span class="tag">${esc(d.area)}</span>` : ''}</div>
+        ${edit ? `<input type="text" id="d-comp" class="pl-in" maxlength="140" value="${esc(compOf(d))}" placeholder="algo concreto que dependa de ti" aria-label="La semana que viene voy a">
+        <div class="seg dark" role="group" aria-label="De qué va">${AREAS.map(a => `<button type="button" data-area="${a}" aria-pressed="${d.area === a}">${a}</button>`).join('')}</div>` : `<p class="pl-t">${esc(compOf(d))}</p>`}</section>
+      ${hist.length ? `<div class="row between"><span class="kicker">Mis compromisos</span>${evald.length ? `<span class="sub">${si} de ${evald.length} cumplidos</span>` : ''}</div><div class="tks">${hist.map(ticket).join('')}</div>` : ''}
+      ${edit ? `<div class="row"><button class="btn primary big grow" type="button" data-a="savesem">Guardar mi semana</button>${mine ? '<button class="btn ghost" type="button" data-a="noeditsem">Cancelar</button>' : ''}</div><p class="msg" id="msg"></p>` : '<button class="btn" type="button" data-a="editsem">Cambiar</button>'}`, { nav: navJ() });
   }
   function hoyView() {
     const t = today(), dow = dateOf(t).getDay(), E = eqObj(), entrena = E.dias.includes(dow), dia = diaHoy();
@@ -381,9 +393,8 @@
     shell(`<div class="hola"><div><span class="kicker">${esc(fmtDay(t))} · ${esc(E.n)}</span><h1>Hola, ${esc(nombre)}</h1></div>
         <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></div>
       ${show ? antesHTML() + despuesHTML() : `<section class="card"><h2>Hoy no tienes entreno con el equipo</h2><p class="sub">Si has jugado un partido o has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno o partido de hoy</button></section>`}
-      ${semanaHTML(false)}`, { nav: navJ() });
+      ${semanaMini()}`, { nav: navJ() });
   }
-  function semanaView() { shell(`<div><span class="kicker">Semana del ${esc(fmtShort(mondayOf(today())))}</span><h1>Esta semana</h1></div>${semanaHTML(true)}`, { nav: navJ() }); }
   function yoView() {
     const t = today(), sem = Object.keys(U.semanas).sort().reverse().slice(0, 8);
     const p = puntos(U.dias, U.semanas), lv = nivelDe(p), next = NIVELES[lv + 1];
@@ -398,11 +409,11 @@
           <button class="btn small" type="button" data-a="editav">Cambiar mi jugadora</button></div></section>
       <section class="card"><h2>Cómo se ganan puntos</h2><ul class="pts">
         <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li>
-        <li><span>Cerrar tu semana</span><b>+${PTS.semana}</b></li><li><span>Contestar la pregunta de la semana</span><b>+${PTS.resp}</b></li></ul>
+        <li><span>Escribir tu diario de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si cumpliste tu compromiso</span><b>+${PTS.revisar}</b></li></ul>
         <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos.</p></section>
       <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, de 1 a 5, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
       <section class="card"><h2>Tu carga por semana</h2><p class="sub">Esfuerzo × minutos de cada sesión, sumado por semana. La barra clara es la semana en curso.</p>${loadChart(U.dias, t)}</section>
-      <section class="card"><h2>Tus metas</h2>${sem.length ? `<ul class="list">${sem.map(k => { const s = U.semanas[k], next = U.semanas[addDays(k, 7)]; return `<li class="li"><span><b>${esc(s.meta || '—')}</b><small>Puesta la semana del ${esc(fmtShort(k))}${next && next.cumplida ? ' · ' + esc((META_OK.find(x => x[0] === next.cumplida) || [])[1] || '') : ''}</small></span></li>`; }).join('')}</ul>` : '<p class="sub">Aquí saldrán las metas que te pongas cada semana.</p>'}</section>`, { nav: navJ() });
+      <section class="card"><h2>Tus compromisos</h2>${sem.length ? `<ul class="list">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<li class="li"><span><b>${esc(compOf(x) || '—')}</b><small>Semana del ${esc(fmtShort(k))}${nx && nx.cumplida ? ' · ' + esc(STAMP[nx.cumplida] || '') : ''}</small></span></li>`; }).join('')}</ul>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`, { nav: navJ() });
   }
   function editAvView(lv) {
     const a = draft.av = draft.av || avNorm(U.perfil.av, lv);
@@ -473,16 +484,17 @@
   actions.showdia = async () => { draft.showDia = true; render(); };
   actions.editsem = async () => { draft.editSem = true; render(); };
   actions.noeditsem = async () => { draft.editSem = false; draft.sem = null; render(); };
-  actions.savesem = async b => {
-    const lunes = mondayOf(today()), E = U.equipo.sem[lunes], d = draft.sem, m = $('#msg');
-    d.resp = $('#s-resp').value.trim(); d.meta = $('#s-meta').value.trim();
-    const objs = E.obj.filter(Boolean);
-    if (objs.some((_, i) => !(d.obj[i] || {}).decide || !(d.obj[i] || {}).ejecuta)) { m.className = 'msg err'; m.textContent = 'Valórate en cada objetivo (decido y ejecuto).'; return; }
-    if (!d.meta) { m.className = 'msg err'; m.textContent = 'Ponte una meta para la semana que viene.'; return; }
-    const doc = { obj: objs.map((t, i) => ({ t, decide: d.obj[i].decide, ejecuta: d.obj[i].ejecuta })), meta: d.meta, resp: d.resp, pregunta: b.dataset.preg, cumplida: d.cumplida || '', ts: Date.now() };
+  actions.gosemana = async () => { view = 'semana'; render(); scrollTo({ top: 0 }); };
+  actions.savesem = async () => {
+    const lunes = mondayOf(today()), d = draft.sem, m = $('#msg'), err = t => { m.className = 'msg err'; m.textContent = t; };
+    const val = id => ((document.getElementById(id) || {}).value || '').trim();
+    d.mejor = val('d-mejor'); d.cambiar = val('d-cambiar'); d.compromiso = val('d-comp');
+    if (!d.tiempo) return err('Elige qué tiempo ha hecho en la pista.');
+    if (!d.compromiso) return err('Escribe a qué te comprometes la semana que viene.');
+    const doc = { tiempo: d.tiempo, mejor: d.mejor, cambiar: d.cambiar, compromiso: d.compromiso, area: d.area || '', cumplida: d.cumplida || '', ts: Date.now() };
     const p0 = puntos(U.dias, U.semanas);
     await B.set(`registros/${me.uid}/semanas/${lunes}`, doc);
-    U.semanas[lunes] = doc; draft.editSem = false; draft.sem = null; premio(p0); render();
+    U.semanas[lunes] = doc; draft.editSem = false; draft.sem = null; premio(p0); render(); scrollTo({ top: 0 });
   };
   actions.export = async () => {
     const data = { jugadora: U.perfil, acceso: U.acceso, dias: U.dias, semanas: U.semanas, descargado: new Date().toISOString() };
@@ -511,10 +523,11 @@
     if (b.dataset.minc) { keepNota(); if (b.dataset.minc === 'otro') draft.ses.otroMin = true; else { draft.ses.min = +b.dataset.minc; draft.ses.otroMin = false; } render(); return; }
     if (b.dataset.min) { draft.ses.min = Math.max(5, Math.min(240, draft.ses.min + +b.dataset.min)); $('#min-o').textContent = draft.ses.min; return; }
     if (b.dataset.avk && draft.av) { draft.av[b.dataset.avk] = b.dataset.avv; const y = scrollY; render(); scrollTo({ top: y }); return; }
-    if (b.dataset.so) { const i = +b.dataset.so; draft.sem.obj[i] = Object.assign({}, draft.sem.obj[i] || {}, { [b.dataset.sk]: +b.dataset.v }); b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
-    if (b.dataset.cumplida) { draft.sem.cumplida = b.dataset.cumplida; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
+    if (b.dataset.tiempo && draft.sem) { draft.sem.tiempo = +b.dataset.tiempo; const y = scrollY; render(); scrollTo({ top: y }); return; }
+    if (b.dataset.area && draft.sem) { draft.sem.area = draft.sem.area === b.dataset.area ? '' : b.dataset.area; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.area === draft.sem.area))); return; }
+    if (b.dataset.cumplida && draft.sem) { draft.sem.cumplida = b.dataset.cumplida; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
   });
-  root.addEventListener('input', e => { if (!draft.sem) return; if (e.target.id === 's-resp') draft.sem.resp = e.target.value; if (e.target.id === 's-meta') draft.sem.meta = e.target.value; });
+  root.addEventListener('input', e => { if (!draft.sem) return; const k = { 'd-mejor': 'mejor', 'd-cambiar': 'cambiar', 'd-comp': 'compromiso' }[e.target.id]; if (k) draft.sem[k] = e.target.value; });
 
   function startJugadora() {
     unsub.push(B.listenDoc('jugadoras/' + me.uid, d => { U.perfil = d; if (d) U.editAlta = false; render(); }, () => {}));
@@ -529,11 +542,10 @@
     if (datosOn) return; datosOn = true;
     unsub.push(B.listenCol(`registros/${me.uid}/dias`, L => { U.dias = Object.fromEntries(L.map(x => [x.id, x.data])); render(); }, () => {}));
     unsub.push(B.listenCol(`registros/${me.uid}/semanas`, L => { U.semanas = Object.fromEntries(L.map(x => [x.id, x.data])); render(); }, () => {}));
-    unsub.push(B.listenDoc('equipos/' + (U.acceso.equipo || U.perfil.equipo), d => { U.equipo = d; render(); }, () => {}));
   }
 
   // ================= Dirección Técnica =================
-  const navA = () => `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['equipo', 'Jugadoras'], ['semana', 'Objetivos'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
+  const navA = () => `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['equipo', 'Jugadoras'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
   const activas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa).sort((a, b) => (A.jug[a].nombre || '').localeCompare(A.jug[b].nombre || '', 'es'));
   const pendientes = () => Object.keys(A.jug).filter(u => !(A.acc[u] || {}).activa && !(A.acc[u] || {}).ts);
   const desactivadas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa === false && (A.acc[u] || {}).ts);
@@ -579,13 +591,16 @@
         ${bad.length ? `<div class="al-h bad">${ST_IC.bad}Habla con ella · ${bad.length}</div><ul class="al-list">${bad.map(al).join('')}</ul>` : ''}
         ${warn.length ? `<div class="al-h warn">${ST_IC.warn}Échale un ojo · ${warn.length}</div><ul class="al-list">${warn.map(al).join('')}</ul>` : ''}
         ${!bad.length && !warn.length ? '<p class="sub">Nadie con avisos. Todo en orden.</p>' : ''}</section>
-      <section class="card"><h2>Su semana</h2><p>${cerradas} de ${us.length} han cerrado su semana.</p></section>`
+      <section class="card"><h2>Su diario</h2><p>${cerradas} de ${us.length} han escrito su semana.</p>${(() => {
+        const sem = us.map(u => semDe(u)[mondayOf(t)]).filter(Boolean), ti = sem.map(x => x.tiempo).filter(Boolean), cu = sem.map(x => x.cumplida).filter(Boolean);
+        return (ti.length ? `<div class="wx-sum">${TIEMPO.map(([v, l]) => { const c = ti.filter(x => x === v).length; return c ? `<span>${wx(v)}<b>${c}</b><small>${l}</small></span>` : ''; }).join('')}</div>` : '')
+          + (cu.length ? `<p class="sub">Compromiso de la semana pasada: ${['si', 'medias', 'no'].map(k => `${cu.filter(x => x === k).length} ${STAMP[k].toLowerCase()}`).join(' · ')}.</p>` : ''); })()}</section>`
       : `<section class="card"><p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p></section>`}`,
       { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   function detalleView() {
     const u = A.sel, J = A.jug[u]; if (!J) { view = 'equipo'; return equipoView(); }
-    const t = today(), D = diasDe(u), S = semDe(u), e = estado(D, t), V = A.val[u] || {};
+    const t = today(), D = diasDe(u), S = semDe(u), e = estado(D, t);
     const last14 = []; for (let i = 0; i < 14; i++) last14.push(addDays(t, -i));
     const semanas = Object.keys(S).sort().reverse().slice(0, 6);
     shell(`<button class="btn ghost small back" type="button" data-av="equipo">← Todas las jugadoras</button>
@@ -597,23 +612,12 @@
       </div>
       <section class="card"><h2>Últimos 14 días</h2><div class="tbl-wrap"><table><thead><tr><th>Día</th>${WELL.map(w => `<th class="num">${w.n.split(' ')[0]}</th>`).join('')}<th class="num">Esfuerzo</th><th class="num">Min</th><th class="num">Carga</th><th>Nota</th></tr></thead><tbody>
         ${last14.map(k => { const d = D[k] || {}, a = d.antes || {}, L = d.ses || []; if (!d.antes && !L.length) return ''; return `<tr><td>${esc(fmtShort(k))}</td>${WELL.map(w => `<td class="num">${a[w.k] || '—'}</td>`).join('')}<td class="num">${L.map(s => s.rpe).join(' + ') || '—'}</td><td class="num">${L.map(s => s.min).join(' + ') || '—'}</td><td class="num">${L.length ? fmtInt(dayLoad(d)) : '—'}</td><td>${esc(L.map(s => s.nota).filter(Boolean).join(' · '))}</td></tr>`; }).join('') || `<tr><td colspan="${WELL.length + 5}" class="sub">Sin respuestas en estos 14 días.</td></tr>`}</tbody></table></div></section>
-      <section class="card"><h2>Autoevaluación y metas</h2><p class="sub">Lo que ella dice y, al lado, tu valoración (solo la ves tú).</p>
-        ${semanas.length ? semanas.map(k => { const s = S[k], v = V[k] || { obj: [] }; return `<div class="obj"><span class="kicker">Semana del ${esc(fmtShort(k))}</span>
-          ${s.obj.map((o, i) => `<div class="q"><b>${esc(o.t)}</b><span class="sub">Ella: decide «${esc(ESC3[o.decide - 1])}», ejecuta «${esc(ESC3[o.ejecuta - 1])}»</span>
-            <div class="row"><span class="sub">Tú, decide:</span><div class="seg">${ESC3.map((l, n) => `<button type="button" data-val="${k}|${i}|decide|${n + 1}" aria-pressed="${(v.obj[i] || {}).decide === n + 1}">${l}</button>`).join('')}</div></div>
-            <div class="row"><span class="sub">Tú, ejecuta:</span><div class="seg">${ESC3.map((l, n) => `<button type="button" data-val="${k}|${i}|ejecuta|${n + 1}" aria-pressed="${(v.obj[i] || {}).ejecuta === n + 1}">${l}</button>`).join('')}</div></div></div>`).join('')}
-          ${s.cumplida ? `<p>Meta anterior: ${esc((META_OK.find(x => x[0] === s.cumplida) || [])[1] || '')}</p>` : ''}${s.resp ? `<p><b>${esc(s.pregunta || 'Respuesta')}</b><br>${esc(s.resp)}</p>` : ''}<p><b>Su meta:</b> ${esc(s.meta || '—')}</p></div>`; }).join('') : '<p class="sub">Todavía no ha hecho ninguna autoevaluación.</p>'}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
-  }
-  function objetivosView() {
-    const lunes = mondayOf(today()), sig = addDays(lunes, 7), wk = A.semWk || lunes;
-    shell(`<div><span class="kicker">Lo que se autoevalúa cada semana</span><h1>Objetivos</h1></div>
-      <div class="seg" role="group" aria-label="Semana">${[[lunes, 'Esta semana'], [sig, 'La que viene']].map(([k, l]) => `<button type="button" data-awk="${k}" aria-pressed="${wk === k}">${l} · ${esc(fmtShort(k))}</button>`).join('')}</div>
-      ${EQUIPOS.map(E => { const cur = ((A.equipos[E.id] || {}).sem || {})[wk] || {}, prev = ((A.equipos[E.id] || {}).sem || {})[addDays(wk, -7)];
-        return `<section class="card"><div class="card-h"><h2>${E.n}</h2>${prev ? `<button class="btn small" type="button" data-a="copiarsem" data-eq="${E.id}">Copiar la semana anterior</button>` : ''}</div>
-        ${[0, 1, 2].map(i => `<label class="field">Objetivo ${i + 1}${i ? ' (opcional)' : ''}<input type="text" id="o-${E.id}-${i}" maxlength="120" value="${esc((cur.obj || [])[i] || '')}" placeholder="${i === 0 ? 'Por ejemplo: presionar al pase atrás' : ''}"></label>`).join('')}
-        <label class="field">Pregunta para pensar (opcional)<input type="text" id="p-${E.id}" maxlength="160" value="${esc(cur.pregunta || '')}" placeholder="${esc(PREGUNTAS[0])}"></label>
-        <button class="btn primary" type="button" data-a="saveobj" data-eq="${E.id}">Guardar ${E.n}</button></section>`; }).join('')}
-      <p class="sub">Cada jugadora se valora en cada objetivo con «decido» y «ejecuto», de «Todavía no» a «Casi siempre». Si no pones pregunta, sale una de la lista.</p>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+      <section class="card"><h2>Su diario</h2>
+        ${semanas.length ? semanas.map(k => { const x = S[k]; return `<div class="obj"><span class="kicker">Semana del ${esc(fmtShort(k))}</span>
+          ${x.tiempo ? `<span class="wx-line">${wx(x.tiempo)}${esc(TIEMPO[x.tiempo - 1][1])}</span>` : ''}
+          ${x.cumplida ? `<span class="sub">Su compromiso anterior: ${esc(STAMP[x.cumplida] || '')}</span>` : ''}
+          ${x.mejor ? `<p><b>Lo mejor:</b> ${esc(x.mejor)}</p>` : ''}${x.cambiar ? `<p><b>Lo que cambiaría:</b> ${esc(x.cambiar)}</p>` : ''}${x.resp ? `<p><b>${esc(x.pregunta || 'Respuesta')}</b><br>${esc(x.resp)}</p>` : ''}
+          <p><b>Se compromete a:</b> ${esc(compOf(x) || '—')}${x.area ? ` <span class="pill">${esc(x.area)}</span>` : ''}</p></div>`; }).join('') : '<p class="sub">Todavía no ha escrito en su diario.</p>'}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   function accesoView() {
     const P = pendientes(), act = activas(), des = desactivadas();
@@ -651,31 +655,13 @@
     const csv = '﻿' + rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `smb-femenino-${today()}.csv`; document.body.appendChild(a); a.click(); a.remove();
   };
-  actions.saveobj = async b => {
-    const eq = b.dataset.eq, wk = A.semWk || mondayOf(today());
-    const obj = [0, 1, 2].map(i => $(`#o-${eq}-${i}`).value.trim()).filter(Boolean), pregunta = $(`#p-${eq}`).value.trim();
-    if (!obj.length) { toast('Pon al menos un objetivo.'); return; }
-    await B.merge('equipos/' + eq, { sem: Object.assign({}, (A.equipos[eq] || {}).sem || {}, { [wk]: { obj, pregunta } }) });
-    toast(`Objetivos de ${eqName(eq)} guardados.`);
-  };
-  actions.copiarsem = async b => {
-    const eq = b.dataset.eq, wk = A.semWk || mondayOf(today()), prev = (((A.equipos[eq] || {}).sem || {})[addDays(wk, -7)]) || {};
-    [0, 1, 2].forEach(i => { $(`#o-${eq}-${i}`).value = (prev.obj || [])[i] || ''; }); $(`#p-${eq}`).value = prev.pregunta || '';
-  };
   root.addEventListener('click', async e => {
     if (!isAdmin()) return;
     const b = e.target.closest('button, tr[data-jug]'); if (!b) return;
     if (b.dataset.av) { view = b.dataset.av; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.aeq) { A.eq = b.dataset.aeq; render(); return; }
     if (b.dataset.req) { A.req = b.dataset.req; render(); return; }
-    if (b.dataset.awk) { A.semWk = b.dataset.awk; render(); return; }
     if (b.dataset.jug) { A.sel = b.dataset.jug; view = 'detalle'; render(); scrollTo({ top: 0 }); return; }
-    if (b.dataset.val) {
-      const [k, i, key, v] = b.dataset.val.split('|'), u = A.sel, cur = clone((A.val[u] || {})[k] || { obj: [] });
-      cur.obj[+i] = Object.assign({}, cur.obj[+i] || {}, { [key]: +v }); cur.ts = Date.now();
-      A.val[u] = Object.assign({}, A.val[u] || {}, { [k]: cur }); render();
-      try { await B.set(`valoraciones/${u}/semanas/${k}`, cur); } catch (er) { toast('No se ha podido guardar tu valoración.'); }
-    }
   });
   root.addEventListener('keydown', e => { if (isAdmin() && e.key === 'Enter' && e.target.dataset && e.target.dataset.jug) e.target.click(); });
   root.addEventListener('change', async e => {
@@ -686,7 +672,6 @@
     view = 'resumen';
     unsub.push(B.listenCol('jugadoras', L => { A.jug = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));
     unsub.push(B.listenCol('acceso', L => { A.acc = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));
-    unsub.push(B.listenCol('equipos', L => { A.equipos = Object.fromEntries(L.map(x => [x.id, x.data])); render(); }, () => {}));
   }
   // escucha lo de cada jugadora con alta
   function syncRegs() {
@@ -695,8 +680,7 @@
       A.regs[u] = A.regs[u] || { dias: {}, semanas: {} };
       const s1 = B.listenCol(`registros/${u}/dias`, L => { A.regs[u].dias = Object.fromEntries(L.map(x => [x.id, x.data])); renderSoon(); }, () => {});
       const s2 = B.listenCol(`registros/${u}/semanas`, L => { A.regs[u].semanas = Object.fromEntries(L.map(x => [x.id, x.data])); renderSoon(); }, () => {});
-      const s3 = B.listenCol(`valoraciones/${u}/semanas`, L => { A.val[u] = Object.fromEntries(L.map(x => [x.id, x.data])); renderSoon(); }, () => {});
-      A.subs[u] = () => { s1(); s2(); s3(); };
+      A.subs[u] = () => { s1(); s2(); };
     });
     Object.keys(A.subs).forEach(u => { if (!A.jug[u]) { A.subs[u](); delete A.subs[u]; } });
   }
@@ -710,12 +694,12 @@
     if (me === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!me) return loginView();
     if (!ADMIN.length) return gate(`<h2>Falta un paso de configuración</h2><p>Copia este código y ponlo en <b>firebase-config.js</b> (SMBF_ADMIN) y en las reglas (ADMIN_UID). Es tu código de usuario: con él la app sabe que eres la Dirección Técnica.</p><p class="code">${esc(me.uid)}</p><button class="btn ghost" type="button" data-a="out">Salir</button>`);
-    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'semana') return objetivosView(); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
+    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
     if (U.perfil === undefined || U.acceso === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!U.perfil || !U.perfil.acepta || U.editAlta) return altaView();
     if (!U.acceso || !U.acceso.activa) return esperaView();
     if (view === 'antes') return antesFlowView();
-    if (view === 'semana') return semanaView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
+    if (view === 'semana') return diarioView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
     return hoyView();
   }
   me = undefined; render();
