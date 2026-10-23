@@ -363,6 +363,7 @@ footer.foot p { margin: 0; }
 .dt-grp { display: grid; gap: 8px; align-content: start; }
 .dt-grp h3 { margin: 0; font: 600 12px/1.2 var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .dt-grp .btn { justify-content: flex-start; width: 100%; }
+.dt-grp a.btn { text-decoration: none; color: inherit; }
 .sg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .sg-row { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
 .sg-row > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(140px, 1.3fr) repeat(4, minmax(0, 1fr)); gap: 10px; align-items: center; padding: 10px 12px; }
@@ -2484,6 +2485,7 @@ function dtResumenHTML(X) {
       <div class="dt-grp"><h3>Cuerpo técnico</h3>${B('seg', 'Seguimiento por entrenador')}${B('alta', X.CL ? 'Dar de alta a un entrenador' : 'Añadir entrenador al vestuario')}${B('puntos', 'Dar puntos')}</div>
       <div class="dt-grp"><h3>Liga y votación</h3>${B('cand-ej', 'Proponer un ejercicio')}${B('cand-ses', 'Proponer una sesión')}${B('jornada', 'Jugar la jornada')}</div>
       <div class="dt-grp"><h3>Horario</h3>${B('hz-add', 'Añadir un entreno')}${B('hz-sin', 'Añadir días sin entreno')}${B('hz', 'Ver el horario')}</div>
+      <div class="dt-grp"><h3>Femenino</h3><a class="btn" id="dt-fem" href="https://hockeysmb.github.io/femenino/" target="_blank" rel="noopener">App de jugadoras</a></div>
     </div></section>`;
 }
 function dtBancoHTML(X) {

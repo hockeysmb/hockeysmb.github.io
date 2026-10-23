@@ -10,6 +10,7 @@ async def main():
       ctx=await b.new_context(viewport={'width':W,'height':900})
       await ctx.add_init_script('const OWNER=false;'+MOCK)
       pg=await ctx.new_page(); pg.on('pageerror',lambda e:errs.append(str(e)))
+      await pg.clock.set_system_time(__import__('datetime').datetime(2026,10,21,12,0,0))   # fecha fija: el plan depende del día
       await pg.goto(ART_URL); await pg.wait_for_timeout(700)
       await pg.click('[data-nav="sesiones"]'); await pg.click('[data-scope="plan"]'); await pg.wait_for_timeout(200)
       print('plan', (await pg.inner_text('.plan'))[:220].replace('\n',' | '))

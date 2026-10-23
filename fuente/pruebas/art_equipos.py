@@ -11,6 +11,7 @@ async def main():
     await ctx.route('https://fonts.googleapis.com/**', lambda r: r.abort())
     await ctx.add_init_script('const OWNER=true;' + MOCK_ART)
     pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
+    await pg.clock.set_system_time(__import__('datetime').datetime(2026,10,21,12,0,0))   # fecha fija: la agenda depende del día
     await pg.goto(ART_URL); await pg.wait_for_timeout(800)
     await pg.click('[data-nav="dt"]'); await pg.click('[data-dttab="equipo"]'); await pg.wait_for_timeout(400)
     by = await pg.evaluate("[...document.querySelectorAll('.eq-by li')].map(l=>l.innerText.replace(/\\n/g,': '))"); print('por entrenador:', by)
