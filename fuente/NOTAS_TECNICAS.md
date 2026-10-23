@@ -56,3 +56,11 @@ Mapa del código de `fuente/plantilla.html` y `fuente/web/cloud.js`: qué hace c
 - Administración: el código de usuario de la DT está en `femenino/firebase-config.js` (`SMBF_ADMIN`) y en `femenino/firestore.rules` (`isAdmin`). Para añadir otra persona, hay que ponerla en los dos sitios y volver a publicar las reglas.
 - Las reglas se publican a mano en la consola (Firestore → Reglas).
 - Cada cambio en `femenino/` sube la versión en `index.html` (`?v=`) y en `sw.js` (`VERSION`) para que los móviles se actualicen.
+
+## App de jugadoras · diseño nuevo (23 oct)
+
+Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 3C (rediseñada, pendiente de su visto bueno), 4C y 5C.
+- **Antes del entreno (1B):** `antesFlowView()`, `view = 'antes'`, una pregunta por pantalla (`WELL[].q` y `WELL[].o`, respuestas de 1 a 5), pasa sola al tocar (`data-fw`) y guarda al acabar (`saveAntes`). Los datos no cambian: `antes {sueno, fatiga, dolor, estres, animo}`.
+- **Después (2B):** cinco niveles `NIV_RPE` (Paseo 1–2 … Al límite 9–10). Al tocar uno se guarda el valor bajo, que coincide con las anclas de la escala CR-10 (Muy duro = 7); «Afina» deja elegir el otro. Minutos con botones (`MINS`) u «Otro» con ±5. La carga sigue siendo esfuerzo × minutos.
+- **Mi jugadora (4C):** personaje Avataaars con `femenino/lib/avatar.js`, que es una **copia** de `fuente/lib/avatar.bundle.js` (esta app no tiene paso de construcción). `puntos()` se calcula de lo respondido: +10 antes, +10 después, +20 semana, +15 si contesta la pregunta. **Nunca dependen de lo que contesta.** `NIVELES` (10), `ITEMS` (ropa, gafas, gorro, fondo y marco se desbloquean por nivel; piel, pelo y cara son libres). El personaje se guarda en `jugadoras/{uid}.av`, así que no hacen falta reglas nuevas. La evolución (gráficos y metas) está en esta misma pantalla.
+- **Panel de la DT (5C):** `resumenView()` es la pantalla de inicio (pestaña «Equipo»). Muestra cuántas han respondido el día de entreno (o el último), cómo llega el equipo frente a lo normal (el equipo se trata como una jugadora: `teamDias`), el esfuerzo de la semana frente al mes (suma de cargas) y los avisos de `estado()`.

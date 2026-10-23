@@ -64,16 +64,90 @@
   // ================= lo que se pregunta =================
   const EQUIPOS = [{ id: 'sub17', n: 'Sub17', dias: [1, 2] }, { id: 'senior', n: 'Senior Fem', dias: [1, 2, 4] }];
   const eqName = id => (EQUIPOS.find(e => e.id === id) || {}).n || '—';
+  // n: nombre para la DT; s: corto; q: la pregunta (una por pantalla); o: respuestas de 1 (peor) a 5 (mejor)
   const WELL = [
-    { k: 'sueno', n: 'Sueño', lo: 'Muy mal', hi: 'Muy bien' },
-    { k: 'fatiga', n: 'Cansancio', lo: 'Agotada', hi: 'Muy fresca' },
-    { k: 'dolor', n: 'Molestias musculares', lo: 'Muchas', hi: 'Ninguna' },
-    { k: 'estres', n: 'Estrés', lo: 'Mucho', hi: 'Nada' },
-    { k: 'animo', n: 'Ánimo', lo: 'Muy bajo', hi: 'Muy bueno' },
+    { k: 'sueno', n: 'Sueño', s: 'Sueño', q: '¿Has dormido bien?', o: ['Fatal', 'Poco', 'Normal', 'Bien', 'Genial'] },
+    { k: 'fatiga', n: 'Cansancio', s: 'Piernas', q: '¿Cómo tienes las piernas?', o: ['Sin fuerza', 'Cansadas', 'Normal', 'Bien', 'Frescas'] },
+    { k: 'dolor', n: 'Molestias musculares', s: 'Molestias', q: '¿Te duele algo?', o: ['Me duele mucho', 'Bastante', 'Alguna molestia', 'Casi nada', 'Nada'] },
+    { k: 'estres', n: 'Estrés', s: 'Cabeza', q: '¿Cómo vas de cabeza?', o: ['Muy agobiada', 'Agobiada', 'Normal', 'Tranquila', 'Muy tranquila'] },
+    { k: 'animo', n: 'Ánimo', s: 'Ánimo', q: '¿Y de ánimo?', o: ['Muy bajo', 'Bajo', 'Normal', 'Bien', 'Muy bien'] },
   ];
-  // escala CR-10 de esfuerzo percibido (Foster)
-  const RPE = ['Reposo', 'Muy, muy suave', 'Suave', 'Moderado', 'Algo duro', 'Duro', 'Duro', 'Muy duro', 'Muy duro', 'Casi al máximo', 'Máximo'];
-  const TIPOS = [{ k: 'entreno', n: 'Entreno', min: 90 }, { k: 'partido', n: 'Partido', min: 50 }, { k: 'otro', n: 'Otro', min: 45 }];
+  // escala CR-10 de esfuerzo percibido (Foster), agrupada en cinco niveles que se afinan con un segundo toque
+  const RPE = ['Reposo', 'Muy suave', 'Suave', 'Normal', 'Algo duro', 'Duro', 'Duro', 'Muy duro', 'Muy duro', 'Al límite', 'Al límite'];
+  const NIV_RPE = [{ n: 'Paseo', r: [1, 2] }, { n: 'Cómodo', r: [3, 4] }, { n: 'Exigente', r: [5, 6] }, { n: 'Muy duro', r: [7, 8] }, { n: 'Al límite', r: [9, 10] }];
+  const nivRpe = v => NIV_RPE.findIndex(x => x.r.includes(v));
+  const TIPOS = [{ k: 'entreno', n: 'Entreno', min: 90 }, { k: 'partido', n: 'Partido', min: 50 }, { k: 'otro', n: 'Otro', min: 60 }];
+  const MINS = [50, 60, 75, 90, 120];
+  // caras de 1 (peor) a 5 (mejor)
+  const MOUTH = ['M8 17 Q12 13 16 17', 'M8.5 16.5 Q12 14.5 15.5 16.5', 'M8.5 15.5 L15.5 15.5', 'M8.5 14.5 Q12 16.5 15.5 14.5', 'M8 14 Q12 18.5 16 14'];
+  const face = v => `<svg class="face" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle class="e" cx="9" cy="10" r="1.2"/><circle class="e" cx="15" cy="10" r="1.2"/><path d="${MOUTH[(v || 3) - 1]}"/></svg>`;
+  const bars = k => `<span class="bars" aria-hidden="true">${[6, 11, 16, 20, 24].map((h, i) => `<i style="height:${h}px"${i <= k ? ' class="f"' : ''}></i>`).join('')}</span>`;
+
+  // ================= juego: puntos por responder (nunca por lo que se responde) =================
+  const PTS = { antes: 10, despues: 10, semana: 20, resp: 15 };
+  const NIVELES = [['Novata', 0], ['Calentando', 30], ['En pista', 80], ['Titular', 150], ['Imprescindible', 250], ['Referente', 380], ['Capitana', 550], ['Veterana', 750], ['Mito', 1000], ['Leyenda del SMB', 1300]];
+  function puntos(dias, semanas) {
+    let p = 0;
+    Object.values(dias || {}).forEach(d => { if (!d) return; if (d.antes) p += PTS.antes; if ((d.ses || []).length) p += PTS.despues; });
+    Object.values(semanas || {}).forEach(s => { if (!s) return; p += PTS.semana; if (String(s.resp || '').trim()) p += PTS.resp; });
+    return p;
+  }
+  const nivelDe = p => { let i = 0; NIVELES.forEach(([, m], k) => { if (p >= m) i = k; }); return i; };
+  // personaje: lo que es de ella (piel, pelo, cara) es libre; ropa, gafas, fondos y marcos se desbloquean por nivel (1 a 10)
+  const SKINS = ['ffdbb4', 'edb98a', 'f8d25c', 'fd9841', 'd08b5b', 'ae5d29', '614335'];
+  const HAIR_COLORS = ['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1', 'c93305', 'f59797'];
+  const HAIRS = [['straight02', 'Liso largo'], ['straight01', 'Liso'], ['straightAndStrand', 'Liso con mechón'], ['longButNotTooLong', 'Media melena'], ['bigHair', 'Melena'], ['bob', 'Melena corta'],
+    ['bun', 'Moño'], ['curly', 'Rizado'], ['curvy', 'Ondas'], ['miaWallace', 'Flequillo recto'], ['frida', 'Trenzas con flores'], ['fro', 'Afro'], ['froBand', 'Afro con cinta'], ['dreads01', 'Rastas'],
+    ['shaggy', 'Despeinado'], ['shortWaved', 'Corto ondulado'], ['shortCurly', 'Corto rizado'], ['shortFlat', 'Corto'], ['hijab', 'Hiyab'], ['turban', 'Turbante']];
+  const EYES = [['default', 'Normales'], ['happy', 'Felices'], ['squint', 'Entornados'], ['side', 'De lado'], ['wink', 'Guiño']];
+  const MOUTHS = [['smile', 'Sonrisa'], ['default', 'Normal'], ['twinkle', 'Pícara'], ['serious', 'Seria']];
+  // [categoría, valor, nombre, nivel]
+  const ITEMS = [
+    ['ropa', 'hoodie:681825', 'Sudadera granate', 1], ['ropa', 'shirtCrewNeck:681825', 'Camiseta granate', 1], ['fondo', 'rosa', 'Rosa', 1], ['fondo', 'gris', 'Gris', 1], ['gafas', '', 'Sin gafas', 1], ['gorro', '', 'Sin gorro', 1], ['marco', '', 'Sin marco', 1],
+    ['ropa', 'shirtCrewNeck:ffffff', 'Camiseta blanca', 2], ['gafas', 'round', 'Gafas redondas', 2],
+    ['fondo', 'pista', 'La pista', 3], ['ropa', 'hoodie:262e33', 'Sudadera negra', 3],
+    ['gafas', 'sunglasses', 'Gafas de sol', 4], ['gorro', 'winterHat02', 'Gorro con pompón', 4],
+    ['fondo', 'atardecer', 'Pista al atardecer', 5], ['ropa', 'graphicShirt:681825', 'Camiseta con dibujo', 5],
+    ['marco', 'plata', 'Marco plateado', 6], ['ropa', 'collarAndSweater:3f4a6e', 'Jersey azul marino', 6],
+    ['fondo', 'noche', 'Pabellón de noche', 7], ['gafas', 'kurt', 'Gafas retro', 7],
+    ['marco', 'oro', 'Marco dorado', 8], ['gorro', 'winterHat03', 'Gorro nórdico', 8],
+    ['fondo', 'confeti', 'Confeti', 9], ['ropa', 'blazerAndShirt:681825', 'Americana', 9],
+    ['marco', 'leyenda', 'Marco de leyenda', 10],
+  ];
+  const AV_DEF = { skin: 'edb98a', top: 'straight02', hairColor: '4a312c', eyes: 'default', mouth: 'smile', ropa: 'hoodie:681825', gafas: '', gorro: '', fondo: 'rosa', marco: '' };
+  const itemOk = (cat, v, lv) => { const it = ITEMS.find(x => x[0] === cat && x[1] === v); return !!it && it[3] <= lv + 1; };
+  function avNorm(av, lv) {
+    const a = Object.assign({}, AV_DEF, av || {});
+    ['ropa', 'gafas', 'gorro', 'fondo', 'marco'].forEach(c => { if (!itemOk(c, a[c], lv)) a[c] = AV_DEF[c]; });
+    return a;
+  }
+  function fondoSVG(bg, id) {
+    if (bg === 'pista') return `<rect width="280" height="280" fill="#dfe8f3"/><rect y="200" width="280" height="80" fill="#c8d6e6"/><line x1="0" y1="200" x2="280" y2="200" stroke="#fff" stroke-width="4"/><path d="M248,150 a22,22 0 0 1 0,44 z" fill="#fff" stroke="#f26a1b" stroke-width="4"/><circle cx="40" cy="44" r="4" fill="#1b1b1b"/>`;
+    if (bg === 'atardecer') return `<defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a5a"/><stop offset=".6" stop-color="#ffcf7a"/><stop offset="1" stop-color="#ffe6b0"/></linearGradient></defs><rect width="280" height="280" fill="url(#${id}s)"/><circle cx="140" cy="170" r="70" fill="#fff3c4" opacity=".7"/><rect y="210" width="280" height="70" fill="#5b7fa8"/><line x1="0" y1="210" x2="280" y2="210" stroke="#fff" stroke-width="3"/>`;
+    if (bg === 'noche') return `<rect width="280" height="280" fill="#1c2340"/>${[[40, 30], [120, 18], [210, 40], [250, 90], [24, 100]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="16" fill="#fff6c8" opacity=".9"/><circle cx="${x}" cy="${y}" r="32" fill="#fff6c8" opacity=".15"/>`).join('')}<rect y="210" width="280" height="70" fill="#2e3a66"/><line x1="0" y1="210" x2="280" y2="210" stroke="#7d8fc9" stroke-width="3"/>`;
+    if (bg === 'confeti') return `<rect width="280" height="280" fill="#681825"/>${Array.from({ length: 46 }, (_, k) => `<rect x="${(k * 61) % 270}" y="${(k * 37) % 270}" width="8" height="4" rx="1" transform="rotate(${(k * 47) % 180} ${(k * 61) % 270 + 4} ${(k * 37) % 270 + 2})" fill="${['#f2c14e', '#ffffff', '#e3949f', '#8fd0a8'][k % 4]}"/>`).join('')}`;
+    const c = { rosa: '#e6c6cb', gris: '#d9d2d3' }[bg] || '#e6c6cb';
+    return `<rect width="280" height="280" fill="${c}"/><circle cx="140" cy="150" r="112" fill="#ffffff" opacity=".2"/>`;
+  }
+  function marcoSVG(m) {
+    if (m === 'leyenda') return `<rect x="5" y="5" width="270" height="270" rx="30" fill="none" stroke="#681825" stroke-width="10"/><rect x="11" y="11" width="258" height="258" rx="25" fill="none" stroke="#e0b23c" stroke-width="5"/>`;
+    const c = { plata: '#9aa3ad', oro: '#e0b23c' }[m];
+    return c ? `<rect x="5" y="5" width="270" height="270" rx="30" fill="none" stroke="${c}" stroke-width="9"/>` : '';
+  }
+  let avSeq = 0;
+  function avatarSVG(av, lv, label) {
+    const a = avNorm(av, lv), id = 'fav' + (++avSeq), [cl, cc] = a.ropa.split(':');
+    let body = '';
+    if (typeof window.SMBAvatar === 'function') {
+      try {
+        body = window.SMBAvatar({ seed: 'smbf', randomizeIds: true, backgroundColor: [], skinColor: [a.skin], top: [a.gorro || a.top], hairColor: [a.hairColor], hatColor: ['681825'], topProbability: 100,
+          eyes: [a.eyes], eyebrows: ['defaultNatural'], mouth: [a.mouth], nose: ['default'], facialHairProbability: 0,
+          accessories: a.gafas ? [a.gafas] : ['round'], accessoriesColor: ['262e33'], accessoriesProbability: a.gafas ? 100 : 0,
+          clothing: [cl], clothesColor: [cc], clothingGraphic: ['diamond'] }).replace(/^<svg /, '<svg x="0" y="0" width="280" height="280" ');
+      } catch (e) { body = ''; }
+    }
+    return `<svg class="av" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(label || 'Tu jugadora')}"><clipPath id="${id}c"><rect width="280" height="280" rx="32"/></clipPath><g clip-path="url(#${id}c)">${fondoSVG(a.fondo, id)}${body}</g>${marcoSVG(a.marco)}</svg>`;
+  }
   const ESC3 = ['Todavía no', 'A veces', 'Casi siempre'];
   const PREGUNTAS = [
     '¿Qué te ha funcionado esta semana?',
@@ -243,7 +317,7 @@
   };
 
   // ================= jugadora: la app =================
-  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['semana', 'Semana'], ['evol', 'Mi evolución'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k ? 'page' : 'false'}">${l}</button>`).join('')}</nav>`;
+  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['semana', 'Semana'], ['yo', 'Mi jugadora'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k ? 'page' : 'false'}">${l}</button>`).join('')}</nav>`;
   const eqObj = () => (EQUIPOS.find(e => e.id === (U.acceso.equipo || U.perfil.equipo)) || EQUIPOS[0]);
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
@@ -251,22 +325,33 @@
   function antesHTML() {
     const a = diaHoy().antes;
     if (a && !draft.editAntes) return `<section class="card done"><div class="card-h"><h2>Antes del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>
-      <div class="summary">${WELL.map(w => `<span class="pill">${w.n}: ${a[w.k]}</span>`).join('')}</div><button class="btn small" type="button" data-a="editantes">Cambiar</button></section>`;
-    const d = draft.antes;
-    return `<section class="card" id="c-antes"><div class="card-h"><h2>Antes del entreno</h2><span class="sub">¿Cómo llegas hoy? De 1 a 5.</span></div>
-      ${WELL.map(w => `<div class="q"><div class="q-h"><span>${w.n}</span></div><div class="scale" role="group" aria-label="${w.n}">${[1, 2, 3, 4, 5].map(v => `<button type="button" data-w="${w.k}" data-v="${v}" aria-pressed="${d[w.k] === v}">${v}</button>`).join('')}</div><div class="scale-ends"><span>${w.lo}</span><span>${w.hi}</span></div></div>`).join('')}
-      <button class="btn primary" type="button" data-a="saveantes">Guardar</button></section>`;
+      <div class="faces">${WELL.map(w => `<span class="mf">${face(a[w.k])}<b>${esc(w.s)}</b><small>${esc(w.o[a[w.k] - 1] || '')}</small></span>`).join('')}</div><button class="btn small" type="button" data-a="editantes">Cambiar</button></section>`;
+    const n = WELL.filter(w => draft.antes[w.k] >= 1).length;
+    return `<section class="card" id="c-antes"><div class="card-h"><h2>Antes del entreno</h2><span class="sub">¿Cómo llegas hoy?</span></div>
+      <button class="btn primary big" type="button" data-a="startantes">${n ? `Seguir · ${n} de 5` : 'Empezar · 15 segundos'}</button></section>`;
+  }
+  // antes del entreno: una pregunta por pantalla; al tocar pasa sola a la siguiente y guarda al acabar
+  function antesFlowView() {
+    const i = Math.min(draft.paso || 0, WELL.length - 1), w = WELL[i], d = draft.antes;
+    root.innerHTML = `<div class="flow"><header class="flow-top"><button class="btn ghost small" type="button" data-a="flowback"${i ? '' : ' style="visibility:hidden"'}>Atrás</button>
+        <div class="dots" role="img" aria-label="Pregunta ${i + 1} de ${WELL.length}">${WELL.map((_, k) => `<span${k <= i ? ' class="on"' : ''}></span>`).join('')}</div>
+        <button class="btn ghost small" type="button" data-a="flowclose">Cerrar</button></header>
+      <main class="wrap flow-in"><div><span class="kicker">Antes del entreno · ${i + 1} de ${WELL.length}</span><h1 class="flow-q">${esc(w.q)}</h1></div>
+        <div class="opts" role="group" aria-label="${esc(w.q)}">${[5, 4, 3, 2, 1].map(v => `<button type="button" class="opt" data-fw="${w.k}" data-v="${v}" aria-pressed="${d[w.k] === v}">${face(v)}<span>${esc(w.o[v - 1])}</span></button>`).join('')}</div>
+        <p class="sub center">Al tocar una, pasa sola a la siguiente.</p></main></div>`;
   }
   function despuesHTML() {
     const L = diaHoy().ses || [], d = draft.ses;
-    const done = L.length ? `<ul class="list">${L.map((s, i) => `<li class="li"><span><b>${esc((TIPOS.find(t => t.k === s.tipo) || TIPOS[0]).n)} · esfuerzo ${s.rpe} (${esc(RPE[s.rpe])})</b><small>${s.min} min · carga ${fmtInt(s.rpe * s.min)}${s.nota ? ' · ' + esc(s.nota) : ''}</small></span><button class="btn ghost small" type="button" data-a="delses" data-i="${i}">Quitar</button></li>`).join('')}</ul>` : '';
+    const done = L.length ? `<ul class="list">${L.map((s, i) => `<li class="li"><span><b>${esc((TIPOS.find(t => t.k === s.tipo) || TIPOS[0]).n)} · ${esc((NIV_RPE[nivRpe(s.rpe)] || { n: RPE[s.rpe] }).n)} (${s.rpe})</b><small>${s.min} min${s.nota ? ' · ' + esc(s.nota) : ''}</small></span><button class="btn ghost small" type="button" data-a="delses" data-i="${i}">Quitar</button></li>`).join('')}</ul>` : '';
     if (L.length && !draft.moreSes) return `<section class="card done"><div class="card-h"><h2>Después del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>${done}<button class="btn small" type="button" data-a="moreses">Añadir otra sesión de hoy</button></section>`;
-    return `<section class="card" id="c-desp"><div class="card-h"><h2>Después del entreno</h2><span class="sub">¿Lo duro que ha sido? De 0 a 10.</span></div>${done}
+    const k = d.rpe == null ? -1 : nivRpe(d.rpe), otro = d.otroMin || !MINS.includes(d.min);
+    return `<section class="card" id="c-desp"><div class="card-h"><h2>Después del entreno</h2><span class="sub">¿Qué tal ha sido?</span></div>${done}
       <div class="seg" role="group" aria-label="Tipo">${TIPOS.map(t => `<button type="button" data-tipo="${t.k}" aria-pressed="${d.tipo === t.k}">${t.n}</button>`).join('')}</div>
-      <div class="q"><div class="scale s11" role="group" aria-label="Esfuerzo">${RPE.map((_, v) => `<button type="button" data-rpe="${v}" aria-pressed="${d.rpe === v}">${v}</button>`).join('')}</div>
-        <div class="scale-ends"><span>Reposo</span><span>Máximo</span></div><p class="rpe-lbl" id="rpe-lbl">${d.rpe == null ? '' : esc(RPE[d.rpe])}</p></div>
-      <div class="row"><span class="sub">Minutos</span><span class="stepper"><button type="button" data-min="-5" aria-label="5 minutos menos">−</button><output id="min-o">${d.min}</output><button type="button" data-min="5" aria-label="5 minutos más">+</button></span></div>
-      <label class="field">Algo que quieras contar (opcional)<input type="text" id="s-nota" value="${esc(d.nota)}" maxlength="200" placeholder="Por ejemplo: me molestaba el tobillo"></label>
+      <div class="lvls" role="group" aria-label="Lo duro que ha sido">${NIV_RPE.map((x, i) => `<button type="button" class="lvl" data-lvl="${i}" aria-pressed="${k === i}">${bars(i)}<span>${x.n}</span><small>${x.r.join('–')}</small></button>`).join('')}</div>
+      ${k >= 0 ? `<div class="q"><div class="q-h"><span>Afina, si quieres</span><small>de 0 a 10</small></div><div class="seg">${NIV_RPE[k].r.map(v => `<button type="button" data-rpe="${v}" aria-pressed="${d.rpe === v}">${v}</button>`).join('')}</div></div>` : ''}
+      <div class="q"><div class="q-h"><span>Minutos</span></div><div class="seg" role="group" aria-label="Minutos">${MINS.map(m => `<button type="button" data-minc="${m}" aria-pressed="${!otro && d.min === m}">${m}</button>`).join('')}<button type="button" data-minc="otro" aria-pressed="${otro}">Otro</button></div>
+        ${otro ? `<span class="stepper"><button type="button" data-min="-5" aria-label="5 minutos menos">−</button><output id="min-o">${d.min}</output><button type="button" data-min="5" aria-label="5 minutos más">+</button></span>` : ''}</div>
+      <label class="field">¿Algo que contar? (opcional)<input type="text" id="s-nota" value="${esc(d.nota)}" maxlength="200" placeholder="Por ejemplo: me molestaba el tobillo"></label>
       <div class="row"><button class="btn primary" type="button" data-a="saveses">Guardar</button>${L.length ? '<button class="btn ghost" type="button" data-a="lessses">Cancelar</button>' : ''}</div></section>`;
   }
   function semanaHTML(full) {
@@ -292,18 +377,63 @@
   function hoyView() {
     const t = today(), dow = dateOf(t).getDay(), E = eqObj(), entrena = E.dias.includes(dow), dia = diaHoy();
     const show = entrena || draft.showDia || dia.antes || (dia.ses || []).length;
-    const nombre = (U.perfil.nombre || '').split(' ')[0];
-    shell(`<div><span class="kicker">${esc(fmtDay(t))} · ${esc(E.n)}</span><h1>Hola, ${esc(nombre)}</h1></div>
+    const nombre = (U.perfil.nombre || '').split(' ')[0], p = puntos(U.dias, U.semanas), lv = nivelDe(p);
+    shell(`<div class="hola"><div><span class="kicker">${esc(fmtDay(t))} · ${esc(E.n)}</span><h1>Hola, ${esc(nombre)}</h1></div>
+        <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></div>
       ${show ? antesHTML() + despuesHTML() : `<section class="card"><h2>Hoy no tienes entreno con el equipo</h2><p class="sub">Si has jugado un partido o has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno o partido de hoy</button></section>`}
       ${semanaHTML(false)}`, { nav: navJ() });
   }
   function semanaView() { shell(`<div><span class="kicker">Semana del ${esc(fmtShort(mondayOf(today())))}</span><h1>Esta semana</h1></div>${semanaHTML(true)}`, { nav: navJ() }); }
-  function evolView() {
+  function yoView() {
     const t = today(), sem = Object.keys(U.semanas).sort().reverse().slice(0, 8);
-    shell(`<div><span class="kicker">Lo tuyo</span><h1>Mi evolución</h1></div>
+    const p = puntos(U.dias, U.semanas), lv = nivelDe(p), next = NIVELES[lv + 1];
+    const nuevos = next ? ITEMS.filter(x => x[3] === lv + 2).map(x => x[2]) : [];
+    const pct = next ? Math.round((p - NIVELES[lv][1]) / (next[1] - NIVELES[lv][1]) * 100) : 100;
+    if (draft.editAv) return editAvView(lv);
+    shell(`<div><span class="kicker">Lo tuyo</span><h1>Mi jugadora</h1></div>
+      <section class="card me-card"><div class="me-av">${avatarSVG(U.perfil.av, lv)}</div>
+        <div class="me-info"><span class="kicker">Nivel ${lv + 1} de ${NIVELES.length}</span><b class="me-lv">${esc(NIVELES[lv][0])}</b>
+          <div class="prog" role="img" aria-label="${pct} % hasta el siguiente nivel"><i style="width:${pct}%"></i></div>
+          <span class="sub">${next ? `${p} de ${next[1]} puntos.${nuevos.length ? ` Próximo: ${esc(nuevos.join(', ').toLowerCase())}.` : ''}` : `${p} puntos. Has llegado arriba del todo.`}</span>
+          <button class="btn small" type="button" data-a="editav">Cambiar mi jugadora</button></div></section>
+      <section class="card"><h2>Cómo se ganan puntos</h2><ul class="pts">
+        <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li>
+        <li><span>Cerrar tu semana</span><b>+${PTS.semana}</b></li><li><span>Contestar la pregunta de la semana</span><b>+${PTS.resp}</b></li></ul>
+        <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos.</p></section>
       <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, de 1 a 5, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
       <section class="card"><h2>Tu carga por semana</h2><p class="sub">Esfuerzo × minutos de cada sesión, sumado por semana. La barra clara es la semana en curso.</p>${loadChart(U.dias, t)}</section>
       <section class="card"><h2>Tus metas</h2>${sem.length ? `<ul class="list">${sem.map(k => { const s = U.semanas[k], next = U.semanas[addDays(k, 7)]; return `<li class="li"><span><b>${esc(s.meta || '—')}</b><small>Puesta la semana del ${esc(fmtShort(k))}${next && next.cumplida ? ' · ' + esc((META_OK.find(x => x[0] === next.cumplida) || [])[1] || '') : ''}</small></span></li>`; }).join('')}</ul>` : '<p class="sub">Aquí saldrán las metas que te pongas cada semana.</p>'}</section>`, { nav: navJ() });
+  }
+  function editAvView(lv) {
+    const a = draft.av = draft.av || avNorm(U.perfil.av, lv);
+    const sw = (cat, list) => `<div class="swatches">${list.map(c => `<button type="button" class="sw" data-avk="${cat}" data-avv="${c}" aria-pressed="${a[cat] === c}" style="background:#${c}" aria-label="Color ${c}"></button>`).join('')}</div>`;
+    const ch = (cat, list) => `<div class="seg">${list.map(([v, n]) => `<button type="button" data-avk="${cat}" data-avv="${v}" aria-pressed="${a[cat] === v}">${esc(n)}</button>`).join('')}</div>`;
+    const it = cat => `<div class="seg">${ITEMS.filter(x => x[0] === cat).map(([, v, n, l]) => l <= lv + 1 ? `<button type="button" data-avk="${cat}" data-avv="${v}" aria-pressed="${a[cat] === v}">${esc(n)}</button>` : `<button type="button" disabled class="locked">${esc(n)} · nivel ${l}</button>`).join('')}</div>`;
+    shell(`<div><span class="kicker">Mi jugadora</span><h1>Cámbiala a tu gusto</h1></div>
+      <section class="card av-edit"><div class="me-av big">${avatarSVG(a, lv)}</div>
+        <div class="q"><span class="q-h">Piel</span>${sw('skin', SKINS)}</div>
+        <div class="q"><span class="q-h">Pelo</span>${ch('top', HAIRS)}</div>
+        <div class="q"><span class="q-h">Color de pelo</span>${sw('hairColor', HAIR_COLORS)}</div>
+        <div class="q"><span class="q-h">Ojos</span>${ch('eyes', EYES)}</div>
+        <div class="q"><span class="q-h">Boca</span>${ch('mouth', MOUTHS)}</div>
+        <div class="q"><span class="q-h">Ropa</span>${it('ropa')}</div>
+        <div class="q"><span class="q-h">Gafas</span>${it('gafas')}</div>
+        <div class="q"><span class="q-h">Gorro</span>${it('gorro')}</div>
+        <div class="q"><span class="q-h">Fondo</span>${it('fondo')}</div>
+        <div class="q"><span class="q-h">Marco</span>${it('marco')}</div>
+        <div class="row"><button class="btn primary" type="button" data-a="saveav">Guardar</button><button class="btn ghost" type="button" data-a="noeditav">Cancelar</button></div></section>`, { nav: navJ() });
+  }
+  actions.editav = async () => { draft.editAv = true; draft.av = null; render(); scrollTo({ top: 0 }); };
+  actions.noeditav = async () => { draft.editAv = false; draft.av = null; render(); };
+  actions.saveav = async () => {
+    const av = Object.assign({}, draft.av); await B.merge('jugadoras/' + me.uid, { av });
+    U.perfil = Object.assign({}, U.perfil, { av }); draft.editAv = false; draft.av = null; toast('Guardada.'); render(); scrollTo({ top: 0 });
+  };
+  // tras guardar algo: los puntos que suma y, si sube de nivel, lo que desbloquea
+  function premio(antes) {
+    const p = puntos(U.dias, U.semanas), d = p - antes, l0 = nivelDe(antes), l1 = nivelDe(p);
+    if (l1 > l0) { const n = ITEMS.filter(x => x[3] === l1 + 1).map(x => x[2].toLowerCase()); toast(`¡Nivel ${l1 + 1}: ${NIVELES[l1][0]}!${n.length ? ' Nuevo: ' + n.join(', ') + '.' : ''}`); }
+    else toast(d > 0 ? `Guardado. +${d} puntos.` : 'Guardado. Gracias.');
   }
   function datosView() {
     const p = U.perfil, c = (U.acceso || {}).consentimiento || {};
@@ -317,21 +447,25 @@
         <div class="row"><button class="btn danger" type="button" data-a="borrartodo">Borrar todos mis datos</button></div></section>
       <button class="btn ghost" type="button" data-a="out">Cerrar sesión</button>`, { nav: navJ() });
   }
-  actions.editantes = async () => { draft.editAntes = true; draft.antes = clone(diaHoy().antes || {}); render(); };
-  actions.saveantes = async () => {
-    const d = draft.antes; if (WELL.some(w => !(d[w.k] >= 1))) { toast('Contesta las cinco antes de guardar.'); return; }
-    const a = Object.assign({}, d, { ts: Date.now() });
+  const firstEmpty = () => { const i = WELL.findIndex(w => !(draft.antes[w.k] >= 1)); return i < 0 ? 0 : i; };
+  actions.startantes = async () => { draft.paso = firstEmpty(); view = 'antes'; render(); scrollTo({ top: 0 }); };
+  actions.editantes = async () => { draft.editAntes = true; draft.antes = clone(diaHoy().antes || {}); delete draft.antes.ts; draft.paso = 0; view = 'antes'; render(); scrollTo({ top: 0 }); };
+  actions.flowback = async () => { if (draft.paso > 0) { draft.paso--; render(); } else actions.flowclose(); };
+  actions.flowclose = async () => { view = 'hoy'; draft.editAntes = false; render(); };
+  async function saveAntes() {
+    const d = draft.antes; if (WELL.some(w => !(d[w.k] >= 1))) { draft.paso = firstEmpty(); render(); return; }
+    const p0 = puntos(U.dias, U.semanas), a = Object.assign({}, d, { ts: Date.now() });
     await B.merge(`registros/${me.uid}/dias/${today()}`, { antes: a, ts: Date.now() });
     U.dias[today()] = Object.assign({}, U.dias[today()] || {}, { antes: a });
-    draft.editAntes = false; draft.antes = {}; toast('Guardado. Gracias.'); render();
-  };
+    draft.editAntes = false; draft.antes = {}; view = 'hoy'; premio(p0); render(); scrollTo({ top: 0 });
+  }
   actions.saveses = async () => {
-    const d = draft.ses; if (d.rpe == null) { toast('Elige lo duro que ha sido, de 0 a 10.'); return; }
+    const d = draft.ses; if (d.rpe == null) { toast('Elige lo duro que ha sido.'); return; }
     const s = { tipo: d.tipo, rpe: d.rpe, min: d.min, nota: ($('#s-nota') || {}).value ? $('#s-nota').value.trim() : '', ts: Date.now() };
-    const L = [...(diaHoy().ses || []), s];
+    const p0 = puntos(U.dias, U.semanas), L = [...(diaHoy().ses || []), s];
     await B.merge(`registros/${me.uid}/dias/${today()}`, { ses: L, ts: Date.now() });
     U.dias[today()] = Object.assign({}, U.dias[today()] || {}, { ses: L });
-    draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; draft.moreSes = false; toast('Guardado. Gracias.'); render();
+    draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; draft.moreSes = false; premio(p0); render();
   };
   actions.delses = async b => { const L = (diaHoy().ses || []).filter((_, i) => i !== +b.dataset.i); await B.merge(`registros/${me.uid}/dias/${today()}`, { ses: L, ts: Date.now() }); U.dias[today()] = Object.assign({}, diaHoy(), { ses: L }); render(); };
   actions.moreses = async () => { draft.moreSes = true; render(); };
@@ -346,8 +480,9 @@
     if (objs.some((_, i) => !(d.obj[i] || {}).decide || !(d.obj[i] || {}).ejecuta)) { m.className = 'msg err'; m.textContent = 'Valórate en cada objetivo (decido y ejecuto).'; return; }
     if (!d.meta) { m.className = 'msg err'; m.textContent = 'Ponte una meta para la semana que viene.'; return; }
     const doc = { obj: objs.map((t, i) => ({ t, decide: d.obj[i].decide, ejecuta: d.obj[i].ejecuta })), meta: d.meta, resp: d.resp, pregunta: b.dataset.preg, cumplida: d.cumplida || '', ts: Date.now() };
+    const p0 = puntos(U.dias, U.semanas);
     await B.set(`registros/${me.uid}/semanas/${lunes}`, doc);
-    U.semanas[lunes] = doc; draft.editSem = false; draft.sem = null; toast('Semana guardada.'); render();
+    U.semanas[lunes] = doc; draft.editSem = false; draft.sem = null; premio(p0); render();
   };
   actions.export = async () => {
     const data = { jugadora: U.perfil, acceso: U.acceso, dias: U.dias, semanas: U.semanas, descargado: new Date().toISOString() };
@@ -361,11 +496,21 @@
   const eqMin = () => 90;
   root.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || isAdmin()) return;
-    if (b.dataset.v && b.closest('.nav')) { view = b.dataset.v; draft.editSem = false; render(); scrollTo({ top: 0 }); return; }
-    if (b.dataset.w) { draft.antes[b.dataset.w] = +b.dataset.v; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
-    if (b.dataset.rpe) { draft.ses.rpe = +b.dataset.rpe; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); const l = $('#rpe-lbl'); if (l) l.textContent = RPE[draft.ses.rpe]; return; }
-    if (b.dataset.tipo) { draft.ses.tipo = b.dataset.tipo; draft.ses.min = (TIPOS.find(t => t.k === b.dataset.tipo) || TIPOS[0]).min; draft.ses.nota = ($('#s-nota') || {}).value || ''; render(); return; }
+    if (b.dataset.v && (b.closest('.nav') || b.classList.contains('me-chip'))) { view = b.dataset.v; draft.editSem = false; draft.editAv = false; draft.av = null; render(); scrollTo({ top: 0 }); return; }
+    if (b.dataset.fw) {
+      if (draft.busy) return;
+      draft.antes[b.dataset.fw] = +b.dataset.v; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      draft.busy = true;
+      setTimeout(async () => { try { if (draft.paso < WELL.length - 1) { draft.paso++; render(); } else await saveAntes(); } catch (er) { console.error(er); toast('No se ha podido guardar. Revisa la conexión e inténtalo otra vez.'); } finally { draft.busy = false; } }, 230);
+      return;
+    }
+    const keepNota = () => { draft.ses.nota = ($('#s-nota') || {}).value || ''; };
+    if (b.dataset.lvl) { keepNota(); draft.ses.rpe = NIV_RPE[+b.dataset.lvl].r[0]; render(); return; }
+    if (b.dataset.rpe) { draft.ses.rpe = +b.dataset.rpe; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
+    if (b.dataset.tipo) { keepNota(); draft.ses.tipo = b.dataset.tipo; draft.ses.min = (TIPOS.find(t => t.k === b.dataset.tipo) || TIPOS[0]).min; draft.ses.otroMin = false; render(); return; }
+    if (b.dataset.minc) { keepNota(); if (b.dataset.minc === 'otro') draft.ses.otroMin = true; else { draft.ses.min = +b.dataset.minc; draft.ses.otroMin = false; } render(); return; }
     if (b.dataset.min) { draft.ses.min = Math.max(5, Math.min(240, draft.ses.min + +b.dataset.min)); $('#min-o').textContent = draft.ses.min; return; }
+    if (b.dataset.avk && draft.av) { draft.av[b.dataset.avk] = b.dataset.avv; const y = scrollY; render(); scrollTo({ top: y }); return; }
     if (b.dataset.so) { const i = +b.dataset.so; draft.sem.obj[i] = Object.assign({}, draft.sem.obj[i] || {}, { [b.dataset.sk]: +b.dataset.v }); b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
     if (b.dataset.cumplida) { draft.sem.cumplida = b.dataset.cumplida; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
   });
@@ -388,7 +533,7 @@
   }
 
   // ================= Dirección Técnica =================
-  const navA = () => `<nav class="nav" aria-label="Secciones">${[['equipo', 'Jugadoras'], ['semana', 'Objetivos'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
+  const navA = () => `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['equipo', 'Jugadoras'], ['semana', 'Objetivos'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
   const activas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa).sort((a, b) => (A.jug[a].nombre || '').localeCompare(A.jug[b].nombre || '', 'es'));
   const pendientes = () => Object.keys(A.jug).filter(u => !(A.acc[u] || {}).activa && !(A.acc[u] || {}).ts);
   const desactivadas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa === false && (A.acc[u] || {}).ts);
@@ -404,6 +549,39 @@
       <section class="card">${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Jugadora</th><th>Estado</th><th class="num">Llega hoy</th><th class="num">Su media</th><th class="num">Carga 7 días</th><th class="num">Semana / mes</th><th>Última respuesta</th><th>Semana</th></tr></thead><tbody>
         ${rows.map(({ u, e }) => `<tr class="click" data-jug="${u}" tabindex="0"><td><b>${esc(A.jug[u].nombre)}</b><br><span class="sub">${esc(eqName(eqDe(u)))}</span></td><td>${stHTML(e.lvl)}</td><td class="num">${fmt1(e.s)}</td><td class="num">${fmt1(e.base)}</td><td class="num">${fmtInt(e.L.acute)}</td><td class="num">${e.L.ratio == null ? '—' : fmt1(e.L.ratio)}</td><td>${e.last ? esc(e.last === t ? 'hoy' : fmtShort(e.last)) : '—'}</td><td>${semDe(u)[lunes] ? 'Hecha' : '—'}</td></tr>`).join('')}</tbody></table></div>
         <p class="chart-note">«Llega hoy»: media de sus cinco respuestas de hoy (1 a 5). «Semana / mes»: carga de los últimos 7 días dividida por su media semanal del último mes; avisa por encima de 1,3 o por debajo de 0,8 (necesita 3 semanas de datos).</p>` : `<p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p>`}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+  }
+  // resumen de un equipo: cuántas han respondido, cómo llega el equipo, su esfuerzo y a quién mirar
+  const mean = v => v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  function resumenView() {
+    const eq = A.req || EQUIPOS[0].id, E = EQUIPOS.find(x => x.id === eq) || EQUIPOS[0], t = today();
+    let ref = t; for (let i = 0; i < 7; i++) { const d = addDays(t, -i); if (E.dias.includes(dateOf(d).getDay())) { ref = d; break; } }
+    const us = activas().filter(u => eqDe(u) === eq);
+    const resp = us.filter(u => (diasDe(u)[ref] || {}).antes).length;
+    const media = mean(us.map(u => wellScore((diasDe(u)[ref] || {}).antes)).filter(x => x != null));
+    // el equipo como si fuera una jugadora: su media de cada día
+    const teamDias = {};
+    for (let i = 0; i < 40; i++) { const d = addDays(t, -i), m = mean(us.map(u => wellScore((diasDe(u)[d] || {}).antes)).filter(x => x != null)); if (m != null) teamDias[d] = { antes: Object.fromEntries(WELL.map(w => [w.k, m])) }; }
+    const base = baseline(teamDias, ref);
+    let acute = 0, chronic = 0, conDatos = 0; us.forEach(u => { const L = loads(diasDe(u), t); acute += L.acute; chronic += L.chronic; if (L.span >= 21) conDatos++; });
+    const ratio = chronic > 0 && conDatos ? acute / chronic : null, pctC = ratio == null ? null : Math.round((ratio - 1) * 100);
+    const rows = us.map(u => ({ u, e: estado(diasDe(u), t) }));
+    const bad = rows.filter(r => r.e.lvl === 'bad'), warn = rows.filter(r => r.e.lvl === 'warn');
+    const cerradas = us.filter(u => semDe(u)[mondayOf(t)]).length;
+    const al = r => `<li><button type="button" class="al-row" data-jug="${r.u}"><b>${esc((A.jug[r.u].nombre || '').split(' ')[0])}</b><span>${esc((r.e.R.find(x => x.lvl === r.e.lvl) || r.e.R[0] || {}).txt || '')}</span></button></li>`;
+    shell(`<div><span class="kicker">${ref === t ? 'Hoy · ' : 'Último entreno · '}${esc(fmtDay(ref))}</span><h1>El equipo de un vistazo</h1></div>
+      <div class="seg" role="group" aria-label="Equipo">${EQUIPOS.map(x => `<button type="button" data-req="${x.id}" aria-pressed="${eq === x.id}">${x.n}</button>`).join('')}</div>
+      ${us.length ? `<div class="tiles">
+        <div class="tile"><span class="k">Han respondido${ref === t ? ' hoy' : ''}</span><b class="v">${resp}/${us.length}</b><span class="s">${Math.round(resp / us.length * 100)} %</span></div>
+        <div class="tile"><span class="k">Cómo llega el equipo</span><b class="v">${fmt1(media)}</b><span class="s">${base != null ? 'Suele ' + fmt1(base) : 'de 1 a 5'}</span></div>
+        <div class="tile"><span class="k">Esfuerzo de la semana</span><b class="v">${pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + ' %'}</b><span class="s">${pctC == null ? 'Faltan semanas de datos' : 'frente a su mes'}</span></div></div>
+      <section class="card"><h2>Cómo llega el equipo · 4 semanas</h2><p class="sub">Media del equipo en cada entreno.${base != null ? ' La franja es lo normal en el equipo.' : ''}</p>${wellChart(teamDias, t)}</section>
+      <section class="card"><h2>A quién mirar</h2>
+        ${bad.length ? `<div class="al-h bad">${ST_IC.bad}Habla con ella · ${bad.length}</div><ul class="al-list">${bad.map(al).join('')}</ul>` : ''}
+        ${warn.length ? `<div class="al-h warn">${ST_IC.warn}Échale un ojo · ${warn.length}</div><ul class="al-list">${warn.map(al).join('')}</ul>` : ''}
+        ${!bad.length && !warn.length ? '<p class="sub">Nadie con avisos. Todo en orden.</p>' : ''}</section>
+      <section class="card"><h2>Su semana</h2><p>${cerradas} de ${us.length} han cerrado su semana.</p></section>`
+      : `<section class="card"><p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p></section>`}`,
+      { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   function detalleView() {
     const u = A.sel, J = A.jug[u]; if (!J) { view = 'equipo'; return equipoView(); }
@@ -489,6 +667,7 @@
     const b = e.target.closest('button, tr[data-jug]'); if (!b) return;
     if (b.dataset.av) { view = b.dataset.av; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.aeq) { A.eq = b.dataset.aeq; render(); return; }
+    if (b.dataset.req) { A.req = b.dataset.req; render(); return; }
     if (b.dataset.awk) { A.semWk = b.dataset.awk; render(); return; }
     if (b.dataset.jug) { A.sel = b.dataset.jug; view = 'detalle'; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.val) {
@@ -504,7 +683,7 @@
     const u = e.target.dataset.chgeq; try { await B.merge('acceso/' + u, { equipo: e.target.value, ts: Date.now() }); toast('Equipo cambiado.'); } catch (er) { toast('No se ha podido cambiar.'); }
   });
   function startAdmin() {
-    view = 'equipo';
+    view = 'resumen';
     unsub.push(B.listenCol('jugadoras', L => { A.jug = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));
     unsub.push(B.listenCol('acceso', L => { A.acc = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));
     unsub.push(B.listenCol('equipos', L => { A.equipos = Object.fromEntries(L.map(x => [x.id, x.data])); render(); }, () => {}));
@@ -531,11 +710,12 @@
     if (me === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!me) return loginView();
     if (!ADMIN.length) return gate(`<h2>Falta un paso de configuración</h2><p>Copia este código y ponlo en <b>firebase-config.js</b> (SMBF_ADMIN) y en las reglas (ADMIN_UID). Es tu código de usuario: con él la app sabe que eres la Dirección Técnica.</p><p class="code">${esc(me.uid)}</p><button class="btn ghost" type="button" data-a="out">Salir</button>`);
-    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'semana') return objetivosView(); if (view === 'acceso') return accesoView(); return equipoView(); }
+    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'semana') return objetivosView(); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
     if (U.perfil === undefined || U.acceso === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!U.perfil || !U.perfil.acepta || U.editAlta) return altaView();
     if (!U.acceso || !U.acceso.activa) return esperaView();
-    if (view === 'semana') return semanaView(); if (view === 'evol') return evolView(); if (view === 'datos') return datosView();
+    if (view === 'antes') return antesFlowView();
+    if (view === 'semana') return semanaView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
     return hoyView();
   }
   me = undefined; render();
