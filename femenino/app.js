@@ -62,8 +62,18 @@
   };
 
   // ================= lo que se pregunta =================
-  const EQUIPOS = [{ id: 'sub17', n: 'Sub17', dias: [1, 2] }, { id: 'senior', n: 'Senior Fem', dias: [1, 2, 4] }];
-  const eqName = id => (EQUIPOS.find(e => e.id === id) || {}).n || '—';
+  // un solo grupo (23 oct): todas las jugadoras de Sub17 y Senior Fem van juntas como «Femenino»
+  const EQ = 'femenino', EQ_N = 'Femenino';
+  const eqName = () => EQ_N;
+  // días de entreno: los pone la DT (equipos/femenino); dias = días de la semana (0 domingo … 6 sábado), sin = fechas sin entreno
+  const CAL_DEF = { dias: [1, 2, 4], sin: [] };
+  const calOf = c => ({ dias: (c && Array.isArray(c.dias)) ? c.dias : CAL_DEF.dias, sin: (c && Array.isArray(c.sin)) ? c.sin : [] });
+  const entrena = (cal, d) => cal.dias.includes(dateOf(d).getDay()) && !cal.sin.includes(d);
+  // respuestas de la DT: en acceso/{uid}.resp (la jugadora lo lee, solo la DT lo escribe; no hacen falta reglas nuevas)
+  // claves: «d:AAAA-MM-DD» (lo que contó ese día) y «s:AAAA-MM-DD» (su diario de esa semana)
+  const respOf = (acc, k) => ((acc || {}).resp || {})[k];
+  const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const DOW = [[1, 'L', 'lunes'], [2, 'M', 'martes'], [3, 'X', 'miércoles'], [4, 'J', 'jueves'], [5, 'V', 'viernes'], [6, 'S', 'sábado'], [0, 'D', 'domingo']];
   // n: nombre para la DT; s: corto; q: la pregunta (una por pantalla); o: respuestas de 1 (peor) a 5 (mejor)
   const WELL = [
     { k: 'sueno', n: 'Sueño', s: 'Sueño', q: '¿Has dormido bien?', o: ['Fatal', 'Poco', 'Normal', 'Bien', 'Genial'] },
@@ -242,7 +252,7 @@
   const root = $('#root');
   let me = null, unsub = [];
   const U = { perfil: undefined, acceso: undefined, equipo: null, dias: {}, semanas: {} };     // jugadora
-  const A = { jug: {}, acc: {}, regs: {}, equipos: {}, val: {}, eq: 'todas', sel: '', subs: {} }; // DT
+  const A = { jug: {}, acc: {}, regs: {}, equipos: {}, val: {}, sel: '', subs: {}, cal: null, editResp: {} }; // DT
   let view = 'hoy';
   const isAdmin = () => !!me && ADMIN.includes(me.uid);
   const stop = () => { unsub.forEach(f => { try { f(); } catch (e) {} }); unsub = []; Object.values(A.subs).forEach(f => { try { f(); } catch (e) {} }); A.subs = {}; };
@@ -294,24 +304,21 @@
       <li><b>Es voluntario:</b> quien no la usa entrena y juega igual.</li></ul>
       <p class="sub">La hoja completa de información te la da Carlos en papel, con la de consentimiento.</p></div>
       <label class="field">Nombre y apellidos<input type="text" id="a-nombre" value="${esc(p.nombre || me.name || '')}" autocomplete="name"></label>
-      <div class="field">Equipo<div class="seg" id="a-eq">${EQUIPOS.map(e => `<button type="button" data-eq="${e.id}" aria-pressed="${p.equipo === e.id}">${e.n}</button>`).join('')}</div></div>
       <label class="check"><input type="checkbox" id="a-menor"${p.menor ? ' checked' : ''}> Soy menor de edad</label>
       <label class="check"><input type="checkbox" id="a-ok"> He leído la información y quiero usar la app.</label>
       <label class="check" id="a-fam-l"${p.menor ? '' : ' hidden'}><input type="checkbox" id="a-fam"> Mi familia ha firmado (o va a firmar) la hoja de consentimiento.</label>
       <button class="btn primary" type="button" data-a="alta">Continuar</button>
       <p class="msg" id="msg"></p>
       <button class="btn ghost small" type="button" data-a="out">Salir</button>`);
-    root.querySelectorAll('#a-eq [data-eq]').forEach(b => b.onclick = () => root.querySelectorAll('#a-eq [data-eq]').forEach(x => x.setAttribute('aria-pressed', String(x === b))));
     $('#a-menor').onchange = e => { $('#a-fam-l').hidden = !e.target.checked; };
   }
   actions.alta = async () => {
-    const nombre = $('#a-nombre').value.trim(), eqb = root.querySelector('#a-eq [aria-pressed="true"]'), menor = $('#a-menor').checked, m = $('#msg');
+    const nombre = $('#a-nombre').value.trim(), menor = $('#a-menor').checked, m = $('#msg');
     const err = t => { m.className = 'msg err'; m.textContent = t; };
     if (!nombre) return err('Escribe tu nombre.');
-    if (!eqb) return err('Elige tu equipo.');
     if (!$('#a-ok').checked) return err('Marca que has leído la información.');
     if (menor && !$('#a-fam').checked) return err('Si eres menor de edad, tu familia tiene que firmar la hoja de consentimiento.');
-    await B.set('jugadoras/' + me.uid, { nombre, equipo: eqb.dataset.eq, menor, email: me.email || '', acepta: { ts: Date.now(), v: INFO_V }, ts: Date.now() });
+    await B.set('jugadoras/' + me.uid, { nombre, equipo: EQ, menor, email: me.email || '', acepta: { ts: Date.now(), v: INFO_V }, ts: Date.now() });
   };
   function esperaView() {
     const p = U.perfil, inactiva = U.acceso && U.acceso.activa === false && U.acceso.ts;
@@ -329,7 +336,7 @@
 
   // ================= jugadora: la app =================
   const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['semana', 'Semana'], ['yo', 'Mi jugadora'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k ? 'page' : 'false'}">${l}</button>`).join('')}</nav>`;
-  const eqObj = () => (EQUIPOS.find(e => e.id === (U.acceso.equipo || U.perfil.equipo)) || EQUIPOS[0]);
+  const calJ = () => calOf(U.equipo);
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
 
@@ -369,6 +376,11 @@
       <div class="row"><button class="btn primary" type="button" data-a="saveses">Guardar</button>${L.length ? '<button class="btn ghost" type="button" data-a="lessses">Cancelar</button>' : ''}</div></section>`;
   }
   function racha() { let n = 0, k = mondayOf(today()); if (!U.semanas[k]) k = addDays(k, -7); while (U.semanas[k]) { n++; k = addDays(k, -7); } return n; }
+  function respuestasHTML() {
+    const R = Object.entries((U.acceso || {}).resp || {}).filter(([, v]) => v && v.t && Date.now() - (v.ts || 0) < 14 * 864e5).sort((a, b) => b[1].ts - a[1].ts).slice(0, 3);
+    if (!R.length) return '';
+    return `<section class="card msg-card"><h2>Carlos te ha contestado</h2>${R.map(([k, v]) => `<div class="msg-it"><span class="kicker">${k[0] === 's' ? 'A tu diario de la semana del ' + esc(fmtShort(k.slice(2))) : 'A lo que contaste el ' + esc(fmtDay(k.slice(2)))}</span><p>${esc(v.t)}</p></div>`).join('')}</section>`;
+  }
   function semanaMini() {
     const mine = U.semanas[mondayOf(today())];
     if (mine) return `<section class="card done"><div class="card-h"><h2>Tu diario</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div><p class="sub">La semana que viene vas a: ${esc(compOf(mine))}</p></section>`;
@@ -393,16 +405,18 @@
       <section class="pledge"><div class="row between"><span class="pl-h">La semana que viene voy a…</span>${!edit && d.area ? `<span class="tag">${esc(d.area)}</span>` : ''}</div>
         ${edit ? `<input type="text" id="d-comp" class="pl-in" maxlength="140" value="${esc(compOf(d))}" placeholder="algo concreto que dependa de ti" aria-label="La semana que viene voy a">
         <div class="seg dark" role="group" aria-label="De qué va">${AREAS.map(a => `<button type="button" data-area="${a}" aria-pressed="${d.area === a}">${a}</button>`).join('')}</div>` : `<p class="pl-t">${esc(compOf(d))}</p>`}</section>
+      ${(r => r ? `<section class="card msg-card"><span class="kicker">Carlos te ha contestado</span><p>${esc(r.t)}</p></section>` : '')(respOf(U.acceso, 's:' + lunes))}
       ${hist.length ? `<div class="row between"><span class="kicker">Mis compromisos</span>${evald.length ? `<span class="sub">${si} de ${evald.length} cumplidos</span>` : ''}</div><div class="tks">${hist.map(ticket).join('')}</div>` : ''}
       ${edit ? `<div class="row"><button class="btn primary big grow" type="button" data-a="savesem">Guardar mi semana</button>${mine ? '<button class="btn ghost" type="button" data-a="noeditsem">Cancelar</button>' : ''}</div><p class="msg" id="msg"></p>` : '<button class="btn" type="button" data-a="editsem">Cambiar</button>'}`, { nav: navJ() });
   }
   function hoyView() {
-    const t = today(), dow = dateOf(t).getDay(), E = eqObj(), entrena = E.dias.includes(dow), dia = diaHoy();
-    const show = entrena || draft.showDia || dia.antes || (dia.ses || []).length;
+    const t = today(), dia = diaHoy();
+    const show = entrena(calJ(), t) || draft.showDia || dia.antes || (dia.ses || []).length;
     const nombre = (U.perfil.nombre || '').split(' ')[0], p = puntos(U.dias, U.semanas), lv = nivelDe(p);
-    shell(`<div class="hola"><div><span class="kicker">${esc(fmtDay(t))} · ${esc(E.n)}</span><h1>Hola, ${esc(nombre)}</h1></div>
+    shell(`<div class="hola"><div><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1></div>
         <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></div>
-      ${show ? antesHTML() + despuesHTML() : `<section class="card"><h2>Hoy no tienes entreno con el equipo</h2><p class="sub">Si has jugado un partido o has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno o partido de hoy</button></section>`}
+      ${respuestasHTML()}
+      ${show ? antesHTML() + despuesHTML() : `<section class="card"><h2>Hoy no hay entreno</h2><p class="sub">Si has jugado un partido o has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno o partido de hoy</button></section>`}
       ${semanaMini()}`, { nav: navJ() });
   }
   function yoView() {
@@ -456,11 +470,77 @@
     if (l1 > l0) { const n = ITEMS.filter(x => x[3] === l1 + 1).map(x => x[2].toLowerCase()); toast(`¡Nivel ${l1 + 1}: ${NIVELES[l1][0]}!${n.length ? ' Nuevo: ' + n.join(', ') + '.' : ''}`); }
     else toast(d > 0 ? `Guardado. +${d} puntos.` : 'Guardado. Gracias.');
   }
+  const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  const avPrefs = () => { let o = {}; try { o = JSON.parse(ls.get('smbf-avisos') || '{}') || {}; } catch (e) {} return Object.assign({ antes: '17:00', despues: '21:00', diario: true }, o); };
+  const compact = (d, hm) => d.replace(/-/g, '') + 'T' + hm.replace(':', '') + '00';
+  const addMin = (hm, m) => { const [h, mi] = hm.split(':').map(Number), x = h * 60 + mi + m; return `${pad(Math.floor(x / 60) % 24)}:${pad(x % 60)}`; };
+  // los avisos: antes y después en los días de entreno y, si quiere, el diario los domingos
+  function avisos() {
+    const c = calJ(), P = avPrefs(), dias = DOW.map(x => x[0]).filter(n => c.dias.includes(n));
+    const first = days => { for (let i = 0; i < 7; i++) { const d = addDays(today(), i); if (days.includes(dateOf(d).getDay())) return d; } return today(); };
+    const L = [];
+    if (dias.length) {
+      L.push({ id: 'antes', t: 'SMB · ¿Cómo llegas hoy?', hm: P.antes, days: dias });
+      L.push({ id: 'despues', t: 'SMB · ¿Qué tal el entreno?', hm: P.despues, days: dias });
+    }
+    if (P.diario) L.push({ id: 'diario', t: 'SMB · Tu diario de la semana', hm: '20:00', days: [0] });
+    return L.map(x => Object.assign(x, { d: first(x.days), rule: `FREQ=WEEKLY;BYDAY=${x.days.map(n => BYDAY[n]).join(',')};UNTIL=20270630T215959Z` }));
+  }
+  const APP_URL = 'https://hockeysmb.github.io/femenino/';
+  const gcal = x => 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(x.t) + '&dates=' + compact(x.d, x.hm) + '/' + compact(x.d, addMin(x.hm, 10)) + '&ctz=Europe/Madrid&recur=' + encodeURIComponent('RRULE:' + x.rule) + '&details=' + encodeURIComponent('Abre la app: ' + APP_URL);
+  function avisosHTML() {
+    const c = calJ(), P = avPrefs(), A2 = avisos(), nom = DOW.filter(x => c.dias.includes(x[0])).map(x => x[2]);
+    const lbl = { antes: 'Aviso antes', despues: 'Aviso después', diario: 'Aviso del diario' };
+    return `<p class="sub">La app no puede mandarte avisos sola. Ponlos en el calendario de tu móvil y te saltarán los días de entreno${nom.length ? ` (${esc(nom.join(', '))})` : ''}.</p>
+      <div class="row"><label class="field tm">Antes del entreno<input type="time" id="av-antes" value="${esc(P.antes)}"></label><label class="field tm">Después<input type="time" id="av-despues" value="${esc(P.despues)}"></label></div>
+      <label class="check"><input type="checkbox" id="av-diario"${P.diario ? ' checked' : ''}> El diario, los domingos a las 20:00</label>
+      <div class="q"><span class="q-h">iPhone u otro calendario</span><button class="btn primary" type="button" data-a="ics">Añadir los avisos</button></div>
+      <div class="q"><span class="q-h">Google Calendar (Android): uno a uno</span><div class="row">${A2.map(x => `<a class="btn small" href="${esc(gcal(x))}" target="_blank" rel="noopener">${lbl[x.id]}</a>`).join('')}</div></div>
+      <p class="sub">Si cambian los días de entreno, vuelve a ponerlos.</p>`;
+  }
+  actions.ics = async () => {
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    const ev = avisos().map(x => ['BEGIN:VEVENT', `UID:smbf-${x.id}-${me.uid}@hockeysmb`, `DTSTAMP:${stamp}`, `DTSTART:${compact(x.d, x.hm)}`, 'DURATION:PT10M', `RRULE:${x.rule}`, `SUMMARY:${x.t}`, `DESCRIPTION:Abre la app: ${APP_URL}`, `URL:${APP_URL}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${x.t}`, 'TRIGGER:PT0M', 'END:VALARM', 'END:VEVENT'].join('\r\n'));
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SMB//Femenino//ES', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' })); a.download = 'avisos-smb-femenino.ics'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Ábrelo y pulsa «Añadir todo» en tu calendario.');
+  };
+  root.addEventListener('change', e => {
+    if (!/^av-/.test(e.target.id || '')) return;
+    const P = avPrefs(); if (e.target.id === 'av-diario') P.diario = e.target.checked; else if (e.target.value) P[e.target.id.slice(3)] = e.target.value;
+    ls.set('smbf-avisos', JSON.stringify(P)); const y = scrollY; render(); scrollTo({ top: y });
+  });
+
+  // ---------- bienvenida (una vez por móvil; también desde «Mis datos») ----------
+  const instalada = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+  const ios = () => /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+  function bienvenidaView() {
+    const nombre = (U.perfil.nombre || '').split(' ')[0];
+    shell(`<div><span class="kicker">Bienvenida</span><h1>Hola, ${esc(nombre)}. Tres pasos y listo</h1></div>
+      <section class="card step-card"><div class="card-h"><h2><span class="num">1</span>Ponla en tu pantalla de inicio</h2></div>
+        ${instalada() ? '<p>Ya la tienes instalada. Perfecto.</p>' : `<p>Así se abre como una app más, sin buscarla en el navegador.</p>
+        <ul class="info"><li${ios() ? ' class="me"' : ''}><b>iPhone (Safari):</b> pulsa el botón Compartir (el cuadrado con la flecha hacia arriba) y luego «Añadir a pantalla de inicio».</li>
+        <li${ios() ? '' : ' class="me"'}><b>Android (Chrome):</b> pulsa el menú de los tres puntos y luego «Instalar aplicación» o «Añadir a pantalla de inicio».</li></ul>`}</section>
+      <section class="card step-card"><div class="card-h"><h2><span class="num">2</span>Pon los avisos</h2></div>${avisosHTML()}</section>
+      <section class="card step-card"><div class="card-h"><h2><span class="num">3</span>Cómo funciona</h2></div>
+        <ul class="info"><li><b>Antes del entreno:</b> cinco preguntas del 1 al 10 y, si quieres, algo que contar. 15 segundos.</li>
+        <li><b>Después:</b> lo duro que ha sido, del 1 al 10, y los minutos.</li>
+        <li><b>Una vez a la semana:</b> tu diario y un compromiso para la siguiente.</li>
+        <li><b>Tu jugadora:</b> sube de nivel cuando respondes. Da igual lo que contestes: puntúa responder.</li>
+        <li><b>Solo lo ve Carlos.</b> A veces te contestará aquí mismo.</li></ul></section>
+      <button class="btn primary big" type="button" data-a="bienvenidaok">Empezar</button>`, { nav: '' });
+  }
+  const bienvenidaKey = () => 'smbf-bienvenida-' + (me ? me.uid : '');
+  actions.bienvenidaok = async () => { ls.set(bienvenidaKey(), '1'); view = 'hoy'; render(); scrollTo({ top: 0 }); };
+  actions.verbienvenida = async () => { view = 'bienvenida'; render(); scrollTo({ top: 0 }); };
   function datosView() {
     const p = U.perfil, c = (U.acceso || {}).consentimiento || {};
     shell(`<div><span class="kicker">Tu cuenta</span><h1>Mis datos</h1></div>
-      <section class="card"><h2>${esc(p.nombre)}</h2><p class="sub">${esc(eqName(U.acceso.equipo || p.equipo))} · ${esc(me.email || '')}</p>
+      <section class="card"><h2>${esc(p.nombre)}</h2><p class="sub">${esc(EQ_N)} · ${esc(me.email || '')}</p>
         <p class="sub">Aceptaste la información el ${esc(fmtDay(isoOf(new Date((p.acepta || {}).ts || Date.now()))))}.${c.tipo ? ` Consentimiento firmado por ${c.tipo === 'familia' ? 'tu familia' : 'ti'}.` : ''}</p></section>
+      <section class="card"><h2>Avisos en tu calendario</h2>${avisosHTML()}</section>
+      <button class="btn" type="button" data-a="verbienvenida">Cómo funciona y cómo instalarla</button>
       <section class="card"><h2>Quién ve tus datos</h2><p>Solo Carlos Manzano, Director Técnico, y tú. No se ceden a nadie y se borran el 30 de junio de 2027.</p></section>
       <section class="card"><h2>Llevarte o borrar tus datos</h2>
         <div class="row"><button class="btn" type="button" data-a="export">Descargar mis datos</button></div>
@@ -553,6 +633,7 @@
     if (datosOn) return; datosOn = true;
     unsub.push(B.listenCol(`registros/${me.uid}/dias`, L => { U.dias = Object.fromEntries(L.map(x => [x.id, x.data])); render(); }, () => {}));
     unsub.push(B.listenCol(`registros/${me.uid}/semanas`, L => { U.semanas = Object.fromEntries(L.map(x => [x.id, x.data])); render(); }, () => {}));
+    unsub.push(B.listenDoc('equipos/' + EQ, d => { U.equipo = d; render(); }, () => {}));
   }
 
   // ================= Dirección Técnica =================
@@ -564,21 +645,20 @@
   const diasDe = u => (A.regs[u] || {}).dias || {};
   const semDe = u => (A.regs[u] || {}).semanas || {};
   function equipoView() {
-    const t = today(), lunes = mondayOf(t), U2 = activas().filter(u => A.eq === 'todas' || eqDe(u) === A.eq);
+    const t = today(), lunes = mondayOf(t), U2 = activas();
     const rows = U2.map(u => ({ u, e: estado(diasDe(u), t) })).sort((a, b) => ({ bad: 0, warn: 1, none: 2, ok: 3 }[a.e.lvl] - { bad: 0, warn: 1, none: 2, ok: 3 }[b.e.lvl]) || (A.jug[a.u].nombre || '').localeCompare(A.jug[b.u].nombre || '', 'es'));
     const n = { bad: 0, warn: 0 }; rows.forEach(r => { if (n[r.e.lvl] != null) n[r.e.lvl]++; });
     shell(`<div><span class="kicker">${esc(fmtDay(t))}</span><h1>Jugadoras</h1><p class="sub">${rows.length} ${rows.length === 1 ? 'activa' : 'activas'}${n.bad ? ` · ${n.bad} para revisar` : ''}${n.warn ? ` · ${n.warn} con algo que mirar` : ''}. Solo lo ves tú.</p></div>
-      <div class="seg" role="group" aria-label="Equipo">${[['todas', 'Todas'], ...EQUIPOS.map(e => [e.id, e.n])].map(([k, l]) => `<button type="button" data-aeq="${k}" aria-pressed="${A.eq === k}">${l}</button>`).join('')}</div>
       <section class="card">${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Jugadora</th><th>Estado</th><th class="num">Llega hoy</th><th class="num">Su media</th><th class="num">Carga 7 días</th><th class="num">Semana / mes</th><th>Última respuesta</th><th>Semana</th></tr></thead><tbody>
-        ${rows.map(({ u, e }) => `<tr class="click" data-jug="${u}" tabindex="0"><td><b>${esc(A.jug[u].nombre)}</b><br><span class="sub">${esc(eqName(eqDe(u)))}</span></td><td>${stHTML(e.lvl)}</td><td class="num">${fmt1(e.s)}</td><td class="num">${fmt1(e.base)}</td><td class="num">${fmtInt(e.L.acute)}</td><td class="num">${e.L.ratio == null ? '—' : fmt1(e.L.ratio)}</td><td>${e.last ? esc(e.last === t ? 'hoy' : fmtShort(e.last)) : '—'}</td><td>${semDe(u)[lunes] ? 'Hecha' : '—'}</td></tr>`).join('')}</tbody></table></div>
-        <p class="chart-note">«Llega hoy»: media de sus cinco respuestas de hoy (1 a 10). «Semana / mes»: carga de los últimos 7 días dividida por su media semanal del último mes; avisa por encima de 1,3 o por debajo de 0,8 (necesita 3 semanas de datos).</p>` : `<p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p>`}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+        ${rows.map(({ u, e }) => `<tr class="click" data-jug="${u}" tabindex="0"><td><b>${esc(A.jug[u].nombre)}</b></td><td>${stHTML(e.lvl)}</td><td class="num">${fmt1(e.s)}</td><td class="num">${fmt1(e.base)}</td><td class="num">${fmtInt(e.L.acute)}</td><td class="num">${e.L.ratio == null ? '—' : fmt1(e.L.ratio)}</td><td>${e.last ? esc(e.last === t ? 'hoy' : fmtShort(e.last)) : '—'}</td><td>${semDe(u)[lunes] ? 'Hecha' : '—'}</td></tr>`).join('')}</tbody></table></div>
+        <p class="chart-note">«Llega hoy»: media de sus cinco respuestas de hoy (1 a 10). «Semana / mes»: carga de los últimos 7 días dividida por su media semanal del último mes; avisa por encima de 1,3 o por debajo de 0,8 (necesita 3 semanas de datos).</p>` : `<p class="sub">${activas().length ? '' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p>`}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   // resumen de un equipo: cuántas han respondido, cómo llega el equipo, su esfuerzo y a quién mirar
   const mean = v => v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
   function resumenView() {
-    const eq = A.req || EQUIPOS[0].id, E = EQUIPOS.find(x => x.id === eq) || EQUIPOS[0], t = today();
-    let ref = t; for (let i = 0; i < 7; i++) { const d = addDays(t, -i); if (E.dias.includes(dateOf(d).getDay())) { ref = d; break; } }
-    const us = activas().filter(u => eqDe(u) === eq);
+    const t = today(), cal = calOf(A.cal);
+    let ref = t; for (let i = 0; i < 7; i++) { const d = addDays(t, -i); if (entrena(cal, d)) { ref = d; break; } }
+    const us = activas();
     const resp = us.filter(u => (diasDe(u)[ref] || {}).antes).length;
     const media = mean(us.map(u => wellScore((diasDe(u)[ref] || {}).antes)).filter(x => x != null));
     // el equipo como si fuera una jugadora: su media de cada día
@@ -592,7 +672,6 @@
     const cerradas = us.filter(u => semDe(u)[mondayOf(t)]).length;
     const al = r => `<li><button type="button" class="al-row" data-jug="${r.u}"><b>${esc((A.jug[r.u].nombre || '').split(' ')[0])}</b><span>${esc((r.e.R.find(x => x.lvl === r.e.lvl) || r.e.R[0] || {}).txt || '')}</span></button></li>`;
     shell(`<div><span class="kicker">${ref === t ? 'Hoy · ' : 'Último entreno · '}${esc(fmtDay(ref))}</span><h1>El equipo de un vistazo</h1></div>
-      <div class="seg" role="group" aria-label="Equipo">${EQUIPOS.map(x => `<button type="button" data-req="${x.id}" aria-pressed="${eq === x.id}">${x.n}</button>`).join('')}</div>
       ${us.length ? `<div class="tiles">
         <div class="tile"><span class="k">Han respondido${ref === t ? ' hoy' : ''}</span><b class="v">${resp}/${us.length}</b><span class="s">${Math.round(resp / us.length * 100)} %</span></div>
         <div class="tile"><span class="k">Cómo llega el equipo</span><b class="v">${fmt1(media)}</b><span class="s">${base != null ? 'Suele ' + fmt1(base) : 'del 1 al 10'}</span></div>
@@ -607,8 +686,27 @@
         const sem = us.map(u => semDe(u)[mondayOf(t)]).filter(Boolean), ti = sem.map(x => x.tiempo).filter(Boolean), cu = sem.map(x => x.cumplida).filter(Boolean);
         return (ti.length ? `<div class="wx-sum">${TIEMPO.map(([v, l]) => { const c = ti.filter(x => x === v).length; return c ? `<span>${wx(v)}<b>${c}</b><small>${l}</small></span>` : ''; }).join('')}</div>` : '')
           + (cu.length ? `<p class="sub">Compromiso de la semana pasada: ${['si', 'medias', 'no'].map(k => `${cu.filter(x => x === k).length} ${STAMP[k].toLowerCase()}`).join(' · ')}.</p>` : ''); })()}</section>`
-      : `<section class="card"><p class="sub">${activas().length ? 'No hay jugadoras activas en este equipo.' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p></section>`}`,
+      : `<section class="card"><p class="sub">${activas().length ? '' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p></section>`}`,
       { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+  }
+  function respBox(u, k) {
+    const r = respOf(A.acc[u], k);
+    if (r && !A.editResp[k]) return `<div class="resp-done"><span><b>Tu respuesta:</b> ${esc(r.t)}</span><button class="btn ghost small" type="button" data-a="editresp" data-k="${k}">Cambiar</button></div>`;
+    return `<div class="resp-box"><textarea id="r-${k}" maxlength="400" rows="2" placeholder="Contéstale: lo verá en su app. Mejor con una pregunta." aria-label="Tu respuesta">${esc(r ? r.t : '')}</textarea><button class="btn small primary" type="button" data-a="resp" data-k="${k}">Enviar</button></div>`;
+  }
+  actions.editresp = async b => { A.editResp[b.dataset.k] = true; render(); };
+  actions.resp = async b => {
+    const k = b.dataset.k, u = A.sel, txt = ((document.getElementById('r-' + k) || {}).value || '').trim(), prev = respOf(A.acc[u], k);
+    if (!txt && !prev) { toast('Escribe algo antes de enviar.'); return; }
+    const resp = Object.assign({}, (A.acc[u] || {}).resp || {});
+    if (txt) resp[k] = { t: txt, ts: Date.now() }; else delete resp[k];
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    await B.merge('acceso/' + u, { resp });
+    A.acc[u] = Object.assign({}, A.acc[u] || {}, { resp }); A.editResp[k] = false; toast(txt ? 'Enviado. Lo verá en su app.' : 'Respuesta quitada.'); render();
+  };
+  function contadoHTML(u, D, t) {
+    const L = []; for (let i = 0; i < 21; i++) { const k = addDays(t, -i), d = D[k] || {}, n = [(d.antes || {}).nota, ...(d.ses || []).map(x => x.nota)].filter(Boolean); if (n.length) L.push([k, n]); }
+    return `<section class="card"><h2>Lo que te ha contado</h2>${L.length ? L.map(([k, n]) => `<div class="obj"><span class="kicker">${esc(fmtDay(k))}</span><p class="nota-p">«${esc(n.join(' · '))}»</p>${respBox(u, 'd:' + k)}</div>`).join('') : '<p class="sub">En las últimas tres semanas no ha escrito nada.</p>'}</section>`;
   }
   function detalleView() {
     const u = A.sel, J = A.jug[u]; if (!J) { view = 'equipo'; return equipoView(); }
@@ -616,8 +714,9 @@
     const last14 = []; for (let i = 0; i < 14; i++) last14.push(addDays(t, -i));
     const semanas = Object.keys(S).sort().reverse().slice(0, 6);
     shell(`<button class="btn ghost small back" type="button" data-av="equipo">← Todas las jugadoras</button>
-      <div><span class="kicker">${esc(eqName(eqDe(u)))}</span><h1>${esc(J.nombre)}</h1></div>
-      <section class="card"><div class="card-h"><h2>Hoy</h2>${stHTML(e.lvl)}</div>${e.R.length ? `<ul class="info" style="padding-left:18px;margin:0">${e.R.map(x => `<li>${esc(x.txt)}</li>`).join('')}</ul>` : '<p class="sub">Nada que destacar.</p>'}</section>
+      <div><span class="kicker">${esc(EQ_N)}</span><h1>${esc(J.nombre)}</h1></div>
+      <section class="card"><div class="card-h"><h2>Hoy</h2>${stHTML(e.lvl)}</div>${e.R.length ? `<ul class="info" style="padding-left:18px;margin:0">${e.R.map(x => `<li>${esc(x.txt)}</li>`).join('')}</ul>` : '<p class="sub">Nada que destacar.</p>'}<button class="btn small" type="button" data-a="temporada">Resumen de temporada</button></section>
+      ${contadoHTML(u, D, t)}
       <div class="two">
         <section class="card"><h2>Cómo llega</h2><p class="sub">Media del 1 al 10, últimos 28 días.${e.base != null ? ' Franja: lo normal en ella.' : ''}</p>${wellChart(D, t)}</section>
         <section class="card"><h2>Carga por semana</h2><p class="sub">Esfuerzo × minutos. Barra clara: semana en curso.</p>${loadChart(D, t)}</section>
@@ -629,23 +728,60 @@
           ${x.tiempo ? `<span class="wx-line">${wx(x.tiempo)}${esc(TIEMPO[x.tiempo - 1][1])}</span>` : ''}
           ${x.cumplida ? `<span class="sub">Su compromiso anterior: ${esc(STAMP[x.cumplida] || '')}</span>` : ''}
           ${x.mejor ? `<p><b>Lo mejor:</b> ${esc(x.mejor)}</p>` : ''}${x.cambiar ? `<p><b>Lo que cambiaría:</b> ${esc(x.cambiar)}</p>` : ''}${x.resp ? `<p><b>${esc(x.pregunta || 'Respuesta')}</b><br>${esc(x.resp)}</p>` : ''}
-          <p><b>Se compromete a:</b> ${esc(compOf(x) || '—')}${x.area ? ` <span class="pill">${esc(x.area)}</span>` : ''}</p></div>`; }).join('') : '<p class="sub">Todavía no ha escrito en su diario.</p>'}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+          <p><b>Se compromete a:</b> ${esc(compOf(x) || '—')}${x.area ? ` <span class="pill">${esc(x.area)}</span>` : ''}</p>${respBox(u, 's:' + k)}</div>`; }).join('') : '<p class="sub">Todavía no ha escrito en su diario.</p>'}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
+  function temporadaView() {
+    const u = A.sel, J = A.jug[u]; if (!J) { view = 'equipo'; return equipoView(); }
+    const t = today(), D = diasDe(u), S = semDe(u), ks = Object.keys(D).filter(k => D[k] && (D[k].antes || (D[k].ses || []).length)).sort();
+    const desde = ks[0] || t, nDias = Math.min(300, Math.max(28, daysBetween(desde, t) + 1)), nSem = Math.min(44, Math.max(8, Math.ceil((daysBetween(mondayOf(desde), t) + 1) / 7)));
+    const conAntes = ks.filter(k => D[k].antes).length, ses = ks.reduce((a, k) => a + (D[k].ses || []).length, 0), mins = ks.reduce((a, k) => a + (D[k].ses || []).reduce((b, x) => b + (+x.min || 0), 0), 0);
+    const meses = {}; ks.forEach(k => { const m = k.slice(0, 7), w = wellScore(D[k].antes), r = (D[k].ses || []).map(x => +x.rpe).filter(x => x > 0); meses[m] = meses[m] || { w: [], r: [], n: 0 }; if (w != null) meses[m].w.push(w); meses[m].r.push(...r); meses[m].n += (D[k].ses || []).length; });
+    const sk = Object.keys(S).sort(), comp = sk.filter(k => compOf(S[k])), mejor = sk.filter(k => S[k].mejor);
+    const p = puntos(D, S), lv = nivelDe(p);
+    const MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    shell(`<button class="btn ghost small back no-print" type="button" data-a="volverficha">← Su ficha</button>
+      <div class="season-h"><div><span class="kicker">Resumen de temporada 2026-27 · ${esc(EQ_N)}</span><h1>${esc(J.nombre)}</h1><p class="sub">Del ${esc(fmtDay(desde))} al ${esc(fmtDay(t))}</p></div>
+        <div class="me-av sm">${avatarSVG(J.av, lv, 'Su jugadora')}</div></div>
+      <div class="tiles four"><div class="tile"><span class="k">Entrenos con respuesta</span><b class="v">${conAntes}</b></div><div class="tile"><span class="k">Sesiones apuntadas</span><b class="v">${ses}</b></div>
+        <div class="tile"><span class="k">Minutos</span><b class="v">${fmtInt(mins)}</b></div><div class="tile"><span class="k">Semanas de diario</span><b class="v">${sk.length}</b></div></div>
+      <section class="card"><h2>Mes a mes</h2><div class="tbl-wrap"><table><thead><tr><th>Mes</th><th class="num">Cómo llega (1–10)</th><th class="num">Esfuerzo medio (1–10)</th><th class="num">Sesiones</th></tr></thead><tbody>
+        ${Object.keys(meses).sort().map(m => `<tr><td>${MES[+m.slice(5) - 1]} ${m.slice(0, 4)}</td><td class="num">${fmt1(mean(meses[m].w))}</td><td class="num">${fmt1(mean(meses[m].r))}</td><td class="num">${meses[m].n}</td></tr>`).join('') || '<tr><td colspan="4" class="sub">Sin datos.</td></tr>'}</tbody></table></div></section>
+      <div class="two"><section class="card"><h2>Cómo ha llegado</h2>${wellChart(D, t, nDias)}</section><section class="card"><h2>Carga por semana</h2>${loadChart(D, t, nSem)}</section></div>
+      <section class="card"><h2>Sus compromisos</h2>${comp.length ? `<ul class="list">${comp.map(k => { const c = (S[addDays(k, 7)] || {}).cumplida; return `<li class="li"><span><b>${esc(compOf(S[k]))}</b><small>Semana del ${esc(fmtShort(k))}${S[k].area ? ' · ' + esc(S[k].area) : ''}</small></span>${c ? `<span class="stamp ${c}">${esc(STAMP[c])}</span>` : ''}</li>`; }).join('')}</ul>
+        <p class="sub">${(n => n + (n === 1 ? ' cumplido' : ' cumplidos'))(comp.filter(k => (S[addDays(k, 7)] || {}).cumplida === 'si').length)}, ${comp.filter(k => (S[addDays(k, 7)] || {}).cumplida === 'medias').length} a medias.</p>` : '<p class="sub">Sin compromisos.</p>'}</section>
+      <section class="card"><h2>Lo mejor de su temporada</h2>${mejor.length ? mejor.map(k => `<p class="nota-p">«${esc(S[k].mejor)}» <small class="sub">· ${esc(fmtShort(k))}</small></p>`).join('') : '<p class="sub">Sin entradas.</p>'}</section>
+      <p class="sub">Nivel alcanzado en la app: ${lv + 1} de ${NIVELES.length} (${esc(NIVELES[lv][0])}).</p>
+      <div class="row no-print"><button class="btn primary" type="button" data-a="imprimir">Imprimir o guardar en PDF</button></div>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+  }
+  actions.temporada = async () => { view = 'temporada'; render(); scrollTo({ top: 0 }); };
+  actions.volverficha = async () => { view = 'detalle'; render(); scrollTo({ top: 0 }); };
+  actions.imprimir = async () => { window.print(); };
+  function calHTML() {
+    const c = calOf(A.cal), prox = c.sin.filter(d => d >= today()).sort();
+    return `<section class="card"><h2>Días de entreno</h2><p class="sub">Esos días la app les pregunta cómo llegan y qué tal ha ido. Toca para quitar o poner.</p>
+      <div class="seg" role="group" aria-label="Días de entreno">${DOW.map(([n, , l]) => `<button type="button" data-cdia="${n}" aria-pressed="${c.dias.includes(n)}">${l}</button>`).join('')}</div>
+      <div class="q"><span class="q-h">Días sin entreno (festivos, puentes…)</span>${prox.length ? `<ul class="list">${prox.map(d => `<li class="li"><span><b>${esc(fmtDay(d))}</b></span><button class="btn ghost small" type="button" data-a="delsin" data-d="${d}">Quitar</button></li>`).join('')}</ul>` : '<p class="sub">Ninguno.</p>'}
+        <div class="row"><input type="date" id="c-sin" aria-label="Fecha sin entreno" class="date-in"><button class="btn small" type="button" data-a="addsin">Añadir</button></div></div></section>`;
+  }
+  async function saveCal(c) { A.cal = Object.assign({}, A.cal || {}, c); render(); await B.merge('equipos/' + EQ, c); }
+  actions.addsin = async () => { const v = ($('#c-sin') || {}).value; if (!v) { toast('Elige una fecha.'); return; } const c = calOf(A.cal); if (!c.sin.includes(v)) await saveCal({ dias: c.dias, sin: [...c.sin, v].sort() }); toast('Día sin entreno añadido.'); };
+  actions.delsin = async b => { const c = calOf(A.cal); await saveCal({ dias: c.dias, sin: c.sin.filter(d => d !== b.dataset.d) }); };
   function accesoView() {
     const P = pendientes(), act = activas(), des = desactivadas();
-    const li = (u, inner) => `<li class="li"><span><b>${esc(A.jug[u].nombre)}</b><small>${esc(eqName(eqDe(u)))} · ${esc(A.jug[u].email || '')}${A.jug[u].menor ? ' · menor de edad' : ''}</small></span>${inner}</li>`;
+    const li = (u, inner) => `<li class="li"><span><b>${esc(A.jug[u].nombre)}</b><small>${esc(A.jug[u].email || '')}${A.jug[u].menor ? ' · menor de edad' : ''}</small></span>${inner}</li>`;
     shell(`<div><span class="kicker">Cuentas y consentimientos</span><h1>Altas</h1></div>
       <section class="card"><h2>Esperando a que las actives${P.length ? ' · ' + P.length : ''}</h2>
         <p class="sub">Actívala cuando tengas la hoja de consentimiento firmada${P.some(u => A.jug[u].menor) ? ' (en las menores, por la familia)' : ''}.</p>
         ${P.length ? `<ul class="list">${P.map(u => li(u, `<span class="row"><select id="c-${u}" aria-label="Quién ha firmado"><option value="${A.jug[u].menor ? 'familia' : 'jugadora'}">${A.jug[u].menor ? 'Firmado por la familia' : 'Firmado por ella'}</option><option value="${A.jug[u].menor ? 'jugadora' : 'familia'}">${A.jug[u].menor ? 'Firmado por ella' : 'Firmado por la familia'}</option></select><button class="btn primary small" type="button" data-a="activar" data-u="${u}">Activar</button></span>`)).join('')}</ul>` : '<p class="sub">Nadie esperando. Cuando una jugadora se da de alta, sale aquí.</p>'}</section>
-      <section class="card"><h2>Activas · ${act.length}</h2>${act.length ? `<ul class="list">${act.map(u => li(u, `<span class="row"><select data-chgeq="${u}" aria-label="Equipo">${EQUIPOS.map(e => `<option value="${e.id}"${eqDe(u) === e.id ? ' selected' : ''}>${e.n}</option>`).join('')}</select><button class="btn small" type="button" data-a="desactivar" data-u="${u}">Desactivar</button><button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></span>`)).join('')}</ul>` : '<p class="sub">Ninguna todavía.</p>'}</section>
+      <section class="card"><h2>Activas · ${act.length}</h2>${act.length ? `<ul class="list">${act.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-a="desactivar" data-u="${u}">Desactivar</button><button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></span>`)).join('')}</ul>` : '<p class="sub">Ninguna todavía.</p>'}</section>
       ${des.length ? `<section class="card"><h2>Desactivadas · ${des.length}</h2><ul class="list">${des.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-a="reactivar" data-u="${u}">Activar otra vez</button><button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></span>`)).join('')}</ul></section>` : ''}
+      ${calHTML()}
       <section class="card"><h2>Datos de todas</h2><p class="sub">Para tu archivo o para analizarlos en una hoja de cálculo.</p><div class="row"><button class="btn" type="button" data-a="csv">Descargar en CSV</button></div>
         <p class="sub">A final de temporada (30 de junio de 2027) hay que borrarlo todo.</p><div class="row"><button class="btn danger" type="button" data-a="borrartemporada">Borrar todos los datos de la temporada</button></div><p class="msg" id="msg"></p></section>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
-  actions.activar = async b => { const u = b.dataset.u, tipo = $('#c-' + u).value; await B.set('acceso/' + u, { activa: true, equipo: A.jug[u].equipo, consentimiento: { tipo, fecha: today() }, ts: Date.now() }); toast(`${A.jug[u].nombre} ya puede usar la app.`); };
+  actions.activar = async b => { const u = b.dataset.u, tipo = $('#c-' + u).value; await B.set('acceso/' + u, { activa: true, equipo: EQ, consentimiento: { tipo, fecha: today() }, ts: Date.now() }); toast(`${A.jug[u].nombre} ya puede usar la app.`); };
   actions.desactivar = async b => { const u = b.dataset.u; await B.merge('acceso/' + u, { activa: false, ts: Date.now() }); toast('Desactivada. Sus datos siguen guardados.'); };
-  actions.reactivar = async b => { const u = b.dataset.u; await B.merge('acceso/' + u, { activa: true, ts: Date.now() }); toast('Activada otra vez.'); };
+  actions.reactivar = async b => { const u = b.dataset.u; await B.merge('acceso/' + u, { activa: true, equipo: EQ, ts: Date.now() }); toast('Activada otra vez.'); };
   async function borrarJug(u) {
     const [d, s, v] = await Promise.all([B.getCol(`registros/${u}/dias`), B.getCol(`registros/${u}/semanas`), B.getCol(`valoraciones/${u}/semanas`).catch(() => [])]);
     await B.batch([...d.map(x => ({ op: 'del', path: `registros/${u}/dias/${x.id}` })), ...s.map(x => ({ op: 'del', path: `registros/${u}/semanas/${x.id}` })), ...v.map(x => ({ op: 'del', path: `valoraciones/${u}/semanas/${x.id}` })), { op: 'del', path: 'acceso/' + u }, { op: 'del', path: 'jugadoras/' + u }]);
@@ -658,7 +794,7 @@
   actions.borrartemporada = async b => {
     if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Pulsa otra vez: se borran los datos de todas'; return; }
     for (const u of Object.keys(A.jug)) await borrarJug(u);
-    await B.batch(EQUIPOS.map(e => ({ op: 'del', path: 'equipos/' + e.id }))); toast('Temporada borrada.');
+    await B.batch(['sub17', 'senior', EQ].map(e => ({ op: 'del', path: 'equipos/' + e }))); toast('Temporada borrada.');
   };
   actions.csv = async () => {
     const rows = [['jugadora', 'equipo', 'fecha', ...WELL.map(w => w.n), 'bienestar (media)', 'sesiones', 'esfuerzo', 'minutos', 'carga', 'notas']];
@@ -671,18 +807,14 @@
     if (!isAdmin()) return;
     const b = e.target.closest('button, tr[data-jug]'); if (!b) return;
     if (b.dataset.av) { view = b.dataset.av; render(); scrollTo({ top: 0 }); return; }
-    if (b.dataset.aeq) { A.eq = b.dataset.aeq; render(); return; }
-    if (b.dataset.req) { A.req = b.dataset.req; render(); return; }
+    if (b.dataset.cdia) { const c = calOf(A.cal), n = +b.dataset.cdia, dias = c.dias.includes(n) ? c.dias.filter(x => x !== n) : [...c.dias, n].sort(); try { await saveCal({ dias, sin: c.sin }); } catch (er) { toast('No se ha podido guardar.'); } return; }
     if (b.dataset.jug) { A.sel = b.dataset.jug; view = 'detalle'; render(); scrollTo({ top: 0 }); return; }
   });
   root.addEventListener('keydown', e => { if (isAdmin() && e.key === 'Enter' && e.target.dataset && e.target.dataset.jug) e.target.click(); });
-  root.addEventListener('change', async e => {
-    if (!isAdmin() || !e.target.dataset.chgeq) return;
-    const u = e.target.dataset.chgeq; try { await B.merge('acceso/' + u, { equipo: e.target.value, ts: Date.now() }); toast('Equipo cambiado.'); } catch (er) { toast('No se ha podido cambiar.'); }
-  });
   function startAdmin() {
     view = 'resumen';
     unsub.push(B.listenCol('jugadoras', L => { A.jug = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));
+    unsub.push(B.listenDoc('equipos/' + EQ, d => { A.cal = d; render(); }, () => {}));
     unsub.push(B.listenCol('acceso', L => { A.acc = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));
   }
   // escucha lo de cada jugadora con alta
@@ -706,10 +838,11 @@
     if (me === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!me) return loginView();
     if (!ADMIN.length) return gate(`<h2>Falta un paso de configuración</h2><p>Copia este código y ponlo en <b>firebase-config.js</b> (SMBF_ADMIN) y en las reglas (ADMIN_UID). Es tu código de usuario: con él la app sabe que eres la Dirección Técnica.</p><p class="code">${esc(me.uid)}</p><button class="btn ghost" type="button" data-a="out">Salir</button>`);
-    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
+    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
     if (U.perfil === undefined || U.acceso === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!U.perfil || !U.perfil.acepta || U.editAlta) return altaView();
     if (!U.acceso || !U.acceso.activa) return esperaView();
+    if (view === 'bienvenida' || !ls.get(bienvenidaKey())) return bienvenidaView();
     if (view === 'antes') return antesFlowView();
     if (view === 'semana') return diarioView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
     return hoyView();
@@ -718,7 +851,7 @@
   if (B) B.onAuth(u => {
     stop(); datosOn = false;
     Object.assign(U, { perfil: undefined, acceso: undefined, equipo: null, dias: {}, semanas: {}, editAlta: false });
-    Object.assign(A, { jug: {}, acc: {}, regs: {}, equipos: {}, val: {}, sel: '' });
+    Object.assign(A, { jug: {}, acc: {}, regs: {}, equipos: {}, val: {}, sel: '', cal: null, editResp: {} });
     me = u || null; view = 'hoy';
     if (me && ADMIN.includes(me.uid)) startAdmin(); else if (me && ADMIN.length) startJugadora();
     render();

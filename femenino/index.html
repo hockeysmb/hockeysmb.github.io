@@ -189,6 +189,30 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--fill); }
 .nota-in { width: 100%; min-height: 140px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 12px 14px; font: 500 24px/30px "Caveat", "Segoe Print", cursive; color: var(--fg); resize: vertical; }
 .nota-p { margin: 0; font: 500 21px/26px "Caveat", "Segoe Print", cursive; color: var(--fg); }
 td.nota-td { white-space: normal; min-width: 200px; }
+/* respuestas de Carlos */
+.msg-card { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface)); }
+.msg-it { display: grid; gap: 2px; } .msg-it + .msg-it { border-top: 1px solid var(--line); padding-top: 10px; }
+.msg-it p, .msg-card > p { margin: 0; font-size: 15px; }
+.resp-box { display: grid; gap: 6px; } .resp-box textarea { width: 100%; font: 15px var(--font); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); resize: vertical; } .resp-box .btn { justify-self: start; }
+.resp-done { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; background: var(--fill); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+/* avisos y bienvenida */
+.field.tm { flex: 1; min-width: 130px; }
+.step-card h2 { display: flex; align-items: center; gap: 10px; }
+.step-card .num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 15px; flex: none; }
+.info li.me { font-weight: 600; }
+.date-in { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); }
+/* resumen de temporada */
+.season-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.me-av.sm { width: 96px; flex: none; }
+.tiles.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 700px) { .tiles.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media print {
+  .top, .nav, .no-print, .toast, .back { display: none !important; }
+  body { background: #fff; color: #000; }
+  .wrap { padding: 0 !important; max-width: none; }
+  .card, .tile { break-inside: avoid; box-shadow: none; }
+  .two { grid-template-columns: 1fr 1fr; }
+}
 /* diario de la semana */
 .row.between { justify-content: space-between; } .row.tight { gap: 5px; flex-wrap: nowrap; } .grow { flex: 1; }
 .diary-hero { background: var(--accent); color: var(--accent-ink); border-radius: 18px; padding: 14px 16px 16px; display: grid; gap: 10px; }
@@ -231,9 +255,9 @@ td.nota-td { white-space: normal; min-width: 200px; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261023h"></script>
-<script src="firebase-config.js?v=20261023h"></script>
-<script src="app.js?v=20261023h"></script>
+<script src="lib/avatar.js?v=20261023j"></script>
+<script src="firebase-config.js?v=20261023j"></script>
+<script src="app.js?v=20261023j"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

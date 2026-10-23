@@ -28,7 +28,7 @@ async def main():
       await go(); await pg.screenshot(path=O + '0_entrar.png')
       # 1. alta de Ana (menor)
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="up"]'); await pg.wait_for_timeout(600)
-      await pg.fill('#a-nombre', 'Ana Prueba'); await pg.click('[data-eq="sub17"]'); await pg.check('#a-menor'); await pg.check('#a-ok')
+      await pg.fill('#a-nombre', 'Ana Prueba'); await pg.check('#a-menor'); await pg.check('#a-ok')
       await pg.click('[data-a="alta"]'); await pg.wait_for_timeout(300); print('sin firma de la familia:', await pg.text_content('#msg'))
       await pg.check('#a-fam'); await pg.screenshot(path=O + '1_alta.png', full_page=True); await pg.click('[data-a="alta"]'); await pg.wait_for_timeout(600)
       print('espera:', (await pg.text_content('.gate h2')))
@@ -43,6 +43,12 @@ async def main():
       await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
       print('pendiente:', ' '.join((await pg.text_content('.list .li')).split()))
       await pg.click(f'[data-a="activar"][data-u="{uid}"]'); await pg.wait_for_timeout(500)
+      # días de entreno: quitar el jueves y volverlo a poner, y un festivo
+      await pg.click('[data-cdia="4"]'); await pg.wait_for_timeout(200); await pg.click('[data-cdia="4"]'); await pg.wait_for_timeout(200)
+      await pg.fill('#c-sin', '2026-11-02'); await pg.click('[data-a="addsin"]'); await pg.wait_for_timeout(300)
+      cal = await pg.evaluate("window.__fake.db()['equipos/femenino']"); print('calendario:', cal)
+      if not cal or cal.get('dias') != [1, 2, 4] or cal.get('sin') != ['2026-11-02']: errs.append('no se guardan los días de entreno')
+      await pg.screenshot(path=O + '1b_altas.png', full_page=True)
       print('acceso:', json.dumps(await pg.evaluate(f"window.__fake.db()['acceso/{uid}']"))[:120])
       # historial de 4 semanas para Ana (como si lo hubiera ido respondiendo), con la última semana más cargada
       await pg.evaluate("""uid => { const d0 = new Date(2026, 9, 26); for (let i = 1; i <= 30; i++) { const d = new Date(d0); d.setDate(d.getDate() - i); const dow = d.getDay(); if (![1, 2, 6].includes(dow)) continue;
@@ -53,6 +59,13 @@ async def main():
       await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
       # 3. Ana responde hoy
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
+      # bienvenida: avisos en el calendario
+      print('bienvenida:', await pg.text_content('h1')); await pg.screenshot(path=O + '2c_bienvenida.png', full_page=True)
+      async with pg.expect_download() as dl: await pg.click('[data-a="ics"]')
+      ics = open(await (await dl.value).path(), encoding='utf-8').read(); print('ics:', ics.count('BEGIN:VEVENT'), 'avisos |', [l for l in ics.splitlines() if l.startswith('RRULE')][0])
+      if 'BYDAY=MO,TU,TH' not in ics: errs.append('los avisos no siguen los días de entreno')
+      g = await pg.get_attribute('a[href*="calendar.google.com"]', 'href'); print('google:', g[:110])
+      await pg.click('[data-a="bienvenidaok"]'); await pg.wait_for_timeout(300)
       print('hoy:', (await pg.text_content('h1')))
       await pg.screenshot(path=O + '2a_hoy.png', full_page=True)
       await pg.click('[data-a="startantes"]'); await pg.wait_for_timeout(200)
@@ -102,6 +115,15 @@ async def main():
       await pg.click('tbody tr'); await pg.wait_for_timeout(400)
       print('motivos:', await pg.evaluate("[...document.querySelectorAll('.card ul.info li')].map(l=>l.textContent)"))
       print('diario en la ficha:', ' '.join((await pg.locator('.card').last.inner_text()).split())[:160])
+      # contestar a lo que contó y a su diario
+      await pg.fill('[id="r-d:2026-10-26"]', '¿Qué te ayudaría a llegar más tranquila el jueves?'); await pg.click('[data-a="resp"][data-k="d:2026-10-26"]'); await pg.wait_for_timeout(300)
+      await pg.fill('[id="r-s:2026-10-26"]', 'Buen compromiso. ¿Cuándo vas a mirar?'); await pg.click('[data-a="resp"][data-k="s:2026-10-26"]'); await pg.wait_for_timeout(300)
+      resp = await pg.evaluate(f"window.__fake.db()['acceso/{uid}'].resp"); print('respuestas:', sorted(resp.keys()) if resp else resp)
+      if not resp or len(resp) != 2: errs.append('no se guardan las respuestas')
+      await pg.screenshot(path=O + '7b_dt_contestar.png', full_page=True)
+      await pg.click('[data-a="temporada"]'); await pg.wait_for_timeout(400)
+      print('temporada:', ' | '.join(' '.join(t.split()) for t in await pg.locator('.tile').all_inner_texts()))
+      await pg.screenshot(path=O + '7c_temporada.png', full_page=True)
       await pg.screenshot(path=O + '7_dt_detalle.png', full_page=True)
       await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
       async with pg.expect_download() as dl: await pg.click('[data-a="csv"]')
@@ -110,6 +132,7 @@ async def main():
       # 5. Ana borra sus datos
       await pg.set_viewport_size({'width': 390, 'height': 844})
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
+      print('Ana ve:', ' '.join((await pg.text_content('.msg-card')).split())[:160]); await pg.screenshot(path=O + '7d_hoy_respuesta.png', full_page=True)
       await pg.click('[data-v="datos"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '8_datos.png', full_page=True)
       await pg.click('[data-a="borrartodo"]'); await pg.click('[data-a="borrartodo"]'); await pg.wait_for_timeout(700)
       left = await pg.evaluate(f"Object.keys(window.__fake.db()).filter(k=>k.includes('{uid}') && !k.startsWith('acceso') && !k.startsWith('valoraciones'))"); print('quedan de Ana:', left)
