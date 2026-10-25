@@ -102,3 +102,10 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - DT: la ficha del partido enseña medias (ganas, confianza, nervios, disfrute, cómo se han visto), repartos (qué les importa, cómo creían que iría, cómo se sienten, si lo consiguieron) y lo de cada una. En el estado de la jugadora salen como información las emociones negativas (`EMOC_MAL`) de los dos últimos días y llegar al partido con confianza 3 o menos.
 - CSV: columnas nuevas del antes y del después.
 - Sin reglas nuevas: todo va en `registros/{uid}/dias/{fecha}`.
+
+## App de jugadoras · partidos en tarjetas (25 oct)
+
+- Fuera listados en los partidos: `ticketHTML` (entrada con la fecha en un talón del color de la categoría) para los próximos, en fila que se desliza; `marcadorHTML` (resultado grande, ganado/empate/perdido y cuántas lo cuentan) para los jugados, en rejilla; `cromoHTML` para cada partido tal y como lo vivió una jugadora («Mis partidos» y «Sus partidos» en la ficha de la DT).
+- Colores por categoría: tokens `--c15`, `--c17`, `--caf` (+ `-ink`), clases `.c15 .c17 .caf .cot` (`catCls`).
+- La DT filtra los partidos tocando el balance de cada categoría (`A.pcat`, `data-pcat`).
+- «Tus compromisos» en «Mi jugadora»: notas de colores con su sello (`.notes`).
