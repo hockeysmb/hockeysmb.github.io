@@ -77,6 +77,15 @@
   const partDe = (cal, d) => allPart(cal).filter(x => x.fecha === d);
   const partTxt = x => `${x.cat} · ${x.rival} (${x.casa ? 'en casa' : 'fuera'})`;
   const PJUEGA = [['si', 'He jugado'], ['conv', 'Convocada, sin jugar']];
+  // antes y después del partido (25 oct)
+  const L10 = o => v => ({ 10: o[4], 8: o[3], 5: o[2], 3: o[1], 1: o[0] })[v];
+  const ESPERA = [['ganar', 'Lo vamos a ganar'], ['igualado', 'Igualado'], ['dificil', 'Va a ser difícil'], ['nose', 'No lo sé']];
+  const IMPORTA = [['ganar', 'Ganar'], ['jugarbien', 'Jugar bien'], ['disfrutar', 'Disfrutar'], ['aprender', 'Aprender algo'], ['minutos', 'Tener minutos'], ['equipo', 'Ayudar al equipo']];
+  const CUMPLIDO = [['si', 'Sí'], ['medias', 'A medias'], ['no', 'No']];
+  const EMOC = ['Orgullosa', 'Contenta', 'Tranquila', 'Con ganas de más', 'Cansada', 'Frustrada', 'Decepcionada', 'Enfadada', 'Triste', 'Nerviosa'];
+  const EMOC_MAL = ['Frustrada', 'Decepcionada', 'Enfadada', 'Triste'];
+  const PMINS = [5, 10, 15, 20, 25, 30, 40, 50];
+  const lbl = (L, k) => (L.find(x => x[0] === k) || [0, ''])[1];
   // respuestas de la DT: en acceso/{uid}.resp (la jugadora lo lee, solo la DT lo escribe; no hacen falta reglas nuevas)
   // claves: «d:AAAA-MM-DD» (lo que contó ese día) y «s:AAAA-MM-DD» (su diario de esa semana)
   const respOf = (acc, k) => ((acc || {}).resp || {})[k];
@@ -108,11 +117,11 @@
   const bars = k => `<span class="bars" aria-hidden="true">${[6, 11, 16, 20, 24].map((h, i) => `<i style="height:${h}px"${i <= k ? ' class="f"' : ''}></i>`).join('')}</span>`;
 
   // ================= juego: puntos por responder (nunca por lo que se responde) =================
-  const PTS = { antes: 10, despues: 10, semana: 20, revisar: 15 };
+  const PTS = { antes: 10, despues: 10, partido: 10, semana: 20, revisar: 15 };
   const NIVELES = [['Novata', 0], ['Calentando', 30], ['En pista', 80], ['Titular', 150], ['Imprescindible', 250], ['Referente', 380], ['Capitana', 550], ['Veterana', 750], ['Mito', 1000], ['Leyenda del SMB', 1300]];
   function puntos(dias, semanas) {
     let p = 0;
-    Object.values(dias || {}).forEach(d => { if (!d) return; if (d.antes) p += PTS.antes; if ((d.ses || []).length || Object.keys(d.partidos || {}).length) p += PTS.despues; });
+    Object.values(dias || {}).forEach(d => { if (!d) return; if (d.antes) p += PTS.antes; if ((d.ses || []).some(z => !z.pid)) p += PTS.despues; Object.values(d.partidos || {}).forEach(pd => { if (pd && pd.pre) p += PTS.partido; if (pd && pd.juega) p += PTS.partido; }); });
     Object.values(semanas || {}).forEach(s => { if (!s) return; p += PTS.semana; if (s.cumplida || String(s.resp || '').trim()) p += PTS.revisar; });
     return p;
   }
@@ -211,6 +220,11 @@
     else if (s != null && base != null && s <= base - 1.8) add('warn', `Hoy está por debajo de lo normal en ella (${fmt1(s)}; suele estar en ${fmt1(base)}).`);
     if (a && diez(a.dolor, a) <= 3) add('warn', 'Molestias musculares altas.');
     if (a && a.nota) add('info', `Ha escrito: «${a.nota}»`);
+    Object.keys(dias).filter(k => k <= ref && daysBetween(k, ref) <= 2).forEach(k => Object.values((dias[k] || {}).partidos || {}).forEach(pd => {
+      const m = (pd.emociones || []).filter(e => EMOC_MAL.includes(e));
+      if (m.length) add('info', `Después del partido contra ${pd.rival || '—'} se siente ${m.join(', ').toLowerCase()}.`);
+      if (k === ref && pd.pre && pd.pre.confianza <= 3) add('info', `Llega al partido con poca confianza (${pd.pre.confianza} de 10).`);
+    }));
     if (L.ratio != null && L.ratio > 1.5) add('bad', `La carga de esta semana se dispara: ${fmt1(L.ratio)} veces su media del mes.`);
     else if (L.ratio != null && L.ratio > 1.3) add('warn', `Carga alta esta semana: ${fmt1(L.ratio)} veces su media del mes.`);
     else if (L.ratio != null && L.ratio < 0.8) add('warn', `Carga baja esta semana: ${fmt1(L.ratio)} veces su media del mes.`);
@@ -364,7 +378,7 @@
     if (a && !draft.editAntes) return `<section class="card done"><div class="card-h"><h2>Antes del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>
       <div class="faces">${WELL.map(w => { const v = Math.round(diez(a[w.k], a)); return `<span class="mf">${face(Math.ceil(v / 2))}<b>${esc(w.s)}</b><small>${v} de 10</small></span>`; }).join('')}</div>${a.nota ? `<p class="nota-p">«${esc(a.nota)}»</p>` : ''}<button class="btn small" type="button" data-a="editantes">Cambiar</button></section>`;
     const n = WELL.filter(w => draft.antes[w.k] >= 1).length;
-    return `<section class="card" id="c-antes"><div class="card-h"><h2>Antes ${!entrena(calJ(), today()) && partDe(calJ(), today()).length ? 'del partido' : 'del entreno'}</h2><span class="sub">¿Cómo llegas hoy?</span></div>
+    return `<section class="card" id="c-antes"><div class="card-h"><h2>Antes del entreno</h2><span class="sub">¿Cómo llegas hoy?</span></div>
       <button class="btn primary big" type="button" data-a="startantes">${n ? `Seguir · ${n} de 5` : 'Empezar · 15 segundos'}</button></section>`;
   }
   // antes del entreno: una pregunta por pantalla; al tocar pasa sola a la siguiente y guarda al acabar
@@ -429,56 +443,125 @@
       ${hist.length ? `<div class="row between"><span class="kicker">Mis compromisos</span>${evald.length ? `<span class="sub">${si} de ${evald.length} cumplidos</span>` : ''}</div><div class="tks">${hist.map(ticket).join('')}</div>` : ''}
       ${edit ? `<div class="row"><button class="btn primary big grow" type="button" data-a="savesem">Guardar mi semana</button>${mine ? '<button class="btn ghost" type="button" data-a="noeditsem">Cancelar</button>' : ''}</div><p class="msg" id="msg"></p>` : '<button class="btn" type="button" data-a="editsem">Cambiar</button>'}`, { nav: navJ() });
   }
-  function partidoHTML(x) {
-    const pd = (diaHoy().partidos || {})[x.id], ed = draft.part && draft.part.id === x.id;
-    const head = `<div class="card-h"><h2>Partido · ${esc(x.cat)}</h2>${pd && !ed ? stHTML('ok').replace('Bien', 'Hecho') : `<span class="sub">${esc(x.hora || 'Hora por confirmar')}</span>`}</div><p class="part-l"><b>${esc(x.rival)}</b> · ${x.casa ? 'en casa' : 'fuera'} · jornada ${x.j || '—'}</p>`;
-    if (pd && !ed) return `<section class="card done">${head}<p class="sub">${pd.juega === 'si' ? `Has jugado ${pd.min} min · esfuerzo ${pd.rpe} · te viste ${pd.visto} de 10` : 'Convocada, sin jugar'}</p>${pd.mejor ? `<p class="nota-p">«${esc(pd.mejor)}»</p>` : ''}<button class="btn small" type="button" data-a="editpart" data-id="${x.id}">Cambiar</button></section>`;
-    if (!ed) return `<section class="card part-card">${head}<p>¿Juegas este partido? Cuando acabe, cuéntanos qué tal.</p><div class="row"><button class="btn primary" type="button" data-a="contarpart" data-id="${x.id}">Contar el partido</button><button class="btn ghost" type="button" data-a="nojuego" data-id="${x.id}">No juego</button></div></section>`;
-    const d = draft.part, jug = d.juega === 'si';
-    return `<section class="card part-card" id="c-part">${head}
-      <div class="seg" role="group" aria-label="¿Has jugado?">${PJUEGA.map(([k, l]) => `<button type="button" data-pjuega="${k}" aria-pressed="${d.juega === k}">${l}</button>`).join('')}</div>
-      ${jug ? `<div class="q"><div class="q-h"><span>Minutos jugados</span></div><span class="stepper"><button type="button" data-pmin="-5" aria-label="5 minutos menos">−</button><output id="pmin-o">${d.min}</output><button type="button" data-pmin="5" aria-label="5 minutos más">+</button></span></div>
-      <div class="q"><div class="q-h"><span>¿Lo duro que ha sido?</span><small>del 1 al 10</small></div>${escalera(v => `data-prpe="${v}"`, d.rpe, v => ({ 10: 'Al límite', 7: 'Muy duro', 5: 'Duro', 3: 'Normal', 1: 'Muy suave' })[v])}</div>
-      <div class="q"><div class="q-h"><span>¿Cómo te has visto?</span><small>del 1 al 10</small></div>${escalera(v => `data-pvisto="${v}"`, d.visto, v => ({ 10: 'Genial', 8: 'Bien', 5: 'Normal', 3: 'Regular', 1: 'Mal' })[v])}</div>` : ''}
-      <label class="field">¿Qué decisión te salió mejor?<textarea id="p-mejor" maxlength="300" rows="2" placeholder="Por ejemplo: presionar al pase atrás en el segundo tiempo">${esc(d.mejor || '')}</textarea></label>
-      <label class="field">¿Cuál cambiarías?<textarea id="p-cambiar" maxlength="300" rows="2">${esc(d.cambiar || '')}</textarea></label>
-      <div class="row"><button class="btn primary" type="button" data-a="savepart">Guardar</button><button class="btn ghost" type="button" data-a="nopart">Cancelar</button></div><p class="msg" id="msg"></p></section>`;
+  // ================= partidos: un antes y un después (25 oct) =================
+  // antes (unos 40 s): cómo llegan (las cinco de siempre si ese día no las han contestado), ganas, nervios, confianza,
+  // cómo creen que irá, qué les importa más y en qué se van a fijar. Después: si han jugado y minutos, esfuerzo,
+  // cómo se han visto, disfrute, si han conseguido lo que se propusieron, cómo se sienten (hasta tres) y tres preguntas abiertas.
+  const partLinea = (pd, visto, disf) => [pd.juega === 'si' ? `${pd.min} min · esfuerzo ${pd.rpe} · ${visto} ${pd.visto}` : pd.juega ? 'convocada, sin jugar' : 'solo el antes', pd.disfrute ? `${disf} ${pd.disfrute}` : ''].filter(Boolean).join(' · ');
+  const pdOf = x => ((U.dias[x.fecha] || {}).partidos || {})[x.id];
+  const partById = id => allPart(calJ()).find(y => y.id === id);
+  const emoHTML = L => (L || []).length ? `<div class="emos">${L.map(e => `<span class="emo${EMOC_MAL.includes(e) ? ' low' : ''}">${esc(e)}</span>`).join('')}</div>` : '';
+  function mfSteps(f) {
+    const v = f.vals, S = [], lad = (k, q, o, sub) => S.push({ k, t: 'ladder', q, lab: L10(o), sub });
+    if (f.kind === 'pre') {
+      if (f.well) WELL.forEach(w => S.push({ k: w.k, t: 'ladder', q: w.q, lab: n => ANCLA[n] != null ? w.o[ANCLA[n]] : '' }));
+      lad('ganas', '¿Con cuántas ganas llegas al partido?', ['Ninguna', 'Pocas', 'Normal', 'Muchas', 'Muchísimas']);
+      lad('nervios', '¿Cómo de nerviosa estás?', ['Nada', 'Poco', 'Algo', 'Bastante', 'Muchísimo'], 'Estar nerviosa no es malo: es para saber cómo llegas.');
+      lad('confianza', '¿Cuánta confianza tienes hoy en ti?', ['Ninguna', 'Poca', 'Normal', 'Mucha', 'Total']);
+      S.push({ k: 'espera', t: 'one', q: '¿Cómo crees que va a ir el partido?', o: ESPERA });
+      S.push({ k: 'importa', t: 'one', q: '¿Qué es lo que más te importa hoy?', o: IMPORTA, sub: 'Elige solo una.' });
+      S.push({ k: 'objetivo', t: 'text', q: '¿En qué te vas a fijar tú en este partido?', sub: 'Algo concreto que dependa de ti. Después del partido te preguntaremos si lo has conseguido.', ph: 'Por ejemplo: pedir la bola siempre que esté libre' });
+    } else {
+      const jug = v.juega !== 'conv';
+      S.push({ k: 'juega', t: 'one', q: '¿Has jugado?', o: PJUEGA });
+      if (jug) { S.push({ k: 'min', t: 'min', q: '¿Cuántos minutos has jugado, más o menos?' });
+        lad('rpe', '¿Lo duro que ha sido?', ['Muy suave', 'Normal', 'Duro', 'Muy duro', 'Al límite']);
+        lad('visto', '¿Cómo te has visto?', ['Mal', 'Regular', 'Normal', 'Bien', 'Genial']); }
+      lad('disfrute', '¿Cuánto has disfrutado?', ['Nada', 'Poco', 'Normal', 'Mucho', 'Muchísimo']);
+      if (jug && f.obj) S.push({ k: 'cumplido', t: 'one', q: '¿Lo has conseguido?', quote: f.obj, o: CUMPLIDO });
+      S.push({ k: 'emociones', t: 'multi', q: '¿Cómo te sientes ahora?', o: EMOC, max: 3 });
+      S.push({ k: 'textos', t: 'texts', q: 'Para acabar', f: jug ? [['mejor', 'La decisión que mejor te salió', 'Por ejemplo: presionar al pase atrás en el segundo tiempo'], ['cambiar', 'Una que cambiarías', 'Por ejemplo: tirar antes en el 2 contra 1'], ['llevo', '¿Qué te llevas de este partido?', 'Algo que hayas aprendido, visto o sentido']] : [['llevo', '¿Qué te llevas de este partido?', 'Algo que hayas aprendido, visto o sentido']] });
+    }
+    return S;
   }
+  function mfView() {
+    const f = draft.mf, S = mfSteps(f), N = S.length, i = f.i = Math.min(f.i, N - 1), s = S[i], v = f.vals, x = partById(f.id) || {};
+    const pre = f.kind === 'pre', kick = `${pre ? 'Antes del partido' : 'Después del partido'} · ${i + 1} de ${N}`;
+    let body;
+    if (s.t === 'ladder') body = `${escalera(n => `data-mf="${s.k}" data-v="${n}"`, v[s.k], s.lab)}<p class="sub center">${s.sub ? esc(s.sub) + ' ' : ''}Del 1 al 10. Al tocar, pasa sola a la siguiente.</p>`;
+    else if (s.t === 'one') body = `${s.quote ? `<p class="nota-p">Te propusiste: «${esc(s.quote)}»</p>` : ''}<div class="opts">${s.o.map(([k, l]) => `<button type="button" class="opt" data-mf="${s.k}" data-v="${k}" aria-pressed="${v[s.k] === k}">${esc(l)}</button>`).join('')}</div>${s.sub ? `<p class="sub center">${esc(s.sub)}</p>` : ''}`;
+    else if (s.t === 'min') body = `<div class="opts four">${PMINS.map(m => `<button type="button" class="opt" data-mf="min" data-v="${m}" aria-pressed="${v.min === m}">${m}</button>`).join('')}</div><p class="sub center">Elige lo más parecido.</p>`;
+    else if (s.t === 'multi') { const sel = v[s.k] || []; body = `<div class="opts chips">${s.o.map(e => `<button type="button" class="opt" data-mm="${s.k}" data-v="${esc(e)}" aria-pressed="${sel.includes(e)}">${esc(e)}</button>`).join('')}</div><p class="sub center">Elige hasta ${s.max}.</p><button class="btn primary big" type="button" data-a="mfnext">Siguiente</button>`; }
+    else if (s.t === 'text') body = `<p class="sub">${esc(s.sub)}</p><textarea class="nota-in" id="mf-${s.k}" maxlength="300" rows="4" placeholder="${esc(s.ph)}" aria-label="${esc(s.q)}">${esc(v[s.k] || '')}</textarea><button class="btn primary big" type="button" data-a="mfsave">Guardar</button><p class="sub center">Si no quieres escribir nada, pulsa Guardar igualmente.</p>`;
+    else body = `${s.f.map(([k, l, ph]) => `<label class="field">${esc(l)}<textarea class="nota-in sm" id="mf-${k}" maxlength="300" rows="2" placeholder="${esc(ph)}">${esc(v[k] || '')}</textarea></label>`).join('')}<button class="btn primary big" type="button" data-a="mfsave">Guardar</button><p class="sub center">Son opcionales. Solo lo lee Carlos.</p>`;
+    root.innerHTML = `<div class="flow"><header class="flow-top"><button class="btn ghost small" type="button" data-a="mfback"${i ? '' : ' style="visibility:hidden"'}>Atrás</button>
+        <div class="dots" role="img" aria-label="Paso ${i + 1} de ${N}">${S.map((_, k) => `<span${k <= i ? ' class="on"' : ''}></span>`).join('')}</div>
+        <button class="btn ghost small" type="button" data-a="mfclose">Cerrar</button></header>
+      <main class="wrap flow-in"><div><span class="kicker">${esc(kick)}</span><p class="flow-m">${esc(x.cat || '')} · ${esc(x.rival || '')}</p><h1 class="flow-q">${esc(s.q)}</h1></div>${body}</main></div>`;
+  }
+  const keepMf = () => { if (!draft.mf) return; root.querySelectorAll('textarea[id^="mf-"]').forEach(el => { draft.mf.vals[el.id.slice(3)] = el.value; }); };
+  function startMf(kind, id) {
+    const x = partById(id); if (!x) return;
+    if (!(draft.mf && draft.mf.id === id && draft.mf.kind === kind)) {
+      const D = U.dias[x.fecha] || {}, pd = (D.partidos || {})[id] || {};
+      draft.mf = { kind, id, fecha: x.fecha, i: 0, vals: clone(kind === 'pre' ? pd.pre || {} : pd.juega ? pd : {}), well: kind === 'pre' && !D.antes, obj: (pd.pre || {}).objetivo || '' };
+    }
+    view = 'mflow'; render(); scrollTo({ top: 0 });
+  }
+  actions.prepart = async b => startMf('pre', b.dataset.id);
+  actions.postpart = async b => startMf('post', b.dataset.id);
+  actions.mfnext = async () => { keepMf(); const n = mfSteps(draft.mf).length; if (draft.mf.i < n - 1) draft.mf.i++; render(); scrollTo({ top: 0 }); };
+  actions.mfback = async () => { keepMf(); if (draft.mf.i > 0) { draft.mf.i--; render(); } else actions.mfclose(); };
+  actions.mfclose = async () => { keepMf(); view = 'hoy'; render(); scrollTo({ top: 0 }); };
+  actions.mfsave = async () => {
+    keepMf(); const f = draft.mf, S = mfSteps(f), v = f.vals;
+    const miss = S.findIndex(s => ['ladder', 'one', 'min'].includes(s.t) && (v[s.k] == null || v[s.k] === ''));
+    if (miss >= 0) { f.i = miss; render(); toast('Te falta esta.'); return; }
+    const x = partById(f.id) || {}, D = U.dias[f.fecha] || {}, old = (D.partidos || {})[f.id] || {}, tx = k => String(v[k] || '').trim(), p0 = puntos(U.dias, U.semanas), now = Date.now();
+    const upd = { ts: now }, base = { cat: x.cat || old.cat || '', rival: x.rival || old.rival || '' }; let pd;
+    if (f.kind === 'pre') {
+      pd = Object.assign({}, old, base, { pre: { ganas: v.ganas, nervios: v.nervios, confianza: v.confianza, espera: v.espera, importa: v.importa, objetivo: tx('objetivo'), ts: now } });
+      if (f.well) { upd.antes = { esc: 10, nota: '', ts: now }; WELL.forEach(w => { upd.antes[w.k] = v[w.k]; }); }
+    } else {
+      const jug = v.juega === 'si';
+      pd = Object.assign({}, old, base, { juega: v.juega, min: jug ? v.min : 0, rpe: jug ? v.rpe : null, visto: jug ? v.visto : null, disfrute: v.disfrute, cumplido: jug && f.obj ? v.cumplido : '',
+        emociones: (v.emociones || []).slice(0, 3), mejor: jug ? tx('mejor') : '', cambiar: jug ? tx('cambiar') : '', llevo: tx('llevo'), ts: now });
+      // la carga del partido va con las demás sesiones del día (una por partido)
+      const ses = (D.ses || []).filter(z => z.pid !== f.id); if (jug && pd.min > 0) ses.push({ tipo: 'partido', rpe: pd.rpe, min: pd.min, nota: '', pid: f.id, ts: now }); upd.ses = ses;
+    }
+    upd.partidos = Object.assign({}, D.partidos || {}, { [f.id]: pd });
+    await B.merge(`registros/${me.uid}/dias/${f.fecha}`, upd);
+    U.dias[f.fecha] = Object.assign({}, D, upd); draft.mf = null; view = 'hoy'; premio(p0); render(); scrollTo({ top: 0 });
+  };
+  function partidoHTML(x) {
+    const pd = pdOf(x) || {}, pre = pd.pre, hoy = x.fecha === today(), id = x.id;
+    const head = st => `<div class="card-h"><h2>Partido · ${esc(x.cat)}</h2>${st}</div><p class="part-l"><b>${esc(x.rival)}</b> · ${x.casa ? 'en casa' : 'fuera'}${x.hora ? ' · ' + esc(x.hora) : ''}${hoy ? '' : ' · ' + esc(fmtDay(x.fecha))}</p>`;
+    if (pd.juega) return `<section class="card done part-card">${head(stHTML('ok').replace('Bien', 'Contado'))}
+      <p class="sub">${pd.juega === 'si' ? `${pd.min} min · esfuerzo ${pd.rpe} · te viste ${pd.visto} de 10` : 'Convocada, sin jugar'}${pd.disfrute ? ` · disfrutaste ${pd.disfrute} de 10` : ''}</p>${emoHTML(pd.emociones)}
+      ${pd.llevo || pd.mejor ? `<p class="nota-p">«${esc(pd.llevo || pd.mejor)}»</p>` : ''}<button class="btn small" type="button" data-a="postpart" data-id="${id}">Cambiar</button></section>`;
+    if (pre) return `<section class="card part-card">${head('<span class="sub">Antes: hecho</span>')}
+      <div class="pre-sum"><span>Ganas<b>${pre.ganas}</b></span><span>Nervios<b>${pre.nervios}</b></span><span>Confianza<b>${pre.confianza}</b></span></div>
+      ${pre.objetivo ? `<p class="nota-p">Te vas a fijar en: «${esc(pre.objetivo)}»</p>` : ''}<p class="sub">Cuando acabe, cuéntanos cómo lo has vivido. Un minuto.</p>
+      <div class="row"><button class="btn primary" type="button" data-a="postpart" data-id="${id}">Contar el partido</button><button class="btn ghost small" type="button" data-a="prepart" data-id="${id}">Cambiar lo de antes</button></div></section>`;
+    if (!hoy) return `<section class="card part-card">${head('<span class="sub">Un minuto</span>')}<p>¿Qué tal fue? Cuéntanos cómo lo viviste.</p>
+      <div class="row"><button class="btn primary" type="button" data-a="postpart" data-id="${id}">Contar el partido</button><button class="btn ghost" type="button" data-a="nojuego" data-id="${id}">No jugué</button></div></section>`;
+    const seguir = draft.mf && draft.mf.id === id && draft.mf.kind === 'pre';
+    return `<section class="card part-card">${head('<span class="sub">40 segundos</span>')}<p>Antes de calentar: cómo llegas, con qué ganas y en qué te vas a fijar.</p>
+      <button class="btn primary big" type="button" data-a="prepart" data-id="${id}">${seguir ? 'Seguir' : 'Antes del partido'}</button>
+      <div class="row"><button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Ya ha terminado: contarlo</button><button class="btn ghost small" type="button" data-a="nojuego" data-id="${id}">No juego</button></div></section>`;
+  }
+  const partVis = x => !ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || pdOf(x);
+  // hoy: los partidos de hoy; ayer: solo los que tienen el antes hecho y falta el después (se cuenta al día siguiente)
   function partidosHoyHTML() {
-    const t = today(), P = partDe(calJ(), t).filter(x => !ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || (diaHoy().partidos || {})[x.id]);
-    return P.map(partidoHTML).join('');
+    const t = today(), ayer = partDe(calJ(), addDays(t, -1)).filter(x => { const pd = pdOf(x); return pd && pd.pre && !pd.juega; });
+    return [...ayer, ...partDe(calJ(), t).filter(partVis)].map(partidoHTML).join('');
   }
   function proximoHTML() {
     const t = today(), n = allPart(calJ()).filter(x => x.fecha > t).slice(0, 2);
     return n.length ? `<section class="card"><h2>Próximos partidos</h2><ul class="part-list">${n.map(x => `<li><b>${esc(fmtDay(x.fecha))}${x.hora ? ' · ' + esc(x.hora) : ''}</b><span>${esc(partTxt(x))}</span></li>`).join('')}</ul></section>` : '';
   }
-  const keepPart = () => { if (!draft.part) return; const v = id => (document.getElementById(id) || {}).value; if (v('p-mejor') != null) draft.part.mejor = v('p-mejor'); if (v('p-cambiar') != null) draft.part.cambiar = v('p-cambiar'); };
-  actions.contarpart = async b => { draft.part = { id: b.dataset.id, juega: 'si', min: 20, rpe: null, visto: null, mejor: '', cambiar: '' }; render(); };
-  actions.editpart = async b => { const pd = (diaHoy().partidos || {})[b.dataset.id] || {}; draft.part = Object.assign({ id: b.dataset.id, juega: 'si', min: 20, rpe: null, visto: null, mejor: '', cambiar: '' }, clone(pd), { id: b.dataset.id }); render(); };
-  actions.nopart = async () => { draft.part = null; render(); };
-  actions.nojuego = async b => { ls.set(`smbf-nojuego-${me.uid}-${b.dataset.id}`, '1'); toast('Vale. Si al final juegas, lo puedes apuntar desde «Apuntar un entreno o partido».'); render(); };
-  actions.savepart = async () => {
-    keepPart(); const d = draft.part, m = $('#msg'), err = t => { m.className = 'msg err'; m.textContent = t; };
-    if (d.juega === 'si' && (d.rpe == null || d.visto == null)) return err('Dinos lo duro que ha sido y cómo te has visto.');
-    const t = today(), x = allPart(calJ()).find(y => y.id === d.id) || {}, p0 = puntos(U.dias, U.semanas);
-    const pd = { juega: d.juega, min: d.juega === 'si' ? d.min : 0, rpe: d.juega === 'si' ? d.rpe : null, visto: d.juega === 'si' ? d.visto : null, mejor: String(d.mejor || '').trim(), cambiar: String(d.cambiar || '').trim(), cat: x.cat || '', rival: x.rival || '', ts: Date.now() };
-    const partidos = Object.assign({}, diaHoy().partidos || {}, { [d.id]: pd });
-    // la carga del partido va con las demás sesiones del día (una por partido)
-    const ses = (diaHoy().ses || []).filter(z => z.pid !== d.id);
-    if (pd.juega === 'si' && pd.min > 0) ses.push({ tipo: 'partido', rpe: pd.rpe, min: pd.min, nota: '', pid: d.id, ts: Date.now() });
-    await B.merge(`registros/${me.uid}/dias/${t}`, { partidos, ses, ts: Date.now() });
-    U.dias[t] = Object.assign({}, U.dias[t] || {}, { partidos, ses }); draft.part = null; premio(p0); render();
-  };
+  actions.nojuego = async b => { ls.set(`smbf-nojuego-${me.uid}-${b.dataset.id}`, '1'); toast('Vale. Si al final juegas, apúntalo en «Después del entreno» como partido.'); render(); };
   function hoyView() {
-    const t = today(), dia = diaHoy();
-    const hayPart = partDe(calJ(), t).some(x => !ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || (dia.partidos || {})[x.id]), ent = entrena(calJ(), t);
+    const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), hayPart = vis.length > 0, ent = entrena(calJ(), t), cards = partidosHoyHTML();
     const show = ent || hayPart || draft.showDia || dia.antes || (dia.ses || []).length;
     const nombre = (U.perfil.nombre || '').split(' ')[0], p = puntos(U.dias, U.semanas), lv = nivelDe(p);
-    const pHoy = partDe(calJ(), t)[0], lineaHoy = pHoy ? `Hoy juegas · ${pHoy.cat} contra ${pHoy.rival}${pHoy.hora ? ', ' + pHoy.hora : ''}` : ent ? 'Hoy hay entreno. ¿Cómo llegas?' : 'Hoy no hay entreno. Descansa bien.';
+    const pHoy = vis[0], lineaHoy = pHoy ? `Hoy juegas · ${pHoy.cat} contra ${pHoy.rival}${pHoy.hora ? ', ' + pHoy.hora : ''}` : ent ? 'Hoy hay entreno. ¿Cómo llegas?' : 'Hoy no hay entreno. Descansa bien.';
+    // día de partido: el «antes» del día va dentro del antes del partido (si ya está contestado, se enseña hecho)
+    const antes = dia.antes || !hayPart ? antesHTML() : '';
     shell(`<section class="hero"><div class="hi"><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1><p class="today">${esc(lineaHoy)}</p></div>
         <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></section>
       ${respuestasHTML()}
-      ${show ? antesHTML() + partidosHoyHTML() + (ent || draft.showDia || (dia.ses || []).some(z => !z.pid) ? despuesHTML() : '') : `<section class="card"><h2>Hoy no hay entreno</h2><p class="sub">Si has jugado un partido o has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno o partido de hoy</button></section>`}
+      ${show ? antes + cards + (ent || draft.showDia || (dia.ses || []).some(z => !z.pid) ? despuesHTML() : '') : `${cards}<section class="card"><h2>Hoy no hay entreno</h2><p class="sub">Si has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno de hoy</button></section>`}
       ${semanaMini()}${proximoHTML()}`, { nav: navJ() });
   }
   function yoView() {
@@ -494,12 +577,12 @@
           <span class="sub">${next ? `${p} de ${next[1]} puntos.${nuevos.length ? ` Próximo: ${esc(nuevos.join(', ').toLowerCase())}.` : ''}` : `${p} puntos. Has llegado arriba del todo.`}</span>
           <button class="btn small" type="button" data-a="editav">Cambiar mi jugadora</button></div></section>
       <section class="card"><h2>Cómo se ganan puntos</h2><ul class="pts">
-        <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li>
+        <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li><li><span>Antes y después de cada partido</span><b>+${PTS.partido} y +${PTS.partido}</b></li>
         <li><span>Escribir tu diario de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si cumpliste tu compromiso</span><b>+${PTS.revisar}</b></li></ul>
         <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos.</p></section>
       <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, del 1 al 10, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
       <section class="card"><h2>Tu carga por semana</h2><p class="sub">Esfuerzo × minutos de cada sesión, sumado por semana. La barra clara es la semana en curso.</p>${loadChart(U.dias, t)}</section>
-      ${(() => { const L = []; Object.keys(U.dias).sort().reverse().forEach(k => Object.entries(U.dias[k].partidos || {}).forEach(([id, pd]) => L.push([k, id, pd]))); return L.length ? `<section class="card"><h2>Mis partidos</h2><ul class="list">${L.slice(0, 12).map(([k, id, pd]) => `<li class="li"><span><b>${esc(pd.cat)} · ${esc(pd.rival)}</b><small>${esc(fmtShort(k))} · ${pd.juega === 'si' ? `${pd.min} min · te viste ${pd.visto} de 10` : 'convocada, sin jugar'}</small></span></li>`).join('')}</ul></section>` : ''; })()}
+      ${(() => { const L = []; Object.keys(U.dias).sort().reverse().forEach(k => Object.entries(U.dias[k].partidos || {}).forEach(([id, pd]) => L.push([k, id, pd]))); return L.length ? `<section class="card"><h2>Mis partidos</h2><ul class="list">${L.slice(0, 12).map(([k, id, pd]) => `<li class="li"><span><b>${esc(pd.cat)} · ${esc(pd.rival)}</b><small>${esc(fmtShort(k))} · ${partLinea(pd, 'te viste', 'disfrutaste')}</small>${pd.pre && pd.pre.objetivo ? `<small>Te fijabas en: ${esc(pd.pre.objetivo)}${pd.cumplido ? ' · ' + esc(lbl(CUMPLIDO, pd.cumplido).toLowerCase()) : ''}</small>` : ''}</span></li>`).join('')}</ul></section>` : ''; })()}
       <section class="card"><h2>Tus compromisos</h2>${sem.length ? `<ul class="list">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<li class="li"><span><b>${esc(compOf(x) || '—')}</b><small>Semana del ${esc(fmtShort(k))}${nx && nx.cumplida ? ' · ' + esc(STAMP[nx.cumplida] || '') : ''}</small></span></li>`; }).join('')}</ul>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`, { nav: navJ() });
   }
   function editAvView(lv) {
@@ -589,6 +672,7 @@
       <section class="card step-card"><div class="card-h"><h2><span class="num">3</span>Cómo funciona</h2></div>
         <ul class="info"><li><b>Antes del entreno:</b> cinco preguntas del 1 al 10 y, si quieres, algo que contar. 15 segundos.</li>
         <li><b>Después:</b> lo duro que ha sido, del 1 al 10, y los minutos.</li>
+        <li><b>Los días de partido:</b> unas preguntas antes (con qué ganas llegas y en qué te vas a fijar) y otras después (cómo lo has vivido).</li>
         <li><b>Una vez a la semana:</b> tu diario y un compromiso para la siguiente.</li>
         <li><b>Tu jugadora:</b> sube de nivel cuando respondes. Da igual lo que contestes: puntúa responder.</li>
         <li><b>Solo lo ve Carlos.</b> A veces te contestará aquí mismo.</li></ul></section>
@@ -672,16 +756,22 @@
       setTimeout(async () => { try { draft.paso++; render(); } catch (er) { console.error(er); toast('No se ha podido guardar. Revisa la conexión e inténtalo otra vez.'); } finally { draft.busy = false; } }, 230);
       return;
     }
+    if (b.dataset.mf && draft.mf) {
+      if (draft.busy) return;
+      draft.mf.vals[b.dataset.mf] = /^\d+$/.test(b.dataset.v) ? +b.dataset.v : b.dataset.v; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      draft.busy = true; setTimeout(() => { try { actions.mfnext(); } finally { draft.busy = false; } }, 230); return;
+    }
+    if (b.dataset.mm && draft.mf) {
+      const L = draft.mf.vals[b.dataset.mm] = draft.mf.vals[b.dataset.mm] || [], j = L.indexOf(b.dataset.v);
+      if (j >= 0) L.splice(j, 1); else if (L.length < 3) L.push(b.dataset.v); else { toast('Elige hasta tres.'); return; }
+      b.setAttribute('aria-pressed', String(j < 0)); return;
+    }
     const keepNota = () => { draft.ses.nota = ($('#s-nota') || {}).value || ''; };
     if (b.dataset.rpe) { draft.ses.rpe = +b.dataset.rpe; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
     if (b.dataset.tipo) { keepNota(); draft.ses.tipo = b.dataset.tipo; draft.ses.min = (TIPOS.find(t => t.k === b.dataset.tipo) || TIPOS[0]).min; draft.ses.otroMin = false; render(); return; }
     if (b.dataset.minc) { keepNota(); if (b.dataset.minc === 'otro') draft.ses.otroMin = true; else { draft.ses.min = +b.dataset.minc; draft.ses.otroMin = false; } render(); return; }
     if (b.dataset.min) { draft.ses.min = Math.max(5, Math.min(240, draft.ses.min + +b.dataset.min)); $('#min-o').textContent = draft.ses.min; return; }
     if (b.dataset.avk && draft.av) { draft.av[b.dataset.avk] = b.dataset.avv; const y = scrollY; render(); scrollTo({ top: y }); return; }
-    if (b.dataset.pjuega && draft.part) { keepPart(); draft.part.juega = b.dataset.pjuega; render(); return; }
-    if (b.dataset.pmin && draft.part) { draft.part.min = Math.max(0, Math.min(60, draft.part.min + +b.dataset.pmin)); $('#pmin-o').textContent = draft.part.min; return; }
-    if (b.dataset.prpe && draft.part) { draft.part.rpe = +b.dataset.prpe; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
-    if (b.dataset.pvisto && draft.part) { draft.part.visto = +b.dataset.pvisto; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
     if (b.dataset.tiempo && draft.sem) { draft.sem.tiempo = +b.dataset.tiempo; const y = scrollY; render(); scrollTo({ top: y }); return; }
     if (b.dataset.area && draft.sem) { draft.sem.area = draft.sem.area === b.dataset.area ? '' : b.dataset.area; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.area === draft.sem.area))); return; }
     if (b.dataset.cumplida && draft.sem) { draft.sem.cumplida = b.dataset.cumplida; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
@@ -817,7 +907,7 @@
   };
   function susPartidosHTML(D) {
     const L = []; Object.keys(D).sort().reverse().forEach(k => Object.entries(D[k].partidos || {}).forEach(([id, pd]) => L.push([k, id, pd])));
-    return L.length ? `<section class="card"><h2>Sus partidos</h2><ul class="list">${L.slice(0, 10).map(([k, id, pd]) => `<li class="li"><span><b>${esc(fmtShort(k))} · ${esc(pd.cat)} · ${esc(pd.rival)}</b><small>${pd.juega === 'si' ? `${pd.min} min · esfuerzo ${pd.rpe} · se vio ${pd.visto} de 10` : 'Convocada, sin jugar'}</small></span><button class="btn ghost small" type="button" data-part="${id}">Ver partido</button></li>`).join('')}</ul></section>` : '';
+    return L.length ? `<section class="card"><h2>Sus partidos</h2><ul class="list">${L.slice(0, 10).map(([k, id, pd]) => `<li class="li"><span><b>${esc(fmtShort(k))} · ${esc(pd.cat)} · ${esc(pd.rival)}</b><small>${partLinea(pd, 'se vio', 'disfrutó')}${pd.pre ? ` · llegó con ganas ${pd.pre.ganas} y confianza ${pd.pre.confianza}` : ''}</small></span><button class="btn ghost small" type="button" data-part="${id}">Ver partido</button></li>`).join('')}</ul></section>` : '';
   }
   function contadoHTML(u, D, t) {
     const L = []; for (let i = 0; i < 21; i++) { const k = addDays(t, -i), d = D[k] || {}, n = [(d.antes || {}).nota, ...(d.ses || []).map(x => x.nota)].filter(Boolean); if (n.length) L.push([k, n]); }
@@ -864,13 +954,29 @@
   function partidoView() {
     A.view2 = 'partido';
     const x = allPart(A.cal).find(y => y.id === A.part); if (!x) { view = 'partidos'; return partidosView(); }
-    const us = activas().filter(u => respPart(u, x)), jug = us.filter(u => respPart(u, x).juega === 'si');
-    const mv = mean(jug.map(u => respPart(u, x).visto)), mr = mean(jug.map(u => respPart(u, x).rpe));
+    const R = activas().map(u => [u, respPart(u, x)]).filter(r => r[1]), pre = R.filter(r => r[1].pre), post = R.filter(r => r[1].juega), jug = post.filter(r => r[1].juega === 'si');
+    const m = (L, f) => mean(L.map(r => f(r[1])).filter(v => v != null && v !== ''));
+    // reparto de una respuesta de opciones: barras con el número de jugadoras
+    const dist = (vals, opts) => { const n = vals.length, rows = opts.map(([k, l]) => [l, vals.filter(v => v === k).length]).filter(r => r[1]).sort((a, b) => b[1] - a[1]);
+      return rows.length ? `<ul class="dist">${rows.map(([l, c]) => `<li><span>${esc(l)}</span><i><b style="width:${Math.round(c / n * 100)}%"></b></i><em>${c}</em></li>`).join('')}</ul>` : '<p class="sub">Nadie todavía.</p>'; };
+    const emos = post.flatMap(r => r[1].emociones || []), cumpl = jug.map(r => r[1].cumplido).filter(Boolean);
+    const ficha = ([u, pd]) => { const p = pd.pre, k = 'p:' + x.fecha + ':' + x.id, txt = (p && p.objetivo) || pd.mejor || pd.cambiar || pd.llevo;
+      return `<div class="obj"><span class="kicker">${esc((A.jug[u].nombre || '').split(' ')[0])}</span>
+        ${p ? `<p><b>Antes:</b> ganas ${p.ganas} · nervios ${p.nervios} · confianza ${p.confianza} · cree que irá: ${esc(lbl(ESPERA, p.espera).toLowerCase())} · le importa: ${esc(lbl(IMPORTA, p.importa).toLowerCase())}</p>${p.objetivo ? `<p><b>Se iba a fijar en:</b> ${esc(p.objetivo)}</p>` : ''}` : '<p class="sub">No contestó el antes.</p>'}
+        ${pd.juega ? `<p><b>Después:</b> ${esc(partLinea(pd, 'se vio', 'disfrutó'))}${pd.cumplido ? ` · lo que se propuso: ${esc(lbl(CUMPLIDO, pd.cumplido).toLowerCase())}` : ''}</p>${emoHTML(pd.emociones)}` : '<p class="sub">Todavía no ha contado el después.</p>'}
+        ${pd.mejor ? `<p><b>Mejor decisión:</b> ${esc(pd.mejor)}</p>` : ''}${pd.cambiar ? `<p><b>Cambiaría:</b> ${esc(pd.cambiar)}</p>` : ''}${pd.llevo ? `<p><b>Se lleva:</b> ${esc(pd.llevo)}</p>` : ''}
+        ${txt ? respBox(u, k) : ''}</div>`; };
     shell(`<button class="btn ghost small back" type="button" data-av="partidos">← Partidos</button>
       <div><span class="kicker">${esc(x.cat)} · jornada ${x.j || '—'} · ${esc(fmtDay(x.fecha))}${x.hora ? ' · ' + esc(x.hora) : ''}</span><h1>${x.casa ? 'SMB – ' + esc(x.rival) : esc(x.rival) + ' – SMB'}</h1>${x.res ? `<p class="sub">Resultado (SMB primero): ${esc(x.res)}</p>` : ''}</div>
-      ${us.length ? `<div class="tiles"><div class="tile"><span class="k">Han respondido</span><b class="v">${us.length}</b><span class="s">${jug.length} han jugado</span></div><div class="tile"><span class="k">Esfuerzo medio</span><b class="v">${fmt1(mr)}</b><span class="s">del 1 al 10</span></div><div class="tile"><span class="k">Cómo se han visto</span><b class="v">${fmt1(mv)}</b><span class="s">del 1 al 10</span></div></div>
-      <section class="card"><h2>Lo que cuentan</h2>${us.map(u => { const pd = respPart(u, x); return `<div class="obj"><span class="kicker">${esc((A.jug[u].nombre || '').split(' ')[0])} · ${pd.juega === 'si' ? `${pd.min} min · esfuerzo ${pd.rpe} · se vio ${pd.visto}` : 'convocada, sin jugar'}</span>
-        ${pd.mejor ? `<p><b>Mejor decisión:</b> ${esc(pd.mejor)}</p>` : ''}${pd.cambiar ? `<p><b>Cambiaría:</b> ${esc(pd.cambiar)}</p>` : ''}${pd.mejor || pd.cambiar ? respBox(u, 'p:' + x.fecha + ':' + x.id) : ''}</div>`; }).join('')}</section>`
+      ${R.length ? `<div class="tiles four"><div class="tile"><span class="k">Han contestado</span><b class="v">${pre.length} · ${post.length}</b><span class="s">antes · después</span></div>
+        <div class="tile"><span class="k">Ganas</span><b class="v">${fmt1(m(pre, pd => pd.pre.ganas))}</b><span class="s">confianza ${fmt1(m(pre, pd => pd.pre.confianza))} · nervios ${fmt1(m(pre, pd => pd.pre.nervios))}</span></div>
+        <div class="tile"><span class="k">Disfrute</span><b class="v">${fmt1(m(post, pd => pd.disfrute))}</b><span class="s">del 1 al 10</span></div>
+        <div class="tile"><span class="k">Cómo se han visto</span><b class="v">${fmt1(m(jug, pd => pd.visto))}</b><span class="s">esfuerzo ${fmt1(m(jug, pd => pd.rpe))}</span></div></div>
+      <div class="grid2"><section class="card"><h2>Lo que más les importaba</h2>${dist(pre.map(r => r[1].pre.importa), IMPORTA)}</section>
+        <section class="card"><h2>Cómo creían que iría</h2>${dist(pre.map(r => r[1].pre.espera), ESPERA)}</section>
+        <section class="card"><h2>Cómo se sienten después</h2>${emos.length ? `${dist(emos, EMOC.map(e => [e, e]))}<p class="sub">Cada una elige hasta tres.</p>` : '<p class="sub">Nadie todavía.</p>'}</section>
+        <section class="card"><h2>Lo que se propusieron</h2>${cumpl.length ? dist(cumpl, CUMPLIDO.map(([k, l]) => [k, l === 'Sí' ? 'Lo consiguió' : l === 'No' ? 'No lo consiguió' : l])) : '<p class="sub">Nadie todavía.</p>'}</section></div>
+      <section class="card"><h2>Lo que cuenta cada una</h2>${R.map(ficha).join('')}</section>`
       : `<section class="card"><p class="sub">${x.fecha > today() ? 'Todavía no se ha jugado.' : 'Nadie lo ha contado todavía.'}</p></section>`}`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   actions.addpart = async () => {
@@ -948,9 +1054,9 @@
     await B.batch(['sub17', 'senior', EQ].map(e => ({ op: 'del', path: 'equipos/' + e }))); toast('Temporada borrada.');
   };
   actions.csv = async () => {
-    const rows = [['jugadora', 'equipo', 'fecha', ...WELL.map(w => w.n), 'bienestar (media)', 'sesiones', 'esfuerzo', 'minutos', 'carga', 'notas', 'partido', 'minutos jugados', 'se vio (1-10)', 'mejor decisión', 'cambiaría']];
+    const rows = [['jugadora', 'equipo', 'fecha', ...WELL.map(w => w.n), 'bienestar (media)', 'sesiones', 'esfuerzo', 'minutos', 'carga', 'notas', 'partido', 'minutos jugados', 'se vio (1-10)', 'mejor decisión', 'cambiaría', 'ganas (antes)', 'nervios (antes)', 'confianza (antes)', 'cree que irá', 'le importa', 'se fija en', 'disfrute', 'lo consiguió', 'cómo se siente', 'se lleva']];
     activas().concat(desactivadas()).forEach(u => Object.keys(diasDe(u)).sort().forEach(k => { const d = diasDe(u)[k], a = d.antes || {}, L = d.ses || [];
-      rows.push([A.jug[u].nombre, eqName(eqDe(u)), k, ...WELL.map(w => a[w.k] >= 1 ? r1(diez(a[w.k], a)) : ''), wellScore(a) == null ? '' : r1(wellScore(a)), L.map(s => s.tipo).join(' + '), L.map(s => s.rpe).join(' + '), L.map(s => s.min).join(' + '), L.length ? dayLoad(d) : '', [a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · '), ...(pp => [pp.map(x => x.cat + ' ' + x.rival).join(' + '), pp.map(x => x.min).join(' + '), pp.map(x => x.visto ?? '').join(' + '), pp.map(x => x.mejor).filter(Boolean).join(' · '), pp.map(x => x.cambiar).filter(Boolean).join(' · ')])(Object.values(d.partidos || {}))]); }));
+      rows.push([A.jug[u].nombre, eqName(eqDe(u)), k, ...WELL.map(w => a[w.k] >= 1 ? r1(diez(a[w.k], a)) : ''), wellScore(a) == null ? '' : r1(wellScore(a)), L.map(s => s.tipo).join(' + '), L.map(s => s.rpe).join(' + '), L.map(s => s.min).join(' + '), L.length ? dayLoad(d) : '', [a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · '), ...(pp => [pp.map(x => x.cat + ' ' + x.rival).join(' + '), pp.map(x => x.min).join(' + '), pp.map(x => x.visto ?? '').join(' + '), pp.map(x => x.mejor).filter(Boolean).join(' · '), pp.map(x => x.cambiar).filter(Boolean).join(' · '), ...['ganas', 'nervios', 'confianza'].map(c => pp.map(x => (x.pre || {})[c] ?? '').join(' + ')), pp.map(x => lbl(ESPERA, (x.pre || {}).espera)).join(' + '), pp.map(x => lbl(IMPORTA, (x.pre || {}).importa)).join(' + '), pp.map(x => (x.pre || {}).objetivo).filter(Boolean).join(' · '), pp.map(x => x.disfrute ?? '').join(' + '), pp.map(x => lbl(CUMPLIDO, x.cumplido)).join(' + '), pp.map(x => (x.emociones || []).join(', ')).join(' + '), pp.map(x => x.llevo).filter(Boolean).join(' · ')])(Object.values(d.partidos || {}))]); }));
     const csv = '﻿' + rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `smb-femenino-${today()}.csv`; document.body.appendChild(a); a.click(); a.remove();
   };
@@ -998,6 +1104,7 @@
     if (!U.acceso || !U.acceso.activa) return esperaView();
     if (view === 'bienvenida' || !ls.get(bienvenidaKey())) return bienvenidaView();
     if (view === 'antes') return antesFlowView();
+    if (view === 'mflow' && draft.mf) return mfView();
     if (view === 'semana') return diarioView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
     return hoyView();
   }

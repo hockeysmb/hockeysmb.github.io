@@ -90,3 +90,15 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **Comparar jugadoras (DT):**
   - En «Equipo», el cuadrante (`cuadranteHTML`): en horizontal, cómo llega frente a lo normal en ella; en vertical, su carga semana/mes, con la línea en ×1,3. Cada punto lleva a su ficha.
   - En «Jugadoras», tarjetas (`pcardHTML`) con su personaje, su estado, la línea de sus últimas 8 respuestas sobre su franja normal, llega, carga y cuántos entrenos de 14 días ha respondido. Filtros: todas, para mirar y sin responder. La tabla sigue en «Ver tabla».
+
+## App de jugadoras · antes y después del partido (25 oct)
+
+- Cada partido tiene dos cuestionarios, una pregunta por pantalla (`mfSteps`, `mfView`, `draft.mf`, vista `mflow`).
+- **Antes** (unos 40 s): las cinco de bienestar si ese día no se han contestado (se guardan en `antes` como siempre), ganas, nervios y confianza (1–10), cómo creen que irá (`ESPERA`), qué les importa más (`IMPORTA`, una) y en qué se van a fijar (texto). Se guarda en `partidos[id].pre = {ganas, nervios, confianza, espera, importa, objetivo, ts}`.
+- **Después:** ha jugado o convocada, minutos (`PMINS`), esfuerzo, cómo se ha visto, disfrute (1–10), si ha conseguido lo que se propuso (`cumplido`: si / medias / no; solo si escribió objetivo y ha jugado), cómo se siente (`emociones`, hasta tres de `EMOC`) y tres textos (`mejor`, `cambiar`, `llevo`). Si ha jugado, la carga va a `ses` con `pid`.
+- El «después» se puede contar al día siguiente: la tarjeta de ayer sale si tiene el antes hecho y falta el después. Se guarda en el día del partido (`x.fecha`).
+- Día de partido sin el antes del día contestado: la tarjeta «Antes del entreno» no sale; lo cubre el antes del partido.
+- Puntos: `PTS.partido` = 10 por el antes y 10 por el después. «Después» del entreno ya no cuenta las sesiones de partido.
+- DT: la ficha del partido enseña medias (ganas, confianza, nervios, disfrute, cómo se han visto), repartos (qué les importa, cómo creían que iría, cómo se sienten, si lo consiguieron) y lo de cada una. En el estado de la jugadora salen como información las emociones negativas (`EMOC_MAL`) de los dos últimos días y llegar al partido con confianza 3 o menos.
+- CSV: columnas nuevas del antes y del después.
+- Sin reglas nuevas: todo va en `registros/{uid}/dias/{fecha}`.

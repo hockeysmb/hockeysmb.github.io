@@ -324,6 +324,24 @@ h2 { font: 600 19px/1.2 var(--font-display); letter-spacing: -.005em; }
 .quad .ax { font-size: 10.5px; fill: var(--muted); }
 .quad g[data-jug] { cursor: pointer; }
 .quad g[data-jug]:focus-visible circle { stroke: var(--fg); stroke-width: 3; }
+/* partidos: antes y después (25 oct) */
+.dots { flex: 1; min-width: 0; justify-content: center; } .dots span { flex: 0 1 26px; min-width: 6px; }
+.flow-m { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: var(--muted); }
+.opts.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } .opts.four .opt { justify-content: center; padding: 0; font-size: 20px; font-variant-numeric: tabular-nums; }
+.opts.chips { display: flex; flex-wrap: wrap; gap: 8px; } .opts.chips .opt { min-height: 46px; border-radius: 23px; font-size: 15.5px; padding: 0 16px; }
+.nota-in.sm { min-height: 76px; font-size: 22px; line-height: 26px; }
+.pre-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pre-sum span { background: var(--lilac); border-radius: 14px; padding: 8px 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.pre-sum b { display: block; font: 600 24px/1.1 "Fraunces", Georgia, serif; color: var(--fg); font-variant-numeric: tabular-nums; }
+.emos { display: flex; flex-wrap: wrap; gap: 6px; }
+.emo { font-size: 12.5px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--sage); color: var(--fg); }
+.emo.low { background: var(--peach); }
+.dist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dist li { display: grid; grid-template-columns: minmax(0, 8.5em) minmax(0, 1fr) 1.6em; align-items: center; gap: 10px; font-size: 13.5px; }
+.dist li span { min-width: 0; overflow-wrap: anywhere; }
+.dist i { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; } .dist i b { display: block; height: 100%; border-radius: 5px; background: var(--accent); }
+.dist em { font-style: normal; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.grid2 { display: grid; gap: 12px; } @media (min-width: 700px) { .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>
@@ -331,9 +349,9 @@ h2 { font: 600 19px/1.2 var(--font-display); letter-spacing: -.005em; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261025c"></script>
-<script src="firebase-config.js?v=20261025c"></script>
-<script src="app.js?v=20261025c"></script>
+<script src="lib/avatar.js?v=20261025d"></script>
+<script src="firebase-config.js?v=20261025d"></script>
+<script src="app.js?v=20261025d"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>
