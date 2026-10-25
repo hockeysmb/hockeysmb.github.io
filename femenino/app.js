@@ -214,22 +214,22 @@
   }
   // estado de una jugadora: ok / warn (atención) / bad (revisar), con los motivos
   function estado(dias, ref) {
-    const R = [], add = (lvl, txt) => R.push({ lvl, txt });
+    const R = [], add = (lvl, txt, c, ic) => R.push({ lvl, txt, c, ic });
     const a = (dias[ref] || {}).antes, s = wellScore(a), base = baseline(dias, ref), L = loads(dias, ref), last = lastAnswer(dias);
-    if (s != null && s <= 4.5) add('bad', `Llega mal hoy (${fmt1(s)} de 10).`);
-    else if (s != null && base != null && s <= base - 1.8) add('warn', `Hoy está por debajo de lo normal en ella (${fmt1(s)}; suele estar en ${fmt1(base)}).`);
-    if (a && diez(a.dolor, a) <= 3) add('warn', 'Molestias musculares altas.');
-    if (a && a.nota) add('info', `Ha escrito: «${a.nota}»`);
+    if (s != null && s <= 4.5) add('bad', `Llega mal hoy (${fmt1(s)} de 10).`, `Llega ${fmt1(s)}`, 'baja');
+    else if (s != null && base != null && s <= base - 1.8) add('warn', `Hoy está por debajo de lo normal en ella (${fmt1(s)}; suele estar en ${fmt1(base)}).`, `${fmt1(s)} · suele ${fmt1(base)}`, 'baja');
+    if (a && diez(a.dolor, a) <= 3) add('warn', 'Molestias musculares altas.', `Molestias ${Math.round(diez(a.dolor, a))}`, 'dolor');
+    if (a && a.nota) add('info', `Ha escrito: «${a.nota}»`, 'Ha escrito', 'nota');
     Object.keys(dias).filter(k => k <= ref && daysBetween(k, ref) <= 2).forEach(k => Object.values((dias[k] || {}).partidos || {}).forEach(pd => {
       const m = (pd.emociones || []).filter(e => EMOC_MAL.includes(e));
-      if (m.length) add('info', `Después del partido contra ${pd.rival || '—'} se siente ${m.join(', ').toLowerCase()}.`);
-      if (k === ref && pd.pre && pd.pre.confianza <= 3) add('info', `Llega al partido con poca confianza (${pd.pre.confianza} de 10).`);
+      if (m.length) add('info', `Después del partido contra ${pd.rival || '—'} se siente ${m.join(', ').toLowerCase()}.`, m.join(', '), 'partido');
+      if (k === ref && pd.pre && pd.pre.confianza <= 3) add('info', `Llega al partido con poca confianza (${pd.pre.confianza} de 10).`, `Confianza ${pd.pre.confianza}`, 'partido');
     }));
-    if (L.ratio != null && L.ratio > 1.5) add('bad', `La carga de esta semana se dispara: ${fmt1(L.ratio)} veces su media del mes.`);
-    else if (L.ratio != null && L.ratio > 1.3) add('warn', `Carga alta esta semana: ${fmt1(L.ratio)} veces su media del mes.`);
-    else if (L.ratio != null && L.ratio < 0.8) add('warn', `Carga baja esta semana: ${fmt1(L.ratio)} veces su media del mes.`);
-    if (!last) add('none', 'Todavía no ha respondido nada.');
-    else if (daysBetween(last, ref) >= 4) add('warn', `Lleva ${daysBetween(last, ref)} días sin responder.`);
+    if (L.ratio != null && L.ratio > 1.5) add('bad', `La carga de esta semana se dispara: ${fmt1(L.ratio)} veces su media del mes.`, `Carga ×${fmt1(L.ratio)}`, 'carga');
+    else if (L.ratio != null && L.ratio > 1.3) add('warn', `Carga alta esta semana: ${fmt1(L.ratio)} veces su media del mes.`, `Carga ×${fmt1(L.ratio)}`, 'carga');
+    else if (L.ratio != null && L.ratio < 0.8) add('info', `Carga baja esta semana: ${fmt1(L.ratio)} veces su media del mes.`, `Carga ×${fmt1(L.ratio)}`, 'carga');
+    if (!last) add('none', 'Todavía no ha respondido nada.', 'Sin respuestas', 'reloj');
+    else if (daysBetween(last, ref) >= 4) add('warn', `Lleva ${daysBetween(last, ref)} días sin responder.`, `${daysBetween(last, ref)} días sin responder`, 'reloj');
     const lvl = R.some(x => x.lvl === 'bad') ? 'bad' : R.some(x => x.lvl === 'warn') ? 'warn' : !last ? 'none' : 'ok';
     return { lvl, R, s, base, L, last };
   }
@@ -422,7 +422,7 @@
   }
   function diarioView() {
     const lunes = mondayOf(today()), mine = U.semanas[lunes], prevK = addDays(lunes, -7), edit = !mine || draft.editSem;
-    if (edit && (!draft.sem || draft.sem.lunes !== lunes)) draft.sem = Object.assign({ tiempo: 0, mejor: '', cambiar: '', compromiso: '', area: '', cumplida: '' }, mine ? clone(mine) : {}, { lunes });
+    if (edit && (!draft.sem || draft.sem.lunes !== lunes)) draft.sem = Object.assign({ tiempo: 0, mejor: '', cambiar: '', como: '', compromiso: '', area: '', cumplida: '' }, mine ? clone(mine) : {}, { lunes });
     const d = edit ? draft.sem : mine, n = Object.keys(U.semanas).length + (mine ? 0 : 1), r = racha();
     const hist = Object.keys(U.semanas).filter(k => k < lunes && compOf(U.semanas[k])).sort().reverse().slice(0, 8);
     const nextOf = k => k === prevK ? d : U.semanas[addDays(k, 7)];
@@ -436,6 +436,7 @@
         <span class="wx-l">${d.tiempo ? esc(TIEMPO[d.tiempo - 1][1]) : 'De tormenta a sol: elige uno'}</span></section>
       ${pg('d-mejor', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>', 'Lo mejor', d.mejor || '')}
       ${pg('d-cambiar', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>', 'Lo que cambiaría', d.cambiar || '')}
+      ${pg('d-como', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>', 'Cómo lo voy a hacer', d.como || '')}
       <section class="pledge"><div class="row between"><span class="pl-h">La semana que viene voy a…</span>${!edit && d.area ? `<span class="tag">${esc(d.area)}</span>` : ''}</div>
         ${edit ? `<input type="text" id="d-comp" class="pl-in" maxlength="140" value="${esc(compOf(d))}" placeholder="algo concreto que dependa de ti" aria-label="La semana que viene voy a">
         <div class="seg dark" role="group" aria-label="De qué va">${AREAS.map(a => `<button type="button" data-area="${a}" aria-pressed="${d.area === a}">${a}</button>`).join('')}</div>` : `<p class="pl-t">${esc(compOf(d))}</p>`}</section>
@@ -763,10 +764,10 @@
   actions.savesem = async () => {
     const lunes = mondayOf(today()), d = draft.sem, m = $('#msg'), err = t => { m.className = 'msg err'; m.textContent = t; };
     const val = id => ((document.getElementById(id) || {}).value || '').trim();
-    d.mejor = val('d-mejor'); d.cambiar = val('d-cambiar'); d.compromiso = val('d-comp');
+    d.mejor = val('d-mejor'); d.cambiar = val('d-cambiar'); d.como = val('d-como'); d.compromiso = val('d-comp');
     if (!d.tiempo) return err('Elige qué tiempo ha hecho en la pista.');
     if (!d.compromiso) return err('Escribe a qué te comprometes la semana que viene.');
-    const doc = { tiempo: d.tiempo, mejor: d.mejor, cambiar: d.cambiar, compromiso: d.compromiso, area: d.area || '', cumplida: d.cumplida || '', ts: Date.now() };
+    const doc = { tiempo: d.tiempo, mejor: d.mejor, cambiar: d.cambiar, como: d.como || '', compromiso: d.compromiso, area: d.area || '', cumplida: d.cumplida || '', ts: Date.now() };
     const p0 = puntos(U.dias, U.semanas);
     await B.set(`registros/${me.uid}/semanas/${lunes}`, doc);
     U.semanas[lunes] = doc; draft.editSem = false; draft.sem = null; premio(p0); render(); scrollTo({ top: 0 });
@@ -811,7 +812,7 @@
     if (b.dataset.area && draft.sem) { draft.sem.area = draft.sem.area === b.dataset.area ? '' : b.dataset.area; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.area === draft.sem.area))); return; }
     if (b.dataset.cumplida && draft.sem) { draft.sem.cumplida = b.dataset.cumplida; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
   });
-  root.addEventListener('input', e => { if (!draft.sem) return; const k = { 'd-mejor': 'mejor', 'd-cambiar': 'cambiar', 'd-comp': 'compromiso' }[e.target.id]; if (k) draft.sem[k] = e.target.value; });
+  root.addEventListener('input', e => { if (!draft.sem) return; const k = { 'd-mejor': 'mejor', 'd-cambiar': 'cambiar', 'd-como': 'como', 'd-comp': 'compromiso' }[e.target.id]; if (k) draft.sem[k] = e.target.value; });
 
   function startJugadora() {
     unsub.push(B.listenDoc('jugadoras/' + me.uid, d => { U.perfil = d; if (d) U.editAlta = false; render(); }, () => {}));
@@ -829,6 +830,54 @@
     unsub.push(B.listenDoc('equipos/' + EQ, d => { U.equipo = d; render(); }, () => {}));
     cargarPartidos();
   }
+
+  // ================= piezas visuales del panel (25 oct): más dibujo y menos texto =================
+  const RIC = {
+    baja: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    dolor: '<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/>',
+    nota: '<path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3v-3H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/>',
+    partido: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4.5 9.5h15M4.5 14.5h15"/>',
+    carga: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+    reloj: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  };
+  const ric = k => `<svg class="ric" viewBox="0 0 24 24" aria-hidden="true">${RIC[k] || RIC.nota}</svg>`;
+  const chipsHTML = R => R.length ? `<span class="rchips">${R.map(r => `<span class="rchip ${r.lvl}">${ric(r.ic)}${esc(r.c || r.txt)}</span>`).join('')}</span>` : '';
+  const nom1 = u => ((A.jug[u] || {}).nombre || '').split(' ')[0];
+  const avDe = u => avatarSVG((A.jug[u] || {}).av, nivelDe(puntos(diasDe(u), semDe(u))), nom1(u));
+  const ORD = { bad: 0, warn: 1, none: 2, ok: 3 };
+  const top1 = e => e.R.slice().sort((a, b) => (ORD[a.lvl] ?? 4) - (ORD[b.lvl] ?? 4))[0];
+  // medidor de 270°: cómo llegan, del 1 al 10, con una marca en lo normal
+  function gaugeSVG(v, base, label) {
+    const R = 50, cx = 64, cy = 62, a0 = Math.PI * 0.75, sp = Math.PI * 1.5, P = (f, r = R) => [cx + r * Math.cos(a0 + sp * f), cy + r * Math.sin(a0 + sp * f)];
+    const arc = (f0, f1) => { const [x0, y0] = P(f0), [x1, y1] = P(f1); return `M${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 ${(f1 - f0) * sp > Math.PI ? 1 : 0} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`; };
+    const lvl = v == null ? 'none' : v <= 4.5 ? 'bad' : base != null && v <= base - 1 ? 'warn' : 'ok', f = v == null ? 0 : Math.max(0.01, (v - 1) / 9);
+    const tick = base != null ? (([x0, y0], [x1, y1]) => `<line class="g-base" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`)(P((base - 1) / 9, R - 11), P((base - 1) / 9, R + 11)) : '';
+    return `<svg class="gauge ${lvl}" viewBox="0 0 128 112" role="img" aria-label="${esc(label)}: ${fmt1(v)} de 10${base != null ? ', suele ' + fmt1(base) : ''}"><path class="g-bg" d="${arc(0, 1)}"/>${v != null ? `<path class="g-v" d="${arc(0, f)}"/>` : ''}${tick}
+      <text x="64" y="68" class="g-n">${fmt1(v)}</text><text x="64" y="86" class="g-s">${base != null ? 'suele ' + fmt1(base) : 'de 10'}</text></svg>`;
+  }
+  // anillo pequeño: una fracción (responden, diarios)
+  function ringSVG(fr, txt, label) {
+    const r = 19, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, fr || 0));
+    return `<svg class="ring" viewBox="0 0 48 48" role="img" aria-label="${esc(label)}"><circle class="r-bg" cx="24" cy="24" r="${r}"/><circle class="r-v" cx="24" cy="24" r="${r}" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 24 24)"/><text x="24" y="28">${esc(txt)}</text></svg>`;
+  }
+  // color de una casilla del 1 al 10 (10 = lo mejor)
+  const hcls = v => v == null ? 'h0' : v <= 3 ? 'h1' : v <= 5 ? 'h2' : v <= 6 ? 'h3' : v <= 8 ? 'h4' : 'h5';
+  // mapa de los últimos días: una columna por día con respuesta, una fila por pregunta
+  function heatHTML(D, t) {
+    const ks = []; for (let i = 20; i >= 0; i--) { const k = addDays(t, -i), d = D[k]; if (d && (d.antes || (d.ses || []).length)) ks.push(k); }
+    const K = ks.slice(-8); if (!K.length) return '<p class="sub">Sin respuestas en las últimas tres semanas.</p>';
+    const cell = (v, cls, tit) => `<td class="${cls}" title="${esc(tit)}">${v ?? ''}</td>`;
+    const rows = WELL.map(w => `<tr><th scope="row">${esc(w.s)}</th>${K.map(k => { const a = (D[k] || {}).antes, v = a && a[w.k] >= 1 ? Math.round(diez(a[w.k], a)) : null; return cell(v, hcls(v), `${w.n} · ${fmtShort(k)}: ${v ?? '—'}`); }).join('')}</tr>`).join('');
+    const rpe = `<tr class="sep"><th scope="row">Esfuerzo</th>${K.map(k => { const L = (D[k] || {}).ses || [], v = L.length ? Math.max(...L.map(s => +s.rpe || 0)) : null; return `<td class="${v ? 'e' + Math.min(5, Math.ceil(v / 2)) : 'h0'}" title="Esfuerzo · ${fmtShort(k)}: ${v ?? '—'}">${v ?? ''}</td>`; }).join('')}</tr>`;
+    const mins = `<tr><th scope="row">Minutos</th>${K.map(k => { const L = (D[k] || {}).ses || []; return `<td class="mn">${L.length ? L.reduce((s, x) => s + (+x.min || 0), 0) : ''}</td>`; }).join('')}</tr>`;
+    const nota = `<tr><th scope="row">Escribe</th>${K.map(k => { const d = D[k] || {}, n = [(d.antes || {}).nota, ...(d.ses || []).map(x => x.nota)].filter(Boolean); return `<td class="nt">${n.length ? `<span title="${esc(n.join(' · '))}">${ric('nota')}</span>` : ''}</td>`; }).join('')}</tr>`;
+    const head = `<tr><th></th>${K.map(k => { const d = dateOf(k); return `<th scope="col"><small>${DIAS3[d.getDay()][0].toUpperCase()}</small>${d.getDate()}</th>`; }).join('')}</tr>`;
+    return `<div class="heat-wrap"><table class="heat"><thead>${head}</thead><tbody>${rows}${rpe}${mins}${nota}</tbody></table></div>
+      <div class="heat-leg"><span><i class="h1"></i>1–3</span><span><i class="h2"></i>4–5</span><span><i class="h3"></i>6</span><span><i class="h4"></i>7–8</span><span><i class="h5"></i>9–10</span></div>`;
+  }
+  // una burbuja con lo que ha escrito una jugadora
+  const bubHTML = (u, txt, sub) => `<button type="button" class="bub" data-jug="${u}"><span class="bav">${avDe(u)}</span><span class="bt"><b>${esc(nom1(u))}${sub ? ` <small>${esc(sub)}</small>` : ''}</b><span>«${esc(txt)}»</span></span></button>`;
 
   // ================= Dirección Técnica =================
   const navA = () => `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['equipo', 'Jugadoras'], ['partidos', 'Partidos'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${ico(k)}${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
@@ -874,8 +923,7 @@
     const X = x => 34 + (x + 3) / 6 * 320, Y = y => 8 + (1.8 - y) / 1.2 * 322, xm = X(0), ym = Y(1.3);
     const col = { bad: 'var(--bad)', warn: 'var(--warn)', ok: 'var(--accent)', none: 'var(--muted)' };
     const dots = P.map(p => { const n = (A.jug[p.u].nombre || '?').trim(), ini = n.slice(0, 2); return `<g data-jug="${p.u}" tabindex="0" role="button" aria-label="${esc(n)}"><circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="13" style="fill:${col[p.lvl]};stroke:var(--surface);stroke-width:2"/><text x="${X(p.x).toFixed(1)}" y="${(Y(p.y) + 4).toFixed(1)}" text-anchor="middle" style="fill:var(--accent-ink);font-size:10.5px;font-weight:700">${esc(ini)}</text></g>`; }).join('');
-    const esquina = P.filter(p => p.x < 0 && p.y > 1.3);
-    return `<section class="card"><h2>Cómo llegan y cuánto cargan</h2><p class="sub">Cada punto es una jugadora. Tócalo para ver su ficha.</p>
+    return `<section class="card"><h2>Cómo llegan y cuánto cargan</h2>
       <svg class="quad" viewBox="0 0 360 372" role="img" aria-label="Cuadrante de cómo llegan y cuánto cargan">
         <rect x="34" y="8" width="${(xm - 35).toFixed(1)}" height="${(ym - 9).toFixed(1)}" rx="10" style="fill:var(--bad-soft)"/>
         <rect x="${(xm + 1).toFixed(1)}" y="8" width="${(354 - xm - 1).toFixed(1)}" height="${(ym - 9).toFixed(1)}" rx="10" style="fill:var(--warn-soft)"/>
@@ -887,8 +935,7 @@
         ${dots}
         <text class="ax" x="194" y="350" text-anchor="middle">← Llega peor que lo normal en ella · Mejor →</text>
         <text class="ax" x="194" y="366" text-anchor="middle">Arriba: más carga que su media del mes</text></svg>
-      ${esquina.length ? `<p><b>En la esquina de arriba a la izquierda:</b> ${esc(esquina.map(p => (A.jug[p.u].nombre || '').split(' ')[0]).join(', '))}.</p>` : ''}
-      ${sin.length ? `<p class="sub">Sin datos suficientes todavía: ${sin.length}.</p>` : ''}</section>`;
+      ${sin.length ? `<p class="sub">${sin.length} sin datos suficientes todavía.</p>` : ''}</section>`;
   }
   function resumenView() {
     const t = today(), cal = calOf(A.cal);
@@ -902,27 +949,41 @@
     const base = baseline(teamDias, ref);
     let acute = 0, chronic = 0, conDatos = 0; us.forEach(u => { const L = loads(diasDe(u), t); acute += L.acute; chronic += L.chronic; if (L.span >= 21) conDatos++; });
     const ratio = chronic > 0 && conDatos ? acute / chronic : null, pctC = ratio == null ? null : Math.round((ratio - 1) * 100);
-    const rows = us.map(u => ({ u, e: estado(diasDe(u), t) }));
-    const bad = rows.filter(r => r.e.lvl === 'bad'), warn = rows.filter(r => r.e.lvl === 'warn');
-    const cerradas = us.filter(u => semDe(u)[mondayOf(t)]).length;
-    const al = r => `<li><button type="button" class="al-row" data-jug="${r.u}"><b>${esc((A.jug[r.u].nombre || '').split(' ')[0])}</b><span>${esc((r.e.R.find(x => x.lvl === r.e.lvl) || r.e.R[0] || {}).txt || '')}</span></button></li>`;
-    shell(`<div><span class="kicker">${ref === t ? 'Hoy · ' : 'Último entreno · '}${esc(fmtDay(ref))}</span><h1>El equipo de un vistazo</h1></div>
-      ${us.length ? `<div class="tiles">
-        <div class="tile"><span class="k">Han respondido${ref === t ? ' hoy' : ''}</span><b class="v">${resp}/${us.length}</b><span class="s">${Math.round(resp / us.length * 100)} %</span></div>
-        <div class="tile"><span class="k">Cómo llega el equipo</span><b class="v">${fmt1(media)}</b><span class="s">${base != null ? 'Suele ' + fmt1(base) : 'del 1 al 10'}</span></div>
-        <div class="tile"><span class="k">Esfuerzo de la semana</span><b class="v">${pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + ' %'}</b><span class="s">${pctC == null ? 'Faltan semanas de datos' : 'frente a su mes'}</span></div></div>
-      <section class="card"><h2>Cómo llega el equipo · 4 semanas</h2><p class="sub">Media del equipo en cada entreno.${base != null ? ' La franja es lo normal en el equipo.' : ''}</p>${wellChart(teamDias, t)}</section>
-      ${(() => { const ns = us.filter(u => ((diasDe(u)[ref] || {}).antes || {}).nota); return ns.length ? `<section class="card"><h2>Lo que te han contado${ref === t ? ' hoy' : ''}</h2><ul class="al-list">${ns.map(u => `<li><button type="button" class="al-row" data-jug="${u}"><b>${esc((A.jug[u].nombre || '').split(' ')[0])}</b><span>«${esc(diasDe(u)[ref].antes.nota)}»</span></button></li>`).join('')}</ul></section>` : ''; })()}
+    const rows = us.map(u => ({ u, e: estado(diasDe(u), t) })).sort((a, b) => ORD[a.e.lvl] - ORD[b.e.lvl] || (a.e.s ?? 99) - (b.e.s ?? 99));
+    const cnt = k => rows.filter(r => r.e.lvl === k).length, mirar = rows.filter(r => r.e.lvl === 'bad' || r.e.lvl === 'warn');
+    const lunes = mondayOf(t), cerradas = us.filter(u => semDe(u)[lunes]).length;
+    // las cinco de hoy frente a lo normal en el equipo (28 días)
+    const cinco = WELL.map(w => { const v = mean(us.map(u => { const a = (diasDe(u)[ref] || {}).antes; return a && a[w.k] >= 1 ? diez(a[w.k], a) : null; }).filter(x => x != null));
+      const B0 = []; us.forEach(u => { for (let i = 1; i <= 28; i++) { const a = (diasDe(u)[addDays(ref, -i)] || {}).antes; if (a && a[w.k] >= 1) B0.push(diez(a[w.k], a)); } });
+      const b = B0.length >= 7 ? mean(B0) : null, dl = v != null && b != null ? v - b : null;
+      return `<div class="c5 ${hcls(v == null ? null : Math.round(v))}"><span class="c5-f">${face(v == null ? 3 : Math.max(1, Math.min(5, Math.ceil(v / 2))))}</span><b>${fmt1(v)}</b><small>${esc(w.s)}</small>${dl != null && Math.abs(dl) >= 0.5 ? `<span class="dl ${dl < 0 ? 'down' : 'up'}">${dl < 0 ? '↓' : '↑'}${fmt1(Math.abs(dl))}</span>` : '<span class="dl"></span>'}</div>`; }).join('');
+    const notas = us.filter(u => ((diasDe(u)[ref] || {}).antes || {}).nota);
+    const prox = allPart(A.cal).filter(x => x.fecha >= t && daysBetween(t, x.fecha) <= 3).slice(0, 2);
+    const nR = x => { const L = us.map(u => respPart(u, x)).filter(Boolean); return `<span class="hoy">${L.filter(p => p.pre).length} antes · ${L.filter(p => p.juega).length} después</span>`; };
+    const sem = us.map(u => semDe(u)[lunes]).filter(Boolean), ti = sem.map(x => x.tiempo).filter(Boolean), cu = sem.map(x => x.cumplida).filter(Boolean);
+    const cuN = k => cu.filter(x => x === k).length;
+    const pf = ({ u, e }) => { const r = top1(e); return `<button type="button" class="pf ${e.lvl}" data-jug="${u}"><span class="pf-av">${avDe(u)}${r && e.lvl !== 'ok' ? `<i class="pf-b ${r.lvl}">${ric(r.ic)}</i>` : ''}</span><b>${esc(nom1(u))}</b><small>${e.s != null ? fmt1(e.s) : '—'}</small></button>`; };
+    shell(`<div class="dt-h"><div><span class="kicker">${ref === t ? 'Hoy' : 'Último entreno'} · ${esc(fmtDay(ref))}</span><h1>Equipo</h1></div></div>
+      ${us.length ? `<section class="card pulse">
+        <div class="p-g">${gaugeSVG(media, base, 'Cómo llegan')}<span class="p-l">Cómo llegan</span></div>
+        <div class="p-s">
+          <div class="pst">${ringSVG(resp / us.length, `${resp}/${us.length}`, `Han respondido ${resp} de ${us.length}`)}<span>Responden</span></div>
+          <div class="pst"><span class="big ${pctC == null ? '' : pctC > 30 ? 'bad' : pctC > 15 ? 'warn' : pctC < -20 ? 'warn' : 'ok'}">${pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + '%'}</span><span>Carga · semana</span></div>
+          <div class="pst">${ringSVG(cerradas / us.length, `${cerradas}/${us.length}`, `Diarios de la semana: ${cerradas} de ${us.length}`)}<span>Diarios</span></div>
+        </div></section>
+      <section class="card"><div class="card-h"><h2>Cada una</h2><span class="leg">${['bad', 'warn', 'ok', 'none'].map(k => cnt(k) ? `<span class="lg ${k}"><i></i>${cnt(k)}</span>` : '').join('')}</span></div>
+        <div class="pfs">${rows.map(pf).join('')}</div></section>
+      ${mirar.length ? `<section class="card"><h2>Para mirar</h2><div class="mir">${mirar.map(({ u, e }) => `<button type="button" class="mr ${e.lvl}" data-jug="${u}"><span class="mr-av">${avDe(u)}</span><span class="mr-b"><b>${esc(nom1(u))}</b>${chipsHTML(e.R.filter(r => r.lvl !== 'none').sort((a, b) => (ORD[a.lvl] ?? 4) - (ORD[b.lvl] ?? 4)))}</span></button>`).join('')}</div></section>` : ''}
+      <section class="card"><div class="card-h"><h2>Las cinco</h2><span class="sub">hoy · ↑↓ frente a lo normal</span></div><div class="cinco">${cinco}</div></section>
+      ${notas.length ? `<section class="card"><h2>Te han contado</h2><div class="bubs">${notas.map(u => bubHTML(u, diasDe(u)[ref].antes.nota)).join('')}</div></section>` : ''}
+      ${prox.length ? `<section class="strip"><div class="strip-h"><h2>${prox[0].fecha === t ? 'Partido de hoy' : 'Próximo partido'}</h2></div><div class="tkts">${prox.map(x => ticketHTML(x, nR(x), `data-part="${x.id}"`)).join('')}</div></section>` : ''}
+      <section class="card"><h2>4 semanas</h2>${wellChart(teamDias, t)}</section>
       ${cuadranteHTML(us, ref)}
-      <section class="card"><h2>A quién mirar</h2>
-        ${bad.length ? `<div class="al-h bad">${ST_IC.bad}Habla con ella · ${bad.length}</div><ul class="al-list">${bad.map(al).join('')}</ul>` : ''}
-        ${warn.length ? `<div class="al-h warn">${ST_IC.warn}Échale un ojo · ${warn.length}</div><ul class="al-list">${warn.map(al).join('')}</ul>` : ''}
-        ${!bad.length && !warn.length ? '<p class="sub">Nadie con avisos. Todo en orden.</p>' : ''}</section>
-      <section class="card"><h2>Su diario</h2><p>${cerradas} de ${us.length} han escrito su semana.</p>${(() => {
-        const sem = us.map(u => semDe(u)[mondayOf(t)]).filter(Boolean), ti = sem.map(x => x.tiempo).filter(Boolean), cu = sem.map(x => x.cumplida).filter(Boolean);
-        return (ti.length ? `<div class="wx-sum">${TIEMPO.map(([v, l]) => { const c = ti.filter(x => x === v).length; return c ? `<span>${wx(v)}<b>${c}</b><small>${l}</small></span>` : ''; }).join('')}</div>` : '')
-          + (cu.length ? `<p class="sub">Compromiso de la semana pasada: ${(n => `${n} ${n === 1 ? 'cumplido' : 'cumplidos'}`)(cu.filter(x => x === 'si').length)} · ${cu.filter(x => x === 'medias').length} a medias · ${(n => `${n} sin cumplir`)(cu.filter(x => x === 'no').length)}.</p>` : ''); })()}</section>`
-      : `<section class="card"><p class="sub">${activas().length ? '' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p></section>`}`,
+      <section class="card"><div class="card-h"><h2>Diario</h2><span class="sub">${cerradas} de ${us.length}</span></div>
+        ${ti.length ? `<div class="wx-sum">${TIEMPO.map(([v, l]) => `<span class="${ti.includes(v) ? '' : 'off'}">${wx(v)}<b>${ti.filter(x => x === v).length}</b><small>${l}</small></span>`).join('')}</div>` : '<p class="sub">Nadie ha escrito todavía esta semana.</p>'}
+        ${cu.length ? `<div class="segbar" role="img" aria-label="Compromiso anterior: ${cuN('si')} cumplidos, ${cuN('medias')} a medias, ${cuN('no')} no">${['si', 'medias', 'no'].map(k => cuN(k) ? `<i class="${k}" style="flex:${cuN(k)}"></i>` : '').join('')}</div>
+          <div class="seg-leg"><span><i class="si"></i>${cuN('si')} cumplidos</span><span><i class="medias"></i>${cuN('medias')} a medias</span><span><i class="no"></i>${cuN('no')} no</span></div>` : ''}</section>`
+      : `<section class="card"><p class="sub">Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.</p></section>`}`,
       { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   function respBox(u, k) {
@@ -947,30 +1008,38 @@
 
   function contadoHTML(u, D, t) {
     const L = []; for (let i = 0; i < 21; i++) { const k = addDays(t, -i), d = D[k] || {}, n = [(d.antes || {}).nota, ...(d.ses || []).map(x => x.nota)].filter(Boolean); if (n.length) L.push([k, n]); }
-    return `<section class="card"><h2>Lo que te ha contado</h2>${L.length ? L.map(([k, n]) => `<div class="obj"><span class="kicker">${esc(fmtDay(k))}</span><p class="nota-p">«${esc(n.join(' · '))}»</p>${respBox(u, 'd:' + k)}</div>`).join('') : '<p class="sub">En las últimas tres semanas no ha escrito nada.</p>'}</section>`;
+    return L.length ? `<section class="card"><h2>Te ha contado</h2>${L.map(([k, n]) => `<div class="said"><div class="said-q"><span class="kicker">${esc(fmtDay(k))}</span><p class="nota-p">«${esc(n.join(' · '))}»</p></div>${respBox(u, 'd:' + k)}</div>`).join('')}</section>` : '';
   }
   function detalleView() {
     A.view2 = 'detalle';
     const u = A.sel, J = A.jug[u]; if (!J) { view = 'equipo'; return equipoView(); }
-    const t = today(), D = diasDe(u), S = semDe(u), e = estado(D, t);
-    const last14 = []; for (let i = 0; i < 14; i++) last14.push(addDays(t, -i));
-    const semanas = Object.keys(S).sort().reverse().slice(0, 6);
-    shell(`<button class="btn ghost small back" type="button" data-av="equipo">← Todas las jugadoras</button>
-      <div><span class="kicker">${esc(EQ_N)}</span><h1>${esc(J.nombre)}</h1></div>
-      <section class="card"><div class="card-h"><h2>Hoy</h2>${stHTML(e.lvl)}</div>${e.R.length ? `<ul class="info" style="padding-left:18px;margin:0">${e.R.map(x => `<li>${esc(x.txt)}</li>`).join('')}</ul>` : '<p class="sub">Nada que destacar.</p>'}<button class="btn small" type="button" data-a="temporada">Resumen de temporada</button></section>
-      ${contadoHTML(u, D, t)}${susPartidosHTML(D)}
-      <div class="two">
-        <section class="card"><h2>Cómo llega</h2><p class="sub">Media del 1 al 10, últimos 28 días.${e.base != null ? ' Franja: lo normal en ella.' : ''}</p>${wellChart(D, t)}</section>
-        <section class="card"><h2>Carga por semana</h2><p class="sub">Esfuerzo × minutos. Barra clara: semana en curso.</p>${loadChart(D, t)}</section>
+    const t = today(), D = diasDe(u), S = semDe(u), e = estado(D, t), a = (D[t] || {}).antes;
+    const semanas = Object.keys(S).sort().reverse().slice(0, 6), p = puntos(D, S), lv = nivelDe(p);
+    let resp = 0, ent = 0; for (let i = 0; i < 14; i++) { const d = addDays(t, -i); if (entrena(calOf(A.cal), d)) { ent++; if ((D[d] || {}).antes) resp++; } }
+    let racha = 0, k0 = mondayOf(t); if (!S[k0]) k0 = addDays(k0, -7); while (S[k0]) { racha++; k0 = addDays(k0, -7); }
+    const dl = e.s != null && e.base != null ? e.s - e.base : null;
+    shell(`<button class="btn ghost small back" type="button" data-av="equipo">← Jugadoras</button>
+      <section class="fhead ${e.lvl}"><span class="fh-av">${avatarSVG(J.av, lv, J.nombre)}</span>
+        <div class="fh-b"><span class="kicker">Nivel ${lv + 1} · ${esc(NIVELES[lv][0])}</span><h1>${esc(J.nombre)}</h1>${stHTML(e.lvl)}</div></section>
+      ${e.R.length ? chipsHTML(e.R) : ''}
+      <div class="kpis">
+        <div class="kpi">${ric('baja')}<b>${fmt1(e.s)}</b><span>Llega hoy${dl != null ? ` <em class="${dl < -1 ? 'bad' : dl > 0.5 ? 'ok' : ''}">${dl < 0 ? '↓' : '↑'}${fmt1(Math.abs(dl))}</em>` : ''}</span></div>
+        <div class="kpi">${ric('carga')}<b>${e.L.ratio == null ? '—' : '×' + fmt1(e.L.ratio)}</b><span>Carga / mes</span></div>
+        <div class="kpi">${ric('ok')}<b>${resp}/${ent}</b><span>Responde</span></div>
+        <div class="kpi">${ric('nota')}<b>${racha}</b><span>${racha === 1 ? 'Semana de diario' : 'Semanas de diario'}</span></div>
       </div>
-      <section class="card"><h2>Últimos 14 días</h2><div class="tbl-wrap"><table><thead><tr><th>Día</th>${WELL.map(w => `<th class="num">${w.n.split(' ')[0]}</th>`).join('')}<th class="num">Esfuerzo</th><th class="num">Min</th><th class="num">Carga</th><th>Nota</th></tr></thead><tbody>
-        ${last14.map(k => { const d = D[k] || {}, a = d.antes || {}, L = d.ses || []; if (!d.antes && !L.length) return ''; return `<tr><td>${esc(fmtShort(k))}</td>${WELL.map(w => `<td class="num">${a[w.k] >= 1 ? fmtInt(diez(a[w.k], a)) : '—'}</td>`).join('')}<td class="num">${L.map(s => s.rpe).join(' + ') || '—'}</td><td class="num">${L.map(s => s.min).join(' + ') || '—'}</td><td class="num">${L.length ? fmtInt(dayLoad(d)) : '—'}</td><td class="nota-td">${esc([a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · '))}</td></tr>`; }).join('') || `<tr><td colspan="${WELL.length + 5}" class="sub">Sin respuestas en estos 14 días.</td></tr>`}</tbody></table></div></section>
+      ${a ? `<section class="card"><div class="card-h"><h2>Hoy</h2><span class="sub">del 1 al 10</span></div><div class="faces">${WELL.map(w => { const v = Math.round(diez(a[w.k], a)); return `<span class="mf ${hcls(v)}">${face(Math.ceil(v / 2))}<b>${esc(w.s)}</b><small>${v}</small></span>`; }).join('')}</div></section>` : ''}
+      ${contadoHTML(u, D, t)}
+      <section class="card"><div class="card-h"><h2>Últimas respuestas</h2><button class="btn ghost small" type="button" data-a="temporada">Temporada</button></div>${heatHTML(D, t)}</section>
+      ${susPartidosHTML(D)}
+      <div class="two">
+        <section class="card"><h2>Cómo llega · 4 semanas</h2>${wellChart(D, t)}</section>
+        <section class="card"><h2>Carga por semana</h2>${loadChart(D, t)}</section>
+      </div>
       <section class="card"><h2>Su diario</h2>
-        ${semanas.length ? semanas.map(k => { const x = S[k]; return `<div class="obj"><span class="kicker">Semana del ${esc(fmtShort(k))}</span>
-          ${x.tiempo ? `<span class="wx-line">${wx(x.tiempo)}${esc(TIEMPO[x.tiempo - 1][1])}</span>` : ''}
-          ${x.cumplida ? `<span class="sub">Su compromiso anterior: ${esc(STAMP[x.cumplida] || '')}</span>` : ''}
-          ${x.mejor ? `<p><b>Lo mejor:</b> ${esc(x.mejor)}</p>` : ''}${x.cambiar ? `<p><b>Lo que cambiaría:</b> ${esc(x.cambiar)}</p>` : ''}${x.resp ? `<p><b>${esc(x.pregunta || 'Respuesta')}</b><br>${esc(x.resp)}</p>` : ''}
-          <p><b>Se compromete a:</b> ${esc(compOf(x) || '—')}${x.area ? ` <span class="pill">${esc(x.area)}</span>` : ''}</p>${respBox(u, 's:' + k)}</div>`; }).join('') : '<p class="sub">Todavía no ha escrito en su diario.</p>'}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+        ${semanas.length ? `<div class="dweeks">${semanas.map(k => { const x = S[k]; return `<div class="dw"><div class="dw-h">${x.tiempo ? `<span class="dw-wx" title="${esc(TIEMPO[x.tiempo - 1][1])}">${wx(x.tiempo)}</span>` : ''}<span class="kicker">Semana del ${esc(fmtShort(k))}</span>${x.cumplida ? `<span class="stamp ${x.cumplida}">${esc(STAMP[x.cumplida] || '')}</span>` : ''}</div>
+          ${x.mejor ? `<p class="dw-m"><span>Lo mejor</span>${esc(x.mejor)}</p>` : ''}${x.cambiar ? `<p class="dw-m"><span>Cambiaría</span>${esc(x.cambiar)}</p>` : ''}${x.como ? `<p class="dw-m"><span>Cómo lo hará</span>${esc(x.como)}</p>` : ''}${x.resp ? `<p class="dw-m"><span>${esc(x.pregunta || 'Respuesta')}</span>${esc(x.resp)}</p>` : ''}
+          <div class="note dw-n"><span class="d">Se compromete a${x.area ? ' · ' + esc(x.area) : ''}</span><span class="t">${esc(compOf(x) || '—')}</span></div>${respBox(u, 's:' + k)}</div>`; }).join('')}</div>` : '<p class="sub">Todavía no ha escrito en su diario.</p>'}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   const respPart = (u, x) => (diasDe(u)[x.fecha] || {}).partidos && diasDe(u)[x.fecha].partidos[x.id];
   function partidosView() {

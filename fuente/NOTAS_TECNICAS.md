@@ -109,3 +109,14 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Colores por categoría: tokens `--c15`, `--c17`, `--caf` (+ `-ink`), clases `.c15 .c17 .caf .cot` (`catCls`).
 - La DT filtra los partidos tocando el balance de cada categoría (`A.pcat`, `data-pcat`).
 - «Tus compromisos» en «Mi jugadora»: notas de colores con su sello (`.notes`).
+
+## App de jugadoras · panel de la DT más visual (25 oct)
+
+- «Equipo»: medidor de cómo llegan (con la marca de lo normal), anillos de respuestas y diarios, la carga de la semana; «Cada una» con el personaje de cada jugadora y un aro del color de su estado (insignia con el motivo principal); «Para mirar» con fichas cortas (`chipsHTML`); «Las cinco» de hoy frente a lo normal del equipo; burbujas con lo que han escrito; el partido de hoy o el próximo; 4 semanas, cuadrante y diario (tiempo y barra de compromisos).
+- `estado()` guarda además un texto corto (`c`) y un icono (`ic`) por motivo. La carga baja ya no pone a nadie en «Atención»: sale como información.
+- Ficha: cabecera con su personaje, motivos en fichas, cuatro cifras (`.kpis`), sus respuestas de hoy, «Últimas respuestas» como mapa de colores (`heatHTML`, últimas 8 respuestas) en vez de tabla, y el diario con su compromiso en nota.
+- Prueba nueva `fem_dt`: un equipo inventado de doce jugadoras para ver el panel con datos (capturas en `_capturas/fem_dt/`).
+
+## App de jugadoras · diario: cómo lo voy a hacer (25 oct)
+
+- Debajo de «Lo que cambiaría», «Cómo lo voy a hacer» (`semanas/{lunes}.como`). La DT lo ve en la ficha como «Cómo lo hará».
