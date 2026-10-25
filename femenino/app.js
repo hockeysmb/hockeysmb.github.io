@@ -343,7 +343,18 @@
   };
 
   // ================= jugadora: la app =================
-  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['semana', 'Semana'], ['yo', 'Mi jugadora'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k ? 'page' : 'false'}">${l}</button>`).join('')}</nav>`;
+  const ICON = {
+    hoy: '<path d="M4 11.5 12 4.5l8 7V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/>',
+    semana: '<path d="M6 4h9.5A2.5 2.5 0 0 1 18 6.5V20H8.5A2.5 2.5 0 0 1 6 17.5z"/><path d="M6 17.5A2.5 2.5 0 0 1 8.5 15H18"/><path d="M10 8h4"/>',
+    yo: '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1.4-3.7 4.2-5.6 7.5-5.6s6.1 1.9 7.5 5.6"/>',
+    datos: '<path d="M12 3.5 19 6v5.3c0 4.4-2.9 7.6-7 9.2-4.1-1.6-7-4.8-7-9.2V6z"/><path d="m9 12 2 2 4-4"/>',
+    resumen: '<circle cx="9" cy="9" r="3.2"/><circle cx="16.5" cy="10" r="2.6"/><path d="M3.5 19c.9-3 3-4.6 5.5-4.6s4.6 1.6 5.5 4.6M14.2 15.2c.7-.4 1.5-.6 2.3-.6 2 0 3.5 1.3 4.1 3.6"/>',
+    equipo: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+    partidos: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4.5 9.5h15M4.5 14.5h15"/>',
+    acceso: '<circle cx="10" cy="8.5" r="3.6"/><path d="M3.5 20c1.2-3.4 3.6-5.2 6.5-5.2 1.6 0 3 .5 4.1 1.5M17.5 13.5v6M14.5 16.5h6"/>',
+  };
+  const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k] || ''}</svg>`;
+  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['semana', 'Semana'], ['yo', 'Mi jugadora'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k ? 'page' : 'false'}">${ico(k)}${l}</button>`).join('')}</nav>`;
   const calJ = () => calOf(U.equipo);
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
@@ -373,6 +384,7 @@
   function despuesHTML() {
     const L = (diaHoy().ses || []).map((z, i) => Object.assign({}, z, { i })).filter(z => !z.pid), d = draft.ses;
     const done = L.length ? `<ul class="list">${L.map(s => `<li class="li"><span><b>${esc((TIPOS.find(t => t.k === s.tipo) || TIPOS[0]).n)} · esfuerzo ${s.rpe} de 10 (${esc(RPE[s.rpe] || '')})</b><small>${s.min} min${s.nota ? ' · ' + esc(s.nota) : ''}</small></span><button class="btn ghost small" type="button" data-a="delses" data-i="${s.i}">Quitar</button></li>`).join('')}</ul>` : '';
+    if (!L.length && !draft.openDesp) return `<section class="card desp-mini"><div><h2>Después del entreno</h2><p class="sub">Cuando acabes: lo duro que ha sido y los minutos.</p></div><button class="btn primary" type="button" data-a="opendesp">Ya he entrenado</button></section>`;
     if (L.length && !draft.moreSes) return `<section class="card done"><div class="card-h"><h2>Después del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>${done}<button class="btn small" type="button" data-a="moreses">Añadir otra sesión de hoy</button></section>`;
     const otro = d.otroMin || !MINS.includes(d.min);
     return `<section class="card" id="c-desp"><div class="card-h"><h2>Después del entreno</h2><span class="sub">¿Qué tal ha sido?</span></div>${done}
@@ -462,8 +474,9 @@
     const hayPart = partDe(calJ(), t).some(x => !ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || (dia.partidos || {})[x.id]), ent = entrena(calJ(), t);
     const show = ent || hayPart || draft.showDia || dia.antes || (dia.ses || []).length;
     const nombre = (U.perfil.nombre || '').split(' ')[0], p = puntos(U.dias, U.semanas), lv = nivelDe(p);
-    shell(`<div class="hola"><div><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1></div>
-        <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></div>
+    const pHoy = partDe(calJ(), t)[0], lineaHoy = pHoy ? `Hoy juegas · ${pHoy.cat} contra ${pHoy.rival}${pHoy.hora ? ', ' + pHoy.hora : ''}` : ent ? 'Hoy hay entreno. ¿Cómo llegas?' : 'Hoy no hay entreno. Descansa bien.';
+    shell(`<section class="hero"><div class="hi"><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1><p class="today">${esc(lineaHoy)}</p></div>
+        <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></section>
       ${respuestasHTML()}
       ${show ? antesHTML() + partidosHoyHTML() + (ent || draft.showDia || (dia.ses || []).some(z => !z.pid) ? despuesHTML() : '') : `<section class="card"><h2>Hoy no hay entreno</h2><p class="sub">Si has jugado un partido o has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno o partido de hoy</button></section>`}
       ${semanaMini()}${proximoHTML()}`, { nav: navJ() });
@@ -618,10 +631,11 @@
     const p0 = puntos(U.dias, U.semanas), L = [...(diaHoy().ses || []), s];
     await B.merge(`registros/${me.uid}/dias/${today()}`, { ses: L, ts: Date.now() });
     U.dias[today()] = Object.assign({}, U.dias[today()] || {}, { ses: L });
-    draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; draft.moreSes = false; premio(p0); render();
+    draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; draft.moreSes = false; draft.openDesp = false; premio(p0); render();
   };
   actions.delses = async b => { const L = (diaHoy().ses || []).filter((_, i) => i !== +b.dataset.i); await B.merge(`registros/${me.uid}/dias/${today()}`, { ses: L, ts: Date.now() }); U.dias[today()] = Object.assign({}, diaHoy(), { ses: L }); render(); };
   actions.moreses = async () => { draft.moreSes = true; render(); };
+  actions.opendesp = async () => { draft.openDesp = true; render(); };
   actions.lessses = async () => { draft.moreSes = false; render(); };
   actions.showdia = async () => { draft.showDia = true; render(); };
   actions.editsem = async () => { draft.editSem = true; render(); };
@@ -692,24 +706,65 @@
   }
 
   // ================= Dirección Técnica =================
-  const navA = () => `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['equipo', 'Jugadoras'], ['partidos', 'Partidos'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
+  const navA = () => `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['equipo', 'Jugadoras'], ['partidos', 'Partidos'], ['acceso', 'Altas']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || (view === 'detalle' && k === 'equipo') ? 'page' : 'false'}">${ico(k)}${l}${k === 'acceso' && pendientes().length ? ` · ${pendientes().length}` : ''}</button>`).join('')}</nav>`;
   const activas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa).sort((a, b) => (A.jug[a].nombre || '').localeCompare(A.jug[b].nombre || '', 'es'));
   const pendientes = () => Object.keys(A.jug).filter(u => !(A.acc[u] || {}).activa && !(A.acc[u] || {}).ts);
   const desactivadas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa === false && (A.acc[u] || {}).ts);
   const eqDe = u => (A.acc[u] || {}).equipo || (A.jug[u] || {}).equipo;
   const diasDe = u => (A.regs[u] || {}).dias || {};
   const semDe = u => (A.regs[u] || {}).semanas || {};
+  // tarjeta de una jugadora: su personaje, cómo está y su línea de las últimas sesiones
+  function pcardHTML({ u, e }) {
+    const D = diasDe(u), t = today(), ks = Object.keys(D).filter(k => k <= t && wellScore((D[k] || {}).antes) != null).sort().slice(-8);
+    const v = ks.map(k => wellScore(D[k].antes)), Y = x => 31 - (x - 1) / 9 * 28, X = i => 4 + i * (132 / Math.max(1, 7));
+    const col = { bad: 'var(--bad)', warn: 'var(--warn)', ok: 'var(--accent)', none: 'var(--muted)' }[e.lvl];
+    const band = e.base != null ? `<rect x="0" y="${Y(Math.min(10, e.base + 0.9)).toFixed(1)}" width="140" height="${(Y(Math.max(1, e.base - 0.9)) - Y(Math.min(10, e.base + 0.9))).toFixed(1)}" rx="4" style="fill:var(--blush)"/>` : '';
+    const line = v.length > 1 ? `<polyline points="${v.map((x, i) => X(i).toFixed(1) + ',' + Y(x).toFixed(1)).join(' ')}" style="fill:none;stroke:${col};stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/>` : '';
+    const dot = v.length ? `<circle cx="${X(v.length - 1).toFixed(1)}" cy="${Y(v[v.length - 1]).toFixed(1)}" r="3.2" style="fill:${col}"/>` : '';
+    let resp = 0, ent = 0; for (let i = 0; i < 14; i++) { const d = addDays(t, -i); if (entrena(calOf(A.cal), d)) { ent++; if ((D[d] || {}).antes) resp++; } }
+    return `<button type="button" class="pcard" data-jug="${u}"><span class="top2">${avatarSVG((A.jug[u] || {}).av, nivelDe(puntos(D, semDe(u))), 'Su jugadora')}<span style="min-width:0"><span class="nm">${esc((A.jug[u].nombre || '').split(' ')[0])}</span>${stHTML(e.lvl)}</span></span>
+      <svg class="spark" viewBox="0 0 140 34" preserveAspectRatio="none" role="img" aria-label="Cómo ha llegado en sus últimas respuestas">${band}${line}${dot}</svg>
+      <span class="nums"><span>Llega<b>${fmt1(e.s)}</b></span><span>Carga<b>${e.L.ratio == null ? '—' : '×' + fmt1(e.L.ratio)}</b></span><span>Responde<b>${resp}/${ent}</b></span></span></button>`;
+  }
+  actions.tabla = async () => { A.tabla = !A.tabla; render(); };
   function equipoView() {
     const t = today(), lunes = mondayOf(t), U2 = activas();
     const rows = U2.map(u => ({ u, e: estado(diasDe(u), t) })).sort((a, b) => ({ bad: 0, warn: 1, none: 2, ok: 3 }[a.e.lvl] - { bad: 0, warn: 1, none: 2, ok: 3 }[b.e.lvl]) || (A.jug[a.u].nombre || '').localeCompare(A.jug[b.u].nombre || '', 'es'));
     const n = { bad: 0, warn: 0 }; rows.forEach(r => { if (n[r.e.lvl] != null) n[r.e.lvl]++; });
     shell(`<div><span class="kicker">${esc(fmtDay(t))}</span><h1>Jugadoras</h1><p class="sub">${rows.length} ${rows.length === 1 ? 'activa' : 'activas'}${n.bad ? ` · ${n.bad} para revisar` : ''}${n.warn ? ` · ${n.warn} con algo que mirar` : ''}. Solo lo ves tú.</p></div>
-      <section class="card">${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Jugadora</th><th>Estado</th><th class="num">Llega hoy</th><th class="num">Su media</th><th class="num">Carga 7 días</th><th class="num">Semana / mes</th><th>Última respuesta</th><th>Semana</th></tr></thead><tbody>
+      <div class="row between"><div class="seg" role="group" aria-label="Filtrar">${[['todas', `Todas · ${rows.length}`], ['mirar', `Para mirar · ${rows.filter(r => r.e.lvl === 'bad' || r.e.lvl === 'warn').length}`], ['sin', `Sin responder · ${rows.filter(r => r.e.lvl === 'none' || (r.e.last && daysBetween(r.e.last, t) >= 4)).length}`]].map(([k, l]) => `<button type="button" data-pf="${k}" aria-pressed="${(A.pf || 'todas') === k}">${l}</button>`).join('')}</div>
+        <button class="btn ghost small" type="button" data-a="tabla">${A.tabla ? 'Ver tarjetas' : 'Ver tabla'}</button></div>
+      ${A.tabla ? '' : `<div class="pcards">${rows.filter(r => (A.pf || 'todas') === 'todas' || (A.pf === 'mirar' ? (r.e.lvl === 'bad' || r.e.lvl === 'warn') : (r.e.lvl === 'none' || (r.e.last && daysBetween(r.e.last, t) >= 4)))).map(pcardHTML).join('') || '<p class="sub">Nadie en este grupo.</p>'}</div>`}
+      <section class="card"${A.tabla || !rows.length ? '' : ' hidden'}>${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Jugadora</th><th>Estado</th><th class="num">Llega hoy</th><th class="num">Su media</th><th class="num">Carga 7 días</th><th class="num">Semana / mes</th><th>Última respuesta</th><th>Semana</th></tr></thead><tbody>
         ${rows.map(({ u, e }) => `<tr class="click" data-jug="${u}" tabindex="0"><td><b>${esc(A.jug[u].nombre)}</b></td><td>${stHTML(e.lvl)}</td><td class="num">${fmt1(e.s)}</td><td class="num">${fmt1(e.base)}</td><td class="num">${fmtInt(e.L.acute)}</td><td class="num">${e.L.ratio == null ? '—' : fmt1(e.L.ratio)}</td><td>${e.last ? esc(e.last === t ? 'hoy' : fmtShort(e.last)) : '—'}</td><td>${semDe(u)[lunes] ? 'Hecha' : '—'}</td></tr>`).join('')}</tbody></table></div>
         <p class="chart-note">«Llega hoy»: media de sus cinco respuestas de hoy (1 a 10). «Semana / mes»: carga de los últimos 7 días dividida por su media semanal del último mes; avisa por encima de 1,3 o por debajo de 0,8 (necesita 3 semanas de datos).</p>` : `<p class="sub">${activas().length ? '' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p>`}</section>`, { nav: navA(), wide: true, right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   // resumen de un equipo: cuántas han respondido, cómo llega el equipo, su esfuerzo y a quién mirar
   const mean = v => v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  // cuadrante: horizontal, cómo llega frente a lo normal en ella; vertical, carga de la semana frente a su mes
+  function cuadranteHTML(us, ref) {
+    const t = today(), P = [], sin = [];
+    us.forEach(u => { const D = diasDe(u), e = estado(D, ref), L = loads(D, t); if (e.s != null && e.base != null && L.ratio != null) P.push({ u, x: Math.max(-2.7, Math.min(2.7, e.s - e.base)), y: Math.max(0.66, Math.min(1.74, L.ratio)), lvl: e.lvl }); else sin.push(u); });
+    if (!P.length) return `<section class="card"><h2>Cómo llegan y cuánto cargan</h2><p class="sub">Saldrá cuando haya unas semanas de respuestas: necesita lo normal de cada una y su carga del mes.</p></section>`;
+    const X = x => 34 + (x + 3) / 6 * 320, Y = y => 8 + (1.8 - y) / 1.2 * 322, xm = X(0), ym = Y(1.3);
+    const col = { bad: 'var(--bad)', warn: 'var(--warn)', ok: 'var(--accent)', none: 'var(--muted)' };
+    const dots = P.map(p => { const n = (A.jug[p.u].nombre || '?').trim(), ini = n.slice(0, 2); return `<g data-jug="${p.u}" tabindex="0" role="button" aria-label="${esc(n)}"><circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="13" style="fill:${col[p.lvl]};stroke:var(--surface);stroke-width:2"/><text x="${X(p.x).toFixed(1)}" y="${(Y(p.y) + 4).toFixed(1)}" text-anchor="middle" style="fill:var(--accent-ink);font-size:10.5px;font-weight:700">${esc(ini)}</text></g>`; }).join('');
+    const esquina = P.filter(p => p.x < 0 && p.y > 1.3);
+    return `<section class="card"><h2>Cómo llegan y cuánto cargan</h2><p class="sub">Cada punto es una jugadora. Tócalo para ver su ficha.</p>
+      <svg class="quad" viewBox="0 0 360 372" role="img" aria-label="Cuadrante de cómo llegan y cuánto cargan">
+        <rect x="34" y="8" width="${(xm - 35).toFixed(1)}" height="${(ym - 9).toFixed(1)}" rx="10" style="fill:var(--bad-soft)"/>
+        <rect x="${(xm + 1).toFixed(1)}" y="8" width="${(354 - xm - 1).toFixed(1)}" height="${(ym - 9).toFixed(1)}" rx="10" style="fill:var(--warn-soft)"/>
+        <rect x="34" y="${(ym + 1).toFixed(1)}" width="${(xm - 35).toFixed(1)}" height="${(330 - ym - 1).toFixed(1)}" rx="10" style="fill:var(--lilac)"/>
+        <rect x="${(xm + 1).toFixed(1)}" y="${(ym + 1).toFixed(1)}" width="${(354 - xm - 1).toFixed(1)}" height="${(330 - ym - 1).toFixed(1)}" rx="10" style="fill:var(--sage)"/>
+        <text class="q-l" x="42" y="26" style="fill:var(--bad)">Cargada y peor</text><text class="q-l" x="${(xm + 9).toFixed(1)}" y="26" style="fill:var(--warn)">Cargada, pero bien</text>
+        <text class="q-l" x="42" y="320" style="fill:var(--fg)">Peor sin cargar: ¿algo fuera?</text><text class="q-l" x="${(xm + 9).toFixed(1)}" y="320" style="fill:var(--good)">Fresca</text>
+        <text class="ax" x="28" y="18" text-anchor="end">×1,8</text><text class="ax" x="28" y="${(ym + 4).toFixed(1)}" text-anchor="end">×1,3</text><text class="ax" x="28" y="330" text-anchor="end">×0,6</text>
+        ${dots}
+        <text class="ax" x="194" y="350" text-anchor="middle">← Llega peor que lo normal en ella · Mejor →</text>
+        <text class="ax" x="194" y="366" text-anchor="middle">Arriba: más carga que su media del mes</text></svg>
+      ${esquina.length ? `<p><b>En la esquina de arriba a la izquierda:</b> ${esc(esquina.map(p => (A.jug[p.u].nombre || '').split(' ')[0]).join(', '))}.</p>` : ''}
+      ${sin.length ? `<p class="sub">Sin datos suficientes todavía: ${sin.length}.</p>` : ''}</section>`;
+  }
   function resumenView() {
     const t = today(), cal = calOf(A.cal);
     let ref = t; for (let i = 0; i < 7; i++) { const d = addDays(t, -i); if (entrena(cal, d)) { ref = d; break; } }
@@ -733,6 +788,7 @@
         <div class="tile"><span class="k">Esfuerzo de la semana</span><b class="v">${pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + ' %'}</b><span class="s">${pctC == null ? 'Faltan semanas de datos' : 'frente a su mes'}</span></div></div>
       <section class="card"><h2>Cómo llega el equipo · 4 semanas</h2><p class="sub">Media del equipo en cada entreno.${base != null ? ' La franja es lo normal en el equipo.' : ''}</p>${wellChart(teamDias, t)}</section>
       ${(() => { const ns = us.filter(u => ((diasDe(u)[ref] || {}).antes || {}).nota); return ns.length ? `<section class="card"><h2>Lo que te han contado${ref === t ? ' hoy' : ''}</h2><ul class="al-list">${ns.map(u => `<li><button type="button" class="al-row" data-jug="${u}"><b>${esc((A.jug[u].nombre || '').split(' ')[0])}</b><span>«${esc(diasDe(u)[ref].antes.nota)}»</span></button></li>`).join('')}</ul></section>` : ''; })()}
+      ${cuadranteHTML(us, ref)}
       <section class="card"><h2>A quién mirar</h2>
         ${bad.length ? `<div class="al-h bad">${ST_IC.bad}Habla con ella · ${bad.length}</div><ul class="al-list">${bad.map(al).join('')}</ul>` : ''}
         ${warn.length ? `<div class="al-h warn">${ST_IC.warn}Échale un ojo · ${warn.length}</div><ul class="al-list">${warn.map(al).join('')}</ul>` : ''}
@@ -740,7 +796,7 @@
       <section class="card"><h2>Su diario</h2><p>${cerradas} de ${us.length} han escrito su semana.</p>${(() => {
         const sem = us.map(u => semDe(u)[mondayOf(t)]).filter(Boolean), ti = sem.map(x => x.tiempo).filter(Boolean), cu = sem.map(x => x.cumplida).filter(Boolean);
         return (ti.length ? `<div class="wx-sum">${TIEMPO.map(([v, l]) => { const c = ti.filter(x => x === v).length; return c ? `<span>${wx(v)}<b>${c}</b><small>${l}</small></span>` : ''; }).join('')}</div>` : '')
-          + (cu.length ? `<p class="sub">Compromiso de la semana pasada: ${['si', 'medias', 'no'].map(k => `${cu.filter(x => x === k).length} ${STAMP[k].toLowerCase()}`).join(' · ')}.</p>` : ''); })()}</section>`
+          + (cu.length ? `<p class="sub">Compromiso de la semana pasada: ${(n => `${n} ${n === 1 ? 'cumplido' : 'cumplidos'}`)(cu.filter(x => x === 'si').length)} · ${cu.filter(x => x === 'medias').length} a medias · ${(n => `${n} sin cumplir`)(cu.filter(x => x === 'no').length)}.</p>` : ''); })()}</section>`
       : `<section class="card"><p class="sub">${activas().length ? '' : 'Todavía no hay jugadoras activas. Actívalas en «Altas» cuando tengas su consentimiento firmado.'}</p></section>`}`,
       { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
@@ -900,13 +956,14 @@
   };
   root.addEventListener('click', async e => {
     if (!isAdmin()) return;
-    const b = e.target.closest('button, tr[data-jug]'); if (!b) return;
+    const b = e.target.closest('button, tr[data-jug], g[data-jug]'); if (!b) return;
+    if (b.dataset.pf) { A.pf = b.dataset.pf; render(); return; }
     if (b.dataset.av) { view = b.dataset.av; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.cdia) { const c = calOf(A.cal), n = +b.dataset.cdia, dias = c.dias.includes(n) ? c.dias.filter(x => x !== n) : [...c.dias, n].sort(); try { await saveCal({ dias, sin: c.sin }); } catch (er) { toast('No se ha podido guardar.'); } return; }
     if (b.dataset.part) { A.part = b.dataset.part; view = 'partido'; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.jug) { A.sel = b.dataset.jug; view = 'detalle'; render(); scrollTo({ top: 0 }); return; }
   });
-  root.addEventListener('keydown', e => { if (isAdmin() && e.key === 'Enter' && e.target.dataset && e.target.dataset.jug) e.target.click(); });
+  root.addEventListener('keydown', e => { if (isAdmin() && (e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.jug && e.target.tagName !== 'BUTTON') { e.preventDefault(); A.sel = e.target.dataset.jug; view = 'detalle'; render(); scrollTo({ top: 0 }); } });
   function startAdmin() {
     view = 'resumen';
     unsub.push(B.listenCol('jugadoras', L => { A.jug = Object.fromEntries(L.map(x => [x.id, x.data])); syncRegs(); render(); }, () => {}));

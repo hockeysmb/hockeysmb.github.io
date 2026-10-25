@@ -82,3 +82,11 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   - El día de partido, la jugadora ve la tarjeta del partido («Contar el partido» / «No juego»). Lo que cuenta va en `registros/{uid}/dias/{fecha}.partidos[id]` = {juega si/conv, min, rpe, visto, mejor, cambiar, cat, rival, ts}. Si ha jugado, además va una sesión `{tipo: 'partido', pid}` en `ses`, para la carga. «No juego» solo se recuerda en ese móvil (`localStorage`).
   - DT: pestaña «Partidos» (próximos, jugados y ficha de cada partido, con respuestas). Sus respuestas usan la clave `p:fecha:id` en `acceso/{uid}.resp`.
   - En la ficha de cada jugadora: «Sus partidos». En el resumen de temporada: partidos, minutos y cómo se ha visto. En el CSV: columnas de partido.
+- **Estilo nuevo (25 oct, lo decide Claude por encargo de la DT):**
+  - Look: fondo marfil cálido, granate del club con tonos suaves (`--blush`, `--peach`, `--sage`, `--lilac`), tarjetas sin borde con sombra suave (`--shadow`, radio 20) y títulos en Fraunces (Inter para el texto, Caveat para lo escrito a mano).
+  - Menú de abajo flotante, con iconos (`ICON`, `ico()`).
+  - «Hoy» empieza con un saludo (`.hero`) que dice qué toca hoy; «Después del entreno» sale recogido hasta pulsar «Ya he entrenado».
+  - Todo el estilo nuevo está en la capa final del `<style>` de `femenino/index.html`.
+- **Comparar jugadoras (DT):**
+  - En «Equipo», el cuadrante (`cuadranteHTML`): en horizontal, cómo llega frente a lo normal en ella; en vertical, su carga semana/mes, con la línea en ×1,3. Cada punto lleva a su ficha.
+  - En «Jugadoras», tarjetas (`pcardHTML`) con su personaje, su estado, la línea de sus últimas 8 respuestas sobre su franja normal, llega, carga y cuántos entrenos de 14 días ha respondido. Filtros: todas, para mirar y sin responder. La tabla sigue en «Ver tabla».
