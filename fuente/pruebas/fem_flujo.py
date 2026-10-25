@@ -13,7 +13,7 @@ async def main():
   try:
     async with async_playwright() as p:
       b = await p.chromium.launch(); errs = []
-      ctx = await b.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, accept_downloads=True)
+      ctx = await b.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, accept_downloads=True, service_workers='block')
       await ctx.route('https://www.gstatic.com/**', lambda r: r.fulfill(body='', content_type='text/javascript'))
       await ctx.route('https://fonts.googleapis.com/**', lambda r: r.abort())
       await ctx.route('**/femenino/firebase-config.js*', lambda r: r.fulfill(body=CFG, content_type='text/javascript'))
@@ -129,10 +129,32 @@ async def main():
       async with pg.expect_download() as dl: await pg.click('[data-a="csv"]')
       path = await (await dl.value).path(); lines = open(path, encoding='utf-8-sig').read().splitlines(); print('CSV:', len(lines), 'líneas |', lines[0][:80])
       await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
-      # 5. Ana borra sus datos
+      # 4b. día de partido: martes 27, Sub-17 en Tres Cantos a las 19:00
       await pg.set_viewport_size({'width': 390, 'height': 844})
+      await pg.clock.set_system_time(datetime.datetime(2026, 10, 27, 20, 45, 0)); await go()
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
-      print('Ana ve:', ' '.join((await pg.text_content('.msg-card')).split())[:160]); await pg.screenshot(path=O + '7d_hoy_respuesta.png', full_page=True)
+      print('partido hoy:', ' '.join((await pg.text_content('.part-card')).split())[:110])
+      await pg.click('[data-a="contarpart"][data-id="s17-3"]'); await pg.wait_for_timeout(200)
+      await pg.click('[data-pmin="5"]'); await pg.click('[data-prpe="8"]'); await pg.click('[data-pvisto="6"]')
+      await pg.fill('#p-mejor', 'Presionar el pase atrás en el segundo tiempo'); await pg.fill('#p-cambiar', 'Tirar antes en el 2c1')
+      await pg.screenshot(path=O + '9a_partido.png', full_page=True)
+      await pg.click('[data-a="savepart"]'); await pg.wait_for_timeout(500)
+      dp = await pg.evaluate(f"window.__fake.db()['registros/{uid}/dias/2026-10-27']"); print('partido guardado:', dp['partidos']['s17-3']['min'], dp['partidos']['s17-3']['visto'], [x.get('pid') for x in dp['ses']])
+      if dp['partidos']['s17-3']['min'] != 25 or not any(x.get('pid') == 's17-3' for x in dp['ses']): errs.append('no se guarda el partido')
+      await pg.screenshot(path=O + '9b_partido_hecho.png', full_page=True)
+      await salir()
+      await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(800)
+      await pg.click('[data-av="partidos"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '9c_dt_partidos.png', full_page=True)
+      await pg.click('[data-part="s17-3"]'); await pg.wait_for_timeout(300)
+      print('partido DT:', ' | '.join(' '.join(t.split()) for t in await pg.locator('.tile').all_inner_texts()))
+      await pg.fill(f'[id="r-{uid}-p:2026-10-27:s17-3"]', '¿Qué viste para saber que tocaba presionar?'); await pg.click('[data-a="resp"][data-k="p:2026-10-27:s17-3"]'); await pg.wait_for_timeout(300)
+      await pg.screenshot(path=O + '9d_dt_partido.png', full_page=True)
+      await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
+      # 5. Ana borra sus datos
+      await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
+      mc = ' '.join((await pg.text_content('.msg-card')).split()); print('Ana ve:', mc[:200])
+      if 'A tu partido' not in mc: errs.append('no ve la respuesta al partido')
+      await pg.screenshot(path=O + '7d_hoy_respuesta.png', full_page=True)
       await pg.click('[data-v="datos"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '8_datos.png', full_page=True)
       await pg.click('[data-a="borrartodo"]'); await pg.click('[data-a="borrartodo"]'); await pg.wait_for_timeout(700)
       left = await pg.evaluate(f"Object.keys(window.__fake.db()).filter(k=>k.includes('{uid}') && !k.startsWith('acceso') && !k.startsWith('valoraciones'))"); print('quedan de Ana:', left)

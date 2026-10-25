@@ -201,6 +201,10 @@ td.nota-td { white-space: normal; min-width: 200px; }
 .step-card .num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 15px; flex: none; }
 .info li.me { font-weight: 600; }
 .date-in { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); }
+/* partidos */
+.part-card { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.part-l { margin: 0; font-size: 15px; }
+.part-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .part-list li { display: grid; gap: 1px; font-size: 14px; } .part-list span { color: var(--muted); }
 /* resumen de temporada */
 .season-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
 .me-av.sm { width: 96px; flex: none; }
@@ -255,9 +259,9 @@ td.nota-td { white-space: normal; min-width: 200px; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261023j"></script>
-<script src="firebase-config.js?v=20261023j"></script>
-<script src="app.js?v=20261023j"></script>
+<script src="lib/avatar.js?v=20261025b"></script>
+<script src="firebase-config.js?v=20261025b"></script>
+<script src="app.js?v=20261025b"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>
