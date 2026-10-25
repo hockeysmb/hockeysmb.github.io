@@ -62,7 +62,7 @@
   };
 
   // ================= lo que se pregunta =================
-  // un solo grupo (23 oct): todas las jugadoras de Sub17 y Senior Fem van juntas como «Femenino»
+  // un solo grupo (23 oct): toda la sección femenina, de Sub-15 para arriba, va junta como «Femenino»
   const EQ = 'femenino', EQ_N = 'Femenino';
   const eqName = () => EQ_N;
   // días de entreno: los pone la DT (equipos/femenino); dias = días de la semana (0 domingo … 6 sábado), sin = fechas sin entreno

@@ -21,9 +21,9 @@ App web del cuerpo técnico de hockey sobre patines del Colegio Santa María la 
 
 ## App de jugadoras (`femenino/`)
 
-- Otra app, para las jugadoras de Sub17 y Senior Fem: bienestar antes del entreno, esfuerzo después (carga = esfuerzo × minutos), diario semanal (qué tal ha ido, lo mejor, lo que cambiaría y un compromiso) y un personaje que sube de nivel por responder (los puntos nunca dependen de lo que contestan). Se publica en https://hockeysmb.github.io/femenino/.
+- Otra app, para todas las jugadoras de la sección femenina, de Sub-15 para arriba: bienestar antes del entreno, esfuerzo después (carga = esfuerzo × minutos), diario semanal (qué tal ha ido, lo mejor, lo que cambiaría y un compromiso) y un personaje que sube de nivel por responder (los puntos nunca dependen de lo que contestan). Se publica en https://hockeysmb.github.io/femenino/.
 - **No tiene paso de construcción:** `femenino/index.html` + `femenino/app.js` son lo publicado. Usa su propio proyecto de Firebase (`femenino/firebase-config.js`, `femenino/firestore.rules`), no el del banco.
-- **Un solo grupo, «Femenino»** (sin separar Sub17 y Senior); los días de entreno los pone la DT en «Altas».
+- **Un solo grupo, «Femenino»** (sin separar por categorías); los días de entreno los pone la DT en «Altas».
 - **Solo la DT (`SMBF_ADMIN`) ve los datos de todas** y puede contestarles desde su ficha; cada jugadora ve y borra los suyos. Las cuentas se activan a mano cuando hay consentimiento firmado (en menores, por la familia). Los datos se borran el 30 de junio de 2027.
 - **Son datos de salud y hay menores:** no añadas campos nuevos de salud (ciclo menstrual, lesiones, medicación…) sin que la DT lo pida y sin actualizar la hoja de información y el consentimiento.
 - **Prueba:** `fem_flujo` (backend simulado `fuente/pruebas/fakefem.js`, con las mismas reglas).
