@@ -120,3 +120,9 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 ## App de jugadoras · diario: cómo lo voy a hacer (25 oct)
 
 - Debajo de «Lo que cambiaría», «Cómo lo voy a hacer» (`semanas/{lunes}.como`). La DT lo ve en la ficha como «Cómo lo hará».
+
+## App de jugadoras · pestaña Partidos (25 oct)
+
+- Pestaña nueva en el menú de la jugadora: calendario del mes (`partidosJView`) con los días de partido marcados por categoría, filtro de categoría (se recuerda en el móvil, `smbf-pcat`) y las entradas de ese mes o de un día. Arriba, «Te falta contar»: partidos pasados con el antes hecho y sin el después.
+- Página de cada partido (`partidoJView`, `draft.part`): el antes solo se contesta el mismo día; el después, ese día o cualquier día posterior. Se guarda siempre en el día del partido. Al acabar, vuelve a la página del partido (`draft.mf.back`).
+- Las entradas de «Próximos partidos» y los cromos de «Mis partidos» llevan a esa página (`data-pp`).

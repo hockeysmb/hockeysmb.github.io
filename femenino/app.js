@@ -368,7 +368,7 @@
     acceso: '<circle cx="10" cy="8.5" r="3.6"/><path d="M3.5 20c1.2-3.4 3.6-5.2 6.5-5.2 1.6 0 3 .5 4.1 1.5M17.5 13.5v6M14.5 16.5h6"/>',
   };
   const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k] || ''}</svg>`;
-  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['semana', 'Semana'], ['yo', 'Mi jugadora'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k ? 'page' : 'false'}">${ico(k)}${l}</button>`).join('')}</nav>`;
+  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['partidos', 'Partidos'], ['semana', 'Semana'], ['yo', 'Mi jugadora'], ['datos', 'Mis datos']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k || (view === 'partido' && k === 'partidos') ? 'page' : 'false'}">${ico(k)}${l}</button>`).join('')}</nav>`;
   const calJ = () => calOf(U.equipo);
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
@@ -471,9 +471,9 @@
   }
   // cromo: un partido tal y como lo vivió una jugadora (who: 'yo' en su app, 'dt' en la ficha)
   function cromoHTML(k, id, pd, x, who) {
-    const r = resOf(x), d = dateOf(k), yo = who === 'yo', dt = who === 'dt', tag = dt ? 'button' : 'article';
+    const r = resOf(x), d = dateOf(k), yo = who === 'yo' || who === 'yo-btn', dt = who === 'dt', tag = dt || who === 'yo-btn' ? 'button' : 'article';
     const num = (v, l) => `<span class="cn"><b>${v ?? '—'}</b><small>${l}</small></span>`, q = pd.llevo || (pd.pre && pd.pre.objetivo);
-    return `<${tag} class="cromo ${catCls(pd.cat)}"${dt ? ` type="button" data-part="${id}"` : ''}>
+    return `<${tag} class="cromo ${catCls(pd.cat)}"${dt ? ` type="button" data-part="${id}"` : who === 'yo-btn' ? ` type="button" data-pp="${id}"` : ''}>
       <span class="cr-top"><span>${esc(pd.cat)}</span><span>${d.getDate()} ${MESES[d.getMonth()]}</span></span>
       <span class="cr-b"><b class="riv">${esc(pd.rival)}</b>${r ? `<span class="res ${r.k}">${r.l} ${r.a}–${r.b}</span>` : ''}
         ${pd.juega === 'si' ? `<span class="cnums">${num(pd.min, 'minutos')}${num(pd.visto, yo ? 'te viste' : 'se vio')}${num(pd.disfrute, yo ? 'disfrute' : 'disfrute')}</span>`
@@ -529,7 +529,7 @@
     const x = partById(id); if (!x) return;
     if (!(draft.mf && draft.mf.id === id && draft.mf.kind === kind)) {
       const D = U.dias[x.fecha] || {}, pd = (D.partidos || {})[id] || {};
-      draft.mf = { kind, id, fecha: x.fecha, i: 0, vals: clone(kind === 'pre' ? pd.pre || {} : pd.juega ? pd : {}), well: kind === 'pre' && !D.antes, obj: (pd.pre || {}).objetivo || '' };
+      draft.mf = { kind, id, fecha: x.fecha, i: 0, vals: clone(kind === 'pre' ? pd.pre || {} : pd.juega ? pd : {}), well: kind === 'pre' && !D.antes, obj: (pd.pre || {}).objetivo || '', back: view === 'partido' ? 'partido' : 'hoy' };
     }
     view = 'mflow'; render(); scrollTo({ top: 0 });
   }
@@ -537,7 +537,7 @@
   actions.postpart = async b => startMf('post', b.dataset.id);
   actions.mfnext = async () => { keepMf(); const n = mfSteps(draft.mf).length; if (draft.mf.i < n - 1) draft.mf.i++; render(); scrollTo({ top: 0 }); };
   actions.mfback = async () => { keepMf(); if (draft.mf.i > 0) { draft.mf.i--; render(); } else actions.mfclose(); };
-  actions.mfclose = async () => { keepMf(); view = 'hoy'; render(); scrollTo({ top: 0 }); };
+  actions.mfclose = async () => { keepMf(); view = (draft.mf && draft.mf.back) || 'hoy'; render(); scrollTo({ top: 0 }); };
   actions.mfsave = async () => {
     keepMf(); const f = draft.mf, S = mfSteps(f), v = f.vals;
     const miss = S.findIndex(s => ['ladder', 'one', 'min'].includes(s.t) && (v[s.k] == null || v[s.k] === ''));
@@ -556,7 +556,7 @@
     }
     upd.partidos = Object.assign({}, D.partidos || {}, { [f.id]: pd });
     await B.merge(`registros/${me.uid}/dias/${f.fecha}`, upd);
-    U.dias[f.fecha] = Object.assign({}, D, upd); draft.mf = null; view = 'hoy'; premio(p0); render(); scrollTo({ top: 0 });
+    U.dias[f.fecha] = Object.assign({}, D, upd); view = f.back || 'hoy'; draft.mf = null; premio(p0); render(); scrollTo({ top: 0 });
   };
   function partidoHTML(x) {
     const pd = pdOf(x) || {}, pre = pd.pre, hoy = x.fecha === today(), id = x.id;
@@ -583,10 +583,57 @@
   }
   function proximoHTML() {
     const t = today(), n = allPart(calJ()).filter(x => x.fecha > t).slice(0, 5);
-    return n.length ? `<section class="strip"><div class="strip-h"><h2>Próximos partidos</h2>${n.length > 1 ? '<span class="sub">Desliza</span>' : ''}</div><div class="tkts">${n.map(x => ticketHTML(x)).join('')}</div></section>` : '';
+    return n.length ? `<section class="strip"><div class="strip-h"><h2>Próximos partidos</h2>${n.length > 1 ? '<span class="sub">Desliza</span>' : ''}</div><div class="tkts">${n.map(x => ticketHTML(x, '', `data-pp="${x.id}"`)).join('')}</div></section>` : '';
   }
 
   actions.nojuego = async b => { ls.set(`smbf-nojuego-${me.uid}-${b.dataset.id}`, '1'); toast('Vale. Si al final juegas, apúntalo en «Después del entreno» como partido.'); render(); };
+  // ================= partidos de la jugadora (25 oct): calendario y la página de cada partido =================
+  // desde el calendario puede ir a cualquier partido y contar el antes (el mismo día) o el después (ese día o más tarde)
+  const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const goPart = id => { draft.part = id; view = 'partido'; render(); scrollTo({ top: 0 }); };
+  function estadoPartJ(x) {
+    const t = today(), pd = pdOf(x) || {};
+    if (pd.juega) return '<span class="pst-j ok">Contado</span>';
+    if (x.fecha === t) return `<span class="pst-j now">${pd.pre ? 'Antes hecho · falta el después' : 'Hoy'}</span>`;
+    if (x.fecha < t) return pd.pre ? '<span class="pst-j due">Falta el después</span>' : ls.get(`smbf-nojuego-${me.uid}-${x.id}`) ? '' : '<span class="pst-j">Sin contar</span>';
+    const n = daysBetween(t, x.fecha); return `<span class="pst-j">${n === 1 ? 'Mañana' : 'En ' + n + ' días'}</span>`;
+  }
+  function partidosJView() {
+    const t = today(), cat = ls.get('smbf-pcat') || 'todas', mes = draft.mes || t.slice(0, 7), [y, m] = mes.split('-').map(Number);
+    const all = allPart(calJ()).filter(x => cat === 'todas' || x.cat === cat), P = all.filter(x => x.fecha.startsWith(mes));
+    const first = new Date(y, m - 1, 1), off = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
+    const cells = []; for (let i = 0; i < off; i++) cells.push('<span class="cd e"></span>');
+    for (let d = 1; d <= nd; d++) { const k = `${mes}-${String(d).padStart(2, '0')}`, L = P.filter(x => x.fecha === k), done = L.length && L.every(x => (pdOf(x) || {}).juega), due = L.some(x => x.fecha < t && !(pdOf(x) || {}).juega && (pdOf(x) || {}).pre);
+      cells.push(L.length ? `<button type="button" class="cd has${k === t ? ' hoy' : ''}${draft.cday === k ? ' sel' : ''}${done ? ' done' : ''}${due ? ' due' : ''}" data-cday="${k}" aria-label="${esc(fmtDay(k))}: ${L.length} ${L.length === 1 ? 'partido' : 'partidos'}"><b>${d}</b><span class="dots">${L.map(x => `<i class="${catCls(x.cat)}"></i>`).join('')}</span></button>`
+        : `<span class="cd${k === t ? ' hoy' : ''}"><b>${d}</b></span>`); }
+    const vis = draft.cday && draft.cday.startsWith(mes) ? P.filter(x => x.fecha === draft.cday) : P;
+    const pend = all.filter(x => x.fecha < t && !(pdOf(x) || {}).juega && (pdOf(x) || {}).pre);
+    const mv = k => { const d = new Date(y, m - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+    shell(`<div><span class="kicker">Sección femenina</span><h1>Partidos</h1></div>
+      <div class="seg cat-f" role="group" aria-label="Categoría">${[['todas', 'Todas'], ['Sub-15', 'Sub-15'], ['Sub-17', 'Sub-17'], ['1ª Autonómica', '1ª Autonómica']].map(([k, l]) => `<button type="button" data-pcatj="${k}" aria-pressed="${cat === k}">${l}</button>`).join('')}</div>
+      ${pend.length ? `<section class="card part-card"><h2>Te falta contar</h2><div class="tkts col">${pend.map(x => ticketHTML(x, estadoPartJ(x), `data-pp="${x.id}"`)).join('')}</div></section>` : ''}
+      <section class="card calm"><div class="cal-h"><button type="button" class="btn ghost small" data-pmes="${mv(-1)}" aria-label="Mes anterior">‹</button><h2>${MESES_L[m - 1]} ${y}</h2><button type="button" class="btn ghost small" data-pmes="${mv(1)}" aria-label="Mes siguiente">›</button></div>
+        <div class="cal-g">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="cw">${d}</span>`).join('')}${cells.join('')}</div>
+        <div class="cal-leg"><span><i class="c15"></i>Sub-15</span><span><i class="c17"></i>Sub-17</span><span><i class="caf"></i>1ª Aut.</span></div></section>
+      <section class="strip"><div class="strip-h"><h2>${draft.cday && draft.cday.startsWith(mes) ? esc(fmtDay(draft.cday)) : 'Este mes'}</h2>${draft.cday ? '<button class="btn ghost small" type="button" data-cday="">Ver todo el mes</button>' : ''}</div>
+        ${vis.length ? `<div class="tkts col">${vis.map(x => ticketHTML(x, estadoPartJ(x), `data-pp="${x.id}"`)).join('')}</div>` : '<p class="sub">No hay partidos este mes.</p>'}</section>`, { nav: navJ() });
+  }
+  function partidoJView() {
+    const x = partById(draft.part); if (!x) { view = 'partidos'; return partidosJView(); }
+    const t = today(), pd = pdOf(x) || {}, p = pd.pre, r = resOf(x), rsp = respOf(U.acceso, 'p:' + x.fecha + ':' + x.id), id = x.id;
+    const preSum = p ? `<div class="pre-sum"><span>Ganas<b>${p.ganas}</b></span><span>Nervios<b>${p.nervios}</b></span><span>Confianza<b>${p.confianza}</b></span></div>
+      <div class="rchips">${p.espera ? `<span class="rchip info">${esc(lbl(ESPERA, p.espera))}</span>` : ''}${p.importa ? `<span class="rchip info">Me importa: ${esc(lbl(IMPORTA, p.importa).toLowerCase())}</span>` : ''}</div>${p.objetivo ? `<p class="nota-p">Me fijo en: «${esc(p.objetivo)}»</p>` : ''}` : '';
+    const pre = x.fecha > t ? `<section class="card"><h2>Antes del partido</h2><p class="sub">Lo podrás contestar el día del partido.</p></section>`
+      : x.fecha === t ? `<section class="card"><div class="card-h"><h2>Antes del partido</h2>${p ? stHTML('ok').replace('Bien', 'Hecho') : '<span class="sub">40 segundos</span>'}</div>${p ? preSum + `<button class="btn small" type="button" data-a="prepart" data-id="${id}">Cambiar</button>` : `<button class="btn primary big" type="button" data-a="prepart" data-id="${id}">Empezar</button>`}</section>`
+      : p ? `<section class="card"><h2>Antes del partido</h2>${preSum}</section>` : '';
+    const post = x.fecha > t ? '' : pd.juega ? `<section class="strip"><div class="strip-h"><h2>Cómo lo viviste</h2><button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Cambiar</button></div><div class="cromos one">${cromoHTML(x.fecha, id, pd, x, 'yo')}</div>
+        ${pd.mejor || pd.cambiar ? `<section class="card">${pd.mejor ? `<p class="dw-m"><span>La decisión que mejor me salió</span>${esc(pd.mejor)}</p>` : ''}${pd.cambiar ? `<p class="dw-m"><span>Una que cambiaría</span>${esc(pd.cambiar)}</p>` : ''}</section>` : ''}</section>`
+      : `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div><p>${x.fecha === t ? 'Cuando acabe, cuéntanos cómo lo has vivido.' : '¿Qué tal fue? Cuéntanos cómo lo viviste.'}</p><button class="btn primary big" type="button" data-a="postpart" data-id="${id}">Contar el partido</button></section>`;
+    shell(`<button class="btn ghost small back" type="button" data-v2="partidos">← Partidos</button>
+      <div class="tkts col big">${ticketHTML(x, r ? `<span class="res ${r.k}">${r.l} ${r.a}–${r.b}</span>` : '')}</div>
+      ${rsp ? `<section class="card msg-card"><span class="kicker">Carlos te ha contestado</span><p>${esc(rsp.t)}</p></section>` : ''}
+      ${pre}${post}`, { nav: navJ() });
+  }
   function hoyView() {
     const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), hayPart = vis.length > 0, ent = entrena(calJ(), t), cards = partidosHoyHTML();
     const show = ent || hayPart || draft.showDia || dia.antes || (dia.ses || []).length;
@@ -618,7 +665,7 @@
         <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos.</p></section>
       <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, del 1 al 10, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
       <section class="card"><h2>Tu carga por semana</h2><p class="sub">Esfuerzo × minutos de cada sesión, sumado por semana. La barra clara es la semana en curso.</p>${loadChart(U.dias, t)}</section>
-      ${(L => L.length ? `<section class="strip"><div class="strip-h"><h2>Mis partidos</h2><span class="sub">${L.length === 1 ? '1 partido' : L.length + ' partidos'}</span></div><div class="cromos">${L.slice(0, 20).map(([k, id, pd]) => cromoHTML(k, id, pd, allPart(calJ()).find(y => y.id === id), 'yo')).join('')}</div></section>` : '')(misPartidos(U.dias))}
+      ${(L => L.length ? `<section class="strip"><div class="strip-h"><h2>Mis partidos</h2><span class="sub">${L.length === 1 ? '1 partido' : L.length + ' partidos'}</span></div><div class="cromos">${L.slice(0, 20).map(([k, id, pd]) => cromoHTML(k, id, pd, allPart(calJ()).find(y => y.id === id), 'yo-btn')).join('')}</div></section>` : '')(misPartidos(U.dias))}
       <section class="strip"><div class="strip-h"><h2>Tus compromisos</h2></div>${sem.length ? `<div class="notes">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<div class="note"><span class="d">Semana del ${esc(fmtShort(k))}</span><span class="t">${esc(compOf(x) || '—')}</span>${nx && nx.cumplida ? `<span class="stamp ${nx.cumplida}">${esc(STAMP[nx.cumplida] || '')}</span>` : ''}</div>`; }).join('')}</div>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`, { nav: navJ() });
   }
   function editAvView(lv) {
@@ -784,6 +831,11 @@
   const eqMin = () => 90;
   root.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || isAdmin()) return;
+    if (b.dataset.pp) { goPart(b.dataset.pp); return; }
+    if (b.dataset.v2) { view = b.dataset.v2; render(); scrollTo({ top: 0 }); return; }
+    if (b.dataset.pcatj) { ls.set('smbf-pcat', b.dataset.pcatj); draft.cday = ''; render(); return; }
+    if (b.dataset.pmes) { draft.mes = b.dataset.pmes; draft.cday = ''; render(); return; }
+    if (b.dataset.cday != null && b.classList.contains('cd') || b.dataset.cday === '') { draft.cday = draft.cday === b.dataset.cday ? '' : b.dataset.cday; render(); return; }
     if (b.dataset.v && (b.closest('.nav') || b.classList.contains('me-chip'))) { view = b.dataset.v; draft.editSem = false; draft.editAv = false; draft.av = null; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.fw) {
       if (draft.busy) return;
@@ -1215,6 +1267,7 @@
     if (view === 'bienvenida' || !ls.get(bienvenidaKey())) return bienvenidaView();
     if (view === 'antes') return antesFlowView();
     if (view === 'mflow' && draft.mf) return mfView();
+    if (view === 'partidos') return partidosJView(); if (view === 'partido') return partidoJView();
     if (view === 'semana') return diarioView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
     return hoyView();
   }

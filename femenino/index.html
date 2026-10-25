@@ -469,6 +469,27 @@ button.tkt, button.cromo, .mrc, .bal-c { cursor: pointer; -webkit-tap-highlight-
 .dw-wx { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--fill); color: var(--accent); } .dw-wx .wx-i { width: 20px; height: 20px; }
 .dw-m { margin: 0; font-size: 14px; } .dw-m span { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .dw-n { transform: rotate(-.6deg); justify-self: start; max-width: 100%; }
+/* partidos de la jugadora (25 oct): calendario y página del partido */
+.nav button { white-space: nowrap; font-size: 11px; padding-inline: 2px; min-width: 0; }
+.tkts.col { flex-direction: column; overflow: visible; margin-inline: 0; padding: 0; scroll-snap-type: none; gap: 10px; }
+.tkts.col .tkt { width: 100%; max-width: none; }
+.card .tkt { box-shadow: 0 0 0 1px var(--line); } .card .tkt::before, .card .tkt::after { background: var(--surface); }
+.tkts.big .tkt { grid-template-columns: 88px minmax(0, 1fr); } .tkts.big .tkt::before, .tkts.big .tkt::after { left: 81px; } .tkts.big .tkt-d b { font-size: 42px; } .tkts.big .riv { font-size: 22px; }
+.tkt .res { justify-self: start; margin-top: 2px; }
+.pst-j { justify-self: start; margin-top: 2px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 10px; background: var(--fill); color: var(--muted); }
+.pst-j.ok { background: var(--good-soft); color: var(--good); } .pst-j.due { background: var(--accent); color: var(--accent-ink); } .pst-j.now { background: var(--accent-soft); color: var(--accent); }
+.cromos.one { overflow: visible; margin-inline: 0; padding: 0; } .cromos.one .cromo { width: 100%; max-width: 360px; }
+.seg.cat-f { flex-wrap: wrap; }
+.cal-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; } .cal-h h2 { text-transform: capitalize; } .cal-h .btn { font-size: 20px; line-height: 1; padding: 4px 12px; }
+.cal-g { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cw { text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
+.cd { aspect-ratio: 1; min-width: 0; display: grid; place-content: center; justify-items: center; gap: 2px; border-radius: 12px; font: inherit; border: 0; background: transparent; color: var(--muted); padding: 0; }
+.cd b { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; } .cd.e { visibility: hidden; }
+.cd.hoy { box-shadow: inset 0 0 0 2px var(--accent); color: var(--fg); }
+.cd.has { background: var(--fill); color: var(--fg); cursor: pointer; } .cd.has b { font-weight: 800; }
+.cd.due { background: var(--accent-soft); } .cd.done { background: var(--good-soft); } .cd.sel { background: var(--accent); color: var(--accent-ink); }
+.cd .dots { display: flex; gap: 3px; } .cd .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--cat-ink); }
+.cal-leg { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); } .cal-leg span { display: inline-flex; align-items: center; gap: 5px; } .cal-leg i { width: 9px; height: 9px; border-radius: 50%; background: var(--cat-ink); }
 </style>
 </head>
 <body>
@@ -476,9 +497,9 @@ button.tkt, button.cromo, .mrc, .bal-c { cursor: pointer; -webkit-tap-highlight-
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261025g"></script>
-<script src="firebase-config.js?v=20261025g"></script>
-<script src="app.js?v=20261025g"></script>
+<script src="lib/avatar.js?v=20261025h"></script>
+<script src="firebase-config.js?v=20261025h"></script>
+<script src="app.js?v=20261025h"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>
