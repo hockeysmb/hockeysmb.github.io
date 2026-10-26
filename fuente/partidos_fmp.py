@@ -36,5 +36,11 @@ try:
             except Exception as e: log.append(f'ERROR {u} {e!r}')
 except Exception as e:
     log.append(f'ERROR home {e!r}')
+# paso 2: el portal se pinta con portales.js de sidgad; guardarlo para ver qué ficheros pide
+for u in ('https://www.server2.sidgad.es/portales.js?v=123',):
+    try:
+        st, fin, h = get(u); open(os.path.join(OUT, 'portales.js'), 'w').write(h); log.append(f'portales.js {st} {len(h)}')
+        log.append('php: ' + ' '.join(sorted(set(re.findall(r"[\w'+ ]*_\w*\.php", h)))[:80]))
+    except Exception as e: log.append(f'ERROR {u} {e!r}')
 open(os.path.join(OUT, 'log.txt'), 'w').write('\n'.join(log))
 print('\n'.join(log))
