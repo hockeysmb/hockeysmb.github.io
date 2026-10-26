@@ -45,6 +45,14 @@ async def main():
       if not av: errs.append('no sale el aviso del reto')
       ja = await db('juego/demo03'); print('ficha de juego creada al entrar:', bool(ja), (ja or {}).get('n'))
       if not ja: errs.append('no se crea su ficha de juego')
+      # 1b. el después de ayer se puede contar hoy
+      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-26', { ses: [] })"); await pg.wait_for_timeout(400)
+      ay = await pg.locator('[data-a="ayerdesp"]').count(); print('tarjeta del entreno de ayer:', ay)
+      if not ay: errs.append('no deja contar el después de ayer')
+      else:
+        await pg.click('[data-a="ayerdesp"]'); await pg.wait_for_timeout(300); await pg.click('#c-desp [data-rpe="6"]'); await pg.click('#c-desp [data-a="saveses"]'); await pg.wait_for_timeout(400)
+        d26 = await db('registros/demo03/dias/2026-10-26'); print('después de ayer guardado:', [(x['rpe'], x['min']) for x in d26.get('ses', [])], '· hoy sin tocar:', len((await db('registros/demo03/dias/2026-10-27')).get('ses', [])))
+        if len(d26.get('ses', [])) != 1: errs.append('no se guarda el después de ayer')
       # 2. el reto: liga
       await pg.click('.nav [data-v="reto"]'); await pg.wait_for_timeout(500); await pg.screenshot(path=O + '2_reto_liga.png', full_page=True)
       print('liga:', await pg.locator('.pd:not(.vacio)').count(), 'en el podio ·', await pg.locator('.lg-rows li').count(), 'en la tabla')
@@ -69,11 +77,17 @@ async def main():
       d = await db('duelos/dprueba1'); print('duelo pendiente:', d.get('pa'), '-', d.get('pb'))
       j = await db('juego/demo03'); print('tras contestar el duelo, partidas contadas:', (j.get('jd') or {}).get('n'))
       if (j.get('jd') or {}).get('n') != 1: errs.append('contestar un duelo no debería contar')
-      # límite: con las tres hechas, no deja jugar más
-      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 3 } })"); await pg.wait_for_timeout(300); await pg.click('[data-a="cerrarres"]') if await pg.locator('[data-a="cerrarres"]').count() else None; await pg.wait_for_timeout(300)
-      lim = ' '.join((await pg.text_content('.rt-hero') or '').split()); print('con 3 partidas:', 'Mañana más' in lim, '·', (await pg.text_content('.rt-left') or '').strip())
-      if 'Mañana más' not in lim: errs.append('no limita las partidas del día')
+      # límite: con las tres gratis hechas, se puede comprar una más (hasta 2); con 5, ya no
+      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 3 }, bolas: 400 })"); await pg.wait_for_timeout(300); await pg.click('[data-a="cerrarres"]') if await pg.locator('[data-a="cerrarres"]').count() else None; await pg.wait_for_timeout(300)
+      lim = ' '.join((await pg.text_content('.rt-hero') or '').split()); print('con 3 partidas:', 'Una más' in lim, '·', (await pg.text_content('.rt-left') or '').strip())
+      if 'Una más' not in lim: errs.append('no ofrece comprar otra partida')
       await pg.screenshot(path=O + '4b_limite.png')
+      g0 = (await db('juego/demo03')).get('gastado') or 0; await pg.click('.rt-play[data-a="comprarpartida"]'); await pg.wait_for_timeout(400); j = await db('juego/demo03')
+      print('compra partida:', j.get('jd'), 'gastado', g0, '→', j.get('gastado'), '· botón', (await pg.text_content('.rt-play')).strip())
+      if (j.get('jd') or {}).get('x') != 1 or (j.get('gastado') or 0) - g0 != 60 or 'Jugar' not in await pg.text_content('.rt-play'): errs.append('no se compra la partida extra')
+      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 5, x: 2 } })"); await pg.wait_for_timeout(300)
+      lim = ' '.join((await pg.text_content('.rt-hero') or '').split()); print('con 5 partidas:', 'Mañana más' in lim)
+      if 'Mañana más' not in lim: errs.append('no limita a 5 partidas')
       await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 1 } })"); await pg.wait_for_timeout(300)
       if d.get('pb') is None: errs.append('no se guarda el duelo')
       await pg.screenshot(path=O + '4_duelo.png', full_page=True)

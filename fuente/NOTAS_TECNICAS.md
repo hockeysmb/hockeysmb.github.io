@@ -203,3 +203,10 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Duelos: guardan `modo` (el juego del día en que se retó); quien contesta juega ese.
 - Límite: 3 partidas al día (`PARTIDAS_DIA`) contadas en `juego.jd = {f, n}`. Retar cuenta; contestar un duelo que te han mandado, no. La DT no tiene límite. Es un límite de la app (no de las reglas).
 - Para jugar hay que haber contestado lo de hoy (`tocaHoy`): el antes del entreno (o el antes del partido si hay partido), el después a partir de la hora de su aviso (21:00 por defecto) y, en domingo, el diario. Si falta algo, el botón Jugar se apaga y salen botones para ir a contestarlo.
+
+## Partidas compradas, después de ayer y más rigor en los avisos (26 oct, noche)
+
+- Partidas: 3 gratis al día y hasta 2 más a 60 monedas (`EXTRA_MAX`, `EXTRA_PRECIO`, acción `comprarpartida`). Se guarda en `juego.jd = {f, n (jugadas), x (compradas)}`. Se paga al comprar.
+- El después del entreno de ayer se puede contar hoy (`ayerHTML`, `draft.sesFecha`): el esfuerzo contado hasta 24 h después es igual de fiable (Phibbs y otros, 2017, adolescentes).
+- `antes.seg`: segundos que tardó en contestar el antes. Si son menos de 6 y las cinco respuestas son iguales, la ficha lo marca como «Muy rápido» (solo información). Sirve para detectar respuestas sin pensar ahora que contestar abre el juego.
+- Carga «Semana / mes»: ya no es aviso fuerte por sí sola. Por encima de 1,5 es «Atención» y pasa a «Revisar» solo si además llega peor de lo normal en ella (0,5 por debajo de su media). Entre 1,3 y 1,5 es información, salvo que también llegue peor. La investigación no ha demostrado que este cociente prediga lesiones ni que exista una «zona segura» de 0,8 a 1,3.
