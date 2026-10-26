@@ -1,0 +1,24 @@
+name: Partidos de la federación
+# Cada mañana lee el calendario de la Federación Madrileña y actualiza femenino/partidos.json si hay cambios.
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['fuente/partidos_fmp.py', '.github/workflows/partidos-fmp.yml']
+permissions:
+  contents: write
+concurrency: partidos-fmp
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 fuente/partidos_fmp.py
+      - name: Guardar si ha cambiado
+        run: |
+          git config user.name "partidos-fmp"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A femenino/partidos.json fuente/_fmp_muestra || true
+          if git diff --cached --quiet; then echo "Sin cambios"; else git commit -m "Partidos: actualizados desde la federación" && git push; fi
