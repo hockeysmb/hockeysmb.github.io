@@ -46,7 +46,7 @@ for u in ('https://www.server2.sidgad.es/portales.js?v=123',):
 import urllib.parse, html as H
 SG = 'https://www.server2.sidgad.es/'
 def post(url, data):
-    req = urllib.request.Request(url, data=urllib.parse.urlencode(data).encode(), headers=dict(UA, **{'Content-Type': 'application/x-www-form-urlencoded', 'Referer': BASE + '/', 'X-Requested-With': 'XMLHttpRequest'}))
+    req = urllib.request.Request(url, data=urllib.parse.urlencode(data).encode(), headers=dict(UA, **{'Content-Type': 'application/x-www-form-urlencoded', 'Referer': BASE + '/', 'Origin': BASE, 'X-Requested-With': 'XMLHttpRequest'}))
     with urllib.request.urlopen(req, timeout=30) as r: return r.read().decode('utf-8', 'replace')
 def attrs(tag): return {k: H.unescape(v) for k, v in re.findall(r'([\w-]+)=["\']([^"\']*)["\']', tag)}
 try:
