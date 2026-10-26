@@ -77,7 +77,7 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **Bienvenida:** sale una vez por móvil y jugadora (`smbf-bienvenida-{uid}`) y también desde «Mis datos». Tiene tres pasos: instalarla, poner los avisos y cómo funciona.
 - **Resumen de temporada** (DT, desde la ficha): `temporadaView()`, con cifras, mes a mes, gráficos, compromisos y «lo mejor». Se imprime o se guarda en PDF con `window.print()` (hay CSS de impresión).
 - **Partidos (25 oct):**
-  - Calendario: `femenino/partidos.json`, sacado a mano de la web de la Federación Madrileña (https://www.hockeypatines.fmp.es, ligas 4853 Sub-15 fem, 4836 Sub-17 fem y 4864 1ª Autonómica fem). Es público, sin datos personales. Para actualizarlo (horas nuevas, resultados), se vuelve a leer la web en Chrome: WebFetch no llega a ese dominio.
+  - Calendario: `femenino/partidos.json`, sacado a mano de la web de la Federación Madrileña (https://www.hockeypatines.fmp.es, ligas 4853 Sub-15 fem, 4836 Sub-17 fem y 4864 1ª Autonómica fem). Es público, sin datos personales. Se actualiza solo cada mañana (ver «Partidos de la federación, automático»).
   - La DT puede añadir otros partidos (amistosos, torneos), que se guardan en `equipos/femenino.extra`.
   - El día de partido, la jugadora ve la tarjeta del partido («Contar el partido» / «No juego»). Lo que cuenta va en `registros/{uid}/dias/{fecha}.partidos[id]` = {juega si/conv, min, rpe, visto, mejor, cambiar, cat, rival, ts}. Si ha jugado, además va una sesión `{tipo: 'partido', pid}` en `ses`, para la carga. «No juego» solo se recuerda en ese móvil (`localStorage`).
   - DT: pestaña «Partidos» (próximos, jugados y ficha de cada partido, con respuestas). Sus respuestas usan la clave `p:fecha:id` en `acceso/{uid}.resp`.
@@ -139,3 +139,12 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - En la ficha de un partido, la DT puede cambiar fecha, hora y resultado («Cambiar fecha, hora o resultado»). Se guarda en `equipos/femenino.cambios` = [{id, fecha, hora, res, ts}] (una lista: así se puede quitar un cambio con `merge`) y manda sobre `partidos.json` hasta que se quita («Volver a lo de la federación»). Los partidos añadidos por la DT (`extra`) se cambian directamente.
 - `allPart` aplica los cambios (`conCambio`, deja `orig` con la fecha de la federación). Lo que contó cada jugadora se busca con `pdAt` (día del partido, la fecha original o cualquier día), así que mover un partido no pierde respuestas.
 - Sin reglas nuevas: `equipos/*` ya lo escribe solo la DT y lo leen las jugadoras activas.
+
+## Partidos de la federación, automático (26 oct)
+
+- `.github/workflows/partidos-fmp.yml` ejecuta `fuente/partidos_fmp.py` cada mañana (y al cambiar el script). Si hay cambios, hace commit de `femenino/partidos.json` como «partidos-fmp». Por eso, antes de subir cambios, `git pull --rebase`.
+- El portal de la federación lo pinta sidgad con JavaScript. El calendario de cada liga sale de un POST a `https://www.server2.sidgad.es/fmp/fmp_cal_idc_{idc}_1.php` con `idc`, y hay que mandar `Referer` y `Origin` del portal o devuelve vacío. Temporada 2026/27 = `temp` 41 (no hace falta para el calendario).
+- Cada partido es un `<tr gamedate=…>`: el primer equipo juega en casa; el SMB es el club 428. Se guardan con id `s15-n`, `s17-n`, `af-n` (n = jornada), así lo que contaron las jugadoras no se pierde. El nombre del rival se deja como estaba si es el mismo equipo. Las jornadas de descanso no se guardan.
+- Si una liga no se puede leer o salen menos de la mitad de partidos, se dejan los de antes. Prueba local con páginas guardadas: `python3 fuente/partidos_fmp.py --local CARPETA --seco`.
+- Para la temporada 2027/28 habrá que cambiar los `idc` de `LIGAS` en el script (se ven en `fmp/fmp_ls_1.php`).
+- La app vuelve a leer `partidos.json` al abrirse y al volver a primer plano. La DT puede cambiar un partido a mano y manda lo suyo (ver «cambiar partidos a mano»).

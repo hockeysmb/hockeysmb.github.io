@@ -70,11 +70,13 @@
   const calOf = c => ({ dias: (c && Array.isArray(c.dias)) ? c.dias : CAL_DEF.dias, sin: (c && Array.isArray(c.sin)) ? c.sin : [] });
   const entrena = (cal, d) => cal.dias.includes(dateOf(d).getDay()) && !cal.sin.includes(d);
   // partidos: el calendario de la federación (partidos.json, lo actualiza quien mantiene la app) y los que añade la DT (equipos/femenino.extra)
-  let PART = [];
+  let PART = [], PART_AT = '';
   const CATS = ['Sub-15', 'Sub-17', '1ª Autonómica', 'Otro'];
-  function cargarPartidos() { fetch('partidos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { if (j && Array.isArray(j.partidos)) { PART = j.partidos; render(); } }).catch(() => {}); }
+  function cargarPartidos() { fetch('partidos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { if (j && Array.isArray(j.partidos)) { const nuevo = JSON.stringify(j.partidos) !== JSON.stringify(PART); PART = j.partidos; PART_AT = j.actualizado || ''; if (nuevo) render(); } }).catch(() => {}); }
   // cambios a mano de la DT (equipos/femenino.cambios: [{id, fecha, hora, res}]) por encima del calendario de la federación; «orig» = la fecha de la federación
   const conCambio = (x, C) => { const c = C.find(z => z.id === x.id); if (!c) return x; const o = Object.fromEntries(['fecha', 'hora', 'res'].filter(k => c[k]).map(k => [k, c[k]])); return Object.assign({}, x, o, { orig: x.fecha, cambiado: true }); };
+  // al volver a la app (estaba en segundo plano) se vuelve a mirar el calendario por si la federación lo ha cambiado
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && PART.length) cargarPartidos(); });
   const allPart = cal => [...PART, ...(((cal || {}).extra) || [])].map(x => conCambio(x, ((cal || {}).cambios) || [])).sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
   const partDe = (cal, d) => allPart(cal).filter(x => x.fecha === d);
   // lo que contó una jugadora de un partido: normalmente en el día del partido; si la fecha cambió, en la de antes o en cualquier otro día
@@ -624,7 +626,8 @@
         <div class="cal-g">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="cw">${d}</span>`).join('')}${cells.join('')}</div>
         <div class="cal-leg"><span><i class="c15"></i>Sub-15</span><span><i class="c17"></i>Sub-17</span><span><i class="caf"></i>1ª Aut.</span></div></section>
       <section class="strip"><div class="strip-h"><h2>${draft.cday && draft.cday.startsWith(mes) ? esc(fmtDay(draft.cday)) : 'Este mes'}</h2>${draft.cday ? '<button class="btn ghost small" type="button" data-cday="">Ver todo el mes</button>' : ''}</div>
-        ${vis.length ? `<div class="tkts col">${vis.map(x => ticketHTML(x, estadoPartJ(x), `data-pp="${x.id}"`)).join('')}</div>` : '<p class="sub">No hay partidos este mes.</p>'}</section>`, { nav: navJ() });
+        ${vis.length ? `<div class="tkts col">${vis.map(x => ticketHTML(x, estadoPartJ(x), `data-pp="${x.id}"`)).join('')}</div>` : '<p class="sub">No hay partidos este mes.</p>'}</section>
+      <p class="sub">Calendario de la Federación Madrileña${PART_AT ? `, revisado el ${esc(fmtDay(PART_AT))}` : ''}.</p>`, { nav: navJ() });
   }
   function partidoJView() {
     const x = partById(draft.part); if (!x) { view = 'partidos'; return partidosJView(); }
@@ -1140,7 +1143,7 @@
         <div class="row"><input type="text" id="np-rival" class="date-in grow" placeholder="Rival" aria-label="Rival" maxlength="60"><label class="check"><input type="checkbox" id="np-casa"> En casa</label></div>
         <button class="btn small" type="button" data-a="addpart">Añadir</button>
         ${((A.cal || {}).extra || []).length ? `<ul class="list">${A.cal.extra.map(x => `<li class="li"><span><b>${esc(fmtShort(x.fecha))} · ${esc(x.cat)}</b><small>${esc(x.rival)}</small></span><button class="btn ghost small" type="button" data-a="delpart" data-id="${x.id}">Quitar</button></li>`).join('')}</ul>` : ''}</section>
-      <p class="sub">Calendario de la Federación Madrileña de Patinaje. Las horas que faltan las pone la federación más adelante.</p>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+      <p class="sub">Calendario de la Federación Madrileña de Patinaje: se revisa solo cada mañana${PART_AT ? ` (último cambio: ${esc(fmtDay(PART_AT))})` : ''}. Si algo cambia a última hora, entra en el partido y cámbialo a mano.</p>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   function partidoView() {
     A.view2 = 'partido';

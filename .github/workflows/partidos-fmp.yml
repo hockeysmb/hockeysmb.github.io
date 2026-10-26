@@ -1,8 +1,9 @@
 name: Partidos de la federación
-# Cada mañana lee el calendario de la Federación Madrileña y actualiza femenino/partidos.json si hay cambios.
+# Cada mañana lee el calendario de la Federación Madrileña (Sub-15, Sub-17 y 1ª Autonómica femenina)
+# y, si ha cambiado algo (horas, fechas, resultados), actualiza femenino/partidos.json. La app lo coge sola.
 on:
   schedule:
-    - cron: '17 5 * * *'
+    - cron: '17 5 * * *'   # 6:17 en invierno, 7:17 en verano (hora de Madrid)
   workflow_dispatch:
   push:
     branches: [main]
@@ -20,5 +21,5 @@ jobs:
         run: |
           git config user.name "partidos-fmp"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A femenino/partidos.json fuente/_fmp_muestra || true
+          git add femenino/partidos.json
           if git diff --cached --quiet; then echo "Sin cambios"; else git commit -m "Partidos: actualizados desde la federación" && git push; fi

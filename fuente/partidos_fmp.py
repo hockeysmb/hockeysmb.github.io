@@ -1,73 +1,90 @@
-"""Lee el calendario de la Federación Madrileña de Patinaje y actualiza femenino/partidos.json.
-Lo ejecuta GitHub Actions cada mañana (.github/workflows/partidos-fmp.yml). Primera versión: solo explora la web
-y guarda lo que encuentra en fuente/_fmp_muestra/ para escribir el lector."""
-import os, re, urllib.request, ssl, json
-BASE = 'https://www.hockeypatines.fmp.es'
-LIGAS = {'4853': 'Sub-15', '4836': 'Sub-17', '4864': '1ª Autonómica'}
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_fmp_muestra')
-os.makedirs(OUT, exist_ok=True)
-UA = {'User-Agent': 'Mozilla/5.0 (compatible; SMB-femenino/1.0; +https://hockeysmb.github.io)'}
-def get(url):
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.status, r.geturl(), r.read().decode('utf-8', 'replace')
-log = []
-try:
-    st, fin, home = get(BASE + '/')
-    log.append(f'home {st} {fin} {len(home)}')
-    open(os.path.join(OUT, 'home.html'), 'w').write(home)
-    links = sorted(set(re.findall(r'href=["\']([^"\']+)["\']', home)))
-    open(os.path.join(OUT, 'links.txt'), 'w').write('\n'.join(links))
-    cand = [l for l in links if any(k in l for k in LIGAS)]
-    log.append('candidatos: ' + ' '.join(cand[:40]))
-    for l in cand[:12]:
-        u = l if l.startswith('http') else BASE + ('' if l.startswith('/') else '/') + l
+"""Actualiza femenino/partidos.json con el calendario de la Federación Madrileña de Patinaje (portal de sidgad).
+Lo ejecuta GitHub Actions cada mañana (.github/workflows/partidos-fmp.yml) y guarda solo si hay cambios.
+Uso local: python3 fuente/partidos_fmp.py [--local CARPETA_CON_cal_IDC.html] [--seco]
+- Por liga: POST a fmp/fmp_cal_idc_{idc}_1.php (hay que mandar Referer y Origin del portal o devuelve vacío).
+- Cada partido es un <tr gamedate="AAAAMMDD"> con hora, «JORNADA n», los dos equipos (el primero juega en casa) y el resultado.
+- Si una liga no se puede leer o sale rara (menos de la mitad de partidos), se dejan los que había: nunca se vacía."""
+import os, re, sys, json, html as H, urllib.request, urllib.parse
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+JSON = os.path.join(RAIZ, 'femenino', 'partidos.json')
+PORTAL = 'https://www.hockeypatines.fmp.es'
+SG = 'https://www.server2.sidgad.es/fmp/'
+LIGAS = [('4853', 'Sub-15', 's15'), ('4836', 'Sub-17', 's17'), ('4864', '1ª Autonómica', 'af')]
+CLUB_SMB = '428'
+CABE = {'User-Agent': 'Mozilla/5.0 (compatible; SMB-femenino/1.0; +https://hockeysmb.github.io)', 'Referer': PORTAL + '/', 'Origin': PORTAL,
+        'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'}
+
+def descargar(idc):
+    datos = urllib.parse.urlencode({'idc': idc, 'tipo_stats': '', 'site_lang': 'es'}).encode()
+    with urllib.request.urlopen(urllib.request.Request(SG + f'fmp_cal_idc_{idc}_1.php', data=datos, headers=CABE), timeout=40) as r:
+        return r.read().decode('utf-8', 'replace')
+
+MINUS = {'DE', 'DEL', 'LA', 'LAS', 'LOS', 'EL', 'Y'}
+def bonito(n):
+    n = re.sub(r'\bSTA\.? Mª', 'SANTA MARÍA', n)
+    out = []
+    for i, w in enumerate(n.split()):
+        if w in MINUS and i: out.append(w.lower())
+        elif len(w) <= 3 and w.isalpha() and not re.search(r'[AEIOUÁÉÍÓÚ]', w): out.append(w)   # CP, RH, PC, HC
+        else: out.append(w[:1] + w[1:].lower())
+    return ' '.join(out)
+
+def leer(h):
+    """Devuelve los partidos del SMB: {j, fecha, hora, casa, rival, res, idp}"""
+    P = []
+    for tr in re.findall(r'<tr[^>]*gamedate="(\d{8})"[^>]*>(.*?)</tr>', h, re.S):
+        g, cuerpo = tr
+        equipos = [H.unescape(x).strip() for x in re.findall(r'nombre_junto_logo">\s*([^<]+?)\s*</div>', cuerpo)]
+        clubes = re.findall(r'logos_clubes/(\d+)[._]', cuerpo)
+        if len(equipos) < 2 or g == '00000000' or any('DESCANSO' in e.upper() for e in equipos): continue
+        smb = [i for i in (0, 1) if (len(clubes) > i and clubes[i] == CLUB_SMB) or 'BLANCA' in equipos[i].upper()]
+        if not smb: continue
+        casa = smb[0] == 0
+        hora = re.search(r'<td[^>]*>\s*(\d{1,2}:\d{2})\s*</td>', cuerpo)
+        jor = re.search(r'JORNADA\s+(\d+)', cuerpo)
+        res = re.search(r'web_link_td"[^>]*>\s*(\d+)\s*-\s*(\d+)\s*</td>', cuerpo)
+        idp = re.search(r'fichapartido_(\d+)', cuerpo)
+        P.append({'j': int(jor.group(1)) if jor else None, 'fecha': f'{g[:4]}-{g[4:6]}-{g[6:]}', 'hora': hora.group(1) if hora else '',
+                  'casa': casa, 'rival': equipos[1 if casa else 0], 'res': (f'{res.group(1)}-{res.group(2)}' if casa else f'{res.group(2)}-{res.group(1)}') if res else '',
+                  'idp': idp.group(1) if idp else ''})
+    return P
+
+def main():
+    args = sys.argv[1:]; local = args[args.index('--local') + 1] if '--local' in args else None; seco = '--seco' in args
+    viejo = json.load(open(JSON, encoding='utf-8'))
+    antes = {x['id']: x for x in viejo['partidos']}
+    nuevos, log = [], []
+    for idc, cat, pre in LIGAS:
+        previos = [x for x in viejo['partidos'] if x['id'].startswith(pre + '-')]
         try:
-            st, fin, h = get(u); n = re.sub(r'[^a-z0-9]+', '_', u.lower())[-80:]
-            open(os.path.join(OUT, n + '.html'), 'w').write(h); log.append(f'{st} {fin} {len(h)} BLANCA={h.upper().count("BLANCA")}')
-        except Exception as e: log.append(f'ERROR {u} {e!r}')
-    for lid in LIGAS:
-        for pat in ('/league/{}', '/liga/{}', '/competicion/{}', '/calendar/{}', '/?league={}'):
-            u = BASE + pat.format(lid)
-            try:
-                st, fin, h = get(u); n = re.sub(r'[^a-z0-9]+', '_', u.lower())[-80:]
-                log.append(f'{st} {fin} {len(h)} BLANCA={h.upper().count("BLANCA")}')
-                if 'BLANCA' in h.upper(): open(os.path.join(OUT, n + '.html'), 'w').write(h)
-            except Exception as e: log.append(f'ERROR {u} {e!r}')
-except Exception as e:
-    log.append(f'ERROR home {e!r}')
-# paso 2: el portal se pinta con portales.js de sidgad; guardarlo para ver qué ficheros pide
-for u in ('https://www.server2.sidgad.es/portales.js?v=123',):
-    try:
-        st, fin, h = get(u); open(os.path.join(OUT, 'portales.js'), 'w').write(h); log.append(f'portales.js {st} {len(h)}')
-        log.append('php: ' + ' '.join(sorted(set(re.findall(r"[\w'+ ]*_\w*\.php", h)))[:80]))
-    except Exception as e: log.append(f'ERROR {u} {e!r}')
-# paso 3: listado de competiciones -> cabecera de cada liga -> botón del calendario
-import urllib.parse, html as H
-SG = 'https://www.server2.sidgad.es/'
-def post(url, data):
-    req = urllib.request.Request(url, data=urllib.parse.urlencode(data).encode(), headers=dict(UA, **{'Content-Type': 'application/x-www-form-urlencoded', 'Referer': BASE + '/', 'Origin': BASE, 'X-Requested-With': 'XMLHttpRequest'}))
-    with urllib.request.urlopen(req, timeout=30) as r: return r.read().decode('utf-8', 'replace')
-def attrs(tag): return {k: H.unescape(v) for k, v in re.findall(r'([\w-]+)=["\']([^"\']*)["\']', tag)}
-try:
-    ls = ''
-    for nombre, fn in (('get+ref', lambda: urllib.request.urlopen(urllib.request.Request(SG + 'fmp/fmp_ls_1.php', headers=dict(UA, Referer=BASE + '/', Origin=BASE)), timeout=30).read().decode('utf-8', 'replace')),
-                       ('post', lambda: post(SG + 'fmp/fmp_ls_1.php', {})), ('post+temp', lambda: post(SG + 'fmp/fmp_ls_1.php', {'temp': '41', 'idm': '1', 'site_lang': 'es'})),
-                       ('get temp', lambda: get(SG + 'fmp/fmp_ls_1.php?temp=41')[2]), ('get ls_41', lambda: get(SG + 'fmp/fmp_ls_41.php')[2])):
-        try: r = fn(); log.append(f'ls {nombre}: {len(r)} 4853={"4853" in r}'); ls = ls or (r if '4853' in r else '')
-        except Exception as e: log.append(f'ls {nombre}: ERROR {e!r}')
-    open(os.path.join(OUT, 'ls.html'), 'w').write(ls)
-    for idc in LIGAS:
-        m = re.search(r'<[^>]*\bid=["\']' + idc + r'["\'][^>]*>', ls); log.append(f'{idc} fila: {m.group(0)[:300] if m else None}')
-        if not m: continue
-        a = attrs(m.group(0)); ta = re.search(r'id=["\']teams_array_' + idc + r'["\'][^>]*value=["\']([^"\']*)', ls) or re.search(r'value=["\']([^"\']*)["\'][^>]*id=["\']teams_array_' + idc, ls)
-        hd = post(SG + 'competicion_header_creator.php', {'config_params': a.get('config_params', ''), 'idm': '1', 'teams_array': ta.group(1) if ta else '', 'cliente': 'fmp', 'temp': '41', 'idc': idc, 'logo': a.get('logo', ''), 'site_lang': 'es'})
-        open(os.path.join(OUT, f'header_{idc}.html'), 'w').write(hd); log.append(f'{idc} header {len(hd)} acceso={a.get("acceso")}')
-        for b in re.findall(r'<[^>]*\bfile=["\'][^"\']+["\'][^>]*>', hd):
-            ba = attrs(b); log.append(f'   btn id={ba.get("id")} file={ba.get("file")}')
-            if 'cal' in (ba.get('id', '') + ba.get('file', '')).lower():
-                c = post(SG + 'fmp/fmp_' + ba['file'], {'idc': idc, 'tipo_stats': '', 'site_lang': 'es'})
-                open(os.path.join(OUT, f'cal_{idc}_{ba.get("id")}.html'), 'w').write(c); log.append(f'   -> {len(c)} BLANCA={c.upper().count("BLANCA")}')
-except Exception as e: log.append(f'ERROR paso 3 {e!r}')
-open(os.path.join(OUT, 'log.txt'), 'w').write('\n'.join(log))
-print('\n'.join(log))
+            h = open(os.path.join(local, f'cal_{idc}_calendario_btn.html'), encoding='utf-8').read() if local else descargar(idc)
+            L = leer(h)
+        except Exception as e:
+            L = []; log.append(f'{cat}: no se ha podido leer ({e!r})')
+        if not L or len(L) < len(previos) / 2:
+            log.append(f'{cat}: {len(L)} partidos leídos (había {len(previos)}): se dejan los de antes'); nuevos += previos; continue
+        for x in L:
+            pid = f'{pre}-{x["j"]}' if x['j'] else f'{pre}-{x["fecha"]}'
+            a = antes.get(pid, {})
+            # el nombre del rival se deja como estaba si es el mismo equipo (está escrito a mano y bonito)
+            rival = a['rival'] if a and __import__('difflib').SequenceMatcher(None, bonito(x['rival']).lower(), a.get('rival', '').lower()).ratio() >= 0.6 else bonito(x['rival'])
+            nuevos.append({'id': pid, 'cat': cat, 'j': x['j'], 'fecha': x['fecha'], 'hora': x['hora'], 'rival': rival, 'casa': x['casa'], 'res': x['res']})
+        log.append(f'{cat}: {len(L)} partidos')
+    orden = {'s15': 0, 's17': 1, 'af': 2}; nuevos.sort(key=lambda x: (orden.get(x['id'].split('-')[0], 3), x['fecha'], x['hora']))
+    cambios = []
+    for x in nuevos:
+        a = antes.get(x['id'])
+        if not a: cambios.append(f'nuevo {x["id"]} {x["fecha"]} {x["rival"]}')
+        else:
+            d = [f'{k}: {a.get(k)!r} → {x[k]!r}' for k in ('fecha', 'hora', 'res', 'rival', 'casa') if a.get(k) != x[k]]
+            if d: cambios.append(f'{x["id"]} ' + ', '.join(d))
+    for k in antes:
+        if k not in {x['id'] for x in nuevos}: cambios.append(f'quitado {k}')
+    print('\n'.join(log)); print('\n'.join(cambios) or 'Sin cambios')
+    if cambios and not seco:
+        viejo['partidos'] = nuevos; viejo['actualizado'] = __import__('datetime').date.today().isoformat()
+        viejo['nota'] = 'res = goles del SMB - goles del rival. hora vacía = la federación todavía no la ha puesto. Se actualiza solo cada mañana (fuente/partidos_fmp.py).'
+        txt = '{\n' + ',\n'.join(f'  {json.dumps(k, ensure_ascii=False)}: {json.dumps(v, ensure_ascii=False)}' for k, v in viejo.items() if k != 'partidos')
+        txt += ',\n  "partidos": [\n' + ',\n'.join('    ' + json.dumps(x, ensure_ascii=False).replace('", "', '", "') for x in nuevos) + '\n  ]\n}\n'
+        open(JSON, 'w', encoding='utf-8').write(txt)
+if __name__ == '__main__': main()
