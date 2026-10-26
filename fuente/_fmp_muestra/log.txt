@@ -15,5 +15,9 @@ ERROR https://www.hockeypatines.fmp.es/liga/4864 <HTTPError 404: 'Not Found'>
 ERROR https://www.hockeypatines.fmp.es/competicion/4864 <HTTPError 404: 'Not Found'>
 ERROR https://www.hockeypatines.fmp.es/calendar/4864 <HTTPError 404: 'Not Found'>
 200 https://www.hockeypatines.fmp.es/?league=4864 14958 BLANCA=0
-portales.js 200 28633
+portales.js 200 28552
 php: '+cliente+'_mc_'+idm+'_horizontal.php ruta_files+'competicion_header_creator.php show_copa_pruebas.php
+ls 200 0
+4853 fila: None
+4836 fila: None
+4864 fila: None
