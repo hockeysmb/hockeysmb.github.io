@@ -1,0 +1,17 @@
+home 200 https://www.hockeypatines.fmp.es/ 14958
+candidatos: 
+ERROR https://www.hockeypatines.fmp.es/league/4853 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/liga/4853 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/competicion/4853 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/calendar/4853 <HTTPError 404: 'Not Found'>
+200 https://www.hockeypatines.fmp.es/?league=4853 14958 BLANCA=0
+ERROR https://www.hockeypatines.fmp.es/league/4836 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/liga/4836 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/competicion/4836 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/calendar/4836 <HTTPError 404: 'Not Found'>
+200 https://www.hockeypatines.fmp.es/?league=4836 14958 BLANCA=0
+ERROR https://www.hockeypatines.fmp.es/league/4864 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/liga/4864 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/competicion/4864 <HTTPError 404: 'Not Found'>
+ERROR https://www.hockeypatines.fmp.es/calendar/4864 <HTTPError 404: 'Not Found'>
+200 https://www.hockeypatines.fmp.es/?league=4864 14958 BLANCA=0

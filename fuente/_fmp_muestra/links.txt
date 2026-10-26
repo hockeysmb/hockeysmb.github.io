@@ -1,0 +1,15 @@
+#
+/custom.css
+/favicon-fmp-2025.png
+/fonts/css/font-awesome.min.css
+http://www.artistico.fmp.es
+http://www.freestyle.fmp.es/
+http://www.hockeylinea.fmp.es
+http://www.hockeypatines.fmp.es
+http://www.pal.fmp.es/
+https://competiciones.fmp.es
+https://fonts.googleapis.com/css?family=Lato:400,700,900,400italic
+https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700
+https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700italic,700,400italic,300italic,300
+https://www.fmp.es
+https://www.server2.sidgad.es/css/portales.css
