@@ -704,11 +704,12 @@
       <section class="strip"><div class="strip-h"><h2>Tus compromisos</h2></div>${sem.length ? `<div class="notes">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<div class="note"><span class="d">Semana del ${esc(fmtShort(k))}</span><span class="t">${esc(compOf(x) || '—')}</span>${nx && nx.cumplida ? `<span class="stamp ${nx.cumplida}">${esc(STAMP[nx.cumplida] || '')}</span>` : ''}</div>`; }).join('')}</div>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`, { nav: navJ() });
   }
   function editAvView(lv) {
-    const a = draft.av = draft.av || avNorm(U.perfil.av, lv);
+    if (isAdmin()) lv = 9;
+    const a = draft.av = draft.av || avNorm(isAdmin() ? miAv() : U.perfil.av, lv);
     const sw = (cat, list) => `<div class="swatches">${list.map(c => `<button type="button" class="sw" data-avk="${cat}" data-avv="${c}" aria-pressed="${a[cat] === c}" style="background:#${c}" aria-label="Color ${c}"></button>`).join('')}</div>`;
     const ch = (cat, list) => `<div class="seg">${list.map(([v, n]) => `<button type="button" data-avk="${cat}" data-avv="${v}" aria-pressed="${a[cat] === v}">${esc(n)}</button>`).join('')}</div>`;
     const it = cat => `<div class="seg">${ITEMS.filter(x => x[0] === cat).map(([, v, n, l]) => l <= lv + 1 ? `<button type="button" data-avk="${cat}" data-avv="${v}" aria-pressed="${a[cat] === v}">${esc(n)}</button>` : `<button type="button" disabled class="locked">${esc(n)} · nivel ${l}</button>`).join('')}${TIENDA.filter(x => x[0] === cat && tiene(cat, x[1])).map(([, v, n]) => `<button type="button" data-avk="${cat}" data-avv="${v}" aria-pressed="${a[cat] === v}">${esc(n)}</button>`).join('')}</div>`;
-    shell(`<div><span class="kicker">Mi jugadora</span><h1>Cámbiala a tu gusto</h1></div>
+    shell(`<div><span class="kicker">${isAdmin() ? 'Tu personaje en el reto' : 'Mi jugadora'}</span><h1>${isAdmin() ? 'Cámbialo a tu gusto' : 'Cámbiala a tu gusto'}</h1></div>
       <section class="card av-edit"><div class="me-av big">${avatarSVG(a, lv)}</div>
         <div class="q"><span class="q-h">Piel</span>${sw('skin', SKINS)}</div>
         <div class="q"><span class="q-h">Pelo</span>${ch('top', HAIRS)}</div>
@@ -720,12 +721,15 @@
         <div class="q"><span class="q-h">Gorro</span>${it('gorro')}</div>
         <div class="q"><span class="q-h">Fondo</span>${it('fondo')}</div>
         <div class="q"><span class="q-h">Marco</span>${it('marco')}</div>
-        <div class="row"><button class="btn primary" type="button" data-a="saveav">Guardar</button><button class="btn ghost" type="button" data-a="noeditav">Cancelar</button></div></section>`, { nav: navJ() });
+        <div class="row"><button class="btn primary" type="button" data-a="saveav">Guardar</button><button class="btn ghost" type="button" data-a="noeditav">Cancelar</button></div></section>`, { nav: isAdmin() ? navA() : navJ() });
   }
   actions.editav = async () => { draft.editAv = true; draft.av = null; render(); scrollTo({ top: 0 }); };
-  actions.noeditav = async () => { draft.editAv = false; draft.av = null; render(); };
+  actions.noeditav = async () => { draft.editAv = false; draft.av = null; if (isAdmin()) view = 'reto'; else if (draft.avBack) { view = draft.avBack; draft.avBack = null; } render(); };
   actions.saveav = async () => {
-    const av = Object.assign({}, draft.av); await B.merge('jugadoras/' + me.uid, { av }); U.perfil = Object.assign({}, U.perfil, { av }); jSync();
+    const av = Object.assign({}, draft.av);
+    if (isAdmin()) { await B.merge('juego/' + me.uid, Object.assign(perfilJ(), { av })); J.todos[me.uid] = Object.assign({}, yoJ(), { av }); draft.editAv = false; draft.av = null; view = 'reto'; render(); scrollTo({ top: 0 }); toast('Guardado.'); return; }
+    await B.merge('jugadoras/' + me.uid, { av }); U.perfil = Object.assign({}, U.perfil, { av }); jSync();
+    if (draft.avBack) { view = draft.avBack; draft.avBack = null; }
     U.perfil = Object.assign({}, U.perfil, { av }); draft.editAv = false; draft.av = null; toast('Guardada.'); render(); scrollTo({ top: 0 });
   };
   // tras guardar algo: los puntos que suma y, si sube de nivel, lo que desbloquea
@@ -932,19 +936,29 @@
     ['gafas', 'prescription02', 'Gafas de pasta', 80], ['gafas', 'wayfarers', 'Gafas de moda', 140],
     ['gorro', 'winterHat1', 'Gorro de lana', 130], ['gorro', 'hat', 'Sombrero', 200],
     ['fondo', 'playa', 'Playa', 220], ['fondo', 'neon', 'Neón', 250], ['marco', 'arcoiris', 'Marco arcoíris', 400],
+    ['cele', '¡Golazo!', '¡Golazo!', 50], ['cele', '¡Para casa!', '¡Para casa!', 70], ['cele', '¡A la escuadra!', '¡A la escuadra!', 100], ['cele', '¡Imparable!', '¡Imparable!', 150], ['cele', '¡Santa María!', '¡Santa María!', 200],
   ];
-  const CAT_N = { estela: 'Estela', ropa: 'Ropa', gafas: 'Gafas', gorro: 'Gorro', fondo: 'Fondo', marco: 'Marco' };
+  // misiones del día: las mismas para todas (salen de la fecha); cada una da monedas una vez al día
+  const MISIONES = [
+    { k: 'goles3', t: 'Marca 3 goles en una partida', p: 30, ok: r => r.goles >= 3 }, { k: 'bolas25', t: 'Recoge 25 bolas en una partida', p: 30, ok: r => r.bolas >= 25 },
+    { k: 'regates4', t: 'Haz 4 regates en una partida', p: 30, ok: r => r.regates >= 4 }, { k: 'pts1500', t: 'Llega a 1.500 puntos', p: 40, ok: r => r.puntos >= 1500 },
+    { k: 'combo3', t: 'Consigue un combo ×3', p: 30, ok: r => r.combo >= 3 }, { k: 'nivel3', t: 'Llega al nivel 3', p: 40, ok: r => r.nivel >= 3 },
+    { k: 'duelo', t: 'Juega un duelo', p: 20, ok: (r, d) => !!d }, { k: 'gol1', t: 'Marca un gol', p: 15, ok: r => r.goles >= 1 },
+  ];
+  const misionesHoy = f => { let h = 0; for (const c of f) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = MISIONES.slice(), out = []; while (out.length < 3) { h = (h * 1103515245 + 12345) >>> 0; out.push(L.splice(h % L.length, 1)[0]); } return out; };
+  const premioDia = racha => 5 + 5 * Math.min(6, racha);
+  const CAT_N = { estela: 'Estela', ropa: 'Ropa', gafas: 'Gafas', gorro: 'Gorro', fondo: 'Fondo', marco: 'Marco', cele: 'Celebración de gol' };
   const DT_AV = { skin: 'edb98a', top: 'shortFlat', hairColor: '2c1b18', eyes: 'default', mouth: 'smile', ropa: 'hoodie:681825', gafas: '', gorro: '', fondo: 'pista', marco: 'oro' };
   const meU = () => me && me.uid, yoJ = () => J.todos[meU()] || {};
   const miNombre = () => isAdmin() ? 'Carlos' : ((U.perfil || {}).nombre || '').split(' ')[0];
   const miAv = () => isAdmin() ? Object.assign({}, DT_AV, yoJ().av || {}) : Object.assign({}, (U.perfil || {}).av || {});
   const miLv = () => isAdmin() ? 9 : nivelDe(puntos(U.dias, U.semanas));
   const perfilJ = () => ({ n: miNombre(), av: miAv(), lv: miLv(), adm: isAdmin() });
-  const monedas = () => { const y = yoJ(); return (isAdmin() ? 0 : Math.floor(puntos(U.dias, U.semanas) / 2)) + (y.bolas || 0) - (y.gastado || 0); };
+  const monedas = () => { const y = yoJ(); return (isAdmin() ? 0 : Math.floor(puntos(U.dias, U.semanas) / 2)) + (y.bolas || 0) + (y.premios || 0) - (y.gastado || 0); };
   const semPts = (d, l) => { let s = 0; for (let i = 0; i < 7; i++) s += (d.dias || {})[addDays(l, i)] || 0; return s; };
   const rachaJ = d => { let n = 0, k = today(); if (!(d.dias || {})[k]) k = addDays(k, -1); while ((d.dias || {})[k]) { n++; k = addDays(k, -1); } return n; };
-  const tiene = (c, v) => (c === 'estela' && v === 'granate') || (yoJ().compras || []).includes(c + '|' + v);
-  const puesto = (c, v) => c === 'estela' ? (yoJ().estela || 'granate') === v : miAv()[c] === v;
+  const tiene = (c, v) => (c === 'estela' && v === 'granate') || (c === 'cele' && v === '¡GOL!') || (yoJ().compras || []).includes(c + '|' + v);
+  const puesto = (c, v) => c === 'estela' ? (yoJ().estela || 'granate') === v : c === 'cele' ? (yoJ().cele || '¡GOL!') === v : miAv()[c] === v;
   const avSrc = (av, lv, n) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatarSVG(av, lv, n).replace('<svg class="av"', '<svg width="280" height="280" class="av"'));
   function jStart() {
     if (J.on) return; J.on = true;
@@ -959,13 +973,17 @@
   }
   function jugar(seed, duelo) {
     if (!window.SMBJuego) { toast('No se ha podido cargar el juego. Vuelve a abrir la app.'); return; }
-    window.SMBJuego.start({ avatarSrc: avSrc(miAv(), miLv(), miNombre()), seed, estela: yoJ().estela || 'granate', titulo: duelo ? 'Duelo contra ' + ((J.todos[(J.duelos[duelo] || {}).a === meU() ? J.duelos[duelo].b : (J.duelos[duelo] || {}).a] || {}).n || '') : 'Patina y marca', onEnd: r => terminar(r, duelo) });
+    window.SMBJuego.start({ avatarSrc: avSrc(miAv(), miLv(), miNombre()), seed, estela: yoJ().estela || 'granate', cele: yoJ().cele || '¡GOL!', titulo: duelo ? 'Duelo contra ' + ((J.todos[(J.duelos[duelo] || {}).a === meU() ? J.duelos[duelo].b : (J.duelos[duelo] || {}).a] || {}).n || '') : 'Patina y marca', onEnd: r => terminar(r, duelo) });
   }
   async function terminar(r, duelo) {
     const t = today(), y = yoJ(), dias = {}, prev = (y.dias || {})[t] || 0;
     Object.entries(y.dias || {}).forEach(([k, v]) => { if (daysBetween(k, t) <= 60) dias[k] = v; }); dias[t] = Math.max(prev, r.puntos);
-    const doc = Object.assign({}, y, perfilJ(), { bolas: (y.bolas || 0) + r.bolas, dias, rec: Math.max(y.rec || 0, r.puntos), partidas: (y.partidas || 0) + 1, ts: Date.now() });
-    draft.res = Object.assign({}, r, { duelo, nuevoRec: r.puntos > (y.rec || 0) && (y.partidas || 0) > 0, mejorHoy: r.puntos > prev && prev > 0 });
+    // premio por entrar a diario (la primera partida del día) y misiones del día
+    const prim = !prev, rch = rachaJ(Object.assign({}, y, { dias })), pd = prim ? premioDia(rch) : 0;
+    const mis = (y.mis && y.mis.f === t) ? { f: t, h: [...(y.mis.h || [])] } : { f: t, h: [] }, nuevas = misionesHoy(t).filter(m => !mis.h.includes(m.k) && m.ok(r, duelo));
+    nuevas.forEach(m => mis.h.push(m.k)); const pm = nuevas.reduce((a, m) => a + m.p, 0);
+    const doc = Object.assign({}, y, perfilJ(), { bolas: (y.bolas || 0) + r.bolas, premios: (y.premios || 0) + pd + pm, mis, dias, rec: Math.max(y.rec || 0, r.puntos), partidas: (y.partidas || 0) + 1, ts: Date.now() });
+    draft.res = Object.assign({}, r, { duelo, nuevoRec: r.puntos > (y.rec || 0) && (y.partidas || 0) > 0, mejorHoy: r.puntos > prev && prev > 0, pd, rch, nuevas });
     J.todos[meU()] = doc; view = 'reto'; draft.rtab = duelo ? 'duelos' : draft.rtab; render(); scrollTo({ top: 0 });
     try {
       await B.set('juego/' + meU(), doc);
@@ -973,6 +991,8 @@
     } catch (e) { console.error(e); toast('No se ha podido guardar la partida. Revisa la conexión.'); }
   }
   actions.jugar = async () => jugar(Math.floor(Math.random() * 2e9), null);
+  actions.editavj = async () => { view = 'yo'; draft.editAv = true; draft.av = null; draft.avBack = 'reto'; render(); scrollTo({ top: 0 }); };
+  actions.editavdt = async () => { view = 'avdt'; draft.editAv = true; draft.av = null; render(); scrollTo({ top: 0 }); };
   actions.retar = async b => {
     const id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), d = { a: meU(), b: b.dataset.u, seed: Math.floor(Math.random() * 2e9), pa: null, pb: null, ts: Date.now() };
     await B.set('duelos/' + id, d); J.duelos[id] = d; jugar(d.seed, id);
@@ -988,7 +1008,7 @@
   };
   actions.ponerj = async b => {
     const c = b.dataset.c, v = b.dataset.v;
-    if (c === 'estela') { J.todos[meU()] = Object.assign({}, yoJ(), { estela: v }); render(); await B.merge('juego/' + meU(), { estela: v }); return; }
+    if (c === 'estela' || c === 'cele') { J.todos[meU()] = Object.assign({}, yoJ(), { [c]: v }); render(); await B.merge('juego/' + meU(), { [c]: v }); toast(c === 'cele' ? 'Así celebrarás tus goles.' : '¡Te queda genial!'); return; }
     const av = Object.assign({}, miAv(), { [c]: v });
     if (isAdmin()) { J.todos[meU()] = Object.assign({}, yoJ(), { av }); render(); await B.merge('juego/' + meU(), { av }); }
     else { U.perfil = Object.assign({}, U.perfil, { av }); render(); await B.merge('jugadoras/' + me.uid, { av }); jSync(); }
@@ -1024,21 +1044,27 @@
     const tiendaH = `<section class="card"><div class="card-h"><h2>Tienda</h2><span class="pill coin">${fmtInt(monedas())} monedas</span></div>
         <p class="sub">${isAdmin() ? 'Ganas monedas recogiendo bolas.' : 'Ganas monedas recogiendo bolas y contestando la app.'}</p>
         <div class="shop">${TIENDA.map(([c, v, n, p]) => { const own = tiene(c, v), on = own && puesto(c, v);
-          const prev = c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
+          const prev = c === 'cele' ? `<span class="sh-c">${esc(v)}</span>` : c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
           return `<div class="sh${own ? ' own' : ''}"><span class="sh-p">${prev}</span><b>${esc(n)}</b><small>${CAT_N[c]}</small>${own ? (on ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Ponérmelo</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`}</div>`; }).join('')}</div>
-        ${tiene('estela', 'granate') && (yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}</section>`;
+        <div class="row">${(yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${(yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div></section>`;
     const resH = res ? (() => { const d = res.duelo && J.duelos[res.duelo], o = d ? J.todos[otro(d)] || {} : null, su = d ? suyo(d) : null;
       return `<section class="card rt-res"><button class="rt-cl" type="button" data-a="cerrarres" aria-label="Cerrar">×</button><span class="kicker">${res.duelo ? 'Duelo contra ' + esc((o || {}).n || '') : 'Tu partida'}</span>
         <b class="rt-pts">${fmtInt(res.puntos)}<small> puntos</small></b>
-        <div class="rt-st sm"><span><b>${res.bolas}</b>bolas</span><span><b>${res.goles}</b>${res.goles === 1 ? 'gol' : 'goles'}</span><span><b>+${res.bolas}</b>monedas</span></div>
+        <div class="rt-st sm"><span><b>${res.bolas}</b>bolas</span><span><b>${res.goles}</b>${res.goles === 1 ? 'gol' : 'goles'}</span><span><b>${res.regates || 0}</b>regates</span><span><b>×${res.combo || 1}</b>combo</span><span><b>${res.nivel || 1}</b>nivel</span></div>
+        <div class="rt-coins"><span class="pill coin">+${res.bolas + (res.pd || 0) + (res.nuevas || []).reduce((a, m) => a + m.p, 0)} monedas</span>${res.pd ? `<span class="sub">incluye ${res.pd} por ${res.rch} ${res.rch === 1 ? 'día' : 'días seguidos'}</span>` : ''}</div>
+        ${(res.nuevas || []).map(m => `<span class="rt-badge mis">Misión cumplida: ${esc(m.t)} · +${m.p}</span>`).join('')}
         ${res.nuevoRec ? '<span class="rt-badge">¡Nuevo récord!</span>' : res.mejorHoy ? '<span class="rt-badge">Tu mejor partida de hoy</span>' : ''}
         ${d ? (su == null ? `<p class="sub">Ahora le toca a ${esc(o.n || '')}. Lo verá al entrar.</p>` : `<p class="rt-vs ${res.puntos > su ? 'g' : res.puntos < su ? 'p' : 'e'}">${res.puntos > su ? '¡Has ganado!' : res.puntos < su ? 'Esta vez gana ' + esc(o.n || '') : '¡Empate!'} · ${fmtInt(res.puntos)} – ${fmtInt(su)}</p>`) : ''}
         <div class="row"><button class="btn primary" type="button" data-a="jugar">Otra vez</button>${d && su != null ? `<button class="btn" type="button" data-a="retar" data-u="${otro(d)}">Revancha</button>` : ''}</div></section>`; })() : '';
-    shell(`<section class="rt-hero"><span class="rt-av">${avatarSVG(miAv(), miLv(), miNombre())}</span>
+    shell(`<section class="rt-hero"><button type="button" class="rt-av" data-a="${isAdmin() ? 'editavdt' : 'editavj'}" aria-label="Cambiar mi personaje">${avatarSVG(miAv(), miLv(), miNombre())}<span class="rt-ed">Cambiar</span></button>
         <div class="rt-b"><span class="kicker">El reto</span><h1>Patina y marca</h1>
           <div class="rt-st"><span><b>${fmtInt(monedas())}</b>monedas</span><span><b>${fmtInt(y.rec || 0)}</b>récord</span><span><b>${rachaJ(y)}</b>${rachaJ(y) === 1 ? 'día' : 'días'} seguidos</span></div></div>
         <button class="btn big rt-play" type="button" data-a="jugar">Jugar</button></section>
       ${resH}
+      ${(() => { const f = today(), mh = (y.mis && y.mis.f === f) ? y.mis.h || [] : [], L = misionesHoy(f), pr = !(y.dias || {})[f];
+        return `<section class="card rt-mis"><div class="card-h"><h2>Misiones de hoy</h2><span class="sub">${mh.length} de 3</span></div>
+          <ul>${L.map(m => `<li class="${mh.includes(m.k) ? 'ok' : ''}"><i>${mh.includes(m.k) ? '✓' : ''}</i><span>${esc(m.t)}</span><b>+${m.p}</b></li>`).join('')}</ul>
+          ${pr ? `<p class="sub">Tu primera partida de hoy da <b>${premioDia(rachaJ(y) + 1)} monedas</b> de premio por entrar a diario.</p>` : ''}</section>`; })()}
       ${retosPend().map(d => `<section class="card rt-reto"><span class="rt-ra">${avJ(J.todos[d.a] || {})}</span><div><b>${esc((J.todos[d.a] || {}).n || 'Alguien')} te ha retado</b><span class="sub">Ha hecho ${fmtInt(d.pa)} puntos. ¿Le ganas?</span></div><button class="btn primary" type="button" data-a="jugarduelo" data-id="${d.id}">Jugar el duelo</button></section>`).join('')}
       <div class="seg etab rt-tabs" role="tablist">${[['liga', 'Liga'], ['duelos', 'Duelos'], ['tienda', 'Tienda']].map(([k, l]) => `<button type="button" role="tab" data-a="rtab" data-k="${k}" aria-pressed="${tab === k}">${l}${k === 'duelos' && retosPend().length ? ` · ${retosPend().length}` : ''}</button>`).join('')}</div>
       ${tab === 'liga' ? `<section class="card"><div class="card-h"><h2>Liga de la semana</h2><span class="sub">tu mejor partida de cada día · se reinicia el lunes</span></div>${ligaH}</section>` : tab === 'duelos' ? duelosH : tiendaH}
@@ -1455,6 +1481,7 @@
     if (b.dataset.av) { view = b.dataset.av; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.cdia) { const c = calOf(A.cal), n = +b.dataset.cdia, dias = c.dias.includes(n) ? c.dias.filter(x => x !== n) : [...c.dias, n].sort(); try { await saveCal({ dias, sin: c.sin }); } catch (er) { toast('No se ha podido guardar.'); } return; }
     if (b.dataset.part) { A.part = b.dataset.part; A.editPart = false; view = 'partido'; render(); scrollTo({ top: 0 }); return; }
+    if (b.dataset.avk && draft.av) { draft.av[b.dataset.avk] = b.dataset.avv; const y = scrollY; render(); scrollTo({ top: y }); return; }
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
     if (b.dataset.ptabs) { A.ptabs = b.dataset.ptabs; render(); return; }
@@ -1498,7 +1525,7 @@
     if (me === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!me) return loginView();
     if (!ADMIN.length) return gate(`<h2>Falta un paso de configuración</h2><p>Copia este código y ponlo en <b>firebase-config.js</b> (SMBF_ADMIN) y en las reglas (ADMIN_UID). Es tu código de usuario: con él la app sabe que eres la Dirección Técnica.</p><p class="code">${esc(me.uid)}</p><button class="btn ghost" type="button" data-a="out">Salir</button>`);
-    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'partidos') return partidosView(); if (view === 'partido') return partidoView(); if (view === 'reto') return retoView(); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
+    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'partidos') return partidosView(); if (view === 'partido') return partidoView(); if (view === 'reto') return retoView(); if (view === 'avdt') return editAvView(9); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); return resumenView(); }
     if (U.perfil === undefined || U.acceso === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!U.perfil || !U.perfil.acepta || U.editAlta) return altaView();
     if (!U.acceso || !U.acceso.activa) return esperaView();

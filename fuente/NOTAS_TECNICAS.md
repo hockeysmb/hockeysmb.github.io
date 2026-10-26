@@ -164,3 +164,10 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - «Mis datos» → «No salir en la liga ni en los duelos» (`oculta`). Borrar los datos (jugadora o DT) borra también `juego/{uid}` y sus duelos.
 - «Mis datos» ya no está en el menú: se entra desde «Mi jugadora».
 - Prueba: `fem_reto` (equipo inventado de `fem_dt`, puerto 8771: el 8770 es el del artifact).
+
+## El reto, más divertido (26 oct, tarde)
+
+- Juego: regate (deslizar hacia arriba, flecha arriba o espacio: salta a la rival, +25), la portera se mueve y hay que leerla, potenciadores (imán, escudo, puntos dobles), combo (cada 6 bolas seguidas sube el multiplicador hasta ×5; se pierde al chocar o si para la portera), rivales que cambian de carril desde el nivel 2 (con flecha), nivel nuevo cada 25 s con otra pista (cole, pabellón de noche, atardecer, la gran final), sonidos con botón para quitarlos (`smbf-sonido`), temblor, confeti y puntos flotantes. `window.__jgDios` solo para capturas.
+- Misiones del día (`MISIONES`, 3 al día iguales para todas, salen de la fecha) y premio por la primera partida del día según los días seguidos (`premioDia`). Se suman en `juego.premios`; las cumplidas, en `juego.mis` = {f, h}.
+- Tienda: celebraciones de gol (`cele`), el texto que sale al marcar.
+- La DT tiene su personaje del reto (botón «Cambiar» sobre el personaje, vista `avdt`): se guarda en `juego/{uid}.av`, con todo desbloqueado. Las jugadoras, desde ahí, van a «Cambiar mi jugadora» y vuelven al reto.

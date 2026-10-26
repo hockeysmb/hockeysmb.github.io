@@ -36,7 +36,7 @@ async def main():
       async def partida(s=3500, teclas=True):
         await pg.wait_for_selector('.jg-ov'); await pg.wait_for_timeout(2600)
         if teclas:
-          for k in ['ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowLeft']: await pg.keyboard.press(k); await pg.wait_for_timeout(s // 4)
+          for k in ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowLeft']: await pg.keyboard.press(k); await pg.wait_for_timeout(s // 6)
         await pg.screenshot(path=O + f'partida_{len(os.listdir(O))}.png'); await pg.click('.jg-x'); await pg.wait_for_timeout(500)
       # 1. Ana entra: le avisan del reto en «Hoy»
       await pg.fill('#l-email', 'demo03@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(1200)
@@ -49,7 +49,8 @@ async def main():
       print('liga:', await pg.locator('.pd:not(.vacio)').count(), 'en el podio ·', await pg.locator('.lg-rows li').count(), 'en la tabla')
       # 3. una partida
       await pg.click('.rt-play'); await partida()
-      j = await db('juego/demo03'); print('tras la partida:', j.get('dias'), 'bolas', j.get('bolas'), 'partidas', j.get('partidas'))
+      j = await db('juego/demo03'); print('tras la partida:', j.get('dias'), 'bolas', j.get('bolas'), 'partidas', j.get('partidas'), 'premios', j.get('premios'), 'misiones', j.get('mis'))
+      if not j.get('premios'): errs.append('no da el premio diario')
       if not (j.get('dias') or {}).get('2026-10-27'): errs.append('no se guarda la partida')
       await pg.screenshot(path=O + '3_resultado.png', full_page=True)
       # 4. jugar el duelo pendiente
@@ -73,6 +74,10 @@ async def main():
       await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(200); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="out"]'); await pg.wait_for_timeout(500)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(900)
       await pg.click('.nav [data-av="reto"]'); await pg.wait_for_timeout(500); await pg.screenshot(path=O + '7_dt_reto.png', full_page=True)
+      await pg.click('[data-a="editavdt"]'); await pg.wait_for_timeout(300); await pg.click('[data-avk="gafas"][data-avv="kurt"]'); await pg.wait_for_timeout(200); await pg.screenshot(path=O + '7b_dt_personaje.png', full_page=True)
+      await pg.click('[data-a="saveav"]'); await pg.wait_for_timeout(400)
+      jd = await db('juego/' + DT['uid']); print('personaje de la DT:', (jd or {}).get('av', {}).get('gafas'))
+      if (jd or {}).get('av', {}).get('gafas') != 'kurt': errs.append('la DT no puede cambiar su personaje')
       await pg.click('.rt-play'); await partida(teclas=False)
       await pg.click('[data-a="rtab"][data-k="duelos"]'); await pg.wait_for_timeout(300); await pg.click('[data-a="retar"][data-u="demo03"]'); await partida(teclas=False)
       ds = [v for k, v in (await pg.evaluate("window.__fake.db()")).items() if k.startswith('duelos/') and v.get('a') == DT['uid']]; print('duelo de Carlos a Ana:', [(x['pa'], x['pb']) for x in ds])
