@@ -50,7 +50,13 @@ def post(url, data):
     with urllib.request.urlopen(req, timeout=30) as r: return r.read().decode('utf-8', 'replace')
 def attrs(tag): return {k: H.unescape(v) for k, v in re.findall(r'([\w-]+)=["\']([^"\']*)["\']', tag)}
 try:
-    st, fin, ls = get(SG + 'fmp/fmp_ls_1.php'); open(os.path.join(OUT, 'ls.html'), 'w').write(ls); log.append(f'ls {st} {len(ls)}')
+    ls = ''
+    for nombre, fn in (('get+ref', lambda: urllib.request.urlopen(urllib.request.Request(SG + 'fmp/fmp_ls_1.php', headers=dict(UA, Referer=BASE + '/', Origin=BASE)), timeout=30).read().decode('utf-8', 'replace')),
+                       ('post', lambda: post(SG + 'fmp/fmp_ls_1.php', {})), ('post+temp', lambda: post(SG + 'fmp/fmp_ls_1.php', {'temp': '41', 'idm': '1', 'site_lang': 'es'})),
+                       ('get temp', lambda: get(SG + 'fmp/fmp_ls_1.php?temp=41')[2]), ('get ls_41', lambda: get(SG + 'fmp/fmp_ls_41.php')[2])):
+        try: r = fn(); log.append(f'ls {nombre}: {len(r)} 4853={"4853" in r}'); ls = ls or (r if '4853' in r else '')
+        except Exception as e: log.append(f'ls {nombre}: ERROR {e!r}')
+    open(os.path.join(OUT, 'ls.html'), 'w').write(ls)
     for idc in LIGAS:
         m = re.search(r'<[^>]*\bid=["\']' + idc + r'["\'][^>]*>', ls); log.append(f'{idc} fila: {m.group(0)[:300] if m else None}')
         if not m: continue
