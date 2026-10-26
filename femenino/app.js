@@ -73,8 +73,16 @@
   let PART = [];
   const CATS = ['Sub-15', 'Sub-17', '1ª Autonómica', 'Otro'];
   function cargarPartidos() { fetch('partidos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { if (j && Array.isArray(j.partidos)) { PART = j.partidos; render(); } }).catch(() => {}); }
-  const allPart = cal => [...PART, ...(((cal || {}).extra) || [])].sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
+  // cambios a mano de la DT (equipos/femenino.cambios: [{id, fecha, hora, res}]) por encima del calendario de la federación; «orig» = la fecha de la federación
+  const conCambio = (x, C) => { const c = C.find(z => z.id === x.id); if (!c) return x; const o = Object.fromEntries(['fecha', 'hora', 'res'].filter(k => c[k]).map(k => [k, c[k]])); return Object.assign({}, x, o, { orig: x.fecha, cambiado: true }); };
+  const allPart = cal => [...PART, ...(((cal || {}).extra) || [])].map(x => conCambio(x, ((cal || {}).cambios) || [])).sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
   const partDe = (cal, d) => allPart(cal).filter(x => x.fecha === d);
+  // lo que contó una jugadora de un partido: normalmente en el día del partido; si la fecha cambió, en la de antes o en cualquier otro día
+  function pdAt(dias, x) {
+    for (const k of [x.fecha, x.orig].filter(Boolean)) { const pd = ((dias[k] || {}).partidos || {})[x.id]; if (pd) return { k, pd }; }
+    for (const k of Object.keys(dias)) { const pd = ((dias[k] || {}).partidos || {})[x.id]; if (pd) return { k, pd }; }
+    return { k: x.fecha, pd: null };
+  }
   const partTxt = x => `${x.cat} · ${x.rival} (${x.casa ? 'en casa' : 'fuera'})`;
   const PJUEGA = [['si', 'He jugado'], ['conv', 'Convocada, sin jugar']];
   // antes y después del partido (25 oct)
@@ -483,7 +491,7 @@
   }
   const misPartidos = D => { const L = []; Object.keys(D).sort().reverse().forEach(k => Object.entries(D[k].partidos || {}).forEach(([id, pd]) => L.push([k, id, pd]))); return L; };
   const partLinea = (pd, visto, disf) => [pd.juega === 'si' ? `${pd.min} min · esfuerzo ${pd.rpe} · ${visto} ${pd.visto}` : pd.juega ? 'convocada, sin jugar' : 'solo el antes', pd.disfrute ? `${disf} ${pd.disfrute}` : ''].filter(Boolean).join(' · ');
-  const pdOf = x => ((U.dias[x.fecha] || {}).partidos || {})[x.id];
+  const pdOf = x => pdAt(U.dias, x).pd || undefined;
   const partById = id => allPart(calJ()).find(y => y.id === id);
   const emoHTML = L => (L || []).length ? `<span class="emos">${L.map(e => `<span class="emo${EMOC_MAL.includes(e) ? ' low' : ''}">${esc(e)}</span>`).join('')}</span>` : '';
   function mfSteps(f) {
@@ -528,8 +536,8 @@
   function startMf(kind, id) {
     const x = partById(id); if (!x) return;
     if (!(draft.mf && draft.mf.id === id && draft.mf.kind === kind)) {
-      const D = U.dias[x.fecha] || {}, pd = (D.partidos || {})[id] || {};
-      draft.mf = { kind, id, fecha: x.fecha, i: 0, vals: clone(kind === 'pre' ? pd.pre || {} : pd.juega ? pd : {}), well: kind === 'pre' && !D.antes, obj: (pd.pre || {}).objetivo || '', back: view === 'partido' ? 'partido' : 'hoy' };
+      const D = U.dias[pdAt(U.dias, x).k] || {}, pd = (D.partidos || {})[id] || {};
+      draft.mf = { kind, id, fecha: pdAt(U.dias, x).k, i: 0, vals: clone(kind === 'pre' ? pd.pre || {} : pd.juega ? pd : {}), well: kind === 'pre' && !D.antes, obj: (pd.pre || {}).objetivo || '', back: view === 'partido' ? 'partido' : 'hoy' };
     }
     view = 'mflow'; render(); scrollTo({ top: 0 });
   }
@@ -620,7 +628,7 @@
   }
   function partidoJView() {
     const x = partById(draft.part); if (!x) { view = 'partidos'; return partidosJView(); }
-    const t = today(), pd = pdOf(x) || {}, p = pd.pre, r = resOf(x), rsp = respOf(U.acceso, 'p:' + x.fecha + ':' + x.id), id = x.id;
+    const t = today(), pd = pdOf(x) || {}, p = pd.pre, r = resOf(x), rsp = respOf(U.acceso, 'p:' + pdAt(U.dias, x).k + ':' + x.id), id = x.id;
     const preSum = p ? `<div class="pre-sum"><span>Ganas<b>${p.ganas}</b></span><span>Nervios<b>${p.nervios}</b></span><span>Confianza<b>${p.confianza}</b></span></div>
       <div class="rchips">${p.espera ? `<span class="rchip info">${esc(lbl(ESPERA, p.espera))}</span>` : ''}${p.importa ? `<span class="rchip info">Me importa: ${esc(lbl(IMPORTA, p.importa).toLowerCase())}</span>` : ''}</div>${p.objetivo ? `<p class="nota-p">Me fijo en: «${esc(p.objetivo)}»</p>` : ''}` : '';
     const pre = x.fecha > t ? `<section class="card"><h2>Antes del partido</h2><p class="sub">Lo podrás contestar el día del partido.</p></section>`
@@ -1115,7 +1123,7 @@
           <div class="note dw-n"><span class="d">Se compromete a${x.area ? ' · ' + esc(x.area) : ''}</span><span class="t">${esc(compOf(x) || '—')}</span></div>${respBox(u, 's:' + k)}</div>`; }).join('')}</div>` : '<p class="sub">Todavía no ha escrito en su diario.</p>'}</section>
       ${nx ? `<button class="btn big next-j" type="button" data-jnav="1"><span class="nj-av">${avDe(nx)}</span>Siguiente: ${esc(nom1(nx))} ›</button>` : ''}`, { nav: navA(), wide: true, right: fnav });
   }
-  const respPart = (u, x) => (diasDe(u)[x.fecha] || {}).partidos && diasDe(u)[x.fecha].partidos[x.id];
+  const respPart = (u, x) => pdAt(diasDe(u), x).pd;
   function partidosView() {
     const t = today(), cat = A.pcat || 'todas', all = allPart(A.cal), L = all.filter(x => cat === 'todas' || x.cat === cat);
     const fut = L.filter(x => x.fecha >= t), pas = L.filter(x => x.fecha < t).reverse(), nResp = x => activas().filter(u => respPart(u, x)).length;
@@ -1143,7 +1151,7 @@
     const dist = (vals, opts) => { const n = vals.length, rows = opts.map(([k, l]) => [l, vals.filter(v => v === k).length]).filter(r => r[1]).sort((a, b) => b[1] - a[1]);
       return rows.length ? `<ul class="dist">${rows.map(([l, c]) => `<li><span>${esc(l)}</span><i><b style="width:${Math.round(c / n * 100)}%"></b></i><em>${c}</em></li>`).join('')}</ul>` : '<p class="sub">Nadie todavía.</p>'; };
     const emos = post.flatMap(r => r[1].emociones || []), cumpl = jug.map(r => r[1].cumplido).filter(Boolean);
-    const ficha = ([u, pd]) => { const p = pd.pre, k = 'p:' + x.fecha + ':' + x.id, txt = (p && p.objetivo) || pd.mejor || pd.cambiar || pd.llevo;
+    const ficha = ([u, pd]) => { const p = pd.pre, k = 'p:' + pdAt(diasDe(u), x).k + ':' + x.id, txt = (p && p.objetivo) || pd.mejor || pd.cambiar || pd.llevo;
       return `<div class="obj"><span class="kicker">${esc((A.jug[u].nombre || '').split(' ')[0])}</span>
         ${p ? `<p><b>Antes:</b> ganas ${p.ganas} · nervios ${p.nervios} · confianza ${p.confianza} · cree que irá: ${esc(lbl(ESPERA, p.espera).toLowerCase())} · le importa: ${esc(lbl(IMPORTA, p.importa).toLowerCase())}</p>${p.objetivo ? `<p><b>Se iba a fijar en:</b> ${esc(p.objetivo)}</p>` : ''}` : '<p class="sub">No contestó el antes.</p>'}
         ${pd.juega ? `<p><b>Después:</b> ${esc(partLinea(pd, 'se vio', 'disfrutó'))}${pd.cumplido ? ` · lo que se propuso: ${esc(lbl(CUMPLIDO, pd.cumplido).toLowerCase())}` : ''}</p>${emoHTML(pd.emociones)}` : '<p class="sub">Todavía no ha contado el después.</p>'}
@@ -1151,6 +1159,7 @@
         ${txt ? respBox(u, k) : ''}</div>`; };
     shell(`<button class="btn ghost small back" type="button" data-av="partidos">← Partidos</button>
       <div><span class="kicker">${esc(x.cat)} · jornada ${x.j || '—'} · ${esc(fmtDay(x.fecha))}${x.hora ? ' · ' + esc(x.hora) : ''}</span><h1>${x.casa ? 'SMB – ' + esc(x.rival) : esc(x.rival) + ' – SMB'}</h1>${x.res ? `<p class="sub">Resultado (SMB primero): ${esc(x.res)}</p>` : ''}</div>
+      ${editPartHTML(x)}
       ${R.length ? `<div class="tiles four"><div class="tile"><span class="k">Han contestado</span><b class="v">${pre.length} · ${post.length}</b><span class="s">antes · después</span></div>
         <div class="tile"><span class="k">Ganas</span><b class="v">${fmt1(m(pre, pd => pd.pre.ganas))}</b><span class="s">confianza ${fmt1(m(pre, pd => pd.pre.confianza))} · nervios ${fmt1(m(pre, pd => pd.pre.nervios))}</span></div>
         <div class="tile"><span class="k">Disfrute</span><b class="v">${fmt1(m(post, pd => pd.disfrute))}</b><span class="s">del 1 al 10</span></div>
@@ -1162,6 +1171,27 @@
       <section class="card"><h2>Lo que cuenta cada una</h2>${R.map(ficha).join('')}</section>`
       : `<section class="card"><p class="sub">${x.fecha > today() ? 'Todavía no se ha jugado.' : 'Nadie lo ha contado todavía.'}</p></section>`}`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
+  function editPartHTML(x) {
+    const c = ((A.cal || {}).cambios || []).find(z => z.id === x.id), extra = ((A.cal || {}).extra || []).some(z => z.id === x.id);
+    if (!A.editPart) return `<div class="row"><button class="btn small" type="button" data-a="editpartdt">Cambiar fecha, hora o resultado</button>${c ? `<span class="pill">Cambiado a mano</span>` : ''}</div>`;
+    return `<section class="card"><h2>Cambiar el partido</h2>
+      <div class="row"><label class="field">Fecha<input type="date" id="ep-fecha" class="date-in" value="${esc(x.fecha)}"></label><label class="field">Hora<input type="time" id="ep-hora" class="date-in" value="${esc(x.hora || '')}"></label><label class="field">Resultado<input type="text" id="ep-res" class="date-in" value="${esc(x.res || '')}" placeholder="3-1" maxlength="7" inputmode="numeric"></label></div>
+      <p class="sub">Resultado con el SMB primero, por ejemplo 3-1. Las jugadoras lo ven al momento.${extra ? '' : ' Si la federación lo cambia después, manda lo que pongas aquí hasta que lo quites.'}</p>
+      <div class="row"><button class="btn primary small" type="button" data-a="savepartdt" data-id="${x.id}">Guardar</button><button class="btn ghost small" type="button" data-a="noeditpartdt">Cancelar</button>${c ? `<button class="btn ghost small" type="button" data-a="delcambio" data-id="${x.id}">Volver a lo de la federación</button>` : ''}</div></section>`;
+  }
+  actions.editpartdt = async () => { A.editPart = true; render(); };
+  actions.noeditpartdt = async () => { A.editPart = false; render(); };
+  async function saveCambios(L) { A.cal = Object.assign({}, A.cal || {}, { cambios: L }); A.editPart = false; render(); await B.merge('equipos/' + EQ, { cambios: L }); }
+  actions.savepartdt = async b => {
+    const v = id => ((document.getElementById(id) || {}).value || '').trim(), fecha = v('ep-fecha'), hora = v('ep-hora'), res = v('ep-res').replace(/\s/g, '').replace(/[–—:]/g, '-'), id = b.dataset.id;
+    if (!fecha) { toast('Pon la fecha.'); return; }
+    if (res && !/^\d{1,2}-\d{1,2}$/.test(res)) { toast('El resultado, así: 3-1 (el SMB primero).'); return; }
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    const ex = (A.cal || {}).extra || [];
+    if (ex.some(z => z.id === id)) { const extra = ex.map(z => z.id === id ? Object.assign({}, z, { fecha, hora, res }) : z); A.cal = Object.assign({}, A.cal || {}, { extra }); A.editPart = false; render(); await B.merge('equipos/' + EQ, { extra }); toast('Partido cambiado.'); return; }
+    await saveCambios([...((A.cal || {}).cambios || []).filter(z => z.id !== id), { id, fecha, hora, res, ts: Date.now() }]); toast('Partido cambiado. Las jugadoras ya lo ven.');
+  };
+  actions.delcambio = async b => { await saveCambios(((A.cal || {}).cambios || []).filter(z => z.id !== b.dataset.id)); toast('Vuelve a estar como en la federación.'); };
   actions.addpart = async () => {
     const v = id => ((document.getElementById(id) || {}).value || '').trim(), fecha = v('np-fecha'), rival = v('np-rival');
     if (!fecha || !rival) { toast('Pon la fecha y el rival.'); return; }
@@ -1250,7 +1280,7 @@
     if (b.dataset.pcat) { A.pcat = b.dataset.pcat === A.pcat ? 'todas' : b.dataset.pcat; render(); return; }
     if (b.dataset.av) { view = b.dataset.av; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.cdia) { const c = calOf(A.cal), n = +b.dataset.cdia, dias = c.dias.includes(n) ? c.dias.filter(x => x !== n) : [...c.dias, n].sort(); try { await saveCal({ dias, sin: c.sin }); } catch (er) { toast('No se ha podido guardar.'); } return; }
-    if (b.dataset.part) { A.part = b.dataset.part; view = 'partido'; render(); scrollTo({ top: 0 }); return; }
+    if (b.dataset.part) { A.part = b.dataset.part; A.editPart = false; view = 'partido'; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
     if (b.dataset.jug) { irFicha(b.dataset.jug, view === 'equipo' ? 'equipo' : view === 'resumen' ? 'resumen' : A.from); return; }

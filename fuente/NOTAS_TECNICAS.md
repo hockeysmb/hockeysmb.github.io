@@ -133,3 +133,9 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - «Lo importante» (`impHTML`): una tarjeta por jugadora que necesita algo, en orden de prioridad (`ordenadas`): revisar, atención, algo que contar (nota, emociones tras el partido, poca confianza) o algo por contestar (notas y partidos de los últimos 7 días sin tu respuesta, `porContestar`). La carga baja y el diario sin contestar no hacen a nadie «importante» (el diario sí suma en «Por contestar»).
 - Ficha: arriba a la derecha «‹ 3/12 ›» y abajo «Siguiente: nombre». Deslizar a los lados en el móvil o las flechas del teclado pasan a la anterior o la siguiente, siempre en el orden de prioridad (`fichaVecina`). «← Equipo» o «← Jugadoras» según de dónde vengas (`A.from`).
 - «Jugadoras» usa el mismo orden.
+
+## App de jugadoras · cambiar partidos a mano (26 oct)
+
+- En la ficha de un partido, la DT puede cambiar fecha, hora y resultado («Cambiar fecha, hora o resultado»). Se guarda en `equipos/femenino.cambios` = [{id, fecha, hora, res, ts}] (una lista: así se puede quitar un cambio con `merge`) y manda sobre `partidos.json` hasta que se quita («Volver a lo de la federación»). Los partidos añadidos por la DT (`extra`) se cambian directamente.
+- `allPart` aplica los cambios (`conCambio`, deja `orig` con la fecha de la federación). Lo que contó cada jugadora se busca con `pdAt` (día del partido, la fecha original o cualquier día), así que mover un partido no pierde respuestas.
+- Sin reglas nuevas: `equipos/*` ya lo escribe solo la DT y lo leen las jugadoras activas.
