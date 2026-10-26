@@ -126,65 +126,66 @@ if (cliente!='cerilh') {
 }
 
 
+if (cliente!='cerilh') {	
+	$j('#scorer_competiciones').load(ruta_files+cliente+'/'+cliente+'_mc_'+idm+'.php',
+		{
 
-$j('#scorer_competiciones').load(ruta_files+cliente+'/'+cliente+'_mc_'+idm+'.php',
-	{
-
-	},
-	function( response, status, xhr ) {
-		if (status == 'success') {
-
-			var id_custom_club = $j("#id_custom_club").val();
-			console.log("estamos dentro ..."+id_custom_club);
-			if (id_custom_club>0) {
-				//console.log("tenemos web de club");
-				$j(".scorer_liga").show();
-				$j(".scorer_game").hide();
-				$j(".scorer_apartado").hide();
-				$j("#scorer_competiciones .club_"+id_custom_club).show();
-				
-			} else {
-				//console.log("NO tenemos web de club");
-			}
-
-			
-		}
-	}		
-);
-var sidgad_scorer = function() {
-	var file_scorer = cliente+'_mc_'+idm+'.php';
+		},
+		function( response, status, xhr ) {
+			if (status == 'success') {
 	
-	
-	var sidgad_reload_scorer = setInterval(function() {	
-		$j('#scorer_competiciones').load(ruta_files+cliente+'/'+cliente+'_mc_'+idm+'.php',
-			{
-	
-			},
-			function( response, status, xhr ) {
-				if (status == 'success') {
-		
-					var id_custom_club = $j("#id_custom_club").val();
-					console.log("estamos dentro ..."+id_custom_club);
-					if (id_custom_club>0) {
-						console.log("tenemos web de club");
-						$j(".scorer_liga").show();
-						$j(".scorer_game").hide();
-						$j(".scorer_apartado").hide();
-						$j("#scorer_competiciones .club_"+id_custom_club).show();
-						
-					} else {
-						console.log("NO tenemos web de club");
-					}
-	
+				var id_custom_club = $j("#id_custom_club").val();
+				console.log("estamos dentro ..."+id_custom_club);
+				if (id_custom_club>0) {
+					//console.log("tenemos web de club");
+					$j(".scorer_liga").show();
+					$j(".scorer_game").hide();
+					$j(".scorer_apartado").hide();
+					$j("#scorer_competiciones .club_"+id_custom_club).show();
 					
+				} else {
+					//console.log("NO tenemos web de club");
 				}
-			}		
-		);
 
-	}, 30000);
-}	
+				
+			}
+		}		
+	);
+	var sidgad_scorer = function() {
+		var file_scorer = cliente+'_mc_'+idm+'.php';
+		
+		
+		var sidgad_reload_scorer = setInterval(function() {	
+			$j('#scorer_competiciones').load(ruta_files+cliente+'/'+cliente+'_mc_'+idm+'.php',
+				{
+		
+				},
+				function( response, status, xhr ) {
+					if (status == 'success') {
+			
+						var id_custom_club = $j("#id_custom_club").val();
+						console.log("estamos dentro ..."+id_custom_club);
+						if (id_custom_club>0) {
+							console.log("tenemos web de club");
+							$j(".scorer_liga").show();
+							$j(".scorer_game").hide();
+							$j(".scorer_apartado").hide();
+							$j("#scorer_competiciones .club_"+id_custom_club).show();
+							
+						} else {
+							console.log("NO tenemos web de club");
+						}
+		
+						
+					}
+				}		
+			);
 
-sidgad_scorer();
+		}, 30000);
+	}	
+
+	sidgad_scorer();
+}
 
 
 $j(document).on("click","#simpleidc_overview_btn",function(e){	
@@ -428,7 +429,7 @@ $j(document).on("click",".game_report",function(e){
 
 $j(document).on("click",".listado_competiciones_fila__",function(e){	
 	e.preventDefault();
-	console.log('3 - pulsando idc');
+	console.log('2 - pulsando idc');
 	$j('.loading_portal').show();
 	var idc = $j(this).attr('id');
 	//var file = cliente+"_"+$j(this).attr('portada_file');
@@ -475,7 +476,7 @@ $j(document).on("click",".listado_competiciones_fila__",function(e){
 
 $j(document).on("click",".listado_competiciones_fila___",function(e){	
 	e.preventDefault();
-	console.log('3 - pulsando idc');
+	console.log('2 - pulsando idc');
 	$j('.loading_portal').show();
 	var idc = $j(this).attr('id');
 	//var file = cliente+"_"+$j(this).attr('portada_file');
@@ -522,7 +523,7 @@ $j(document).on("click",".listado_competiciones_fila___",function(e){
 
 $j(document).on("click",".listado_competiciones_fila",function(e){	
 	e.preventDefault();
-	console.log('3 - pulsando idc');
+	console.log('2 - pulsando idc');
 	$j('.loading_portal').show();
 	var idc = $j(this).attr('id');
 	//var file = cliente+"_"+$j(this).attr('portada_file');

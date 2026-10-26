@@ -15,9 +15,16 @@ ERROR https://www.hockeypatines.fmp.es/liga/4864 <HTTPError 404: 'Not Found'>
 ERROR https://www.hockeypatines.fmp.es/competicion/4864 <HTTPError 404: 'Not Found'>
 ERROR https://www.hockeypatines.fmp.es/calendar/4864 <HTTPError 404: 'Not Found'>
 200 https://www.hockeypatines.fmp.es/?league=4864 14958 BLANCA=0
-portales.js 200 28552
+portales.js 200 28633
 php: '+cliente+'_mc_'+idm+'_horizontal.php ruta_files+'competicion_header_creator.php show_copa_pruebas.php
-ls 200 0
-4853 fila: None
-4836 fila: None
-4864 fila: None
+ls get+ref: 939059 4853=True
+ls post: 0 4853=False
+ls post+temp: 0 4853=False
+ls get temp: 0 4853=False
+ls get ls_41: ERROR <HTTPError 404: 'Not Found'>
+4853 fila: <a href="#" class="idc_master listado_competiciones_fila id_fede_ temp_41 club_424 club_428 club_470 club_400 club_485 club_334 club_399 club_386 " id="4853" name="CTO AUT SUB-15 FEMENINO" logo="default.png" style="display: none;" config_params="ids_teams:5955,5954,5953,5952,5951,5950,5949,5948;hora
+4853 header 0 acceso=calendario_btn
+4836 fila: <a href="#" class="idc_master listado_competiciones_fila id_fede_ temp_41 club_424 club_428 club_395 club_400 club_485 club_399 " id="4836" name="CTO AUT SUB-17 FEMENINO" logo="default.png" style="display: none;" config_params="ids_teams:5869,5868,5867,5866,5865,5864;horarios:1;desde_hasta:5,9,21,9,
+4836 header 0 acceso=calendario_btn
+4864 fila: <a href="#" class="idc_master listado_competiciones_fila id_fede_ temp_41 club_330 club_428 club_329 club_395 club_400 club_485 club_334 club_399 " id="4864" name="1ª AUTONÓMICA FEMENINA" logo="default.png" style="display: none;" config_params="ids_teams:6053,6052,6051,6050,6049,6048,6047,6046;horar
+4864 header 0 acceso=calendario_btn
