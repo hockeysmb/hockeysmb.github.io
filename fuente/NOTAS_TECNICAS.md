@@ -126,3 +126,10 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Pestaña nueva en el menú de la jugadora: calendario del mes (`partidosJView`) con los días de partido marcados por categoría, filtro de categoría (se recuerda en el móvil, `smbf-pcat`) y las entradas de ese mes o de un día. Arriba, «Te falta contar»: partidos pasados con el antes hecho y sin el después.
 - Página de cada partido (`partidoJView`, `draft.part`): el antes solo se contesta el mismo día; el después, ese día o cualquier día posterior. Se guarda siempre en el día del partido. Al acabar, vuelve a la página del partido (`draft.mf.back`).
 - Las entradas de «Próximos partidos» y los cromos de «Mis partidos» llevan a esa página (`data-pp`).
+
+## App de jugadoras · lo importante y fichas seguidas (26 oct)
+
+- «Equipo» tiene dos pestañas (`A.etab`): **Hoy** (cómo llegan, cuántas responden, cuántas cosas tienes por contestar; «Lo importante»; partido de hoy; «Cada una»; «Las cinco») y **Semana** (carga, diarios, compromisos cumplidos, 4 semanas, cuadrante y diario).
+- «Lo importante» (`impHTML`): una tarjeta por jugadora que necesita algo, en orden de prioridad (`ordenadas`): revisar, atención, algo que contar (nota, emociones tras el partido, poca confianza) o algo por contestar (notas y partidos de los últimos 7 días sin tu respuesta, `porContestar`). La carga baja y el diario sin contestar no hacen a nadie «importante» (el diario sí suma en «Por contestar»).
+- Ficha: arriba a la derecha «‹ 3/12 ›» y abajo «Siguiente: nombre». Deslizar a los lados en el móvil o las flechas del teclado pasan a la anterior o la siguiente, siempre en el orden de prioridad (`fichaVecina`). «← Equipo» o «← Jugadoras» según de dónde vengas (`A.from`).
+- «Jugadoras» usa el mismo orden.
