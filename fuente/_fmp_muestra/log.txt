@@ -18,13 +18,52 @@ ERROR https://www.hockeypatines.fmp.es/calendar/4864 <HTTPError 404: 'Not Found'
 portales.js 200 28633
 php: '+cliente+'_mc_'+idm+'_horizontal.php ruta_files+'competicion_header_creator.php show_copa_pruebas.php
 ls get+ref: 939059 4853=True
-ls post: 0 4853=False
-ls post+temp: 0 4853=False
+ls post: 939059 4853=True
+ls post+temp: 939059 4853=True
 ls get temp: 0 4853=False
 ls get ls_41: ERROR <HTTPError 404: 'Not Found'>
 4853 fila: <a href="#" class="idc_master listado_competiciones_fila id_fede_ temp_41 club_424 club_428 club_470 club_400 club_485 club_334 club_399 club_386 " id="4853" name="CTO AUT SUB-15 FEMENINO" logo="default.png" style="display: none;" config_params="ids_teams:5955,5954,5953,5952,5951,5950,5949,5948;hora
-4853 header 0 acceso=calendario_btn
+4853 header 8350 acceso=calendario_btn
+   btn id=portada_btn file=portadas_1_4853.php
+   btn id=clasificaciones_btn file=clasif_idc_4853_1.php
+   btn id=calendario_btn file=cal_idc_4853_1.php
+   -> 80468 BLANCA=14
+   btn id=cuadro_cruces_btn file=2_3_league_cruces.php
+   btn id=designaciones_btn file=des_idc_4853_1.php
+   btn id=leaders_btn file=portadas_1_41.php
+   btn id=goles_btn file=stats_1_4853.php
+   btn id=asistencias_btn file=stats_1_4853.php
+   btn id=directas_btn file=stats_1_4853.php
+   btn id=penaltis_btn file=stats_1_4853.php
+   btn id=tarjetas_btn file=stats_1_4853.php
+   btn id=plantilla_btn file=stats_1_4853.php
 4836 fila: <a href="#" class="idc_master listado_competiciones_fila id_fede_ temp_41 club_424 club_428 club_395 club_400 club_485 club_399 " id="4836" name="CTO AUT SUB-17 FEMENINO" logo="default.png" style="display: none;" config_params="ids_teams:5869,5868,5867,5866,5865,5864;horarios:1;desde_hasta:5,9,21,9,
-4836 header 0 acceso=calendario_btn
+4836 header 7777 acceso=calendario_btn
+   btn id=portada_btn file=portadas_1_4836.php
+   btn id=clasificaciones_btn file=clasif_idc_4836_1.php
+   btn id=calendario_btn file=cal_idc_4836_1.php
+   -> 65759 BLANCA=15
+   btn id=cuadro_cruces_btn file=2_3_league_cruces.php
+   btn id=designaciones_btn file=des_idc_4836_1.php
+   btn id=leaders_btn file=portadas_1_41.php
+   btn id=goles_btn file=stats_1_4836.php
+   btn id=asistencias_btn file=stats_1_4836.php
+   btn id=directas_btn file=stats_1_4836.php
+   btn id=penaltis_btn file=stats_1_4836.php
+   btn id=tarjetas_btn file=stats_1_4836.php
+   btn id=plantilla_btn file=stats_1_4836.php
 4864 fila: <a href="#" class="idc_master listado_competiciones_fila id_fede_ temp_41 club_330 club_428 club_329 club_395 club_400 club_485 club_334 club_399 " id="4864" name="1ª AUTONÓMICA FEMENINA" logo="default.png" style="display: none;" config_params="ids_teams:6053,6052,6051,6050,6049,6048,6047,6046;horar
-4864 header 0 acceso=calendario_btn
+4864 header 8350 acceso=calendario_btn
+   btn id=portada_btn file=portadas_1_4864.php
+   btn id=clasificaciones_btn file=clasif_idc_4864_1.php
+   btn id=calendario_btn file=cal_idc_4864_1.php
+   -> 79587 BLANCA=14
+   btn id=cuadro_cruces_btn file=2_3_league_cruces.php
+   btn id=designaciones_btn file=des_idc_4864_1.php
+   btn id=leaders_btn file=portadas_1_41.php
+   btn id=goles_btn file=stats_1_4864.php
+   btn id=asistencias_btn file=stats_1_4864.php
+   btn id=directas_btn file=stats_1_4864.php
+   btn id=penaltis_btn file=stats_1_4864.php
+   btn id=tarjetas_btn file=stats_1_4864.php
+   btn id=plantilla_btn file=stats_1_4864.php
