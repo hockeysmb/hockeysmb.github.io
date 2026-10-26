@@ -609,26 +609,41 @@
     const n = daysBetween(t, x.fecha); return `<span class="pst-j">${n === 1 ? 'Mañana' : 'En ' + n + ' días'}</span>`;
   }
   function partidosJView() {
-    const t = today(), cat = ls.get('smbf-pcat') || 'todas', mes = draft.mes || t.slice(0, 7), [y, m] = mes.split('-').map(Number);
-    const all = allPart(calJ()).filter(x => cat === 'todas' || x.cat === cat), P = all.filter(x => x.fecha.startsWith(mes));
-    const first = new Date(y, m - 1, 1), off = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
-    const cells = []; for (let i = 0; i < off; i++) cells.push('<span class="cd e"></span>');
-    for (let d = 1; d <= nd; d++) { const k = `${mes}-${String(d).padStart(2, '0')}`, L = P.filter(x => x.fecha === k), done = L.length && L.every(x => (pdOf(x) || {}).juega), due = L.some(x => x.fecha < t && !(pdOf(x) || {}).juega && (pdOf(x) || {}).pre);
-      cells.push(L.length ? `<button type="button" class="cd has${k === t ? ' hoy' : ''}${draft.cday === k ? ' sel' : ''}${done ? ' done' : ''}${due ? ' due' : ''}" data-cday="${k}" aria-label="${esc(fmtDay(k))}: ${L.length} ${L.length === 1 ? 'partido' : 'partidos'}"><b>${d}</b><span class="dots">${L.map(x => `<i class="${catCls(x.cat)}"></i>`).join('')}</span></button>`
-        : `<span class="cd${k === t ? ' hoy' : ''}"><b>${d}</b></span>`); }
-    const vis = draft.cday && draft.cday.startsWith(mes) ? P.filter(x => x.fecha === draft.cday) : P;
+    const t = today(), cat = ls.get('smbf-pcat') || 'todas', modo = ls.get('smbf-pmodo') || 'lista';
+    const all = allPart(calJ()).filter(x => cat === 'todas' || x.cat === cat);
     const pend = all.filter(x => x.fecha < t && !(pdOf(x) || {}).juega && (pdOf(x) || {}).pre);
-    const mv = k => { const d = new Date(y, m - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
-    shell(`<div><span class="kicker">Sección femenina</span><h1>Partidos</h1></div>
-      <div class="seg cat-f" role="group" aria-label="Categoría">${[['todas', 'Todas'], ['Sub-15', 'Sub-15'], ['Sub-17', 'Sub-17'], ['1ª Autonómica', '1ª Autonómica']].map(([k, l]) => `<button type="button" data-pcatj="${k}" aria-pressed="${cat === k}">${l}</button>`).join('')}</div>
-      ${pend.length ? `<section class="card part-card"><h2>Te falta contar</h2><div class="tkts col">${pend.map(x => ticketHTML(x, estadoPartJ(x), `data-pp="${x.id}"`)).join('')}</div></section>` : ''}
-      <section class="card calm"><div class="cal-h"><button type="button" class="btn ghost small" data-pmes="${mv(-1)}" aria-label="Mes anterior">‹</button><h2>${MESES_L[m - 1]} ${y}</h2><button type="button" class="btn ghost small" data-pmes="${mv(1)}" aria-label="Mes siguiente">›</button></div>
-        <div class="cal-g">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="cw">${d}</span>`).join('')}${cells.join('')}</div>
-        <div class="cal-leg"><span><i class="c15"></i>Sub-15</span><span><i class="c17"></i>Sub-17</span><span><i class="caf"></i>1ª Aut.</span></div></section>
-      <section class="strip"><div class="strip-h"><h2>${draft.cday && draft.cday.startsWith(mes) ? esc(fmtDay(draft.cday)) : 'Este mes'}</h2>${draft.cday ? '<button class="btn ghost small" type="button" data-cday="">Ver todo el mes</button>' : ''}</div>
-        ${vis.length ? `<div class="tkts col">${vis.map(x => ticketHTML(x, estadoPartJ(x), `data-pp="${x.id}"`)).join('')}</div>` : '<p class="sub">No hay partidos este mes.</p>'}</section>
+    const hoy = all.filter(x => x.fecha === t), fut = all.filter(x => x.fecha > t), pas = all.filter(x => x.fecha < t && !pend.includes(x)).reverse();
+    const tk = (x, cls = '') => ticketHTML(x, estadoPartJ(x) + (resOf(x) ? `<span class="res ${resOf(x).k}">${resOf(x).l} ${resOf(x).a}–${resOf(x).b}</span>` : ''), `data-pp="${x.id}"`).replace('class="tkt ', `class="tkt ${cls} `);
+    const sec = (tit, L, cls = '', extra = '') => L.length ? `<section class="strip"><div class="strip-h"><h2>${tit}</h2>${extra}</div><div class="tkts col${cls ? ' ' + cls : ''}">${L.map(x => tk(x)).join('')}</div></section>` : '';
+    let cuerpo;
+    if (modo === 'lista') {
+      cuerpo = sec('Te falta contar', pend) + sec('Hoy', hoy) + sec('Próximos', fut.slice(0, draft.pmas ? 99 : 3), '', fut.length > 3 ? `<span class="sub">${fut.length} por jugar</span>` : '')
+        + (fut.length > 3 && !draft.pmas ? '<button class="btn ghost" type="button" data-a="pmasj">Ver todos los próximos</button>' : '')
+        + sec('Jugados', pas.slice(0, draft.pjmas ? 99 : 4), 'mini') + (pas.length > 4 && !draft.pjmas ? '<button class="btn ghost" type="button" data-a="pjmasj">Ver todos los jugados</button>' : '')
+        + (!all.length ? '<p class="sub">No hay partidos.</p>' : '');
+    } else {
+      const mes = draft.mes || t.slice(0, 7), [y, m] = mes.split('-').map(Number), P = all.filter(x => x.fecha.startsWith(mes));
+      const first = new Date(y, m - 1, 1), off = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
+      // día elegido: el que toque; si no, hoy o el primer partido que quede en ese mes
+      const sel = draft.cday && draft.cday.startsWith(mes) ? draft.cday : ((P.find(x => x.fecha >= t) || P[P.length - 1] || {}).fecha || '');
+      const cells = []; for (let i = 0; i < off; i++) cells.push('<span class="cd e"></span>');
+      for (let d = 1; d <= nd; d++) { const k = `${mes}-${String(d).padStart(2, '0')}`, L = P.filter(x => x.fecha === k), done = L.length && L.every(x => (pdOf(x) || {}).juega), due = L.some(x => pend.includes(x));
+        cells.push(L.length ? `<button type="button" class="cd has${k === t ? ' hoy' : ''}${sel === k ? ' sel' : ''}${done ? ' done' : ''}${due ? ' due' : ''}" data-cday="${k}" aria-label="${esc(fmtDay(k))}: ${L.length} ${L.length === 1 ? 'partido' : 'partidos'}"><b>${d}</b><span class="dots">${L.map(x => `<i class="${catCls(x.cat)}"></i>`).join('')}</span></button>`
+          : `<span class="cd${k === t ? ' hoy' : ''}"><b>${d}</b></span>`); }
+      const mv = k => { const d = new Date(y, m - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+      const delDia = P.filter(x => x.fecha === sel);
+      cuerpo = `<section class="card cal-c"><div class="cal-h"><button type="button" class="btn ghost small" data-pmes="${mv(-1)}" aria-label="Mes anterior">‹</button><h2>${MESES_L[m - 1]} ${y}</h2><button type="button" class="btn ghost small" data-pmes="${mv(1)}" aria-label="Mes siguiente">›</button></div>
+          <div class="cal-g">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="cw">${d}</span>`).join('')}${cells.join('')}</div></section>
+        ${delDia.length ? `<div class="tkts col">${delDia.map(x => tk(x)).join('')}</div>` : `<p class="sub">${P.length ? 'Toca un día con partido.' : 'No hay partidos este mes.'}</p>`}`;
+    }
+    shell(`<div class="dt-h"><div><span class="kicker">Sección femenina</span><h1>Partidos</h1></div>
+        <div class="seg etab" role="tablist">${[['lista', 'Lista'], ['cal', 'Calendario']].map(([k, l]) => `<button type="button" role="tab" data-pmodo="${k}" aria-pressed="${modo === k}" aria-selected="${modo === k}">${l}</button>`).join('')}</div></div>
+      <div class="chips-cat" role="group" aria-label="Categoría">${[['todas', 'Todas'], ['Sub-15', 'Sub-15'], ['Sub-17', 'Sub-17'], ['1ª Autonómica', '1ª Aut.']].map(([k, l]) => `<button type="button" class="cc ${k === 'todas' ? '' : catCls(k)}" data-pcatj="${k}" aria-pressed="${cat === k}">${k === 'todas' ? '' : '<i></i>'}${l}</button>`).join('')}</div>
+      ${cuerpo}
       <p class="sub">Calendario de la Federación Madrileña${PART_AT ? `, revisado el ${esc(fmtDay(PART_AT))}` : ''}.</p>`, { nav: navJ() });
   }
+  actions.pmasj = async () => { draft.pmas = true; render(); };
+  actions.pjmasj = async () => { draft.pjmas = true; render(); };
   function partidoJView() {
     const x = partById(draft.part); if (!x) { view = 'partidos'; return partidosJView(); }
     const t = today(), pd = pdOf(x) || {}, p = pd.pre, r = resOf(x), rsp = respOf(U.acceso, 'p:' + pdAt(U.dias, x).k + ':' + x.id), id = x.id;
@@ -846,7 +861,8 @@
     if (b.dataset.v2) { view = b.dataset.v2; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.pcatj) { ls.set('smbf-pcat', b.dataset.pcatj); draft.cday = ''; render(); return; }
     if (b.dataset.pmes) { draft.mes = b.dataset.pmes; draft.cday = ''; render(); return; }
-    if (b.dataset.cday != null && b.classList.contains('cd') || b.dataset.cday === '') { draft.cday = draft.cday === b.dataset.cday ? '' : b.dataset.cday; render(); return; }
+    if (b.dataset.pmodo) { ls.set('smbf-pmodo', b.dataset.pmodo); render(); return; }
+    if (b.dataset.cday != null) { draft.cday = b.dataset.cday; render(); return; }
     if (b.dataset.v && (b.closest('.nav') || b.classList.contains('me-chip'))) { view = b.dataset.v; draft.editSem = false; draft.editAv = false; draft.av = null; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.fw) {
       if (draft.busy) return;
@@ -1127,24 +1143,38 @@
       ${nx ? `<button class="btn big next-j" type="button" data-jnav="1"><span class="nj-av">${avDe(nx)}</span>Siguiente: ${esc(nom1(nx))} ›</button>` : ''}`, { nav: navA(), wide: true, right: fnav });
   }
   const respPart = (u, x) => pdAt(diasDe(u), x).pd;
+  // quién ha contestado un partido: verde antes y después, ámbar solo el antes, gris nada
+  const respEst = (u, x) => { const pd = respPart(u, x) || {}; return pd.juega ? 'post' : pd.pre ? 'pre' : ''; };
+  const iniDe = u => { const n = nom1(u); return n.slice(0, 2); };
+  const whoDots = x => `<span class="who" aria-label="Quién ha contestado">${activas().map(u => `<i class="${respEst(u, x)}" title="${esc(nom1(u))}">${esc(iniDe(u))}</i>`).join('')}</span>`;
+  const whoCount = x => { const us = activas(), a = us.filter(u => respEst(u, x)).length, d = us.filter(u => respEst(u, x) === 'post').length; return `<span class="whoc"><b>${a}</b>/${us.length} antes · <b>${d}</b> después</span>`; };
+  const WHO_LEG = '<span class="who-leg"><span><i class="post"></i>antes y después</span><span><i class="pre"></i>solo antes</span><span><i></i>nada</span></span>';
   function partidosView() {
-    const t = today(), cat = A.pcat || 'todas', all = allPart(A.cal), L = all.filter(x => cat === 'todas' || x.cat === cat);
-    const fut = L.filter(x => x.fecha >= t), pas = L.filter(x => x.fecha < t).reverse(), nResp = x => activas().filter(u => respPart(u, x)).length;
+    const t = today(), cat = A.pcat || 'todas', all = allPart(A.cal), L = all.filter(x => cat === 'todas' || x.cat === cat), tab = A.ptabs || 'proximos';
+    const fut = L.filter(x => x.fecha >= t), pas = L.filter(x => x.fecha < t).reverse();
     const bal = c => { const R = all.filter(x => x.cat === c).map(resOf).filter(Boolean), n = k => R.filter(r => r.k === k).length;
-      return `<button type="button" class="bal-c ${catCls(c)}" data-pcat="${c}" aria-pressed="${cat === c}"><span>${esc(c)}</span><b>${n('g')}<i>·</i>${n('e')}<i>·</i>${n('p')}</b><small>ganados · empates · perdidos</small></button>`; };
-    shell(`<div><span class="kicker">Sección femenina</span><h1>Partidos</h1></div>
+      return `<button type="button" class="bal-c ${catCls(c)}" data-pcat="${c}" aria-pressed="${cat === c}"><span>${esc(c)}</span><b>${n('g')}<i>·</i>${n('e')}<i>·</i>${n('p')}</b></button>`; };
+    const extra = (A.cal || {}).extra || [];
+    // jugados: los de los últimos 10 días con quién ha contestado; los anteriores, en marcador
+    const recientes = pas.filter(x => daysBetween(x.fecha, t) <= 10), viejos = pas.filter(x => daysBetween(x.fecha, t) > 10);
+    const tk = x => ticketHTML(x, (x.fecha <= t ? whoCount(x) + whoDots(x) : '') + (resOf(x) ? `<span class="res ${resOf(x).k}">${resOf(x).l} ${resOf(x).a}–${resOf(x).b}</span>` : ''), `data-part="${x.id}"`);
+    shell(`<div class="dt-h"><div><span class="kicker">Sección femenina · G · E · P</span><h1>Partidos</h1></div>
+        <div class="seg etab" role="tablist">${[['proximos', `Próximos`], ['jugados', `Jugados`]].map(([k, l]) => `<button type="button" role="tab" data-ptabs="${k}" aria-pressed="${tab === k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div></div>
       <div class="bal" role="group" aria-label="Filtrar por categoría">${['Sub-15', 'Sub-17', '1ª Autonómica'].map(bal).join('')}</div>
       ${cat !== 'todas' ? `<button class="btn ghost small" type="button" data-pcat="todas">Ver todas las categorías</button>` : ''}
-      <section class="strip"><div class="strip-h"><h2>Próximos</h2>${fut.length > 1 ? '<span class="sub">Desliza</span>' : ''}</div>${fut.length ? `<div class="tkts">${fut.slice(0, 10).map(x => ticketHTML(x, x.fecha === t ? `<span class="hoy">Hoy · ${nResp(x)} ${nResp(x) === 1 ? 'ha contestado' : 'han contestado'}</span>` : '', `data-part="${x.id}"`)).join('')}</div>` : '<p class="sub">No hay partidos por delante.</p>'}</section>
-      <section class="strip"><div class="strip-h"><h2>Jugados</h2></div>${pas.length ? `<div class="mrcs">${pas.map(x => marcadorHTML(x, nResp(x))).join('')}</div>` : '<p class="sub">Todavía ninguno.</p>'}</section>
-      <section class="card"><h2>Añadir un partido</h2><p class="sub">Los de liga vienen del calendario de la federación. Aquí puedes añadir amistosos, torneos o de copa.</p>
-        <div class="row"><input type="date" id="np-fecha" class="date-in" aria-label="Fecha"><input type="time" id="np-hora" class="date-in" aria-label="Hora">
-        <select id="np-cat" class="date-in" aria-label="Categoría">${CATS.map(c => `<option>${c}</option>`).join('')}</select></div>
-        <div class="row"><input type="text" id="np-rival" class="date-in grow" placeholder="Rival" aria-label="Rival" maxlength="60"><label class="check"><input type="checkbox" id="np-casa"> En casa</label></div>
-        <button class="btn small" type="button" data-a="addpart">Añadir</button>
-        ${((A.cal || {}).extra || []).length ? `<ul class="list">${A.cal.extra.map(x => `<li class="li"><span><b>${esc(fmtShort(x.fecha))} · ${esc(x.cat)}</b><small>${esc(x.rival)}</small></span><button class="btn ghost small" type="button" data-a="delpart" data-id="${x.id}">Quitar</button></li>`).join('')}</ul>` : ''}</section>
-      <p class="sub">Calendario de la Federación Madrileña de Patinaje: se revisa solo cada mañana${PART_AT ? ` (último cambio: ${esc(fmtDay(PART_AT))})` : ''}. Si algo cambia a última hora, entra en el partido y cámbialo a mano.</p>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+      ${tab === 'proximos' ? `${fut.some(x => x.fecha === t) || recientes.length ? WHO_LEG : ''}
+        ${fut.length ? `<div class="tkts col">${fut.slice(0, A.pmas ? 99 : 5).map(tk).join('')}</div>${fut.length > 5 && !A.pmas ? `<button class="btn ghost" type="button" data-a="pmas">Ver los ${fut.length - 5} siguientes</button>` : ''}` : '<p class="sub">No hay partidos por delante.</p>'}
+        <details class="card add-p"${A.addOpen ? ' open' : ''}><summary><h2>Añadir un partido</h2><span class="sub">amistosos, torneos, copa</span></summary>
+          <div class="row"><input type="date" id="np-fecha" class="date-in" aria-label="Fecha"><input type="time" id="np-hora" class="date-in" aria-label="Hora">
+          <select id="np-cat" class="date-in" aria-label="Categoría">${CATS.map(c => `<option>${c}</option>`).join('')}</select></div>
+          <div class="row"><input type="text" id="np-rival" class="date-in grow" placeholder="Rival" aria-label="Rival" maxlength="60"><label class="check"><input type="checkbox" id="np-casa"> En casa</label></div>
+          <button class="btn small" type="button" data-a="addpart">Añadir</button>
+          ${extra.length ? `<ul class="list">${extra.map(x => `<li class="li"><span><b>${esc(fmtShort(x.fecha))} · ${esc(x.cat)}</b><small>${esc(x.rival)}</small></span><button class="btn ghost small" type="button" data-a="delpart" data-id="${x.id}">Quitar</button></li>`).join('')}</ul>` : ''}</details>`
+      : `${recientes.length ? `${WHO_LEG}<div class="tkts col">${recientes.map(tk).join('')}</div>` : ''}
+        ${viejos.length ? `<div class="mrcs">${viejos.map(x => marcadorHTML(x, activas().filter(u => respPart(u, x)).length)).join('')}</div>` : ''}${!pas.length ? '<p class="sub">Todavía ninguno.</p>' : ''}`}
+      <p class="sub">Calendario de la Federación Madrileña: se revisa solo cada mañana${PART_AT ? ` (último cambio: ${esc(fmtDay(PART_AT))})` : ''}. Si algo cambia a última hora, entra en el partido y cámbialo a mano.</p>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
+  actions.pmas = async () => { A.pmas = true; render(); };
   function partidoView() {
     A.view2 = 'partido';
     const x = allPart(A.cal).find(y => y.id === A.part); if (!x) { view = 'partidos'; return partidosView(); }
@@ -1155,7 +1185,7 @@
       return rows.length ? `<ul class="dist">${rows.map(([l, c]) => `<li><span>${esc(l)}</span><i><b style="width:${Math.round(c / n * 100)}%"></b></i><em>${c}</em></li>`).join('')}</ul>` : '<p class="sub">Nadie todavía.</p>'; };
     const emos = post.flatMap(r => r[1].emociones || []), cumpl = jug.map(r => r[1].cumplido).filter(Boolean);
     const ficha = ([u, pd]) => { const p = pd.pre, k = 'p:' + pdAt(diasDe(u), x).k + ':' + x.id, txt = (p && p.objetivo) || pd.mejor || pd.cambiar || pd.llevo;
-      return `<div class="obj"><span class="kicker">${esc((A.jug[u].nombre || '').split(' ')[0])}</span>
+      return `<div class="obj" id="pc-${u}"><span class="obj-h"><span class="mr-av">${avDe(u)}</span><b>${esc(nom1(u))}</b></span>
         ${p ? `<p><b>Antes:</b> ganas ${p.ganas} · nervios ${p.nervios} · confianza ${p.confianza} · cree que irá: ${esc(lbl(ESPERA, p.espera).toLowerCase())} · le importa: ${esc(lbl(IMPORTA, p.importa).toLowerCase())}</p>${p.objetivo ? `<p><b>Se iba a fijar en:</b> ${esc(p.objetivo)}</p>` : ''}` : '<p class="sub">No contestó el antes.</p>'}
         ${pd.juega ? `<p><b>Después:</b> ${esc(partLinea(pd, 'se vio', 'disfrutó'))}${pd.cumplido ? ` · lo que se propuso: ${esc(lbl(CUMPLIDO, pd.cumplido).toLowerCase())}` : ''}</p>${emoHTML(pd.emociones)}` : '<p class="sub">Todavía no ha contado el después.</p>'}
         ${pd.mejor ? `<p><b>Mejor decisión:</b> ${esc(pd.mejor)}</p>` : ''}${pd.cambiar ? `<p><b>Cambiaría:</b> ${esc(pd.cambiar)}</p>` : ''}${pd.llevo ? `<p><b>Se lleva:</b> ${esc(pd.llevo)}</p>` : ''}
@@ -1163,15 +1193,19 @@
     shell(`<button class="btn ghost small back" type="button" data-av="partidos">← Partidos</button>
       <div><span class="kicker">${esc(x.cat)} · jornada ${x.j || '—'} · ${esc(fmtDay(x.fecha))}${x.hora ? ' · ' + esc(x.hora) : ''}</span><h1>${x.casa ? 'SMB – ' + esc(x.rival) : esc(x.rival) + ' – SMB'}</h1>${x.res ? `<p class="sub">Resultado (SMB primero): ${esc(x.res)}</p>` : ''}</div>
       ${editPartHTML(x)}
-      ${R.length ? `<div class="tiles four"><div class="tile"><span class="k">Han contestado</span><b class="v">${pre.length} · ${post.length}</b><span class="s">antes · después</span></div>
+      ${(() => { const us = activas(); if (x.fecha > today() && !R.length) return ''; return `<section class="card"><div class="card-h"><h2>Quién ha contestado</h2>${whoCount(x)}</div>
+        <div class="pfs who-g">${us.map(u => { const e = respEst(u, x); return `<button type="button" class="pf ${e === 'post' ? 'ok' : e === 'pre' ? 'warn' : 'none'}" data-pcu="${e ? u : ''}" ${e ? '' : 'data-jug="' + u + '"'}><span class="pf-av">${avDe(u)}</span><b>${esc(nom1(u))}</b><small>${e === 'post' ? 'antes · después' : e === 'pre' ? 'solo antes' : '—'}</small></button>`; }).join('')}</div>${WHO_LEG}</section>`; })()}
+      ${R.length ? `<div class="seg etab" role="tablist">${[['resumen', 'Resumen'], ['cada', 'Lo que cuenta cada una']].map(([k, l]) => `<button type="button" role="tab" data-ptab="${k}" aria-pressed="${(A.ptab || 'resumen') === k}">${l}</button>`).join('')}</div>
+      ${(A.ptab || 'resumen') === 'resumen' ? `<div class="tiles four"><div class="tile"><span class="k">Han contestado</span><b class="v">${pre.length} · ${post.length}</b><span class="s">antes · después</span></div>
         <div class="tile"><span class="k">Ganas</span><b class="v">${fmt1(m(pre, pd => pd.pre.ganas))}</b><span class="s">confianza ${fmt1(m(pre, pd => pd.pre.confianza))} · nervios ${fmt1(m(pre, pd => pd.pre.nervios))}</span></div>
         <div class="tile"><span class="k">Disfrute</span><b class="v">${fmt1(m(post, pd => pd.disfrute))}</b><span class="s">del 1 al 10</span></div>
         <div class="tile"><span class="k">Cómo se han visto</span><b class="v">${fmt1(m(jug, pd => pd.visto))}</b><span class="s">esfuerzo ${fmt1(m(jug, pd => pd.rpe))}</span></div></div>
       <div class="grid2"><section class="card"><h2>Lo que más les importaba</h2>${dist(pre.map(r => r[1].pre.importa), IMPORTA)}</section>
         <section class="card"><h2>Cómo creían que iría</h2>${dist(pre.map(r => r[1].pre.espera), ESPERA)}</section>
         <section class="card"><h2>Cómo se sienten después</h2>${emos.length ? `${dist(emos, EMOC.map(e => [e, e]))}<p class="sub">Cada una elige hasta tres.</p>` : '<p class="sub">Nadie todavía.</p>'}</section>
-        <section class="card"><h2>Lo que se propusieron</h2>${cumpl.length ? dist(cumpl, CUMPLIDO.map(([k, l]) => [k, l === 'Sí' ? 'Lo consiguió' : l === 'No' ? 'No lo consiguió' : l])) : '<p class="sub">Nadie todavía.</p>'}</section></div>
-      <section class="card"><h2>Lo que cuenta cada una</h2>${R.map(ficha).join('')}</section>`
+        <section class="card"><h2>Lo que se propusieron</h2>${cumpl.length ? dist(cumpl, CUMPLIDO.map(([k, l]) => [k, l === 'Sí' ? 'Lo consiguió' : l === 'No' ? 'No lo consiguió' : l])) : '<p class="sub">Nadie todavía.</p>'}</section></div>`
+      : `<section class="card"><h2>Lo que cuenta cada una</h2>${R.map(ficha).join('')}</section>`}`
+
       : `<section class="card"><p class="sub">${x.fecha > today() ? 'Todavía no se ha jugado.' : 'Nadie lo ha contado todavía.'}</p></section>`}`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   function editPartHTML(x) {
@@ -1286,6 +1320,9 @@
     if (b.dataset.part) { A.part = b.dataset.part; A.editPart = false; view = 'partido'; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
+    if (b.dataset.ptabs) { A.ptabs = b.dataset.ptabs; render(); return; }
+    if (b.dataset.ptab) { A.ptab = b.dataset.ptab; render(); return; }
+    if (b.dataset.pcu) { A.ptab = 'cada'; render(); const el = document.getElementById('pc-' + b.dataset.pcu); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (b.dataset.jug) { irFicha(b.dataset.jug, view === 'equipo' ? 'equipo' : view === 'resumen' ? 'resumen' : A.from); return; }
   });
   root.addEventListener('keydown', e => { if (isAdmin() && (e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.jug && e.target.tagName !== 'BUTTON') { e.preventDefault(); A.sel = e.target.dataset.jug; view = 'detalle'; render(); scrollTo({ top: 0 }); } });

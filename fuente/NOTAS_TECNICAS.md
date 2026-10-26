@@ -148,3 +148,9 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Si una liga no se puede leer o salen menos de la mitad de partidos, se dejan los de antes. Prueba local con páginas guardadas: `python3 fuente/partidos_fmp.py --local CARPETA --seco`.
 - Para la temporada 2027/28 habrá que cambiar los `idc` de `LIGAS` en el script (se ven en `fmp/fmp_ls_1.php`).
 - La app vuelve a leer `partidos.json` al abrirse y al volver a primer plano. La DT puede cambiar un partido a mano y manda lo suyo (ver «cambiar partidos a mano»).
+
+## Partidos más cómodos (26 oct)
+
+- DT: pestañas «Próximos» y «Jugados» (`A.ptabs`), balance por categoría como filtro, entradas en columna con quién ha contestado (`whoDots`: verde antes y después, ámbar solo antes, gris nada) en los de hoy y los de los últimos 10 días; los más antiguos, en marcador. «Añadir un partido» plegado.
+- Ficha del partido (DT): «Quién ha contestado» con los personajes (tocar una que ha contestado lleva a lo que cuenta; una que no, a su ficha) y pestañas «Resumen» / «Lo que cuenta cada una» (`A.ptab`).
+- Jugadoras: «Lista» o «Calendario» (se recuerda en el móvil, `smbf-pmodo`). Lista: te falta contar, hoy, 3 próximos y 4 jugados (con «ver todos»). Calendario: el mes compacto y debajo los partidos del día elegido (por defecto, el siguiente partido del mes).
