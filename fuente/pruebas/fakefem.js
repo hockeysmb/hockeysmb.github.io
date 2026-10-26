@@ -18,7 +18,7 @@
     if (s[0] === 'equipos') return isAdmin(u) || (activa(u) && acc(u).equipo === s[1]);
     if (s[0] === 'registros') return isAdmin(u) || (!!u && u.uid === s[1]);
     if (s[0] === 'valoraciones') return isAdmin(u);
-    if (s[0] === 'juego' || s[0] === 'duelos') return activa(u) || isAdmin(u);
+    if (s[0] === 'juego' || s[0] === 'duelos') return !window.__sinReglasReto && (activa(u) || isAdmin(u));   // __sinReglasReto: como si no se hubieran publicado las reglas del reto
     return false;
   }
   function canWrite(p, u, data) {
@@ -26,7 +26,7 @@
     if (s[0] === 'jugadoras') return del ? (isAdmin(u) || (!!u && u.uid === s[1])) : (!!u && u.uid === s[1]);
     if (s[0] === 'acceso' || s[0] === 'equipos' || s[0] === 'valoraciones') return isAdmin(u);
     if (s[0] === 'registros') return del ? (isAdmin(u) || (!!u && u.uid === s[1])) : (activa(u) && u.uid === s[1]);
-    const reto = activa(u) || isAdmin(u);
+    const reto = !window.__sinReglasReto && (activa(u) || isAdmin(u));
     if (s[0] === 'juego') return del ? (isAdmin(u) || (!!u && u.uid === s[1])) : (reto && u.uid === s[1]);
     if (s[0] === 'duelos') { const old = db[p];
       if (del) return isAdmin(u) || (!!u && !!old && (old.a === u.uid || old.b === u.uid));
@@ -36,7 +36,7 @@
     return false;
   }
   // listar una colección: la regla se mira sobre un documento cualquiera de ella (como hace Firestore con las consultas)
-  const canList = p => p.split('/').length % 2 === 1 && (isAdmin(cur) || canRead(p + '/x', cur));
+  const canList = p => p.split('/').length % 2 === 1 && !(window.__sinReglasReto && /^(juego|duelos)$/.test(p)) && (isAdmin(cur) || canRead(p + '/x', cur));
   const colDocs = p => Object.keys(db).filter(k => k.startsWith(p + '/') && k.split('/').length === p.split('/').length + 1).map(k => ({ id: k.split('/').pop(), data: JSON.parse(JSON.stringify(db[k])) }));
   function notify() {
     save();

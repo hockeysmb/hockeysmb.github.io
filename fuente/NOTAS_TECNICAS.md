@@ -171,3 +171,4 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Misiones del día (`MISIONES`, 3 al día iguales para todas, salen de la fecha) y premio por la primera partida del día según los días seguidos (`premioDia`). Se suman en `juego.premios`; las cumplidas, en `juego.mis` = {f, h}.
 - Tienda: celebraciones de gol (`cele`), el texto que sale al marcar.
 - La DT tiene su personaje del reto (botón «Cambiar» sobre el personaje, vista `avdt`): se guarda en `juego/{uid}.av`, con todo desbloqueado. Las jugadoras, desde ahí, van a «Cambiar mi jugadora» y vuelven al reto.
+- Si las reglas del reto no están publicadas, Firestore niega `juego` y `duelos`: la pantalla del reto lo avisa (`J.sinReglas`) y los errores al guardar lo dicen claro. La versión de la app (`APP_V`, la `?v=` de `app.js`) sale en «Mis datos» y en «Altas». El Firebase falso imita la falta de reglas con `window.__sinReglasReto`.

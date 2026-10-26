@@ -324,6 +324,7 @@
       else if (actions[a]) await actions[a](b);
     } catch (er) {
       if (['google', 'in', 'up', 'reset'].includes(a)) say(authErr(er), true);
+      else if (/permission/i.test((er && (er.code || er.message)) || '') && /^(reto|avdt)$/.test(view)) { J.sinReglas = true; toast(isAdmin() ? 'No se ha guardado: faltan las reglas del reto en Firebase.' : 'Todavía no se puede guardar: el reto no está activo.'); render(); }
       else { console.error(er); toast('No se ha podido guardar. Revisa la conexión e inténtalo otra vez.'); }
     }
   });
@@ -816,7 +817,8 @@
         <div class="row"><button class="btn" type="button" data-a="export">Descargar mis datos</button></div>
         <p class="sub">Borrar quita todo lo que has respondido y tu alta. No tiene ninguna consecuencia en el equipo.</p>
         <div class="row"><button class="btn danger" type="button" data-a="borrartodo">Borrar todos mis datos</button></div></section>
-      <button class="btn ghost" type="button" data-a="out">Cerrar sesión</button>`, { nav: navJ() });
+      <button class="btn ghost" type="button" data-a="out">Cerrar sesión</button>
+      <p class="sub center">Versión ${esc(APP_V)}</p>`, { nav: navJ() });
   }
   const firstEmpty = () => { const i = WELL.findIndex(w => !(draft.antes[w.k] >= 1)); return i < 0 ? 0 : i; };
   actions.startantes = async () => { draft.paso = firstEmpty(); view = 'antes'; render(); scrollTo({ top: 0 }); };
@@ -929,7 +931,9 @@
   // duelos/{id}: {a, b, seed, pa, pb, ts}: a reta a b; pa y pb son los puntos de cada una (null = sin jugar). Las dos juegan la misma semilla.
   // Monedas = la mitad de los puntos por responder la app + las bolas recogidas − lo gastado. La DT solo tiene las bolas.
   // En la liga y en los duelos solo se ve nombre de pila, personaje y puntos del juego. Nunca nada de lo que responden.
-  const J = { todos: {}, duelos: {}, on: false, synced: false };
+  // versión de la app (sale en «Mis datos» y en «Altas»: sirve para saber si el móvil ya tiene la última)
+  const APP_V = (((document.currentScript || {}).src || '').split('v=')[1] || '').slice(0, 12);
+  const J = { todos: {}, duelos: {}, on: false, synced: false, sinReglas: false };
   const TIENDA = [
     ['estela', 'rosa', 'Estela rosa', 60], ['estela', 'menta', 'Estela menta', 60], ['estela', 'oro', 'Estela dorada', 150], ['estela', 'arcoiris', 'Estela arcoíris', 300], ['estela', 'fuego', 'Estela de fuego', 450],
     ['ropa', 'shirtVNeck:2fb5a5', 'Camiseta turquesa', 90], ['ropa', 'shirtScoopNeck:f2c14e', 'Camiseta amarilla', 90], ['ropa', 'hoodie:e05297', 'Sudadera fucsia', 120], ['ropa', 'overall:5b6cff', 'Peto azul', 180],
@@ -962,8 +966,10 @@
   const avSrc = (av, lv, n) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatarSVG(av, lv, n).replace('<svg class="av"', '<svg width="280" height="280" class="av"'));
   function jStart() {
     if (J.on) return; J.on = true;
-    unsub.push(B.listenCol('juego', L => { J.todos = Object.fromEntries(L.map(x => [x.id, x.data])); jSync(); renderSoon(); }, () => {}));
-    unsub.push(B.listenCol('duelos', L => { J.duelos = Object.fromEntries(L.map(x => [x.id, x.data])); renderSoon(); }, () => {}));
+    // si las reglas del reto no están publicadas en Firebase, se avisa en la pantalla del reto
+    const err = e => { if (e && /permission/i.test(e.code || e.message || '')) { J.sinReglas = true; renderSoon(); } };
+    unsub.push(B.listenCol('juego', L => { J.sinReglas = false; J.todos = Object.fromEntries(L.map(x => [x.id, x.data])); jSync(); renderSoon(); }, err));
+    unsub.push(B.listenCol('duelos', L => { J.duelos = Object.fromEntries(L.map(x => [x.id, x.data])); renderSoon(); }, err));
   }
   // su ficha del juego al día (nombre, personaje y nivel) para que las demás la vean en la liga y la puedan retar
   function jSync() {
@@ -988,7 +994,7 @@
     try {
       await B.set('juego/' + meU(), doc);
       if (duelo && J.duelos[duelo]) { const d = J.duelos[duelo], k = d.a === meU() ? 'pa' : 'pb'; if (d[k] == null) { await B.merge('duelos/' + duelo, { [k]: r.puntos }); J.duelos[duelo] = Object.assign({}, d, { [k]: r.puntos }); render(); } }
-    } catch (e) { console.error(e); toast('No se ha podido guardar la partida. Revisa la conexión.'); }
+    } catch (e) { console.error(e); if (/permission/i.test(e.code || e.message || '')) { J.sinReglas = true; render(); toast(isAdmin() ? 'No se ha guardado: faltan las reglas del reto en Firebase.' : 'La partida no se ha guardado: el reto todavía no está activo.'); } else toast('No se ha podido guardar la partida. Revisa la conexión.'); }
   }
   actions.jugar = async () => jugar(Math.floor(Math.random() * 2e9), null);
   actions.editavj = async () => { view = 'yo'; draft.editAv = true; draft.av = null; draft.avBack = 'reto'; render(); scrollTo({ top: 0 }); };
@@ -1060,6 +1066,7 @@
         <div class="rt-b"><span class="kicker">El reto</span><h1>Patina y marca</h1>
           <div class="rt-st"><span><b>${fmtInt(monedas())}</b>monedas</span><span><b>${fmtInt(y.rec || 0)}</b>récord</span><span><b>${rachaJ(y)}</b>${rachaJ(y) === 1 ? 'día' : 'días'} seguidos</span></div></div>
         <button class="btn big rt-play" type="button" data-a="jugar">Jugar</button></section>
+      ${J.sinReglas ? `<section class="card aviso-reglas"><h2>${isAdmin() ? 'Faltan las reglas del reto' : 'El reto todavía no está listo'}</h2><p>${isAdmin() ? 'Firebase no deja guardar nada del juego (partidas, duelos, tienda ni tu personaje) porque las reglas nuevas no están publicadas. Ve a la consola de Firebase, Firestore → Reglas, pega el archivo <b>firestore.rules</b> y pulsa «Publicar».' : 'Puedes jugar, pero todavía no se guardan las partidas. Carlos lo activa en breve.'}</p></section>` : ''}
       ${resH}
       ${(() => { const f = today(), mh = (y.mis && y.mis.f === f) ? y.mis.h || [] : [], L = misionesHoy(f), pr = !(y.dias || {})[f];
         return `<section class="card rt-mis"><div class="card-h"><h2>Misiones de hoy</h2><span class="sub">${mh.length} de 3</span></div>
@@ -1447,7 +1454,8 @@
       ${des.length ? `<section class="card"><h2>Desactivadas · ${des.length}</h2><ul class="list">${des.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-a="reactivar" data-u="${u}">Activar otra vez</button><button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></span>`)).join('')}</ul></section>` : ''}
       ${calHTML()}
       <section class="card"><h2>Datos de todas</h2><p class="sub">Para tu archivo o para analizarlos en una hoja de cálculo.</p><div class="row"><button class="btn" type="button" data-a="csv">Descargar en CSV</button></div>
-        <p class="sub">A final de temporada (30 de junio de 2027) hay que borrarlo todo.</p><div class="row"><button class="btn danger" type="button" data-a="borrartemporada">Borrar todos los datos de la temporada</button></div><p class="msg" id="msg"></p></section>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+        <p class="sub">A final de temporada (30 de junio de 2027) hay que borrarlo todo.</p><div class="row"><button class="btn danger" type="button" data-a="borrartemporada">Borrar todos los datos de la temporada</button></div><p class="msg" id="msg"></p></section>
+      <p class="sub center">Versión de la app ${esc(APP_V)}${J.sinReglas ? ' · faltan las reglas del reto en Firebase' : ''}</p>`, { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   actions.activar = async b => { const u = b.dataset.u, tipo = $('#c-' + u).value; await B.set('acceso/' + u, { activa: true, equipo: EQ, consentimiento: { tipo, fecha: today() }, ts: Date.now() }); toast(`${A.jug[u].nombre} ya puede usar la app.`); };
   actions.desactivar = async b => { const u = b.dataset.u; await B.merge('acceso/' + u, { activa: false, ts: Date.now() }); toast('Desactivada. Sus datos siguen guardados.'); };
