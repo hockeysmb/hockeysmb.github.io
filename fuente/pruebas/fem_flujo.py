@@ -40,7 +40,7 @@ async def main():
       await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
       # 2. la DT la activa y pone objetivos
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(800)
-      await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
+      await pg.click('.nav [data-av="equipo"]'); await pg.wait_for_timeout(200); await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
       print('pendiente:', ' '.join((await pg.text_content('.list .li')).split()))
       await pg.click(f'[data-a="activar"][data-u="{uid}"]'); await pg.wait_for_timeout(500)
       # días de entreno: quitar el jueves y volverlo a poner, y un festivo
@@ -135,7 +135,7 @@ async def main():
       print('temporada:', ' | '.join(' '.join(t.split()) for t in await pg.locator('.tile').all_inner_texts()))
       await pg.screenshot(path=O + '7c_temporada.png', full_page=True)
       await pg.screenshot(path=O + '7_dt_detalle.png', full_page=True)
-      await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
+      await pg.click('.nav [data-av="equipo"]'); await pg.wait_for_timeout(200); await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
       async with pg.expect_download() as dl: await pg.click('[data-a="csv"]')
       path = await (await dl.value).path(); lines = open(path, encoding='utf-8-sig').read().splitlines(); print('CSV:', len(lines), 'líneas |', lines[0][:80])
       await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)

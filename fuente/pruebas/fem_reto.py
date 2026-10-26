@@ -48,15 +48,33 @@ async def main():
       # 2. el reto: liga
       await pg.click('.nav [data-v="reto"]'); await pg.wait_for_timeout(500); await pg.screenshot(path=O + '2_reto_liga.png', full_page=True)
       print('liga:', await pg.locator('.pd:not(.vacio)').count(), 'en el podio ·', await pg.locator('.lg-rows li').count(), 'en la tabla')
-      # 3. una partida
+      h1 = await pg.text_content('.rt-hero h1'); print('juego de hoy (27 oct):', h1, '·', ' '.join((await pg.text_content('.rt-left') or '').split()))
+      if 'penaltis' not in h1: errs.append('no rota el juego del día')
+      # 2b. sin contestar lo de hoy no se puede jugar
+      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-27', { antes: null, partidos: {} })"); await pg.wait_for_timeout(400)
+      g = await pg.locator('.rt-gate').count(); dis = await pg.locator('.rt-play[disabled]').count(); print('sin contestar:', 'bloqueado' if g and dis else 'NO bloquea', '·', ' '.join((await pg.text_content('.rt-gate') or '').split()) if g else '')
+      if not (g and dis): errs.append('deja jugar sin contestar lo de hoy')
+      await pg.screenshot(path=O + '2b_sin_contestar.png')
+      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-27', " + json.dumps({'antes': seed_reto()['registros/demo03/dias/2026-10-27']['antes'], 'partidos': seed_reto()['registros/demo03/dias/2026-10-27'].get('partidos', {})}) + ")"); await pg.wait_for_timeout(400)
+      # 3. una partida (hoy, penaltis: se tira con la flecha arriba)
       await pg.click('.rt-play'); await partida()
       j = await db('juego/demo03'); print('tras la partida:', j.get('dias'), 'bolas', j.get('bolas'), 'partidas', j.get('partidas'), 'premios', j.get('premios'), 'misiones', j.get('mis'))
       if not j.get('premios'): errs.append('no da el premio diario')
       if not (j.get('dias') or {}).get('2026-10-27'): errs.append('no se guarda la partida')
+      print('partidas contadas hoy:', j.get('jd'), '· récords', j.get('recs'))
+      if (j.get('jd') or {}).get('n') != 1: errs.append('no cuenta las partidas del día')
       await pg.screenshot(path=O + '3_resultado.png', full_page=True)
       # 4. jugar el duelo pendiente
       await pg.click('[data-a="jugarduelo"][data-id="dprueba1"]'); await partida()
       d = await db('duelos/dprueba1'); print('duelo pendiente:', d.get('pa'), '-', d.get('pb'))
+      j = await db('juego/demo03'); print('tras contestar el duelo, partidas contadas:', (j.get('jd') or {}).get('n'))
+      if (j.get('jd') or {}).get('n') != 1: errs.append('contestar un duelo no debería contar')
+      # límite: con las tres hechas, no deja jugar más
+      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 3 } })"); await pg.wait_for_timeout(300); await pg.click('[data-a="cerrarres"]') if await pg.locator('[data-a="cerrarres"]').count() else None; await pg.wait_for_timeout(300)
+      lim = ' '.join((await pg.text_content('.rt-hero') or '').split()); print('con 3 partidas:', 'Mañana más' in lim, '·', (await pg.text_content('.rt-left') or '').strip())
+      if 'Mañana más' not in lim: errs.append('no limita las partidas del día')
+      await pg.screenshot(path=O + '4b_limite.png')
+      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 1 } })"); await pg.wait_for_timeout(300)
       if d.get('pb') is None: errs.append('no se guarda el duelo')
       await pg.screenshot(path=O + '4_duelo.png', full_page=True)
       # 5. retar a Carlos
@@ -84,6 +102,10 @@ async def main():
       jg, ju = await db('juego/demo03'), await db('jugadoras/demo03'); print('tienda:', jg.get('compras'), 'gastado', jg.get('gastado'), '| gafas puestas:', ju['av'].get('gafas'), '| estela', jg.get('estela'))
       if ju['av'].get('gafas') != 'prescription02' or jg.get('estela') != 'oro': errs.append('no se compra o no se pone lo de la tienda')
       await pg.screenshot(path=O + '6_tienda.png', full_page=True)
+      # 6b. los otros juegos se cargan y terminan bien
+      for m in ('portera', 'patina'):
+        await pg.evaluate("m => SMBJuego.jugar({ modo: m, seed: 7, titulo: m, onEnd: r => { window.__rp = r; } })", m); await partida(); rp = await pg.evaluate('window.__rp'); print(m + ':', rp)
+        if not rp or rp.get('puntos') is None: errs.append('el juego ' + m + ' no acaba bien')
       # 7. la DT entra, juega y reta a Ana
       await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(200); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="out"]'); await pg.wait_for_timeout(500)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(900)

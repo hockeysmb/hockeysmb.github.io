@@ -26,7 +26,7 @@ App web del cuerpo técnico de hockey sobre patines del Colegio Santa María la 
 - **Un solo grupo, «Femenino»** (sin separar por categorías); los días de entreno los pone la DT en «Altas».
 - **Solo la DT (`SMBF_ADMIN`) ve los datos de todas** y puede contestarles desde su ficha; cada jugadora ve y borra los suyos. Las cuentas se activan a mano cuando hay consentimiento firmado (en menores, por la familia). Los datos se borran el 30 de junio de 2027.
 - **Son datos de salud y hay menores:** no añadas campos nuevos de salud (ciclo menstrual, lesiones, medicación…) sin que la DT lo pida y sin actualizar la hoja de información y el consentimiento.
-- **El reto:** minijuego con su personaje (`femenino/juego.js`), duelos 1 contra 1, liga de la semana y tienda. Las compañeras se ven entre ellas solo el nombre de pila, el personaje y los puntos del juego (colecciones `juego` y `duelos`); nunca nada de bienestar.
+- **El reto:** tres minijuegos con su personaje (`femenino/juego.js` y `femenino/juegos2.js`), uno distinto cada día, 3 partidas al día y solo después de contestar lo de hoy; duelos 1 contra 1, liga de la semana y tienda. Las compañeras se ven entre ellas solo el nombre de pila, el personaje y los puntos del juego (colecciones `juego` y `duelos`); nunca nada de bienestar.
 - **Prueba:** `fem_flujo`, `fem_dt` (panel con doce jugadoras inventadas) y `fem_reto` (backend simulado `fuente/pruebas/fakefem.js`, con las mismas reglas).
 
 ## Reglas

@@ -35,7 +35,9 @@ def seed():
       if n.startswith('Lucía') and back == 0: a['nota'] = 'Tengo exámenes toda la semana y no duermo bien'
       if n.startswith('Elena') and back == 0: a['nota'] = 'Hoy llego un poco tarde, tengo médico'
       day = {'antes': a, 'ts': 1}
-      if back > 0 or n.startswith('Ana'): day['ses'] = [{'tipo': 'entreno', 'rpe': R.choice([5, 6, 7]) + (2 if hard else 0), 'min': 90 + (30 if hard else 0), 'nota': '', 'ts': 1}]
+      if back > 0 or n.startswith(('Ana', 'Marta', 'Carla', 'Paula', 'Claudia')): day['ses'] = [{'tipo': 'entreno', 'rpe': R.choice([5, 6, 7]) + (2 if hard else 0), 'min': 90 + (30 if hard else 0), 'nota': '', 'ts': 1}]
+      if back == 0 and n.startswith('Marta'): day['ses'][0]['nota'] = 'Las piernas no me iban en el último ejercicio'
+      if back == 0 and n.startswith('Carla'): day['ses'][0]['nota'] = 'Hoy me he atrevido a pedirla de cara'
       db['registros/%s/dias/%s' % (u, d.isoformat())] = day
     # diario de las semanas
     for w in (2, 1, 0):
@@ -71,6 +73,23 @@ async def main():
         await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(900)
         await pg.screenshot(path=O + tag + '_1_equipo.png', full_page=True)
         await pg.click('[data-etab="semana"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_1b_semana.png', full_page=True); await pg.click('[data-etab="hoy"]'); await pg.wait_for_timeout(200)
+        dd = await pg.locator('.desp-dt').count(); print(tag, 'después del entreno en Equipo:', ' '.join((await pg.text_content('.desp-dt .card-h') or '').split()) if dd else 'NO', '·', await pg.locator('.desp-dt .ef').count(), 'esfuerzos')
+        if not dd: errs.append('no sale el después del entreno en Equipo')
+        # buzón: lo que cuentan, con preguntas rápidas y «Leído»
+        await pg.click('.nav [data-av="buzon"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_5_buzon.png', full_page=True)
+        nbz = await pg.locator('.bz.pend').count(); print(tag, 'buzón:', nbz, 'por contestar ·', await pg.text_content('.nav [data-av="buzon"]'))
+        if not nbz: errs.append('el buzón sale vacío')
+        it = pg.locator('.bz.pend').first; k1 = await it.locator('[data-a="editresp"]').get_attribute('data-k'); u1 = await it.locator('[data-a="editresp"]').get_attribute('data-u')
+        await it.locator('[data-a="editresp"]').click(); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_5c_buzon_abierto.png')
+        it = pg.locator('.bz.pend').first; await it.locator('.bz-chip').nth(1).click(); await it.locator('[data-a="resp"]').click(); await pg.wait_for_timeout(300)
+        it2 = pg.locator('.bz.pend').first; k2 = await it2.locator('[data-a="leido"]').get_attribute('data-k'); u2 = await it2.locator('[data-a="leido"]').get_attribute('data-u')
+        await it2.locator('[data-a="leido"]').click(); await pg.wait_for_timeout(300)
+        r1 = await pg.evaluate(f"(window.__fake.db()['acceso/{u1}'].resp || {{}})['{k1}']"); r2 = await pg.evaluate(f"(window.__fake.db()['acceso/{u2}'].resp || {{}})['{k2}']")
+        print(tag, 'respuesta con pregunta:', r1, '| leído:', r2)
+        if not r1 or '?' not in (r1.get('t') or ''): errs.append('no se contesta desde el buzón')
+        if not r2 or not r2.get('visto'): errs.append('no se marca como leído')
+        await pg.click('[data-btab="todo"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_5b_buzon_todo.png', full_page=True)
+        await pg.click('.nav [data-av="resumen"]'); await pg.wait_for_timeout(300)
         imp = await pg.locator('.imp').count(); print(tag, 'lo importante:', imp)
         if not imp: errs.append('no sale lo importante')
         await pg.locator('.imp').first.click(); await pg.wait_for_timeout(400)

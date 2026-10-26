@@ -641,6 +641,47 @@ body.jg-on { overflow: hidden; }
 .cf-res .row.center { justify-content: center; flex-wrap: wrap; } .cf-res .btn.ghost { color: #fff; }
 .hall { display: grid; gap: 8px; } .hl { display: flex; align-items: center; gap: 10px; font-size: 14px; } .hl-p { width: 44px; height: 44px; flex: none; } .hl small { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .cf-shake, .cf-box.abre .cofre, .cf-res { animation: none; } }
+
+/* juego del día, límite de partidas y «contesta antes de jugar» (26 oct, noche) */
+.rt-desc { font-size: 13px; color: rgba(255, 255, 255, .85); }
+.rt-play[disabled] { background: rgba(255, 255, 255, .25); color: rgba(255, 255, 255, .85); box-shadow: none; cursor: not-allowed; }
+.rt-left, .rt-next { grid-column: 1 / -1; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; color: rgba(255, 255, 255, .85); margin-top: -4px; }
+.rt-next { justify-content: flex-end; font-size: 11.5px; opacity: .75; margin-top: -8px; }
+.rt-pips { display: inline-flex; gap: 4px; } .rt-pips i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .25); } .rt-pips i.on { background: #ffd21f; }
+.rt-gate { grid-column: 1 / -1; z-index: 1; display: grid; gap: 8px; padding: 12px; border-radius: 16px; background: rgba(0, 0, 0, .22); }
+.rt-gate b { font-size: 14px; } .rt-gate .btn { background: #fff; color: #681825; border: 0; }
+
+/* buzón de la DT, después del entreno en «Equipo» y pestañas nuevas (26 oct, noche) */
+.nav button { position: relative; }
+.nbad { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--bad); color: #fff; font: 700 10.5px/17px var(--font); font-style: normal; text-align: center; }
+.bz-d { margin: 6px 2px -2px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.bzs { display: grid; gap: 10px; }
+.bz { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.bz.pend { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: inset 4px 0 0 var(--accent); }
+.bz-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.bz-who { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; font: inherit; color: var(--fg); cursor: pointer; }
+.bz-who .bav { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: var(--blush); display: grid; place-items: center; } .bz-who .bav svg { width: 100%; height: 100%; }
+.bz-t { font-size: 12px; color: var(--muted); font-weight: 600; }
+.bz-q { margin: 0; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; } .bz-q span { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.bz-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; } .bz-chips::-webkit-scrollbar { display: none; }
+.bz-chip { flex: none; border: 1px solid var(--line); background: var(--fill); color: var(--fg); border-radius: 999px; padding: 6px 10px; font-family: inherit; font-size: 12.5px; font-weight: 600; line-height: 1.2; cursor: pointer; white-space: nowrap; }
+.bz-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.bz-ok { display: inline-flex; align-items: center; gap: 6px; color: var(--good); font-weight: 700; } .bz-ok .ric { width: 18px; height: 18px; }
+.ks-b { border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.aviso-altas { display: flex; align-items: center; gap: 10px; width: 100%; border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--line)); background: var(--accent-soft); color: var(--fg); border-radius: 14px; padding: 10px 14px; text-align: left; font: inherit; cursor: pointer; }
+.aviso-altas svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .aviso-altas span { display: grid; flex: 1; } .aviso-altas small { color: var(--muted); }
+.dstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dstats > span { display: grid; gap: 1px; font-size: 12px; font-weight: 700; padding: 8px 10px; border-radius: 12px; background: var(--fill); min-width: 0; }
+.dstats b { font: 600 24px/1.05 var(--font-display); font-variant-numeric: tabular-nums; } .dstats small { font-weight: 400; color: var(--muted); font-size: 11px; }
+.dstats .dl { font-style: normal; font-size: 11.5px; color: var(--muted); } .dstats .dl.up { color: var(--warn); }
+.efs { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: thin; }
+.ef { flex: none; display: grid; justify-items: center; gap: 2px; border: 0; background: none; padding: 0; font: inherit; color: var(--fg); cursor: pointer; width: 54px; }
+.ef-av { position: relative; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--blush); } .ef-av svg { width: 100%; height: 100%; }
+.ef-n { margin-top: -14px; z-index: 1; min-width: 26px; padding: 1px 6px; border-radius: 9px; font: 700 13px/1.3 var(--font); font-variant-numeric: tabular-nums; border: 2px solid var(--surface); }
+.ef small { font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ef.alto small { color: var(--warn); font-weight: 700; }
+/* lo que ve la jugadora: «Carlos lo ha leído» */
+.visto { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--good); } .visto svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.msg-it .yo { margin: 2px 0 4px; font-size: 13px; color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -648,11 +689,12 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261026l"></script>
-<script src="firebase-config.js?v=20261026l"></script>
-<script src="mascotas.js?v=20261026l"></script>
-<script src="juego.js?v=20261026l"></script>
-<script src="app.js?v=20261026l"></script>
+<script src="lib/avatar.js?v=20261026m"></script>
+<script src="firebase-config.js?v=20261026m"></script>
+<script src="mascotas.js?v=20261026m"></script>
+<script src="juego.js?v=20261026m"></script>
+<script src="juegos2.js?v=20261026m"></script>
+<script src="app.js?v=20261026m"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

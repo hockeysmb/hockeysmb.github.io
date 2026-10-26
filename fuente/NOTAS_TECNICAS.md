@@ -185,3 +185,21 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Las mascotas ya no se compran sueltas: salen de cofres (`COFRES`: madera 250, plata 600, oro 1.400 monedas) con las probabilidades a la vista. Las repetidas devuelven monedas (`REPE`). Garantías: tras 20 cofres sin épica, el siguiente trae épica (80 %) o legendaria; a los 60 sin legendaria, legendaria segura (`juego.sinEp`, `juego.sinLeg`, `juego.cofres`).
 - La colección muestra las que faltan como silueta con «?». Al sacar una épica o legendaria nueva se guarda `juego.ultima` y sale en «Lo último que ha salido» (liga, 4 días).
 - Cuentas: un jugadora muy activa gana unas 900 monedas a la semana; completar las 22 lleva meses, que es lo buscado.
+
+## Buzón, después del entreno y un juego distinto cada día (26 oct, noche)
+
+**DT**
+- Pestañas: Equipo, Buzón, Jugadoras, Partidos, Reto. «Altas» está dentro de Jugadoras (botón arriba; si hay cuentas esperando, también sale un aviso en Equipo y un número en la pestaña Jugadoras).
+- **Buzón** (`buzonView`, `itemsDe`, `buzonItems`): todo lo que escriben en los últimos 14 días (`BUZ_DIAS`): notas del antes y del después, partido (se fija en, mejor decisión, cambiaría, se lleva) y diario. Por contestar / Todo. Cada cosa: «Contestar» (abre preguntas rápidas `PREG` y la caja) o «Leído». «Marcar las N como leídas» aparece con más de 5 pendientes.
+- «Leído» guarda `acceso/{uid}.resp[clave] = {visto: true, ts}` sin texto. La jugadora ve «Carlos lo ha leído» junto a lo que escribió (`vistoTag`). Las claves son las de siempre (`d:fecha`, `p:fecha:id`, `s:lunes`). No hacen falta reglas nuevas.
+- `porContestar` sale ahora del buzón (14 días, también lo que «se fija en» antes del partido).
+- Equipo · Hoy: tarjeta «Después del entreno» (cuántas lo han contado, esfuerzo medio frente a lo que suelen en el último mes, minutos, carga, el esfuerzo de cada una con su personaje, quién contó el antes y no el después y sus notas).
+- «Carlos te ha contestado» enseña ahora también lo que escribió ella (`miTexto`).
+
+**El reto**
+- `femenino/juegos2.js` añade dos juegos: «Tanda de penaltis» (`SMBJuego.penaltis`: dos toques, dónde y a qué altura; la portera acierta cada vez más; 3 fallos) y «La portera» (`SMBJuego.portera`: paras tú, tres zonas, amagos desde el tiro 7; 3 goles). `SMBJuego.jugar({modo})` elige. Usan la semilla, como «Patina y marca».
+- Juego del día: `SMBJuego.delDia(fecha)` rota patina → penaltis → portera desde el 26 oct. Es el mismo para todas. Las misiones del día salen de las de ese juego (`MISIONES[].m`; `'*'` vale para todos).
+- La liga solo suma el juego del día. Récord por juego en `juego.recs` (`rec` sigue siendo el de patina).
+- Duelos: guardan `modo` (el juego del día en que se retó); quien contesta juega ese.
+- Límite: 3 partidas al día (`PARTIDAS_DIA`) contadas en `juego.jd = {f, n}`. Retar cuenta; contestar un duelo que te han mandado, no. La DT no tiene límite. Es un límite de la app (no de las reglas).
+- Para jugar hay que haber contestado lo de hoy (`tocaHoy`): el antes del entreno (o el antes del partido si hay partido), el después a partir de la hora de su aviso (21:00 por defecto) y, en domingo, el diario. Si falta algo, el botón Jugar se apaga y salen botones para ir a contestarlo.

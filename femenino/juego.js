@@ -205,5 +205,5 @@
     requestAnimationFrame(frame);
     return { stop: () => fin(true) };
   }
-  window.SMBJuego = { start, ESTELAS };
+  window.SMBJuego = { start, ESTELAS, _rng: rng, _beep: beep };
 })();
