@@ -179,3 +179,9 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Tienda por secciones (`draft.ttab`): Mascotas, Personaje, Estelas, Celebraciones. Más ropa, gafas, gorro, fondos (`bosque`, `nieve`, `espacio`) y marco (`estrellas`).
 - Corona: quien ganó la liga la semana pasada la lleva toda la semana (`campeona()`).
 - Barba y bigote (`av.barba`, opción `facialHair` de los personajes): solo en el editor de la DT.
+
+## El reto: cofres de mascotas (26 oct, noche)
+
+- Las mascotas ya no se compran sueltas: salen de cofres (`COFRES`: madera 250, plata 600, oro 1.400 monedas) con las probabilidades a la vista. Las repetidas devuelven monedas (`REPE`). Garantías: tras 20 cofres sin épica, el siguiente trae épica (80 %) o legendaria; a los 60 sin legendaria, legendaria segura (`juego.sinEp`, `juego.sinLeg`, `juego.cofres`).
+- La colección muestra las que faltan como silueta con «?». Al sacar una épica o legendaria nueva se guarda `juego.ultima` y sale en «Lo último que ha salido» (liga, 4 días).
+- Cuentas: un jugadora muy activa gana unas 900 monedas a la semana; completar las 22 lleva meses, que es lo buscado.

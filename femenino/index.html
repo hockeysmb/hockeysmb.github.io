@@ -619,6 +619,28 @@ body.jg-on { overflow: hidden; }
 .sh.pet.own { background: var(--good-soft); }
 .rz { position: absolute; top: 6px; left: 6px; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; padding: 2px 6px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { .msc.hero { animation: none; } }
+/* cofres de mascotas (26 oct, noche) */
+.cofres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 6px 0 8px; }
+.cf { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 10px 6px 12px; border-radius: 16px; background: var(--fill); }
+.cf.plata { background: linear-gradient(170deg, #eef1f4, var(--fill)); } .cf.oro { background: linear-gradient(170deg, #fff2c2, var(--fill)); box-shadow: 0 0 16px rgba(255, 196, 0, .25); }
+.cofre { width: 70px; height: 63px; } .cf b { font-size: 12.5px; }
+.cf-odds { display: grid; font-size: 10.5px; font-weight: 700; line-height: 1.35; } .cf-odds i { font-style: normal; }
+.cf .btn { padding-inline: 8px; font-size: 12px; }
+.sil { position: relative; display: block; } .sil .msc { filter: brightness(0); opacity: .14; } .sil i { position: absolute; inset: 0; display: grid; place-items: center; font: 800 30px var(--font-display); font-style: normal; color: var(--muted); }
+.sh.pet.falta { background: var(--fill); box-shadow: none; } .sh.pet.falta b { color: var(--muted); }
+.cf-ov { position: fixed; inset: 0; z-index: 110; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 45%, rgba(104, 24, 37, .85), rgba(20, 8, 12, .96)); color: #fff; text-align: center; }
+.cf-ov.legendaria { background: radial-gradient(circle at 50% 45%, rgba(224, 160, 0, .9), rgba(40, 20, 0, .97)); } .cf-ov.epica { background: radial-gradient(circle at 50% 45%, rgba(138, 63, 252, .85), rgba(20, 8, 30, .97)); }
+.cf-box .cofre { width: 180px; height: 162px; } .cf-shake { animation: cf-tiembla .35s ease-in-out infinite; } .cf-box.abre .cofre { animation: cf-abre .45s ease-in forwards; }
+@keyframes cf-tiembla { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+@keyframes cf-abre { to { transform: scale(1.6); opacity: 0; } }
+.cf-res { display: grid; justify-items: center; gap: 10px; animation: cf-sale .5s cubic-bezier(.2, 1.4, .4, 1); } .cf-res[hidden] { display: none !important; }
+@keyframes cf-sale { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.cf-pet { width: 200px; height: 200px; filter: drop-shadow(0 0 24px rgba(255, 255, 255, .45)); }
+.cf-res > b { font: 700 30px var(--font-display); } .cf-st { font-size: 15px; opacity: .9; }
+.cf-rz { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; color: #fff; }
+.cf-res .row.center { justify-content: center; flex-wrap: wrap; } .cf-res .btn.ghost { color: #fff; }
+.hall { display: grid; gap: 8px; } .hl { display: flex; align-items: center; gap: 10px; font-size: 14px; } .hl-p { width: 44px; height: 44px; flex: none; } .hl small { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .cf-shake, .cf-box.abre .cofre, .cf-res { animation: none; } }
 </style>
 </head>
 <body>
@@ -626,11 +648,11 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261026k"></script>
-<script src="firebase-config.js?v=20261026k"></script>
-<script src="mascotas.js?v=20261026k"></script>
-<script src="juego.js?v=20261026k"></script>
-<script src="app.js?v=20261026k"></script>
+<script src="lib/avatar.js?v=20261026l"></script>
+<script src="firebase-config.js?v=20261026l"></script>
+<script src="mascotas.js?v=20261026l"></script>
+<script src="juego.js?v=20261026l"></script>
+<script src="app.js?v=20261026l"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>
