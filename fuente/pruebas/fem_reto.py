@@ -12,7 +12,8 @@ def seed_reto():
     u = 'demo%02d' % i; j = db['jugadoras/' + u]
     if i == 3: continue   # Ana empieza sin ficha de juego
     db['juego/' + u] = {'n': j['nombre'].split()[0], 'av': j['av'], 'lv': i % 7, 'adm': False, 'bolas': 40 * i, 'gastado': 0, 'compras': [], 'rec': 900 + 137 * i,
-                        'dias': {'2026-10-26': 400 + 90 * i, **({'2026-10-27': 300 + 55 * i} if i % 2 else {})}, 'partidas': 5 + i}
+                        'dias': {'2026-10-26': 400 + 90 * i, **({'2026-10-27': 300 + 55 * i} if i % 2 else {}), '2026-10-21': 2000 if i == 5 else 300}, 'partidas': 5 + i,
+                        'mascota': ['perro', 'zorro', 'axolote', '', 'gato', 'dragon', 'panda', 'pinguino', 'conejo'][i]}
   db['duelos/dprueba1'] = {'a': 'demo01', 'b': 'demo03', 'seed': 12345, 'pa': 860, 'pb': None, 'ts': 1793100000000}
   return db
 
@@ -64,9 +65,17 @@ async def main():
       # 6. tienda
       await pg.evaluate("window.__fake.put('juego/demo03', { bolas: 500 })"); await pg.wait_for_timeout(300)
       await pg.click('[data-a="rtab"][data-k="tienda"]'); await pg.wait_for_timeout(300)
+      await pg.click('[data-a="ttab"][data-k="personaje"]'); await pg.wait_for_timeout(200)
       await pg.click('[data-a="comprar"][data-c="gafas"][data-v="prescription02"]'); await pg.wait_for_timeout(300)
       await pg.click('[data-a="ponerj"][data-c="gafas"][data-v="prescription02"]'); await pg.wait_for_timeout(400)
+      await pg.click('[data-a="ttab"][data-k="estelas"]'); await pg.wait_for_timeout(200)
       await pg.click('[data-a="comprar"][data-c="estela"][data-v="oro"]'); await pg.wait_for_timeout(300); await pg.click('[data-a="ponerj"][data-c="estela"][data-v="oro"]'); await pg.wait_for_timeout(300)
+      await pg.click('[data-a="ttab"][data-k="mascotas"]'); await pg.wait_for_timeout(200); await pg.evaluate("window.__fake.put('juego/demo03', { bolas: 2500 })"); await pg.wait_for_timeout(300)
+      await pg.click('[data-a="comprar"][data-c="mascota"][data-v="unicornio"]'); await pg.wait_for_timeout(300); await pg.click('[data-a="ponerj"][data-c="mascota"][data-v="unicornio"]'); await pg.wait_for_timeout(300)
+      await pg.screenshot(path=O + '6b_mascotas.png', full_page=True)
+      print('mascota:', (await db('juego/demo03')).get('mascota'))
+      if (await db('juego/demo03')).get('mascota') != 'unicornio': errs.append('no se compra la mascota')
+      await pg.click('[data-a="ttab"][data-k="personaje"]'); await pg.wait_for_timeout(200)
       jg, ju = await db('juego/demo03'), await db('jugadoras/demo03'); print('tienda:', jg.get('compras'), 'gastado', jg.get('gastado'), '| gafas puestas:', ju['av'].get('gafas'), '| estela', jg.get('estela'))
       if ju['av'].get('gafas') != 'prescription02' or jg.get('estela') != 'oro': errs.append('no se compra o no se pone lo de la tienda')
       await pg.screenshot(path=O + '6_tienda.png', full_page=True)
@@ -74,9 +83,10 @@ async def main():
       await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(200); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="out"]'); await pg.wait_for_timeout(500)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(900)
       await pg.click('.nav [data-av="reto"]'); await pg.wait_for_timeout(500); await pg.screenshot(path=O + '7_dt_reto.png', full_page=True)
-      await pg.click('[data-a="editavdt"]'); await pg.wait_for_timeout(300); await pg.click('[data-avk="gafas"][data-avv="kurt"]'); await pg.wait_for_timeout(200); await pg.screenshot(path=O + '7b_dt_personaje.png', full_page=True)
+      await pg.click('[data-a="editavdt"]'); await pg.wait_for_timeout(300); await pg.click('[data-avk="gafas"][data-avv="kurt"]'); await pg.click('[data-avk="barba"][data-avv="beardMedium"]'); await pg.wait_for_timeout(200); await pg.screenshot(path=O + '7b_dt_personaje.png', full_page=True)
       await pg.click('[data-a="saveav"]'); await pg.wait_for_timeout(400)
-      jd = await db('juego/' + DT['uid']); print('personaje de la DT:', (jd or {}).get('av', {}).get('gafas'))
+      jd = await db('juego/' + DT['uid']); print('personaje de la DT:', (jd or {}).get('av', {}).get('gafas'), (jd or {}).get('av', {}).get('barba'))
+      if (jd or {}).get('av', {}).get('barba') != 'beardMedium': errs.append('la DT no puede ponerse barba')
       if (jd or {}).get('av', {}).get('gafas') != 'kurt': errs.append('la DT no puede cambiar su personaje')
       await pg.click('.rt-play'); await partida(teclas=False)
       await pg.click('[data-a="rtab"][data-k="duelos"]'); await pg.wait_for_timeout(300); await pg.click('[data-a="retar"][data-u="demo03"]'); await partida(teclas=False)

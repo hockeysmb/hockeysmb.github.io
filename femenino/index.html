@@ -601,6 +601,24 @@ body.jg-on { overflow: hidden; }
 .sh-c { display: grid; place-items: center; width: 92px; height: 76px; border-radius: 18px; background: #1d0f14; color: #7dffa8; font: 700 15px/1.1 var(--font-display); text-align: center; padding: 6px; }
 .jg-mu { font: 800 15px var(--font); color: #ffd21f; min-width: 28px; text-align: right; }
 .jg-snd { border: 0; border-radius: 12px; width: 36px; height: 34px; background: rgba(255, 255, 255, .14); color: #fff; font-size: 16px; cursor: pointer; }
+/* mascotas, corona y tienda por secciones (26 oct, tarde) */
+.msc { display: block; } .msc.big { width: 84px; height: 84px; }
+.pd-av, .lg-av, .pf-av, .rt-av, .me-av { position: relative; }
+.msc.chico { position: absolute; right: -10px; bottom: -6px; width: 30px; height: 30px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .2)); }
+.lg-av .msc.chico { width: 22px; height: 22px; right: -9px; bottom: -5px; }
+.pd.p1 .msc.chico { width: 38px; height: 38px; }
+.msc.hero { position: absolute; right: -22px; bottom: -14px; width: 52px; height: 52px; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); animation: msc-bote 2.4s ease-in-out infinite; }
+.me-av .msc.hero { right: -14px; bottom: -6px; width: 60px; height: 60px; }
+@keyframes msc-bote { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.crown { width: 16px; height: 16px; vertical-align: -2px; margin-right: 3px; display: inline-block; }
+.rt-camp { display: inline-flex; align-items: center; gap: 4px; justify-self: start; font-size: 12px; font-weight: 800; color: #2a1a00; background: #ffd21f; padding: 3px 9px; border-radius: 10px; }
+.rz-h { margin: 14px 0 6px; font: 800 12px var(--font); letter-spacing: .08em; text-transform: uppercase; }
+.sh.pet { position: relative; padding-top: 18px; background: var(--surface); box-shadow: inset 0 0 0 2px var(--line); }
+.sh.pet.rara { box-shadow: inset 0 0 0 2px #2c7be5; } .sh.pet.epica { box-shadow: inset 0 0 0 2px #8a3ffc; background: color-mix(in srgb, #8a3ffc 6%, var(--surface)); }
+.sh.pet.legendaria { box-shadow: inset 0 0 0 2.5px #d99a00, 0 0 18px rgba(255, 196, 0, .35); background: linear-gradient(160deg, color-mix(in srgb, #ffd84d 16%, var(--surface)), var(--surface)); }
+.sh.pet.own { background: var(--good-soft); }
+.rz { position: absolute; top: 6px; left: 6px; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; padding: 2px 6px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .msc.hero { animation: none; } }
 </style>
 </head>
 <body>
@@ -608,10 +626,11 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261026j"></script>
-<script src="firebase-config.js?v=20261026j"></script>
-<script src="juego.js?v=20261026j"></script>
-<script src="app.js?v=20261026j"></script>
+<script src="lib/avatar.js?v=20261026k"></script>
+<script src="firebase-config.js?v=20261026k"></script>
+<script src="mascotas.js?v=20261026k"></script>
+<script src="juego.js?v=20261026k"></script>
+<script src="app.js?v=20261026k"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

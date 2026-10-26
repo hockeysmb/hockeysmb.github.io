@@ -44,6 +44,9 @@
     }
     size(); addEventListener('resize', size);
     const img = new Image(); let imgOk = false; img.onload = () => { imgOk = true; }; img.src = o.avatarSrc || '';
+    // la mascota la acompaña patinando a su lado
+    const mimg = new Image(); let mOk = false; mimg.onload = () => { mOk = true; }; if (o.mascotaSrc) mimg.src = o.mascotaSrc;
+    let mx = null;
     const laneX = i => W * (0.2 + 0.3 * i), PY = () => H * 0.8;
     let lane = 1, px = null, lives = 3, inv = 0, t = 0, dist = 0, nextRow = 0, rows = 0, puntos = 0, bolas = 0, goles = 0, regates = 0, combo = 0, mult = 1, maxMult = 1;
     let ents = [], parts = [], floats = [], txt = null, alive = true, started = false, cnt = 3, cntT = 0, last = 0, paused = false, salto = 0, shake = 0, flash = 0;
@@ -121,6 +124,7 @@
     function drawPlayer() {
       const y = PY(), j = salto > 0 ? Math.sin((0.6 - salto) / 0.6 * Math.PI) : 0, r = 26 * S * (1 + j * 0.3);
       parts.forEach(p => { cx.globalAlpha = Math.max(0, p.a); cx.fillStyle = p.c; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.29); cx.fill(); }); cx.globalAlpha = 1;
+      if (mOk) { mx = mx == null ? px : mx + (px - mx) * 0.08; const ms = 42 * S, side = px > W * 0.6 ? -1 : 1; cx.drawImage(mimg, mx + side * 34 * S - ms / 2, y + 4 * S + Math.sin(t * 9) * 3 * S - ms / 2, ms, ms); }
       if (inv > 0 && Math.floor(inv * 10) % 2) return;
       if (j > 0) { cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(px, y + 22 * S, 22 * S, 7 * S, 0, 0, 6.29); cx.fill(); }
       const yy = y - j * 22 * S;

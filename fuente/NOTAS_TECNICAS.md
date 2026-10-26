@@ -172,3 +172,10 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Tienda: celebraciones de gol (`cele`), el texto que sale al marcar.
 - La DT tiene su personaje del reto (botón «Cambiar» sobre el personaje, vista `avdt`): se guarda en `juego/{uid}.av`, con todo desbloqueado. Las jugadoras, desde ahí, van a «Cambiar mi jugadora» y vuelven al reto.
 - Si las reglas del reto no están publicadas, Firestore niega `juego` y `duelos`: la pantalla del reto lo avisa (`J.sinReglas`) y los errores al guardar lo dicen claro. La versión de la app (`APP_V`, la `?v=` de `app.js`) sale en «Mis datos» y en «Altas». El Firebase falso imita la falta de reglas con `window.__sinReglasReto`.
+
+## El reto: mascotas, corona y barba (26 oct, tarde)
+
+- `femenino/mascotas.js` (`SMBMascotas`): 22 mascotas dibujadas en SVG, en cuatro rarezas (común, rara, épica, legendaria) con precio. Se compran como lo demás (`compras` 'mascota|id') y se lleva una (`juego.mascota`). Salen junto al personaje en el reto, la liga, los duelos, «Retar a…», «Mi jugadora» y patinando al lado en la partida (`mascotaSrc`). Ojo: la clase CSS es `msc chico`, no `mini` (ya existe `.mini` para otros botones).
+- Tienda por secciones (`draft.ttab`): Mascotas, Personaje, Estelas, Celebraciones. Más ropa, gafas, gorro, fondos (`bosque`, `nieve`, `espacio`) y marco (`estrellas`).
+- Corona: quien ganó la liga la semana pasada la lleva toda la semana (`campeona()`).
+- Barba y bigote (`av.barba`, opción `facialHair` de los personajes): solo en el editor de la DT.

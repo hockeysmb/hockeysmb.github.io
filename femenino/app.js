@@ -157,7 +157,8 @@
     ['fondo', 'confeti', 'Confeti', 9], ['ropa', 'blazerAndShirt:681825', 'Americana', 9],
     ['marco', 'leyenda', 'Marco de leyenda', 10],
   ];
-  const AV_DEF = { skin: 'edb98a', top: 'straight02', hairColor: '4a312c', eyes: 'default', mouth: 'smile', ropa: 'hoodie:681825', gafas: '', gorro: '', fondo: 'rosa', marco: '' };
+  const AV_DEF = { skin: 'edb98a', top: 'straight02', hairColor: '4a312c', eyes: 'default', mouth: 'smile', ropa: 'hoodie:681825', gafas: '', gorro: '', fondo: 'rosa', marco: '', barba: '' };
+  const BARBAS = [['', 'Sin barba'], ['beardLight', 'Barba corta'], ['beardMedium', 'Barba'], ['beardMajestic', 'Barbaza'], ['moustacheFancy', 'Bigote'], ['moustacheMagnum', 'Bigotón']];
   // lo de la tienda del reto vale siempre (se compra con monedas, no va por nivel)
   const itemOk = (cat, v, lv) => { if (typeof TIENDA !== 'undefined' && TIENDA.some(x => x[0] === cat && x[1] === v)) return true; const it = ITEMS.find(x => x[0] === cat && x[1] === v); return !!it && it[3] <= lv + 1; };
   function avNorm(av, lv) {
@@ -168,6 +169,9 @@
   function fondoSVG(bg, id) {
     if (bg === 'pista') return `<rect width="280" height="280" fill="#dfe8f3"/><rect y="200" width="280" height="80" fill="#c8d6e6"/><line x1="0" y1="200" x2="280" y2="200" stroke="#fff" stroke-width="4"/><path d="M248,150 a22,22 0 0 1 0,44 z" fill="#fff" stroke="#f26a1b" stroke-width="4"/><circle cx="40" cy="44" r="4" fill="#1b1b1b"/>`;
     if (bg === 'atardecer') return `<defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a5a"/><stop offset=".6" stop-color="#ffcf7a"/><stop offset="1" stop-color="#ffe6b0"/></linearGradient></defs><rect width="280" height="280" fill="url(#${id}s)"/><circle cx="140" cy="170" r="70" fill="#fff3c4" opacity=".7"/><rect y="210" width="280" height="70" fill="#5b7fa8"/><line x1="0" y1="210" x2="280" y2="210" stroke="#fff" stroke-width="3"/>`;
+    if (bg === 'espacio') return `<rect width="280" height="280" fill="#0f1030"/>${Array.from({ length: 30 }, (_, k) => `<circle cx="${(k * 97) % 280}" cy="${(k * 53) % 280}" r="${1 + k % 3}" fill="#fff" opacity="${0.4 + (k % 5) / 8}"/>`).join('')}<circle cx="230" cy="60" r="26" fill="#ff8fd1"/><ellipse cx="230" cy="60" rx="40" ry="8" fill="none" stroke="#ffd84d" stroke-width="4"/>`;
+    if (bg === 'bosque') return `<rect width="280" height="280" fill="#cfeedd"/>${[[30, 150], [90, 130], [200, 140], [250, 160]].map(([x, y]) => `<path d="M${x} ${y - 90} L${x - 40} ${y + 10} L${x + 40} ${y + 10} Z" fill="#3f9a5a"/><rect x="${x - 6}" y="${y + 10}" width="12" height="30" fill="#8a5a2b"/>`).join('')}<rect y="230" width="280" height="50" fill="#7cc576"/>`;
+    if (bg === 'nieve') return `<rect width="280" height="280" fill="#dbe9f7"/>${Array.from({ length: 34 }, (_, k) => `<circle cx="${(k * 71) % 280}" cy="${(k * 43) % 230}" r="${2 + k % 3}" fill="#fff"/>`).join('')}<path d="M0 230 Q70 200 140 228 T280 222 V280 H0 Z" fill="#fff"/>`;
     if (bg === 'playa') return `<rect width="280" height="280" fill="#8fd3f4"/><circle cx="222" cy="58" r="30" fill="#ffe27a"/><rect y="170" width="280" height="40" fill="#3fa7d6"/><rect y="205" width="280" height="75" fill="#f3dca2"/>`;
     if (bg === 'neon') return `<rect width="280" height="280" fill="#1a1033"/>${[['#ff3ea5', 60], ['#3ef0ff', 120], ['#b45cff', 180], ['#ff3ea5', 240]].map(([c, y]) => `<line x1="0" y1="${y}" x2="280" y2="${y - 40}" stroke="${c}" stroke-width="5" opacity=".8"/>`).join('')}`;
     if (bg === 'noche') return `<rect width="280" height="280" fill="#1c2340"/>${[[40, 30], [120, 18], [210, 40], [250, 90], [24, 100]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="16" fill="#fff6c8" opacity=".9"/><circle cx="${x}" cy="${y}" r="32" fill="#fff6c8" opacity=".15"/>`).join('')}<rect y="210" width="280" height="70" fill="#2e3a66"/><line x1="0" y1="210" x2="280" y2="210" stroke="#7d8fc9" stroke-width="3"/>`;
@@ -176,6 +180,7 @@
     return `<rect width="280" height="280" fill="${c}"/><circle cx="140" cy="150" r="112" fill="#ffffff" opacity=".2"/>`;
   }
   function marcoSVG(m) {
+    if (m === 'estrellas') return `<rect x="5" y="5" width="270" height="270" rx="30" fill="none" stroke="#2c1f5e" stroke-width="10"/>${[[20, 20], [260, 20], [20, 260], [260, 260], [140, 8], [140, 272]].map(([x, y]) => `<path d="M${x} ${y - 12} l3.5 8 8.5 1 -6.5 6 2 8.5 -7.5 -4.5 -7.5 4.5 2 -8.5 -6.5 -6 8.5 -1 Z" fill="#ffd84d"/>`).join('')}`;
     if (m === 'arcoiris') return `<defs><linearGradient id="mra" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a5a"/><stop offset=".25" stop-color="#ffb84d"/><stop offset=".5" stop-color="#5ad16b"/><stop offset=".75" stop-color="#4da6ff"/><stop offset="1" stop-color="#a36bff"/></linearGradient></defs><rect x="5" y="5" width="270" height="270" rx="30" fill="none" stroke="url(#mra)" stroke-width="10"/>`;
     if (m === 'leyenda') return `<rect x="5" y="5" width="270" height="270" rx="30" fill="none" stroke="#681825" stroke-width="10"/><rect x="11" y="11" width="258" height="258" rx="25" fill="none" stroke="#e0b23c" stroke-width="5"/>`;
     const c = { plata: '#9aa3ad', oro: '#e0b23c' }[m];
@@ -188,7 +193,7 @@
     if (typeof window.SMBAvatar === 'function') {
       try {
         body = window.SMBAvatar({ seed: 'smbf', randomizeIds: true, backgroundColor: [], skinColor: [a.skin], top: [a.gorro || a.top], hairColor: [a.hairColor], hatColor: ['681825'], topProbability: 100,
-          eyes: [a.eyes], eyebrows: ['defaultNatural'], mouth: [a.mouth], nose: ['default'], facialHairProbability: 0,
+          eyes: [a.eyes], eyebrows: ['defaultNatural'], mouth: [a.mouth], nose: ['default'], facialHair: a.barba ? [a.barba] : ['beardLight'], facialHairColor: [a.hairColor], facialHairProbability: a.barba ? 100 : 0,
           accessories: a.gafas ? [a.gafas] : ['round'], accessoriesColor: ['262e33'], accessoriesProbability: a.gafas ? 100 : 0,
           clothing: [cl], clothesColor: [cc], clothingGraphic: ['diamond'] }).replace(/^<svg /, '<svg x="0" y="0" width="280" height="280" ');
       } catch (e) { body = ''; }
@@ -690,7 +695,7 @@
     const pct = next ? Math.round((p - NIVELES[lv][1]) / (next[1] - NIVELES[lv][1]) * 100) : 100;
     if (draft.editAv) return editAvView(lv);
     shell(`<div class="dt-h"><div><span class="kicker">Lo tuyo</span><h1>Mi jugadora</h1></div><button class="btn small" type="button" data-v2="datos">${ico('datos')}Mis datos</button></div>
-      <section class="card me-card"><div class="me-av">${avatarSVG(U.perfil.av, lv)}</div>
+      <section class="card me-card"><div class="me-av">${avatarSVG(U.perfil.av, lv)}${mscH(yoJ().mascota, 'msc hero')}</div>
         <div class="me-info"><span class="kicker">Nivel ${lv + 1} de ${NIVELES.length}</span><b class="me-lv">${esc(NIVELES[lv][0])}</b>
           <div class="prog" role="img" aria-label="${pct} % hasta el siguiente nivel"><i style="width:${pct}%"></i></div>
           <span class="sub">${next ? `${p} de ${next[1]} puntos.${nuevos.length ? ` Próximo: ${esc(nuevos.join(', ').toLowerCase())}.` : ''}` : `${p} puntos. Has llegado arriba del todo.`}</span>
@@ -717,6 +722,7 @@
         <div class="q"><span class="q-h">Color de pelo</span>${sw('hairColor', HAIR_COLORS)}</div>
         <div class="q"><span class="q-h">Ojos</span>${ch('eyes', EYES)}</div>
         <div class="q"><span class="q-h">Boca</span>${ch('mouth', MOUTHS)}</div>
+        ${isAdmin() ? `<div class="q"><span class="q-h">Barba</span>${ch('barba', BARBAS)}</div>` : ''}
         <div class="q"><span class="q-h">Ropa</span>${it('ropa')}</div>
         <div class="q"><span class="q-h">Gafas</span>${it('gafas')}</div>
         <div class="q"><span class="q-h">Gorro</span>${it('gorro')}</div>
@@ -939,7 +945,10 @@
     ['ropa', 'shirtVNeck:2fb5a5', 'Camiseta turquesa', 90], ['ropa', 'shirtScoopNeck:f2c14e', 'Camiseta amarilla', 90], ['ropa', 'hoodie:e05297', 'Sudadera fucsia', 120], ['ropa', 'overall:5b6cff', 'Peto azul', 180],
     ['gafas', 'prescription02', 'Gafas de pasta', 80], ['gafas', 'wayfarers', 'Gafas de moda', 140],
     ['gorro', 'winterHat1', 'Gorro de lana', 130], ['gorro', 'hat', 'Sombrero', 200],
-    ['fondo', 'playa', 'Playa', 220], ['fondo', 'neon', 'Neón', 250], ['marco', 'arcoiris', 'Marco arcoíris', 400],
+    ['ropa', 'hoodie:2c7be5', 'Sudadera azul', 110], ['ropa', 'graphicShirt:111111', 'Camiseta negra con dibujo', 140], ['ropa', 'collarAndSweater:6fcf6a', 'Jersey verde', 130], ['ropa', 'blazerAndSweater:8a3ffc', 'Americana morada', 260],
+    ['gafas', 'kurt', 'Gafas retro', 120], ['gorro', 'winterHat04', 'Gorro de invierno', 160],
+    ['fondo', 'playa', 'Playa', 220], ['fondo', 'neon', 'Neón', 250], ['fondo', 'bosque', 'Bosque', 220], ['fondo', 'nieve', 'Nieve', 240], ['fondo', 'espacio', 'Espacio', 350],
+    ['marco', 'arcoiris', 'Marco arcoíris', 400], ['marco', 'estrellas', 'Marco de estrellas', 450],
     ['cele', '¡Golazo!', '¡Golazo!', 50], ['cele', '¡Para casa!', '¡Para casa!', 70], ['cele', '¡A la escuadra!', '¡A la escuadra!', 100], ['cele', '¡Imparable!', '¡Imparable!', 150], ['cele', '¡Santa María!', '¡Santa María!', 200],
   ];
   // misiones del día: las mismas para todas (salen de la fecha); cada una da monedas una vez al día
@@ -951,7 +960,13 @@
   ];
   const misionesHoy = f => { let h = 0; for (const c of f) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = MISIONES.slice(), out = []; while (out.length < 3) { h = (h * 1103515245 + 12345) >>> 0; out.push(L.splice(h % L.length, 1)[0]); } return out; };
   const premioDia = racha => 5 + 5 * Math.min(6, racha);
-  const CAT_N = { estela: 'Estela', ropa: 'Ropa', gafas: 'Gafas', gorro: 'Gorro', fondo: 'Fondo', marco: 'Marco', cele: 'Celebración de gol' };
+  // mascotas (mascotas.js): se compran como lo demás ('mascota|id') y se lleva una puesta (juego.mascota)
+  const MSC = () => window.SMBMascotas || { LISTA: [], RAREZA: {}, svg: () => '' };
+  const mscH = (id, cls = 'msc') => id ? MSC().svg(id, cls) : '';
+  // la campeona de la semana pasada lleva corona toda esta semana
+  function campeona() { const lp = addDays(mondayOf(today()), -7); let best = null; Object.entries(J.todos).forEach(([u, d]) => { if (!d || d.oculta || !d.n) return; const p = semPts(d, lp); if (p > 0 && (!best || p > best.p)) best = { u, p }; }); return best; }
+  const CORONA = '<svg class="crown" viewBox="0 0 24 24" role="img" aria-label="Campeona de la semana pasada"><path d="M3 18h18l-1.6-10-4.4 4-3-7-3 7-4.4-4z" fill="#ffcf33" stroke="#a87800" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12" cy="4.6" r="1.4" fill="#ffcf33"/></svg>';
+  const CAT_N = { mascota: 'Mascota', estela: 'Estela', ropa: 'Ropa', gafas: 'Gafas', gorro: 'Gorro', fondo: 'Fondo', marco: 'Marco', cele: 'Celebración de gol' };
   const DT_AV = { skin: 'edb98a', top: 'shortFlat', hairColor: '2c1b18', eyes: 'default', mouth: 'smile', ropa: 'hoodie:681825', gafas: '', gorro: '', fondo: 'pista', marco: 'oro' };
   const meU = () => me && me.uid, yoJ = () => J.todos[meU()] || {};
   const miNombre = () => isAdmin() ? 'Carlos' : ((U.perfil || {}).nombre || '').split(' ')[0];
@@ -962,7 +977,7 @@
   const semPts = (d, l) => { let s = 0; for (let i = 0; i < 7; i++) s += (d.dias || {})[addDays(l, i)] || 0; return s; };
   const rachaJ = d => { let n = 0, k = today(); if (!(d.dias || {})[k]) k = addDays(k, -1); while ((d.dias || {})[k]) { n++; k = addDays(k, -1); } return n; };
   const tiene = (c, v) => (c === 'estela' && v === 'granate') || (c === 'cele' && v === '¡GOL!') || (yoJ().compras || []).includes(c + '|' + v);
-  const puesto = (c, v) => c === 'estela' ? (yoJ().estela || 'granate') === v : c === 'cele' ? (yoJ().cele || '¡GOL!') === v : miAv()[c] === v;
+  const puesto = (c, v) => c === 'mascota' ? yoJ().mascota === v : c === 'estela' ? (yoJ().estela || 'granate') === v : c === 'cele' ? (yoJ().cele || '¡GOL!') === v : miAv()[c] === v;
   const avSrc = (av, lv, n) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatarSVG(av, lv, n).replace('<svg class="av"', '<svg width="280" height="280" class="av"'));
   function jStart() {
     if (J.on) return; J.on = true;
@@ -979,7 +994,7 @@
   }
   function jugar(seed, duelo) {
     if (!window.SMBJuego) { toast('No se ha podido cargar el juego. Vuelve a abrir la app.'); return; }
-    window.SMBJuego.start({ avatarSrc: avSrc(miAv(), miLv(), miNombre()), seed, estela: yoJ().estela || 'granate', cele: yoJ().cele || '¡GOL!', titulo: duelo ? 'Duelo contra ' + ((J.todos[(J.duelos[duelo] || {}).a === meU() ? J.duelos[duelo].b : (J.duelos[duelo] || {}).a] || {}).n || '') : 'Patina y marca', onEnd: r => terminar(r, duelo) });
+    window.SMBJuego.start({ avatarSrc: avSrc(miAv(), miLv(), miNombre()), mascotaSrc: yoJ().mascota ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(mscH(yoJ().mascota).replace('<svg class="msc"', '<svg width="100" height="100" class="msc"')) : '', seed, estela: yoJ().estela || 'granate', cele: yoJ().cele || '¡GOL!', titulo: duelo ? 'Duelo contra ' + ((J.todos[(J.duelos[duelo] || {}).a === meU() ? J.duelos[duelo].b : (J.duelos[duelo] || {}).a] || {}).n || '') : 'Patina y marca', onEnd: r => terminar(r, duelo) });
   }
   async function terminar(r, duelo) {
     const t = today(), y = yoJ(), dias = {}, prev = (y.dias || {})[t] || 0;
@@ -1006,6 +1021,7 @@
   actions.jugarduelo = async b => { const d = J.duelos[b.dataset.id]; if (d) jugar(d.seed, b.dataset.id); };
   actions.cerrarres = async () => { draft.res = null; render(); };
   actions.rtab = async b => { draft.rtab = b.dataset.k; render(); };
+  actions.ttab = async b => { draft.ttab = b.dataset.k; render(); };
   actions.comprar = async b => {
     const c = b.dataset.c, v = b.dataset.v, p = +b.dataset.p, y = yoJ();
     if (tiene(c, v)) return; if (monedas() < p) { toast('Te faltan monedas. ¡A jugar!'); return; }
@@ -1014,7 +1030,7 @@
   };
   actions.ponerj = async b => {
     const c = b.dataset.c, v = b.dataset.v;
-    if (c === 'estela' || c === 'cele') { J.todos[meU()] = Object.assign({}, yoJ(), { [c]: v }); render(); await B.merge('juego/' + meU(), { [c]: v }); toast(c === 'cele' ? 'Así celebrarás tus goles.' : '¡Te queda genial!'); return; }
+    if (c === 'estela' || c === 'cele' || c === 'mascota') { J.todos[meU()] = Object.assign({}, yoJ(), { [c]: v }); render(); await B.merge('juego/' + meU(), { [c]: v }); toast(c === 'cele' ? 'Así celebrarás tus goles.' : c === 'mascota' ? (v ? '¡Ya te acompaña!' : 'Vale, sin mascota.') : '¡Te queda genial!'); return; }
     const av = Object.assign({}, miAv(), { [c]: v });
     if (isAdmin()) { J.todos[meU()] = Object.assign({}, yoJ(), { av }); render(); await B.merge('juego/' + meU(), { av }); }
     else { U.perfil = Object.assign({}, U.perfil, { av }); render(); await B.merge('jugadoras/' + me.uid, { av }); jSync(); }
@@ -1032,27 +1048,35 @@
   function retoView() {
     const y = yoJ(), t = today(), lunes = mondayOf(t), yo_ = meU(), tab = draft.rtab || 'liga', res = draft.res;
     const todos = Object.entries(J.todos).filter(([, d]) => d && d.n && !d.oculta);
-    const avJ = d => avatarSVG(d.av, d.lv || 0, d.n);
+    const avJ = d => avatarSVG(d.av, d.lv || 0, d.n), ch = campeona(), cw = u => ch && ch.u === u ? CORONA : '', pet = d => mscH(d.mascota, 'msc chico');
     const liga = todos.map(([u, d]) => ({ u, d, p: semPts(d, lunes) })).filter(r => r.p > 0).sort((a, b) => b.p - a.p);
     const Ds = duelosMios(), otro = d => d.a === yo_ ? d.b : d.a, mio = d => d.a === yo_ ? d.pa : d.pb, suyo = d => d.a === yo_ ? d.pb : d.pa;
     const est = d => mio(d) == null ? (caducado(d) ? ['cad', 'Caducado'] : ['tuyo', 'Te toca']) : suyo(d) == null ? (caducado(d) ? ['cad', 'Caducado'] : ['esp', 'Esperando']) : mio(d) > suyo(d) ? ['g', 'Ganado'] : mio(d) < suyo(d) ? ['p', 'Perdido'] : ['e', 'Empate'];
     const vsDT = Ds.filter(d => (J.todos[otro(d)] || {}).adm && mio(d) != null && suyo(d) != null && mio(d) > suyo(d)).length;
     const dots = d => `<span class="lg-dots">${[0, 1, 2, 3, 4, 5, 6].map(i => `<i class="${(d.dias || {})[addDays(lunes, i)] ? 'on' : ''}${addDays(lunes, i) === t ? ' hoy' : ''}"></i>`).join('')}</span>`;
     const pod = liga.slice(0, 3), podOrd = [pod[1], pod[0], pod[2]];
-    const ligaH = liga.length ? `<div class="podio">${podOrd.map((r, i) => r ? `<div class="pd p${[2, 1, 3][i]}${r.u === yo_ ? ' me' : ''}"><span class="pd-av">${avJ(r.d)}</span><b>${esc(r.d.n)}</b><small>${fmtInt(r.p)}</small><span class="pd-base">${[2, 1, 3][i]}</span></div>` : '<div class="pd vacio"></div>').join('')}</div>
-        ${liga.length > 3 ? `<ol class="lg-rows" start="4">${liga.slice(3).map((r, i) => `<li class="${r.u === yo_ ? 'me' : ''}"><span class="lg-n">${i + 4}</span><span class="lg-av">${avJ(r.d)}</span><b>${esc(r.d.n)}</b>${dots(r.d)}<span class="lg-p">${fmtInt(r.p)}</span></li>`).join('')}</ol>` : ''}
+    const ligaH = liga.length ? `<div class="podio">${podOrd.map((r, i) => r ? `<div class="pd p${[2, 1, 3][i]}${r.u === yo_ ? ' me' : ''}"><span class="pd-av">${avJ(r.d)}${pet(r.d)}</span><b>${cw(r.u)}${esc(r.d.n)}</b><small>${fmtInt(r.p)}</small><span class="pd-base">${[2, 1, 3][i]}</span></div>` : '<div class="pd vacio"></div>').join('')}</div>
+        ${liga.length > 3 ? `<ol class="lg-rows" start="4">${liga.slice(3).map((r, i) => `<li class="${r.u === yo_ ? 'me' : ''}"><span class="lg-n">${i + 4}</span><span class="lg-av">${avJ(r.d)}${pet(r.d)}</span><b>${cw(r.u)}${esc(r.d.n)}</b>${dots(r.d)}<span class="lg-p">${fmtInt(r.p)}</span></li>`).join('')}</ol>` : ''}
         ${!liga.some(r => r.u === yo_) ? '<p class="sub">Todavía no has jugado esta semana. Cada día cuenta tu mejor partida.</p>' : ''}`
       : '<p class="sub">Nadie ha jugado esta semana. ¡Estrena la tabla!</p>';
     const duelosH = `<section class="card"><div class="card-h"><h2>Retar a…</h2>${vsDT ? `<span class="pill">Le has ganado a Carlos ${vsDT} ${vsDT === 1 ? 'vez' : 'veces'}</span>` : ''}</div>
-        ${todos.filter(([u]) => u !== yo_).length ? `<div class="pfs">${todos.filter(([u]) => u !== yo_).sort((a, b) => (b[1].adm ? 1 : 0) - (a[1].adm ? 1 : 0)).map(([u, d]) => `<button type="button" class="pf ok" data-a="retar" data-u="${u}"><span class="pf-av">${avJ(d)}</span><b>${esc(d.n)}</b><small>${d.adm ? 'el jefe final' : 'récord ' + fmtInt(d.rec || 0)}</small></button>`).join('')}</div>` : '<p class="sub">Todavía no hay nadie más. En cuanto entren tus compañeras, salen aquí.</p>'}
+        ${todos.filter(([u]) => u !== yo_).length ? `<div class="pfs">${todos.filter(([u]) => u !== yo_).sort((a, b) => (b[1].adm ? 1 : 0) - (a[1].adm ? 1 : 0)).map(([u, d]) => `<button type="button" class="pf ok" data-a="retar" data-u="${u}"><span class="pf-av">${avJ(d)}${pet(d)}</span><b>${cw(u)}${esc(d.n)}</b><small>${d.adm ? 'el jefe final' : 'récord ' + fmtInt(d.rec || 0)}</small></button>`).join('')}</div>` : '<p class="sub">Todavía no hay nadie más. En cuanto entren tus compañeras, salen aquí.</p>'}
         <p class="sub">Las dos jugáis exactamente la misma pista. Gana quien saque más puntos. Tiene 7 días para contestar.</p></section>
-      ${Ds.length ? `<section class="card"><h2>Tus duelos</h2><div class="dls">${Ds.slice(0, 12).map(d => { const o = J.todos[otro(d)] || {}, [k, l] = est(d); return `<div class="dl-r"><span class="lg-av">${avJ(o)}</span><span class="dl-b"><b>${esc(o.n || '—')}</b><small>${mio(d) == null ? '—' : fmtInt(mio(d))} · ${suyo(d) == null ? '—' : fmtInt(suyo(d))}</small></span>${k === 'tuyo' ? `<button class="btn small primary" type="button" data-a="jugarduelo" data-id="${d.id}">Jugar</button>` : `<span class="res ${k}">${l}</span>`}</div>`; }).join('')}</div></section>` : ''}`;
+      ${Ds.length ? `<section class="card"><h2>Tus duelos</h2><div class="dls">${Ds.slice(0, 12).map(d => { const o = J.todos[otro(d)] || {}, [k, l] = est(d); return `<div class="dl-r"><span class="lg-av">${avJ(o)}${pet(o)}</span><span class="dl-b"><b>${esc(o.n || '—')}</b><small>${mio(d) == null ? '—' : fmtInt(mio(d))} · ${suyo(d) == null ? '—' : fmtInt(suyo(d))}</small></span>${k === 'tuyo' ? `<button class="btn small primary" type="button" data-a="jugarduelo" data-id="${d.id}">Jugar</button>` : `<span class="res ${k}">${l}</span>`}</div>`; }).join('')}</div></section>` : ''}`;
+    const tt = draft.ttab || 'mascotas', mis = MSC().LISTA.filter(([id]) => tiene('mascota', id)).length;
+    const itemCard = ([c, v, n, p]) => { const own = tiene(c, v), on = own && puesto(c, v);
+      const prev = c === 'cele' ? `<span class="sh-c">${esc(v)}</span>` : c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
+      return `<div class="sh${own ? ' own' : ''}"><span class="sh-p">${prev}</span><b>${esc(n)}</b><small>${CAT_N[c]}</small>${own ? (on ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Ponérmelo</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`}</div>`; };
+    const petCard = ([id, n, r, p]) => { const own = tiene('mascota', id), on = own && puesto('mascota', id), R = MSC().RAREZA[r] || ['', '#999'];
+      return `<div class="sh pet ${r}${own ? ' own' : ''}"><span class="rz" style="background:${R[1]}">${R[0]}</span><span class="sh-p">${mscH(id, 'msc big')}</span><b>${esc(n)}</b>${own ? (on ? '<span class="pill">Te acompaña</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="mascota" data-v="${id}">Llevarla</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="mascota" data-v="${id}" data-p="${p}">${fmtInt(p)} monedas</button>`}</div>`; };
     const tiendaH = `<section class="card"><div class="card-h"><h2>Tienda</h2><span class="pill coin">${fmtInt(monedas())} monedas</span></div>
-        <p class="sub">${isAdmin() ? 'Ganas monedas recogiendo bolas.' : 'Ganas monedas recogiendo bolas y contestando la app.'}</p>
-        <div class="shop">${TIENDA.map(([c, v, n, p]) => { const own = tiene(c, v), on = own && puesto(c, v);
-          const prev = c === 'cele' ? `<span class="sh-c">${esc(v)}</span>` : c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
-          return `<div class="sh${own ? ' own' : ''}"><span class="sh-p">${prev}</span><b>${esc(n)}</b><small>${CAT_N[c]}</small>${own ? (on ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Ponérmelo</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`}</div>`; }).join('')}</div>
-        <div class="row">${(yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${(yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div></section>`;
+        <p class="sub">${isAdmin() ? 'Ganas monedas recogiendo bolas, con las misiones y entrando a diario.' : 'Ganas monedas recogiendo bolas, con las misiones, entrando a diario y contestando la app.'}</p>
+        <div class="chips-cat">${[['mascotas', 'Mascotas'], ['personaje', 'Personaje'], ['estelas', 'Estelas'], ['goles', 'Celebraciones']].map(([k, l]) => `<button type="button" class="cc" data-a="ttab" data-k="${k}" aria-pressed="${tt === k}">${l}</button>`).join('')}</div>
+        ${tt === 'mascotas' ? `<p class="sub">Tu colección: <b>${mis} de ${MSC().LISTA.length}</b>. Te acompañan en la liga, en los duelos y patinando a tu lado.</p>
+          ${Object.entries(MSC().RAREZA).map(([r, [rn, rc]]) => `<h3 class="rz-h" style="color:${rc}">${rn}${r === 'legendaria' ? 's' : r === 'comun' ? 'es' : 's'}</h3><div class="shop">${MSC().LISTA.filter(x => x[2] === r).map(petCard).join('')}</div>`).join('')}
+          ${yoJ().mascota ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="mascota" data-v="">Ir sin mascota</button>' : ''}`
+        : `<div class="shop">${TIENDA.filter(([c]) => tt === 'personaje' ? !['estela', 'cele'].includes(c) : tt === 'estelas' ? c === 'estela' : c === 'cele').map(itemCard).join('')}</div>
+          <div class="row">${tt === 'estelas' && (yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${tt === 'goles' && (yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div>`}</section>`;
     const resH = res ? (() => { const d = res.duelo && J.duelos[res.duelo], o = d ? J.todos[otro(d)] || {} : null, su = d ? suyo(d) : null;
       return `<section class="card rt-res"><button class="rt-cl" type="button" data-a="cerrarres" aria-label="Cerrar">×</button><span class="kicker">${res.duelo ? 'Duelo contra ' + esc((o || {}).n || '') : 'Tu partida'}</span>
         <b class="rt-pts">${fmtInt(res.puntos)}<small> puntos</small></b>
@@ -1062,8 +1086,8 @@
         ${res.nuevoRec ? '<span class="rt-badge">¡Nuevo récord!</span>' : res.mejorHoy ? '<span class="rt-badge">Tu mejor partida de hoy</span>' : ''}
         ${d ? (su == null ? `<p class="sub">Ahora le toca a ${esc(o.n || '')}. Lo verá al entrar.</p>` : `<p class="rt-vs ${res.puntos > su ? 'g' : res.puntos < su ? 'p' : 'e'}">${res.puntos > su ? '¡Has ganado!' : res.puntos < su ? 'Esta vez gana ' + esc(o.n || '') : '¡Empate!'} · ${fmtInt(res.puntos)} – ${fmtInt(su)}</p>`) : ''}
         <div class="row"><button class="btn primary" type="button" data-a="jugar">Otra vez</button>${d && su != null ? `<button class="btn" type="button" data-a="retar" data-u="${otro(d)}">Revancha</button>` : ''}</div></section>`; })() : '';
-    shell(`<section class="rt-hero"><button type="button" class="rt-av" data-a="${isAdmin() ? 'editavdt' : 'editavj'}" aria-label="Cambiar mi personaje">${avatarSVG(miAv(), miLv(), miNombre())}<span class="rt-ed">Cambiar</span></button>
-        <div class="rt-b"><span class="kicker">El reto</span><h1>Patina y marca</h1>
+    shell(`<section class="rt-hero"><button type="button" class="rt-av" data-a="${isAdmin() ? 'editavdt' : 'editavj'}" aria-label="Cambiar mi personaje">${avatarSVG(miAv(), miLv(), miNombre())}<span class="rt-ed">Cambiar</span>${mscH(y.mascota, 'msc hero')}</button>
+        <div class="rt-b"><span class="kicker">El reto</span><h1>Patina y marca</h1>${(campeona() || {}).u === yo_ ? `<span class="rt-camp">${CORONA}${isAdmin() ? 'Campeón' : 'Campeona'} de la semana pasada</span>` : ''}
           <div class="rt-st"><span><b>${fmtInt(monedas())}</b>monedas</span><span><b>${fmtInt(y.rec || 0)}</b>récord</span><span><b>${rachaJ(y)}</b>${rachaJ(y) === 1 ? 'día' : 'días'} seguidos</span></div></div>
         <button class="btn big rt-play" type="button" data-a="jugar">Jugar</button></section>
       ${J.sinReglas ? `<section class="card aviso-reglas"><h2>${isAdmin() ? 'Faltan las reglas del reto' : 'El reto todavía no está listo'}</h2><p>${isAdmin() ? 'Firebase no deja guardar nada del juego (partidas, duelos, tienda ni tu personaje) porque las reglas nuevas no están publicadas. Ve a la consola de Firebase, Firestore → Reglas, pega el archivo <b>firestore.rules</b> y pulsa «Publicar».' : 'Puedes jugar, pero todavía no se guardan las partidas. Carlos lo activa en breve.'}</p></section>` : ''}
