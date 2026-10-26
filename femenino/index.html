@@ -536,6 +536,57 @@ button.tkt, button.cromo, .mrc, .bal-c { cursor: pointer; -webkit-tap-highlight-
 .tkts.col.mini .tkt { grid-template-columns: 58px minmax(0, 1fr); } .tkts.col.mini .tkt::before, .tkts.col.mini .tkt::after { left: 51px; }
 .tkts.col.mini .tkt-d { padding: 8px 2px; } .tkts.col.mini .tkt-d b { font-size: 24px; } .tkts.col.mini .tkt-b { padding: 8px 12px; gap: 2px; } .tkts.col.mini .riv { font-size: 16px; } .tkts.col.mini .meta { display: none; }
 .cal-c { padding-block: 12px; } .cal-c .cd { aspect-ratio: auto; height: 42px; } .cal-c .cal-g { gap: 3px; }
+/* El reto (26 oct): minijuego, liga, duelos y tienda */
+.rt-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 18px; border-radius: 24px; color: #fff; background: radial-gradient(120% 140% at 100% 0%, #c8475c 0%, #8a2033 45%, #4a0f1a 100%); box-shadow: var(--shadow-lg); }
+.rt-hero::after { content: ""; position: absolute; right: -40px; bottom: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255, 255, 255, .07); pointer-events: none; }
+.rt-hero .kicker { color: rgba(255, 255, 255, .75); } .rt-hero h1 { color: #fff; margin: 0; }
+.rt-av .av { width: 92px; height: 92px; border-radius: 26px; display: block; box-shadow: 0 0 0 3px rgba(255, 255, 255, .35); }
+.rt-b { display: grid; gap: 6px; min-width: 0; z-index: 1; }
+.rt-st { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: rgba(255, 255, 255, .8); } .rt-st span { display: grid; } .rt-st b { font: 600 20px/1.1 var(--font-display); color: #fff; font-variant-numeric: tabular-nums; }
+.rt-st.sm { color: var(--muted); } .rt-st.sm b { color: var(--fg); }
+.rt-play { grid-column: 1 / -1; z-index: 1; background: #ffd21f; color: #2a1a00; border: 0; font-size: 18px; font-weight: 800; letter-spacing: .02em; box-shadow: 0 6px 0 #c99a00; }
+.rt-play:active { transform: translateY(4px); box-shadow: 0 2px 0 #c99a00; }
+.rt-reto { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; background: var(--warn-soft); }
+.rt-reto b { display: block; } .rt-ra .av { width: 48px; height: 48px; border-radius: 50%; display: block; }
+.rt-res { position: relative; display: grid; gap: 8px; justify-items: start; }
+.rt-cl { position: absolute; right: 10px; top: 8px; border: 0; background: none; font-size: 24px; color: var(--muted); cursor: pointer; }
+.rt-pts { font: 600 44px/1 var(--font-display); font-variant-numeric: tabular-nums; } .rt-pts small { font: 600 14px var(--font); color: var(--muted); }
+.rt-badge { font-size: 13px; font-weight: 800; color: #2a1a00; background: #ffd21f; padding: 4px 10px; border-radius: 10px; }
+.rt-vs { margin: 0; font-weight: 700; } .rt-vs.g { color: var(--good); } .rt-vs.p { color: var(--bad); } .rt-vs.e { color: var(--warn); }
+.rt-tabs { justify-self: start; }
+.podio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; padding-top: 8px; }
+.pd { display: grid; justify-items: center; gap: 2px; min-width: 0; } .pd b { font-size: 13.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pd small { font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pd-av .av { width: 56px; height: 56px; border-radius: 50%; display: block; } .pd.p1 .pd-av .av { width: 74px; height: 74px; box-shadow: 0 0 0 3px #e0b23c; }
+.pd-base { width: 100%; display: grid; place-items: center; border-radius: 12px 12px 4px 4px; font: 700 22px var(--font-display); color: #fff; margin-top: 4px; }
+.pd.p1 .pd-base { height: 70px; background: linear-gradient(#e0b23c, #b88a12); } .pd.p2 .pd-base { height: 52px; background: linear-gradient(#b8c0c8, #8a939c); } .pd.p3 .pd-base { height: 40px; background: linear-gradient(#d89a66, #a8683a); }
+.pd.me b { color: var(--accent); }
+.lg-rows { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.lg-rows li { display: grid; grid-template-columns: 22px 34px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 12px; background: var(--fill); font-size: 14px; }
+.lg-rows li.me { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); } .lg-rows b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-n { font-weight: 800; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; } .lg-p { font: 600 16px var(--font-display); font-variant-numeric: tabular-nums; }
+.lg-av .av { width: 34px; height: 34px; border-radius: 50%; display: block; }
+.lg-dots { display: flex; gap: 3px; } .lg-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); } .lg-dots i.on { background: var(--accent); } .lg-dots i.hoy { box-shadow: 0 0 0 1.5px var(--fg); }
+.dls { display: grid; gap: 8px; } .dl-r { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.dl-b { display: grid; } .dl-b small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.res.tuyo { background: var(--accent); color: var(--accent-ink); } .res.esp { background: var(--lilac); color: var(--fg); } .res.cad { background: var(--fill); color: var(--muted); }
+.pill.coin { background: #fff2c2; color: #6b4e00; }
+.shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr)); gap: 10px; }
+.sh { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 10px 8px 12px; border-radius: 16px; background: var(--fill); } .sh.own { background: var(--good-soft); }
+.sh-p .av { width: 76px; height: 76px; border-radius: 18px; display: block; } .sh-e { display: block; width: 76px; height: 76px; border-radius: 50%; box-shadow: inset 0 0 0 6px rgba(255, 255, 255, .5); }
+.sh b { font-size: 13.5px; } .sh small { font-size: 11px; color: var(--muted); }
+/* partida a pantalla completa */
+.jg-ov { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; background: #1b0b10; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); touch-action: none; user-select: none; -webkit-user-select: none; }
+body.jg-on { overflow: hidden; }
+.jg-top { display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: #fff; font-weight: 700; }
+.jg-tt { flex: 1; min-width: 0; font-size: 13px; color: rgba(255, 255, 255, .7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jg-sc { font: 600 26px var(--font-display); font-variant-numeric: tabular-nums; } .jg-lv { color: #ff6b81; font-size: 18px; letter-spacing: 2px; }
+.jg-x { border: 0; border-radius: 12px; padding: 8px 12px; background: rgba(255, 255, 255, .14); color: #fff; font: 600 13px var(--font); cursor: pointer; }
+.jg-cv { position: relative; flex: 1; min-height: 0; display: flex; justify-content: center; }
+.jg-cv canvas { display: block; touch-action: none; border-radius: 18px 18px 0 0; }
+.jg-big { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; font: 700 84px var(--font-display); color: #681825; text-shadow: 0 2px 0 #fff; }
+.jg-hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); width: max-content; max-width: 90%; text-align: center; font-size: 13px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .55); padding: 8px 12px; border-radius: 12px; pointer-events: none; transition: opacity .4s; }
+.jg-hint.off { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .rt-play:active { transform: none; } }
 </style>
 </head>
 <body>
@@ -543,9 +594,10 @@ button.tkt, button.cromo, .mrc, .bal-c { cursor: pointer; -webkit-tap-highlight-
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261026f"></script>
-<script src="firebase-config.js?v=20261026f"></script>
-<script src="app.js?v=20261026f"></script>
+<script src="lib/avatar.js?v=20261026h"></script>
+<script src="firebase-config.js?v=20261026h"></script>
+<script src="juego.js?v=20261026h"></script>
+<script src="app.js?v=20261026h"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

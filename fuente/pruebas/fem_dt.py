@@ -95,4 +95,4 @@ async def main():
         await ctx.close()
       print('errs', errs); await b.close()
   finally: srv.terminate()
-asyncio.run(main())
+if __name__ == '__main__': asyncio.run(main())

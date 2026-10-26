@@ -18,6 +18,7 @@
     if (s[0] === 'equipos') return isAdmin(u) || (activa(u) && acc(u).equipo === s[1]);
     if (s[0] === 'registros') return isAdmin(u) || (!!u && u.uid === s[1]);
     if (s[0] === 'valoraciones') return isAdmin(u);
+    if (s[0] === 'juego' || s[0] === 'duelos') return activa(u) || isAdmin(u);
     return false;
   }
   function canWrite(p, u, data) {
@@ -25,6 +26,13 @@
     if (s[0] === 'jugadoras') return del ? (isAdmin(u) || (!!u && u.uid === s[1])) : (!!u && u.uid === s[1]);
     if (s[0] === 'acceso' || s[0] === 'equipos' || s[0] === 'valoraciones') return isAdmin(u);
     if (s[0] === 'registros') return del ? (isAdmin(u) || (!!u && u.uid === s[1])) : (activa(u) && u.uid === s[1]);
+    const reto = activa(u) || isAdmin(u);
+    if (s[0] === 'juego') return del ? (isAdmin(u) || (!!u && u.uid === s[1])) : (reto && u.uid === s[1]);
+    if (s[0] === 'duelos') { const old = db[p];
+      if (del) return isAdmin(u) || (!!u && !!old && (old.a === u.uid || old.b === u.uid));
+      if (!old) return reto && data.a === u.uid;
+      const nu = Object.assign({}, old, data);   // merge
+      return reto && (u.uid === old.a || u.uid === old.b) && nu.a === old.a && nu.b === old.b && nu.seed === old.seed; }
     return false;
   }
   // listar una colección: la regla se mira sobre un documento cualquiera de ella (como hace Firestore con las consultas)

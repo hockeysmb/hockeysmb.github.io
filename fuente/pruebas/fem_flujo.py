@@ -23,7 +23,7 @@ async def main():
       U = 'http://localhost:8768/femenino/'
       async def go(): await pg.goto(U); await pg.wait_for_timeout(700)
       async def salir():
-        if await pg.query_selector('[data-v="datos"]'): await pg.click('[data-v="datos"]')
+        if await pg.query_selector('.nav [data-v="yo"]'): await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(150); await pg.click('[data-v2="datos"]')
         await pg.click('[data-a="out"]'); await pg.wait_for_timeout(500)
       await go(); await pg.screenshot(path=O + '0_entrar.png')
       # 1. alta de Ana (menor)
@@ -224,7 +224,7 @@ async def main():
       mc = ' '.join((await pg.text_content('.msg-card')).split()); print('Ana ve:', mc[:200])
       if 'A tu partido' not in mc: errs.append('no ve la respuesta al partido')
       await pg.screenshot(path=O + '7d_hoy_respuesta.png', full_page=True)
-      await pg.click('[data-v="datos"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '8_datos.png', full_page=True)
+      await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(150); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '8_datos.png', full_page=True)
       await pg.click('[data-a="borrartodo"]'); await pg.click('[data-a="borrartodo"]'); await pg.wait_for_timeout(700)
       left = await pg.evaluate(f"Object.keys(window.__fake.db()).filter(k=>k.includes('{uid}') && !k.startsWith('acceso') && !k.startsWith('valoraciones'))"); print('quedan de Ana:', left)
       if left: errs.append('no se borra todo')

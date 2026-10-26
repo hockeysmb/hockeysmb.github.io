@@ -154,3 +154,13 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - DT: pestañas «Próximos», «Jugados» y «Calendario» (`A.ptabs`; el calendario es el mismo `mesHTML` que el de las jugadoras, con `A.mes` y `A.cday`), balance por categoría como filtro, entradas en columna con quién ha contestado (`whoDots`: verde antes y después, ámbar solo antes, gris nada) en los de hoy y los de los últimos 10 días; los más antiguos, en marcador. «Añadir un partido» plegado.
 - Ficha del partido (DT): «Quién ha contestado» con los personajes (tocar una que ha contestado lleva a lo que cuenta; una que no, a su ficha) y pestañas «Resumen» / «Lo que cuenta cada una» (`A.ptab`).
 - Jugadoras: «Lista» o «Calendario» (se recuerda en el móvil, `smbf-pmodo`). Lista: te falta contar, hoy, 3 próximos y 4 jugados (con «ver todos»). Calendario: el mes compacto y debajo los partidos del día elegido (por defecto, el siguiente partido del mes).
+
+## App de jugadoras · El reto (26 oct)
+
+- Pestaña «Reto» (jugadoras y DT). Minijuego **«Patina y marca»** (`femenino/juego.js`, `SMBJuego.start`): tres carriles, se toca a izquierda o derecha (o flechas), rivales y conos quitan vida (3), bolas = +10 puntos y +1 moneda, portería cada 12 filas = gol (+100) si no vas por el carril de la portera; 10 puntos por segundo; cada vez más rápido. Todo sale de una semilla (`seed`): en un duelo las dos juegan la misma pista. Se pinta en una capa aparte (`.jg-ov`), fuera de `#app`, así que los `render()` no la rompen.
+- Datos (Firestore, colecciones nuevas, **reglas nuevas**): `juego/{uid}` = {n, av, lv, adm, oculta, bolas, gastado, compras ['cat|valor'], estela, dias {fecha: mejor partida}, rec, partidas}; `duelos/{id}` = {a, b, seed, pa, pb, ts}. Las ven todas las activas y la DT; nada de bienestar. Cada una escribe su ficha (se crea al entrar, `jSync`). La puntuación la calcula el móvil: es un juego entre compañeras, no hay protección contra trampas.
+- Monedas = la mitad de los puntos por responder la app + bolas recogidas − gastado (la DT, solo bolas). Tienda (`TIENDA`): estelas para el juego y ropa, gafas, gorros, fondos (`playa`, `neon`) y marco (`arcoiris`) para el personaje; lo comprado sale también en «Cambiar mi jugadora» (`itemOk` acepta siempre lo de la tienda).
+- Liga de la semana: suma la mejor partida de cada día (lunes a domingo). Duelos: caducan a los 7 días; el aviso «X te ha retado» sale en «Hoy». La DT es «el jefe final».
+- «Mis datos» → «No salir en la liga ni en los duelos» (`oculta`). Borrar los datos (jugadora o DT) borra también `juego/{uid}` y sus duelos.
+- «Mis datos» ya no está en el menú: se entra desde «Mi jugadora».
+- Prueba: `fem_reto` (equipo inventado de `fem_dt`, puerto 8771: el 8770 es el del artifact).

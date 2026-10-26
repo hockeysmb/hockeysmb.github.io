@@ -31,6 +31,22 @@ service cloud.firestore {
       allow create, update: if activa() && request.auth.uid == uid;
       allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
+    // El reto (minijuego): ficha de juego de cada una (nombre de pila, personaje, puntos del juego, monedas).
+    // La ven todas las jugadoras activas y la DT; cada una escribe la suya. Nada de bienestar.
+    function enElReto() { return activa() || isAdmin(); }
+    match /juego/{uid} {
+      allow read: if enElReto();
+      allow create, update: if enElReto() && request.auth.uid == uid;
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+    // Duelos 1 contra 1: a reta a b. Los ven todas; los crea quien reta y los actualizan las dos.
+    match /duelos/{id} {
+      allow read: if enElReto();
+      allow create: if enElReto() && request.resource.data.a == request.auth.uid;
+      allow update: if enElReto() && (request.auth.uid == resource.data.a || request.auth.uid == resource.data.b)
+        && request.resource.data.a == resource.data.a && request.resource.data.b == resource.data.b && request.resource.data.seed == resource.data.seed;
+      allow delete: if isAdmin() || (signedIn() && (request.auth.uid == resource.data.a || request.auth.uid == resource.data.b));
+    }
     // Lo que valora la DT de cada jugadora: solo la DT
     match /valoraciones/{uid}/{rest=**} {
       allow read, write: if isAdmin();
