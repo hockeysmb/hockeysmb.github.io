@@ -151,6 +151,6 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 
 ## Partidos más cómodos (26 oct)
 
-- DT: pestañas «Próximos» y «Jugados» (`A.ptabs`), balance por categoría como filtro, entradas en columna con quién ha contestado (`whoDots`: verde antes y después, ámbar solo antes, gris nada) en los de hoy y los de los últimos 10 días; los más antiguos, en marcador. «Añadir un partido» plegado.
+- DT: pestañas «Próximos», «Jugados» y «Calendario» (`A.ptabs`; el calendario es el mismo `mesHTML` que el de las jugadoras, con `A.mes` y `A.cday`), balance por categoría como filtro, entradas en columna con quién ha contestado (`whoDots`: verde antes y después, ámbar solo antes, gris nada) en los de hoy y los de los últimos 10 días; los más antiguos, en marcador. «Añadir un partido» plegado.
 - Ficha del partido (DT): «Quién ha contestado» con los personajes (tocar una que ha contestado lleva a lo que cuenta; una que no, a su ficha) y pestañas «Resumen» / «Lo que cuenta cada una» (`A.ptab`).
 - Jugadoras: «Lista» o «Calendario» (se recuerda en el móvil, `smbf-pmodo`). Lista: te falta contar, hoy, 3 próximos y 4 jugados (con «ver todos»). Calendario: el mes compacto y debajo los partidos del día elegido (por defecto, el siguiente partido del mes).

@@ -608,6 +608,19 @@
     if (x.fecha < t) return pd.pre ? '<span class="pst-j due">Falta el después</span>' : ls.get(`smbf-nojuego-${me.uid}-${x.id}`) ? '' : '<span class="pst-j">Sin contar</span>';
     const n = daysBetween(t, x.fecha); return `<span class="pst-j">${n === 1 ? 'Mañana' : 'En ' + n + ' días'}</span>`;
   }
+  // calendario de un mes: días con partido marcados por categoría; done/due deciden el color del día
+  function mesHTML(all, mes, cday, done, due) {
+    const t = today(), [y, m] = mes.split('-').map(Number), P = all.filter(x => x.fecha.startsWith(mes));
+    const first = new Date(y, m - 1, 1), off = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
+    const sel = cday && cday.startsWith(mes) ? cday : ((P.find(x => x.fecha >= t) || P[P.length - 1] || {}).fecha || '');
+    const cells = []; for (let i = 0; i < off; i++) cells.push('<span class="cd e"></span>');
+    for (let d = 1; d <= nd; d++) { const k = `${mes}-${String(d).padStart(2, '0')}`, L = P.filter(x => x.fecha === k), ok = L.length && L.every(done), mal = L.some(due);
+      cells.push(L.length ? `<button type="button" class="cd has${k === t ? ' hoy' : ''}${sel === k ? ' sel' : ''}${ok ? ' done' : ''}${mal ? ' due' : ''}" data-cday="${k}" aria-label="${esc(fmtDay(k))}: ${L.length} ${L.length === 1 ? 'partido' : 'partidos'}"><b>${d}</b><span class="dots">${L.map(x => `<i class="${catCls(x.cat)}"></i>`).join('')}</span></button>`
+        : `<span class="cd${k === t ? ' hoy' : ''}"><b>${d}</b></span>`); }
+    const mv = k => { const d = new Date(y, m - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+    return { sel, P, html: `<section class="card cal-c"><div class="cal-h"><button type="button" class="btn ghost small" data-pmes="${mv(-1)}" aria-label="Mes anterior">‹</button><h2>${MESES_L[m - 1]} ${y}</h2><button type="button" class="btn ghost small" data-pmes="${mv(1)}" aria-label="Mes siguiente">›</button></div>
+      <div class="cal-g">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="cw">${d}</span>`).join('')}${cells.join('')}</div></section>` };
+  }
   function partidosJView() {
     const t = today(), cat = ls.get('smbf-pcat') || 'todas', modo = ls.get('smbf-pmodo') || 'lista';
     const all = allPart(calJ()).filter(x => cat === 'todas' || x.cat === cat);
@@ -622,18 +635,9 @@
         + sec('Jugados', pas.slice(0, draft.pjmas ? 99 : 4), 'mini') + (pas.length > 4 && !draft.pjmas ? '<button class="btn ghost" type="button" data-a="pjmasj">Ver todos los jugados</button>' : '')
         + (!all.length ? '<p class="sub">No hay partidos.</p>' : '');
     } else {
-      const mes = draft.mes || t.slice(0, 7), [y, m] = mes.split('-').map(Number), P = all.filter(x => x.fecha.startsWith(mes));
-      const first = new Date(y, m - 1, 1), off = (first.getDay() + 6) % 7, nd = new Date(y, m, 0).getDate();
-      // día elegido: el que toque; si no, hoy o el primer partido que quede en ese mes
-      const sel = draft.cday && draft.cday.startsWith(mes) ? draft.cday : ((P.find(x => x.fecha >= t) || P[P.length - 1] || {}).fecha || '');
-      const cells = []; for (let i = 0; i < off; i++) cells.push('<span class="cd e"></span>');
-      for (let d = 1; d <= nd; d++) { const k = `${mes}-${String(d).padStart(2, '0')}`, L = P.filter(x => x.fecha === k), done = L.length && L.every(x => (pdOf(x) || {}).juega), due = L.some(x => pend.includes(x));
-        cells.push(L.length ? `<button type="button" class="cd has${k === t ? ' hoy' : ''}${sel === k ? ' sel' : ''}${done ? ' done' : ''}${due ? ' due' : ''}" data-cday="${k}" aria-label="${esc(fmtDay(k))}: ${L.length} ${L.length === 1 ? 'partido' : 'partidos'}"><b>${d}</b><span class="dots">${L.map(x => `<i class="${catCls(x.cat)}"></i>`).join('')}</span></button>`
-          : `<span class="cd${k === t ? ' hoy' : ''}"><b>${d}</b></span>`); }
-      const mv = k => { const d = new Date(y, m - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+      const { html: mesH, sel, P } = mesHTML(all, draft.mes || t.slice(0, 7), draft.cday, x => (pdOf(x) || {}).juega, x => pend.includes(x));
       const delDia = P.filter(x => x.fecha === sel);
-      cuerpo = `<section class="card cal-c"><div class="cal-h"><button type="button" class="btn ghost small" data-pmes="${mv(-1)}" aria-label="Mes anterior">‹</button><h2>${MESES_L[m - 1]} ${y}</h2><button type="button" class="btn ghost small" data-pmes="${mv(1)}" aria-label="Mes siguiente">›</button></div>
-          <div class="cal-g">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="cw">${d}</span>`).join('')}${cells.join('')}</div></section>
+      cuerpo = `${mesH}
         ${delDia.length ? `<div class="tkts col">${delDia.map(x => tk(x)).join('')}</div>` : `<p class="sub">${P.length ? 'Toca un día con partido.' : 'No hay partidos este mes.'}</p>`}`;
     }
     shell(`<div class="dt-h"><div><span class="kicker">Sección femenina</span><h1>Partidos</h1></div>
@@ -1159,10 +1163,12 @@
     const recientes = pas.filter(x => daysBetween(x.fecha, t) <= 10), viejos = pas.filter(x => daysBetween(x.fecha, t) > 10);
     const tk = x => ticketHTML(x, (x.fecha <= t ? whoCount(x) + whoDots(x) : '') + (resOf(x) ? `<span class="res ${resOf(x).k}">${resOf(x).l} ${resOf(x).a}–${resOf(x).b}</span>` : ''), `data-part="${x.id}"`);
     shell(`<div class="dt-h"><div><span class="kicker">Sección femenina · G · E · P</span><h1>Partidos</h1></div>
-        <div class="seg etab" role="tablist">${[['proximos', `Próximos`], ['jugados', `Jugados`]].map(([k, l]) => `<button type="button" role="tab" data-ptabs="${k}" aria-pressed="${tab === k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div></div>
+        <div class="seg etab" role="tablist">${[['proximos', `Próximos`], ['jugados', `Jugados`], ['cal', 'Calendario']].map(([k, l]) => `<button type="button" role="tab" data-ptabs="${k}" aria-pressed="${tab === k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div></div>
       <div class="bal" role="group" aria-label="Filtrar por categoría">${['Sub-15', 'Sub-17', '1ª Autonómica'].map(bal).join('')}</div>
       ${cat !== 'todas' ? `<button class="btn ghost small" type="button" data-pcat="todas">Ver todas las categorías</button>` : ''}
-      ${tab === 'proximos' ? `${fut.some(x => x.fecha === t) || recientes.length ? WHO_LEG : ''}
+      ${tab === 'cal' ? (() => { const us = activas(), { html, sel, P } = mesHTML(L, A.mes || t.slice(0, 7), A.cday, x => x.fecha < t && us.length && us.every(u => respEst(u, x) === 'post'), x => false), dd = P.filter(x => x.fecha === sel);
+        return `${html}${dd.length ? `${dd.some(x => x.fecha <= t) ? WHO_LEG : ''}<div class="tkts col">${dd.map(tk).join('')}</div>` : `<p class="sub">${P.length ? 'Toca un día con partido.' : 'No hay partidos este mes.'}</p>`}`; })()
+      : tab === 'proximos' ? `${fut.some(x => x.fecha === t) || recientes.length ? WHO_LEG : ''}
         ${fut.length ? `<div class="tkts col">${fut.slice(0, A.pmas ? 99 : 5).map(tk).join('')}</div>${fut.length > 5 && !A.pmas ? `<button class="btn ghost" type="button" data-a="pmas">Ver los ${fut.length - 5} siguientes</button>` : ''}` : '<p class="sub">No hay partidos por delante.</p>'}
         <details class="card add-p"${A.addOpen ? ' open' : ''}><summary><h2>Añadir un partido</h2><span class="sub">amistosos, torneos, copa</span></summary>
           <div class="row"><input type="date" id="np-fecha" class="date-in" aria-label="Fecha"><input type="time" id="np-hora" class="date-in" aria-label="Hora">
@@ -1321,6 +1327,8 @@
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
     if (b.dataset.ptabs) { A.ptabs = b.dataset.ptabs; render(); return; }
+    if (b.dataset.pmes) { A.mes = b.dataset.pmes; A.cday = ''; render(); return; }
+    if (b.dataset.cday != null && view === 'partidos') { A.cday = b.dataset.cday; render(); return; }
     if (b.dataset.ptab) { A.ptab = b.dataset.ptab; render(); return; }
     if (b.dataset.pcu) { A.ptab = 'cada'; render(); const el = document.getElementById('pc-' + b.dataset.pcu); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (b.dataset.jug) { irFicha(b.dataset.jug, view === 'equipo' ? 'equipo' : view === 'resumen' ? 'resumen' : A.from); return; }
