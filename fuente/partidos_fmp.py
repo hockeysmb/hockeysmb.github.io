@@ -42,5 +42,26 @@ for u in ('https://www.server2.sidgad.es/portales.js?v=123',):
         st, fin, h = get(u); open(os.path.join(OUT, 'portales.js'), 'w').write(h); log.append(f'portales.js {st} {len(h)}')
         log.append('php: ' + ' '.join(sorted(set(re.findall(r"[\w'+ ]*_\w*\.php", h)))[:80]))
     except Exception as e: log.append(f'ERROR {u} {e!r}')
+# paso 3: listado de competiciones -> cabecera de cada liga -> botón del calendario
+import urllib.parse, html as H
+SG = 'https://www.server2.sidgad.es/'
+def post(url, data):
+    req = urllib.request.Request(url, data=urllib.parse.urlencode(data).encode(), headers=dict(UA, **{'Content-Type': 'application/x-www-form-urlencoded', 'Referer': BASE + '/', 'X-Requested-With': 'XMLHttpRequest'}))
+    with urllib.request.urlopen(req, timeout=30) as r: return r.read().decode('utf-8', 'replace')
+def attrs(tag): return {k: H.unescape(v) for k, v in re.findall(r'([\w-]+)=["\']([^"\']*)["\']', tag)}
+try:
+    st, fin, ls = get(SG + 'fmp/fmp_ls_1.php'); open(os.path.join(OUT, 'ls.html'), 'w').write(ls); log.append(f'ls {st} {len(ls)}')
+    for idc in LIGAS:
+        m = re.search(r'<[^>]*\bid=["\']' + idc + r'["\'][^>]*>', ls); log.append(f'{idc} fila: {m.group(0)[:300] if m else None}')
+        if not m: continue
+        a = attrs(m.group(0)); ta = re.search(r'id=["\']teams_array_' + idc + r'["\'][^>]*value=["\']([^"\']*)', ls) or re.search(r'value=["\']([^"\']*)["\'][^>]*id=["\']teams_array_' + idc, ls)
+        hd = post(SG + 'competicion_header_creator.php', {'config_params': a.get('config_params', ''), 'idm': '1', 'teams_array': ta.group(1) if ta else '', 'cliente': 'fmp', 'temp': '41', 'idc': idc, 'logo': a.get('logo', ''), 'site_lang': 'es'})
+        open(os.path.join(OUT, f'header_{idc}.html'), 'w').write(hd); log.append(f'{idc} header {len(hd)} acceso={a.get("acceso")}')
+        for b in re.findall(r'<[^>]*\bfile=["\'][^"\']+["\'][^>]*>', hd):
+            ba = attrs(b); log.append(f'   btn id={ba.get("id")} file={ba.get("file")}')
+            if 'cal' in (ba.get('id', '') + ba.get('file', '')).lower():
+                c = post(SG + 'fmp/fmp_' + ba['file'], {'idc': idc, 'tipo_stats': '', 'site_lang': 'es'})
+                open(os.path.join(OUT, f'cal_{idc}_{ba.get("id")}.html'), 'w').write(c); log.append(f'   -> {len(c)} BLANCA={c.upper().count("BLANCA")}')
+except Exception as e: log.append(f'ERROR paso 3 {e!r}')
 open(os.path.join(OUT, 'log.txt'), 'w').write('\n'.join(log))
 print('\n'.join(log))
