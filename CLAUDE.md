@@ -21,12 +21,12 @@ App web del cuerpo técnico de hockey sobre patines del Colegio Santa María la 
 
 ## App de jugadoras (`femenino/`)
 
-- Otra app, para todas las jugadoras de la sección femenina, de Sub-15 para arriba: bienestar antes del entreno, esfuerzo después (carga = esfuerzo × minutos), diario semanal (qué tal ha ido, lo mejor, lo que cambiaría y un compromiso) y un personaje que sube de nivel por responder (los puntos nunca dependen de lo que contestan). Se publica en https://hockeysmb.github.io/femenino/.
+- Otra app, para todas las jugadoras de la sección femenina, de Sub-15 para arriba: bienestar antes del entreno, esfuerzo después (carga = esfuerzo × minutos), diario de cada día (qué tal el día, lo mejor, lo que cambiaría y cómo lo va a hacer) y un compromiso semanal y un personaje que sube de nivel por responder (los puntos nunca dependen de lo que contestan). Se publica en https://hockeysmb.github.io/femenino/.
 - **No tiene paso de construcción:** `femenino/index.html` + `femenino/app.js` son lo publicado. Usa su propio proyecto de Firebase (`femenino/firebase-config.js`, `femenino/firestore.rules`), no el del banco.
 - **Un solo grupo, «Femenino»** (sin separar por categorías); los días de entreno los pone la DT en «Altas».
 - **Solo la DT (`SMBF_ADMIN`) ve los datos de todas** y puede contestarles desde su ficha; cada jugadora ve y borra los suyos. Las cuentas se activan a mano cuando hay consentimiento firmado (en menores, por la familia). Los datos se borran el 30 de junio de 2027.
 - **Son datos de salud y hay menores:** no añadas campos nuevos de salud (ciclo menstrual, lesiones, medicación…) sin que la DT lo pida y sin actualizar la hoja de información y el consentimiento.
-- **El reto:** tres minijuegos con su personaje (`femenino/juego.js` y `femenino/juegos2.js`), uno distinto cada día, 3 partidas gratis al día (y hasta 2 más con monedas), solo después de contestar lo de hoy; duelos 1 contra 1, liga de la semana y tienda. Las compañeras se ven entre ellas solo el nombre de pila, el personaje y los puntos del juego (colecciones `juego` y `duelos`); nunca nada de bienestar.
+- **El reto:** tres minijuegos con su personaje (`femenino/juego.js` y `femenino/juegos2.js`), uno distinto cada día, partidas sin límite (solo las 5 primeras del día dan monedas), y solo después de contestar todo lo de hoy, diario incluido; duelos 1 contra 1, liga de la semana y tienda. Las compañeras se ven entre ellas solo el nombre de pila, el personaje y los puntos del juego (colecciones `juego` y `duelos`); nunca nada de bienestar.
 - **Prueba:** `fem_flujo`, `fem_dt` (panel con doce jugadoras inventadas) y `fem_reto` (backend simulado `fuente/pruebas/fakefem.js`, con las mismas reglas).
 
 ## Reglas

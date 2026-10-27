@@ -210,3 +210,11 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - El después del entreno de ayer se puede contar hoy (`ayerHTML`, `draft.sesFecha`): el esfuerzo contado hasta 24 h después es igual de fiable (Phibbs y otros, 2017, adolescentes).
 - `antes.seg`: segundos que tardó en contestar el antes. Si son menos de 6 y las cinco respuestas son iguales, la ficha lo marca como «Muy rápido» (solo información). Sirve para detectar respuestas sin pensar ahora que contestar abre el juego.
 - Carga «Semana / mes»: ya no es aviso fuerte por sí sola. Por encima de 1,5 es «Atención» y pasa a «Revisar» solo si además llega peor de lo normal en ella (0,5 por debajo de su media). Entre 1,3 y 1,5 es información, salvo que también llegue peor. La investigación no ha demostrado que este cociente prediga lesiones ni que exista una «zona segura» de 0,8 a 1,3.
+
+## Diario de cada día y juego sin límite (27 oct)
+
+- **Diario diario.** Se guarda en `registros/{uid}/dias/{fecha}.diario = {tiempo (1 tormenta … 5 sol), mejor, cambiar, como, ts}`. Obligatorios: el tiempo y lo mejor. Da 5 puntos (`PTS.diario`).
+- El **compromiso** sigue siendo semanal en `semanas/{lunes}`, pero ahora solo guarda `{compromiso, area, cumplida, ts}`. Los campos de semanas anteriores (tiempo, mejor…) se conservan y se siguen viendo.
+- Pestaña «Diario» (antes «Semana», vista `semana`, `diarioView`): tira de la semana con el tiempo de cada día (`data-verdia` para ver otro día), formulario de hoy, compromiso de la semana y días anteriores. La respuesta de Carlos va con la clave `d:fecha`, la misma que las notas de ese día.
+- DT: el diario sale en el buzón y en «Te ha contado» de la ficha. En Equipo · Semana, «Diarios» es el % de días escritos. El tiempo de la semana suma todos los días. El CSV lleva cuatro columnas de diario.
+- **Juego:** sin límite de partidas. Para jugar hay que tener todo lo de hoy: el antes (o el del partido), el después a partir de la hora del aviso y el diario. Solo las 5 primeras partidas del día dan monedas por las bolas (`PARTIDAS_MONEDAS`); las demás cuentan para la liga, el récord y las misiones. `juego.jd = {f, n}`. Lo de comprar partidas se ha quitado.

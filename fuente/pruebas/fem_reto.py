@@ -14,6 +14,7 @@ def seed_reto():
     db['juego/' + u] = {'n': j['nombre'].split()[0], 'av': j['av'], 'lv': i % 7, 'adm': False, 'bolas': 40 * i, 'gastado': 0, 'compras': [], 'rec': 900 + 137 * i,
                         'dias': {'2026-10-26': 400 + 90 * i, **({'2026-10-27': 300 + 55 * i} if i % 2 else {}), '2026-10-21': 2000 if i == 5 else 300}, 'partidas': 5 + i,
                         'mascota': ['perro', 'zorro', 'axolote', '', 'gato', 'dragon', 'panda', 'pinguino', 'conejo'][i]}
+  db['registros/demo03/dias/2026-10-27']['diario'] = {'tiempo': 4, 'mejor': 'Me salió el 2c1', 'cambiar': '', 'como': '', 'ts': 1}
   db['duelos/dprueba1'] = {'a': 'demo01', 'b': 'demo03', 'seed': 12345, 'pa': 860, 'pb': None, 'ts': 1793100000000}
   return db
 
@@ -59,11 +60,11 @@ async def main():
       h1 = await pg.text_content('.rt-hero h1'); print('juego de hoy (27 oct):', h1, '·', ' '.join((await pg.text_content('.rt-left') or '').split()))
       if 'penaltis' not in h1: errs.append('no rota el juego del día')
       # 2b. sin contestar lo de hoy no se puede jugar
-      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-27', { antes: null, partidos: {} })"); await pg.wait_for_timeout(400)
+      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-27', { antes: null, partidos: {}, diario: null })"); await pg.wait_for_timeout(400)
       g = await pg.locator('.rt-gate').count(); dis = await pg.locator('.rt-play[disabled]').count(); print('sin contestar:', 'bloqueado' if g and dis else 'NO bloquea', '·', ' '.join((await pg.text_content('.rt-gate') or '').split()) if g else '')
       if not (g and dis): errs.append('deja jugar sin contestar lo de hoy')
       await pg.screenshot(path=O + '2b_sin_contestar.png')
-      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-27', " + json.dumps({'antes': seed_reto()['registros/demo03/dias/2026-10-27']['antes'], 'partidos': seed_reto()['registros/demo03/dias/2026-10-27'].get('partidos', {})}) + ")"); await pg.wait_for_timeout(400)
+      await pg.evaluate("window.__fake.put('registros/demo03/dias/2026-10-27', " + json.dumps({'antes': seed_reto()['registros/demo03/dias/2026-10-27']['antes'], 'partidos': seed_reto()['registros/demo03/dias/2026-10-27'].get('partidos', {}), 'diario': seed_reto()['registros/demo03/dias/2026-10-27']['diario']}) + ")"); await pg.wait_for_timeout(400)
       # 3. una partida (hoy, penaltis: se tira con la flecha arriba)
       await pg.click('.rt-play'); await partida()
       j = await db('juego/demo03'); print('tras la partida:', j.get('dias'), 'bolas', j.get('bolas'), 'partidas', j.get('partidas'), 'premios', j.get('premios'), 'misiones', j.get('mis'))
@@ -75,19 +76,14 @@ async def main():
       # 4. jugar el duelo pendiente
       await pg.click('[data-a="jugarduelo"][data-id="dprueba1"]'); await partida()
       d = await db('duelos/dprueba1'); print('duelo pendiente:', d.get('pa'), '-', d.get('pb'))
-      j = await db('juego/demo03'); print('tras contestar el duelo, partidas contadas:', (j.get('jd') or {}).get('n'))
-      if (j.get('jd') or {}).get('n') != 1: errs.append('contestar un duelo no debería contar')
-      # límite: con las tres gratis hechas, se puede comprar una más (hasta 2); con 5, ya no
-      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 3 }, bolas: 400 })"); await pg.wait_for_timeout(300); await pg.click('[data-a="cerrarres"]') if await pg.locator('[data-a="cerrarres"]').count() else None; await pg.wait_for_timeout(300)
-      lim = ' '.join((await pg.text_content('.rt-hero') or '').split()); print('con 3 partidas:', 'Una más' in lim, '·', (await pg.text_content('.rt-left') or '').strip())
-      if 'Una más' not in lim: errs.append('no ofrece comprar otra partida')
-      await pg.screenshot(path=O + '4b_limite.png')
-      g0 = (await db('juego/demo03')).get('gastado') or 0; await pg.click('.rt-play[data-a="comprarpartida"]'); await pg.wait_for_timeout(400); j = await db('juego/demo03')
-      print('compra partida:', j.get('jd'), 'gastado', g0, '→', j.get('gastado'), '· botón', (await pg.text_content('.rt-play')).strip())
-      if (j.get('jd') or {}).get('x') != 1 or (j.get('gastado') or 0) - g0 != 60 or 'Jugar' not in await pg.text_content('.rt-play'): errs.append('no se compra la partida extra')
-      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 5, x: 2 } })"); await pg.wait_for_timeout(300)
-      lim = ' '.join((await pg.text_content('.rt-hero') or '').split()); print('con 5 partidas:', 'Mañana más' in lim)
-      if 'Mañana más' not in lim: errs.append('no limita a 5 partidas')
+      # sin límite: con 5 jugadas se puede seguir jugando, pero ya sin monedas por las bolas
+      await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 5 } })"); await pg.wait_for_timeout(300); await pg.click('[data-a="cerrarres"]') if await pg.locator('[data-a="cerrarres"]').count() else None; await pg.wait_for_timeout(300)
+      ok = await pg.locator('.rt-play[data-a="jugar"]:not([disabled])').count(); print('con 5 partidas se puede jugar:', bool(ok), '·', (await pg.text_content('.rt-left') or '').strip())
+      if not ok: errs.append('limita las partidas')
+      b0 = (await db('juego/demo03')).get('bolas'); await pg.click('.rt-play'); await partida(); j = await db('juego/demo03')
+      print('partida 6: bolas', b0, '→', j.get('bolas'), '·', j.get('jd'))
+      if j.get('bolas') != b0 or (j.get('jd') or {}).get('n') != 6: errs.append('la partida 6 no debería dar monedas')
+      await pg.screenshot(path=O + '4b_sin_monedas.png', full_page=True)
       await pg.evaluate("window.__fake.put('juego/demo03', { jd: { f: '2026-10-27', n: 1 } })"); await pg.wait_for_timeout(300)
       if d.get('pb') is None: errs.append('no se guarda el duelo')
       await pg.screenshot(path=O + '4_duelo.png', full_page=True)

@@ -683,6 +683,37 @@ body.jg-on { overflow: hidden; }
 .visto { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--good); } .visto svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .msg-it .yo { margin: 2px 0 4px; font-size: 13px; color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
 .rt-pips i.pag { border-radius: 2px; } .rt-pips i.pag.on { background: #fff; }
+
+/* diario de cada día (27 oct) */
+.dsem { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.dsd { display: grid; justify-items: center; gap: 3px; padding: 6px 0 5px; border: 0; border-radius: 14px; background: transparent; color: var(--accent-ink); font: inherit; cursor: pointer; min-width: 0; }
+.dsd small { font-size: 11px; font-weight: 700; opacity: .75; } .dsd b { font-size: 12px; font-weight: 600; opacity: .85; font-variant-numeric: tabular-nums; }
+.dsd-i { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--accent-ink) 12%, transparent); }
+.dsd-i .wx-i { width: 22px; height: 22px; } .dsd.ok .dsd-i { background: var(--accent-ink); color: var(--accent); }
+.dsd.hoy .dsd-i { box-shadow: 0 0 0 2px var(--accent-ink); } .dsd .dot { width: 8px; height: 8px; border-radius: 50%; background: #ffd21f; }
+.dsd.fut { opacity: .4; cursor: default; } .dsd.sel { background: color-mix(in srgb, var(--accent-ink) 14%, transparent); }
+.dform .wxs.dk .wx { background: var(--accent-soft); color: var(--accent); } .dform .wxs.dk .wx[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.dform .wx-l { color: var(--muted); margin-top: -6px; }
+.dfield { display: grid; gap: 4px; }
+.df-h, .dl-r i { display: flex; align-items: center; gap: 8px; font: 700 17px/1 var(--font-display); }
+.df-h i, .dl-r i { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); }
+.df-h svg, .dl-r svg { width: 15px; height: 15px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dfield textarea { width: 100%; min-height: 58px; border: 0; resize: vertical; padding: 1px 0 0; background-color: transparent; font: 500 23px/29px "Caveat", "Segoe Print", cursive; color: var(--fg);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 28px, var(--line) 28px, var(--line) 29px); outline: none; }
+.dfield textarea:focus-visible { box-shadow: 0 2px 0 var(--accent); }
+.dentries { display: grid; gap: 10px; }
+.dentry { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.de-h { display: flex; align-items: center; gap: 10px; } .de-h > span:last-child { display: grid; } .de-h small { font-size: 12px; color: var(--muted); }
+.de-wx { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); flex: none; }
+.dl-r { display: flex; gap: 10px; align-items: flex-start; } .dl-r span { display: grid; min-width: 0; overflow-wrap: anywhere; font: 500 21px/1.15 "Caveat", "Segoe Print", cursive; }
+.dl-r b { font: 700 11px/1.4 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.de-resp { background: var(--fill); border-radius: 12px; padding: 8px 10px; } .de-resp p { margin: 2px 0 0; }
+.pl-prev { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; opacity: .9; }
+.pl-resp { margin: 0; font-size: 13.5px; opacity: .9; }
+.pledge .btn.dk { color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); background: transparent; justify-self: start; }
+.pledge .btn.small:not(.dk) { justify-self: start; background: #c9a227; border-color: #c9a227; color: #221c1d; }
+.dia-l { display: flex; align-items: center; gap: 8px; } .dia-l .wx-i { width: 22px; height: 22px; flex: none; color: var(--accent); }
+.said-q .kicker { display: flex; align-items: center; gap: 6px; }
 </style>
 </head>
 <body>
@@ -690,12 +721,12 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261026n"></script>
-<script src="firebase-config.js?v=20261026n"></script>
-<script src="mascotas.js?v=20261026n"></script>
-<script src="juego.js?v=20261026n"></script>
-<script src="juegos2.js?v=20261026n"></script>
-<script src="app.js?v=20261026n"></script>
+<script src="lib/avatar.js?v=20261027a"></script>
+<script src="firebase-config.js?v=20261027a"></script>
+<script src="mascotas.js?v=20261027a"></script>
+<script src="juego.js?v=20261027a"></script>
+<script src="juegos2.js?v=20261027a"></script>
+<script src="app.js?v=20261027a"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

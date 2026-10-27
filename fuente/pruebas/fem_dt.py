@@ -39,6 +39,11 @@ def seed():
       if back == 0 and n.startswith('Marta'): day['ses'][0]['nota'] = 'Las piernas no me iban en el último ejercicio'
       if back == 0 and n.startswith('Carla'): day['ses'][0]['nota'] = 'Hoy me he atrevido a pedirla de cara'
       db['registros/%s/dias/%s' % (u, d.isoformat())] = day
+    # diario de cada día (desde el 27 oct)
+    for back in range(0, 6):
+      if R.random() < 0.35 or (back == 0 and n.startswith(('Irene', 'Sara'))): continue
+      k = 'registros/%s/dias/%s' % (u, (HOY - datetime.timedelta(days=back)).isoformat())
+      db.setdefault(k, {'ts': 1})['diario'] = {'tiempo': R.choice([2, 3, 4, 4, 5, 5]), 'mejor': R.choice(['Me salió el 2c1', 'Aprobé el examen de mates', 'Presioné bien el pase atrás', 'Llegué puntual']), 'cambiar': R.choice(['', 'Hablar más en defensa', 'No enfadarme tanto']), 'como': R.choice(['', 'Respirar antes de contestar', 'Pedirla de cara']), 'ts': 1}
     # diario de las semanas
     for w in (2, 1, 0):
       lunes = (HOY - datetime.timedelta(days=HOY.weekday() + 7 * w)).isoformat()
