@@ -218,3 +218,9 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Pestaña «Diario» (antes «Semana», vista `semana`, `diarioView`): tira de la semana con el tiempo de cada día (`data-verdia` para ver otro día), formulario de hoy, compromiso de la semana y días anteriores. La respuesta de Carlos va con la clave `d:fecha`, la misma que las notas de ese día.
 - DT: el diario sale en el buzón y en «Te ha contado» de la ficha. En Equipo · Semana, «Diarios» es el % de días escritos. El tiempo de la semana suma todos los días. El CSV lleva cuatro columnas de diario.
 - **Juego:** sin límite de partidas. Para jugar hay que tener todo lo de hoy: el antes (o el del partido), el después a partir de la hora del aviso y el diario. Solo las 5 primeras partidas del día dan monedas por las bolas (`PARTIDAS_MONEDAS`); las demás cuentan para la liga, el récord y las misiones. `juego.jd = {f, n}`. Lo de comprar partidas se ha quitado.
+
+## El después del partido, solo al acabar (27 oct)
+
+- `postAbre(x)`: el día del partido, el después se abre a la hora del partido + 75 min (`POST_MIN`). Si no hay hora, se abre todo el día. Los partidos pasados están siempre abiertos y los futuros, cerrados.
+- Mientras está cerrado no salen los botones «Contar el partido» ni «Ya ha terminado: contarlo»: sale «El después se abre al acabar el partido, a las HH:MM». `actions.postpart` también lo comprueba. Cambiar un después ya contado se puede siempre.
+- El después del entreno no tiene hora (en «Altas» solo hay días), así que sigue abierto todo el día.

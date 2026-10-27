@@ -163,6 +163,8 @@ async def main():
       dp = await pg.evaluate(f"window.__fake.db()['registros/{uid}/dias/2026-10-27']"); print('antes del partido:', dp['partidos']['s17-3']['pre'], 'antes:', bool(dp.get('antes')))
       if dp['partidos']['s17-3']['pre'].get('confianza') != 4 or not dp.get('antes'): errs.append('no se guarda el antes del partido')
       await pg.screenshot(path=O + '9a3_pre_hecho.png', full_page=True)
+      pw = await pg.locator('.post-wait').count(); pb = await pg.locator('[data-a="postpart"][data-id="s17-3"]').count(); print('a las 17:30 el después está cerrado:', pw > 0 and pb == 0, '·', ' '.join((await pg.text_content('.post-wait') or '').split()) if pw else '')
+      if pb or not pw: errs.append('deja contar el después antes de que acabe el partido')
       # después, a las 20:45
       await pg.clock.set_system_time(datetime.datetime(2026, 10, 27, 20, 45, 0)); await go(); await entrar()
       await toca('[data-a="postpart"][data-id="s17-3"]')

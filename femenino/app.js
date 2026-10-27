@@ -601,7 +601,18 @@
     view = 'mflow'; render(); scrollTo({ top: 0 });
   }
   actions.prepart = async b => startMf('pre', b.dataset.id);
-  actions.postpart = async b => startMf('post', b.dataset.id);
+  // el después del partido se abre al acabar (27 oct): a la hora del partido más 75 min (dos partes de 25 min, paradas y descanso).
+  // Si no se sabe la hora, se abre todo el día; los partidos pasados, siempre.
+  const POST_MIN = 75;
+  function postAbre(x) {
+    const t = today(); if (!x || x.fecha < t) return 0; if (x.fecha > t) return Infinity;
+    const m = /^(\d{1,2})[:.](\d{2})/.exec(x.hora || ''); if (!m) return 0;
+    const d = dateOf(x.fecha); d.setHours(+m[1], +m[2] + POST_MIN, 0, 0); return d.getTime();
+  }
+  const postListo = x => Date.now() >= postAbre(x);
+  const postHora = x => { const d = new Date(postAbre(x)); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  const postCerradoHTML = x => `<p class="post-wait">${ric('reloj')}El después se abre al acabar el partido, a las ${postHora(x)}.</p>`;
+  actions.postpart = async b => { const x = partById(b.dataset.id); if (x && !(pdOf(x) || {}).juega && !postListo(x)) { toast(postAbre(x) === Infinity ? 'Podrás contarlo cuando se haya jugado.' : `Podrás contarlo a partir de las ${postHora(x)}, al acabar el partido.`); return; } startMf('post', b.dataset.id); };
   actions.mfnext = async () => { keepMf(); const n = mfSteps(draft.mf).length; if (draft.mf.i < n - 1) draft.mf.i++; render(); scrollTo({ top: 0 }); };
   actions.mfback = async () => { keepMf(); if (draft.mf.i > 0) { draft.mf.i--; render(); } else actions.mfclose(); };
   actions.mfclose = async () => { keepMf(); view = (draft.mf && draft.mf.back) || 'hoy'; render(); scrollTo({ top: 0 }); };
@@ -633,14 +644,14 @@
       ${pd.llevo || pd.mejor ? `<p class="nota-p">«${esc(pd.llevo || pd.mejor)}»</p>` : ''}<button class="btn small" type="button" data-a="postpart" data-id="${id}">Cambiar</button></section>`;
     if (pre) return `<section class="card part-card">${head('<span class="sub">Antes: hecho</span>')}
       <div class="pre-sum"><span>Ganas<b>${pre.ganas}</b></span><span>Nervios<b>${pre.nervios}</b></span><span>Confianza<b>${pre.confianza}</b></span></div>
-      ${pre.objetivo ? `<p class="nota-p">Te vas a fijar en: «${esc(pre.objetivo)}»</p>` : ''}<p class="sub">Cuando acabe, cuéntanos cómo lo has vivido. Un minuto.</p>
-      <div class="row"><button class="btn primary" type="button" data-a="postpart" data-id="${id}">Contar el partido</button><button class="btn ghost small" type="button" data-a="prepart" data-id="${id}">Cambiar lo de antes</button></div></section>`;
+      ${pre.objetivo ? `<p class="nota-p">Te vas a fijar en: «${esc(pre.objetivo)}»</p>` : ''}${postListo(x) ? '<p class="sub">Cuéntanos cómo lo has vivido. Un minuto.</p>' : postCerradoHTML(x)}
+      <div class="row">${postListo(x) ? `<button class="btn primary" type="button" data-a="postpart" data-id="${id}">Contar el partido</button>` : ''}<button class="btn ghost small" type="button" data-a="prepart" data-id="${id}">Cambiar lo de antes</button></div></section>`;
     if (!hoy) return `<section class="card part-card">${head('<span class="sub">Un minuto</span>')}<p>¿Qué tal fue? Cuéntanos cómo lo viviste.</p>
       <div class="row"><button class="btn primary" type="button" data-a="postpart" data-id="${id}">Contar el partido</button><button class="btn ghost" type="button" data-a="nojuego" data-id="${id}">No jugué</button></div></section>`;
     const seguir = draft.mf && draft.mf.id === id && draft.mf.kind === 'pre';
     return `<section class="card part-card">${head('<span class="sub">40 segundos</span>')}<p>Antes de calentar: cómo llegas, con qué ganas y en qué te vas a fijar.</p>
       <button class="btn primary big" type="button" data-a="prepart" data-id="${id}">${seguir ? 'Seguir' : 'Antes del partido'}</button>
-      <div class="row"><button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Ya ha terminado: contarlo</button><button class="btn ghost small" type="button" data-a="nojuego" data-id="${id}">No juego</button></div></section>`;
+      <div class="row">${postListo(x) ? `<button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Ya ha terminado: contarlo</button>` : ''}<button class="btn ghost small" type="button" data-a="nojuego" data-id="${id}">No juego</button></div></section>`;
   }
   const partVis = x => !ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || pdOf(x);
   // hoy: los partidos de hoy; ayer: solo los que tienen el antes hecho y falta el después (se cuenta al día siguiente)
@@ -661,7 +672,7 @@
   function estadoPartJ(x) {
     const t = today(), pd = pdOf(x) || {};
     if (pd.juega) return '<span class="pst-j ok">Contado</span>';
-    if (x.fecha === t) return `<span class="pst-j now">${pd.pre ? 'Antes hecho · falta el después' : 'Hoy'}</span>`;
+    if (x.fecha === t) return `<span class="pst-j now">${pd.pre ? (postListo(x) ? 'Antes hecho · falta el después' : 'Antes hecho · después a las ' + postHora(x)) : 'Hoy'}</span>`;
     if (x.fecha < t) return pd.pre ? '<span class="pst-j due">Falta el después</span>' : ls.get(`smbf-nojuego-${me.uid}-${x.id}`) ? '' : '<span class="pst-j">Sin contar</span>';
     const n = daysBetween(t, x.fecha); return `<span class="pst-j">${n === 1 ? 'Mañana' : 'En ' + n + ' días'}</span>`;
   }
@@ -715,7 +726,8 @@
       : p ? `<section class="card"><h2>Antes del partido</h2>${preSum}</section>` : '';
     const post = x.fecha > t ? '' : pd.juega ? `<section class="strip"><div class="strip-h"><h2>Cómo lo viviste</h2><button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Cambiar</button></div><div class="cromos one">${cromoHTML(x.fecha, id, pd, x, 'yo')}</div>
         ${pd.mejor || pd.cambiar ? `<section class="card">${pd.mejor ? `<p class="dw-m"><span>La decisión que mejor me salió</span>${esc(pd.mejor)}</p>` : ''}${pd.cambiar ? `<p class="dw-m"><span>Una que cambiaría</span>${esc(pd.cambiar)}</p>` : ''}</section>` : ''}</section>`
-      : `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div><p>${x.fecha === t ? 'Cuando acabe, cuéntanos cómo lo has vivido.' : '¿Qué tal fue? Cuéntanos cómo lo viviste.'}</p><button class="btn primary big" type="button" data-a="postpart" data-id="${id}">Contar el partido</button></section>`;
+      : !postListo(x) ? `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div>${postCerradoHTML(x)}</section>`
+      : `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div><p>${x.fecha === t ? 'Ya ha acabado: cuéntanos cómo lo has vivido.' : '¿Qué tal fue? Cuéntanos cómo lo viviste.'}</p><button class="btn primary big" type="button" data-a="postpart" data-id="${id}">Contar el partido</button></section>`;
     shell(`<button class="btn ghost small back" type="button" data-v2="partidos">← Partidos</button>
       <div class="tkts col big">${ticketHTML(x, r ? `<span class="res ${r.k}">${r.l} ${r.a}–${r.b}</span>` : '')}</div>
       ${rsp && rsp.t ? `<section class="card msg-card"><span class="kicker">Carlos te ha contestado</span><p>${esc(rsp.t)}</p></section>` : rsp ? `<p>${vistoTag('p:' + pdAt(U.dias, x).k + ':' + x.id)}</p>` : ''}
