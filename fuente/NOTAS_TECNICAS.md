@@ -259,3 +259,12 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   No salen en los cofres normales.
 - `COFRES` admite `ev` y `hasta`. El «Cofre de Halloween» cuesta 500 y sale con probabilidades 50/30/15/5 hasta el 3 de noviembre de 2026; después desaparece de la tienda y quien tenga mascotas de Halloween se las queda. No cuenta para las garantías de los cofres normales. En la colección sale primero una sección «Halloween».
 - Para otro evento (Navidad, por ejemplo): se añaden las mascotas con su código, el evento en `EVENTOS` y un cofre con `ev` y `hasta`.
+
+## Orden nuevo de la app (27 oct, tarde)
+
+- **Jugadoras.** Pestañas: Hoy, Diario, Partidos, Juegos y Mi mundo.
+  - «Hoy» (`hoyView`) es una lista «Lo de hoy» (`.tarea`) con cada cosa y su botón: antes, partido, después, el entreno de ayer y el diario. Tiene un anillo de progreso y, si está todo, «Todo listo. ¡A jugar!». Debajo van las respuestas de Carlos, los retos y el próximo partido. El formulario del después sale debajo de la lista al abrirlo.
+  - «Mi mundo» (`mundoView`, vista `yo`; la DT, vista `mundo`) tiene sus propias pestañas (`draft.ytab`): Mascota (`tamaHTML`), Personaje (`personajeHTML`), Tienda (`tiendaHTML`, que antes estaba en el reto) y Evolución (`evolHTML`, solo ellas). «Mis datos» se abre con el botón de arriba.
+  - «Juegos» (`retoView`) se queda con el juego del día, las misiones, la liga y los duelos.
+- **DT.** En Equipo · Hoy, «Lo importante» enseña 5 y un botón «Ver las N». «Cada una» se quita de ahí (ya está en Jugadoras). En Reto hay un acceso a «Mi mundo».
+- **Dibujos 3D** en `femenino/img/`: Fluent Emoji de Microsoft (licencia MIT, `img/LICENCIA.txt`), con nombre en español. Se usan con `fx('nombre')`. El service worker sirve `img/` y `lib/` primero desde lo guardado.

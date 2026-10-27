@@ -90,7 +90,7 @@ async def main():
       await pg.click(f'[data-a="retar"][data-u="{DT["uid"]}"]') if await pg.locator(f'[data-a="retar"][data-u="{DT["uid"]}"]').count() else print('Carlos todavía no ha entrado: no sale para retarle')
       # 6. tienda
       await pg.evaluate("window.__fake.put('juego/demo03', { bolas: 500 })"); await pg.wait_for_timeout(300)
-      await pg.click('[data-a="rtab"][data-k="tienda"]'); await pg.wait_for_timeout(300)
+      await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(300); await pg.click('[data-ytab="tienda"]'); await pg.wait_for_timeout(300)
       await pg.click('[data-a="ttab"][data-k="personaje"]'); await pg.wait_for_timeout(200)
       await pg.click('[data-a="comprar"][data-c="gafas"][data-v="prescription02"]'); await pg.wait_for_timeout(300)
       await pg.click('[data-a="ponerj"][data-c="gafas"][data-v="prescription02"]'); await pg.wait_for_timeout(400)

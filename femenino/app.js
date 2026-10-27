@@ -393,10 +393,14 @@
     partidos: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4.5 9.5h15M4.5 14.5h15"/>',
     reto: '<path d="M7 8h10a5 5 0 0 1 0 10c-1.6 0-2.4-1-3.2-2h-3.6c-.8 1-1.6 2-3.2 2A5 5 0 0 1 7 8z"/><path d="M8 11v4M6 13h4"/><circle cx="15.5" cy="12" r=".9"/><circle cx="17.5" cy="14.3" r=".9"/>',
     buzon: '<path d="M4 13.5 6.6 5.2A1 1 0 0 1 7.5 4.5h9a1 1 0 0 1 .9.7l2.6 8.3V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M4 13.5h4.6l1.3 2.6h4.2l1.3-2.6H20"/>',
+    mundo: '<ellipse cx="12" cy="15.5" rx="4.2" ry="3.6"/><circle cx="6.2" cy="10.4" r="1.9"/><circle cx="9.6" cy="6.6" r="1.9"/><circle cx="14.4" cy="6.6" r="1.9"/><circle cx="17.8" cy="10.4" r="1.9"/>',
     acceso: '<circle cx="10" cy="8.5" r="3.6"/><path d="M3.5 20c1.2-3.4 3.6-5.2 6.5-5.2 1.6 0 3 .5 4.1 1.5M17.5 13.5v6M14.5 16.5h6"/>',
   };
   const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k] || ''}</svg>`;
-  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy'], ['partidos', 'Partidos'], ['reto', 'Reto'], ['semana', 'Diario'], ['yo', 'Mi jugadora']].map(([k, l]) => `<button type="button" data-v="${k}" aria-current="${view === k || (view === 'partido' && k === 'partidos') || (view === 'datos' && k === 'yo') ? 'page' : 'false'}">${ico(k)}${l}</button>`).join('')}</nav>`;
+  // dibujos 3D (Fluent Emoji de Microsoft, licencia MIT, en img/; ver img/LICENCIA.txt)
+  const fx = (n, cls = '') => `<img class="fx${cls ? ' ' + cls : ''}" src="img/${n}.webp" alt="" draggable="false">`;
+  // pestañas (27 oct, tarde): lo de cada día a la izquierda y lo del juego a la derecha
+  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy', 'hoy'], ['semana', 'Diario', 'semana'], ['partidos', 'Partidos', 'partidos'], ['reto', 'Juegos', 'reto'], ['yo', 'Mi mundo', 'mundo']].map(([k, l, i]) => `<button type="button" data-v="${k}" aria-current="${view === k || (view === 'partido' && k === 'partidos') || (view === 'datos' && k === 'yo') ? 'page' : 'false'}">${ico(i)}${l}</button>`).join('')}</nav>`;
   const calJ = () => calOf(U.equipo);
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
@@ -738,40 +742,69 @@
       ${rsp && rsp.t ? `<section class="card msg-card"><span class="kicker">Carlos te ha contestado</span><p>${esc(rsp.t)}</p></section>` : rsp ? `<p>${vistoTag('p:' + pdAt(U.dias, x).k + ':' + x.id)}</p>` : ''}
       ${pre}${post}`, { nav: navJ() });
   }
+  // «Hoy» (27 oct, tarde): una lista con lo que toca hoy, cada cosa con su botón; lo demás, en su pestaña
   function hoyView() {
-    const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), hayPart = vis.length > 0, ent = entrena(calJ(), t), cards = partidosHoyHTML();
-    const show = ent || hayPart || draft.showDia || dia.antes || (dia.ses || []).length;
+    const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), ent = entrena(calJ(), t);
     const nombre = (U.perfil.nombre || '').split(' ')[0], p = puntos(U.dias, U.semanas), lv = nivelDe(p);
-    const pHoy = vis[0], lineaHoy = pHoy ? `Hoy juegas · ${pHoy.cat} contra ${pHoy.rival}${pHoy.hora ? ', ' + pHoy.hora : ''}` : ent ? 'Hoy hay entreno. ¿Cómo llegas?' : 'Hoy no hay entreno. Descansa bien.';
-    // día de partido: el «antes» del día va dentro del antes del partido (si ya está contestado, se enseña hecho)
-    const antes = dia.antes || ent || !hayPart ? antesHTML() : '';   // el día de entreno sale siempre (también si hay partido: no todas juegan)
-    shell(`<section class="hero"><div class="hi"><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1><p class="today">${esc(lineaHoy)}</p></div>
-        <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></section>
+    const ay = addDays(t, -1), ayerP = partDe(calJ(), ay).filter(x => { const pd = pdOf(x); return pd && pd.pre && !pd.juega; });
+    const L = [], fila = (ic, tit, sub, ok, btn, extra = '') => L.push({ ok, h: `<div class="tarea${ok ? ' ok' : ''}${extra}"><span class="ta-ic">${fx(ic)}${ok ? `<i class="ta-ok">${fx('check')}</i>` : ''}</span><span class="ta-b"><b>${tit}</b><small>${sub}</small></span><span class="ta-a">${btn}</span></div>` });
+    if (ent) { const a = dia.antes, s0 = a ? wellScore(a) : null;
+      fila('antes', 'Antes del entreno', a ? `Hecho · llegas con un ${fmt1(s0)} de 10` : 'Cómo llegas · 15 segundos', !!a, a ? '<button class="btn small ghost" type="button" data-a="editantes">Cambiar</button>' : `<button class="btn small primary" type="button" data-a="startantes">${WELL.some(w => draft.antes[w.k] >= 1) ? 'Seguir' : 'Empezar'}</button>`); }
+    [...ayerP, ...vis].forEach(x => { const pd = pdOf(x) || {}, hoy = x.fecha === t, tit = `${hoy ? 'Partido' : 'Partido de ayer'} · ${x.cat} contra ${x.rival}`;
+      if (pd.juega) fila('partido', tit, 'Contado. ¡Gracias!', true, `<button class="btn small ghost" type="button" data-pp="${x.id}">Ver</button>`, ' part-card');
+      else if (pd.pre) fila('partido', tit, postListo(x) ? 'Antes hecho · cuéntanos cómo lo has vivido' : `Antes hecho · el después se abre a las ${postHora(x)}`, false, postListo(x) ? `<button class="btn small primary" type="button" data-a="postpart" data-id="${x.id}">Contar</button>` : `<button class="btn small ghost" type="button" data-pp="${x.id}">Ver</button>`, ' part-card');
+      else fila('partido', tit, `${x.casa ? 'En casa' : 'Fuera'}${x.hora ? ' · ' + esc(x.hora) : ''} · si juegas, el antes antes de calentar`, false, `<button class="btn small primary" type="button" data-a="prepart" data-id="${x.id}">Antes</button><button class="btn small ghost" type="button" data-a="nojuego" data-id="${x.id}">No juego</button>`, ' part-card'); });
+    const sesH = (dia.ses || []).filter(z => !z.pid);
+    if (ent || sesH.length) fila('despues', 'Después del entreno', sesH.length ? `Hecho · esfuerzo ${sesH.map(z => z.rpe).join(' y ')}, ${sesH.reduce((a, z) => a + z.min, 0)} min` : 'Al acabar: lo duro que ha sido y los minutos', !!sesH.length, sesH.length ? '<button class="btn small ghost" type="button" data-a="moreses">Añadir</button>' : '<button class="btn small primary" type="button" data-a="opendesp">Ya he entrenado</button>');
+    if (entrena(calJ(), ay) && !((U.dias[ay] || {}).ses || []).some(z => !z.pid)) fila('reloj', 'El entreno de ayer', 'No contaste el después. Todavía estás a tiempo.', false, '<button class="btn small" type="button" data-a="ayerdesp">Contarlo</button>');
+    fila('diario', 'Tu diario de hockey', dia.diario ? `Hecho · «${esc((dia.diario.mejor || '').slice(0, 60))}»` : 'Qué tal hoy, lo mejor y lo que cambiarías', !!dia.diario, dia.diario ? '<button class="btn small ghost" type="button" data-a="gosemana">Ver</button>' : '<button class="btn small primary" type="button" data-a="gosemana">Escribir</button>');
+    const hechas = L.filter(x => x.ok).length, T = tocaHoy(), r = 2 * Math.PI * 17;
+    const abierto = draft.openDesp || draft.moreSes || draft.sesFecha;
+    const prox = allPart(calJ()).filter(x => x.fecha > t)[0];
+    shell(`<section class="hero"><div class="hi"><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1><p class="today">${esc(vis[0] ? `Hoy hay partido: ${vis[0].cat} contra ${vis[0].rival}` : ent ? 'Hoy hay entreno' : 'Hoy no hay entreno')}</p></div>
+        <button class="me-chip" type="button" data-v="yo" aria-label="Mi mundo: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></section>
+      <section class="card tareas-c"><div class="card-h"><h2>Lo de hoy</h2><span class="ta-prog" role="img" aria-label="${hechas} de ${L.length} hechas"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17"/><circle class="on" cx="20" cy="20" r="17" stroke-dasharray="${(r * hechas / Math.max(1, L.length)).toFixed(1)} ${r.toFixed(1)}"/></svg><b>${hechas}/${L.length}</b></span></div>
+        <div class="tareas">${L.map(x => x.h).join('')}</div>
+        ${T.length ? '' : `<button class="ta-fin" type="button" data-v2="reto">${fx('mando')}<span><b>Todo listo. ¡A jugar!</b><small>Hoy toca ${esc(juegoDe(t)[1])}</small></span>›</button>`}</section>
+      ${abierto ? despuesHTML(draft.sesFecha || undefined) : ''}
       ${respuestasHTML()}${retoAvisoHTML()}
-      ${show ? antes + cards + (ent || draft.showDia || (dia.ses || []).some(z => !z.pid) ? despuesHTML() : '') : `${cards}<section class="card"><h2>Hoy no hay entreno</h2><p class="sub">Si has entrenado por tu cuenta, apúntalo.</p><button class="btn" type="button" data-a="showdia">Apuntar un entreno de hoy</button></section>`}
-      ${ayerHTML()}${semanaMini()}${proximoHTML()}`, { nav: navJ() });
+      ${!ent && !sesH.length && !abierto ? '<button class="btn ghost small" type="button" data-a="opendesp">¿Has entrenado por tu cuenta? Apúntalo</button>' : ''}
+      ${prox ? `<button class="prox-l" type="button" data-pp="${prox.id}">${fx('calendario')}<span><small>Próximo partido</small><b>${esc(prox.cat)} contra ${esc(prox.rival)}</b><small>${esc(fmtDay(prox.fecha))}${prox.hora ? ' · ' + esc(prox.hora) : ''}</small></span>›</button>` : ''}`, { nav: navJ() });
   }
-  function yoView() {
-    const t = today(), sem = Object.keys(U.semanas).sort().reverse().slice(0, 8);
+  // «Mi mundo» (27 oct, tarde): la mascota, el personaje, la tienda y (ellas) su evolución, cada cosa en su pestaña
+  function mundoView() {
+    const adm = isAdmin(), T = adm ? [['mascota', 'Mascota', 'corazon'], ['personaje', 'Personaje', 'camiseta'], ['tienda', 'Tienda', 'tienda']] : [['mascota', 'Mascota', 'corazon'], ['personaje', 'Personaje', 'camiseta'], ['tienda', 'Tienda', 'tienda'], ['evolucion', 'Evolución', 'grafica']];
+    const tab = T.some(x => x[0] === draft.ytab) ? draft.ytab : 'mascota';
+    if (!adm && draft.editAv) return editAvView(nivelDe(puntos(U.dias, U.semanas)));
+    const body = tab === 'mascota' ? tamaHTML() : tab === 'personaje' ? personajeHTML() : tab === 'tienda' ? tiendaHTML() : evolHTML();
+    shell(`<div class="dt-h"><div><span class="kicker">Lo tuyo</span><h1>Mi mundo</h1></div>${adm ? '' : `<button class="btn small" type="button" data-v2="datos">${ico('datos')}Mis datos</button>`}</div>
+      <div class="mtabs" role="tablist">${T.map(([k, l, i]) => `<button type="button" role="tab" data-ytab="${k}" aria-selected="${tab === k}">${fx(i)}<span>${l}</span></button>`).join('')}</div>
+      ${body}`, { nav: adm ? navA() : navJ(), right: adm ? '<button class="btn ghost small" type="button" data-av="reto">← Reto</button>' : '' });
+  }
+  function personajeHTML() {
+    if (isAdmin()) return `<section class="card me-card"><div class="me-av">${avatarSVG(miAv(), 9, 'Carlos')}${mscH(yoJ().mascota, 'msc hero')}</div><div class="me-info"><span class="kicker">El jefe final</span><b class="me-lv">Carlos</b><button class="btn small" type="button" data-a="editavdt">Cambiar mi personaje</button></div></section>`;
     const p = puntos(U.dias, U.semanas), lv = nivelDe(p), next = NIVELES[lv + 1];
     const nuevos = next ? ITEMS.filter(x => x[3] === lv + 2).map(x => x[2]) : [];
     const pct = next ? Math.round((p - NIVELES[lv][1]) / (next[1] - NIVELES[lv][1]) * 100) : 100;
-    if (draft.editAv) return editAvView(lv);
-    shell(`<div class="dt-h"><div><span class="kicker">Lo tuyo</span><h1>Mi jugadora</h1></div><button class="btn small" type="button" data-v2="datos">${ico('datos')}Mis datos</button></div>
-      <section class="card me-card"><div class="me-av">${avatarSVG(U.perfil.av, lv)}${mscH(yoJ().mascota, 'msc hero')}</div>
+    return `<section class="card me-card"><div class="me-av">${avatarSVG(U.perfil.av, lv)}${mscH(yoJ().mascota, 'msc hero')}</div>
         <div class="me-info"><span class="kicker">Nivel ${lv + 1} de ${NIVELES.length}</span><b class="me-lv">${esc(NIVELES[lv][0])}</b>
           <div class="prog" role="img" aria-label="${pct} % hasta el siguiente nivel"><i style="width:${pct}%"></i></div>
           <span class="sub">${next ? `${p} de ${next[1]} puntos.${nuevos.length ? ` Próximo: ${esc(nuevos.join(', ').toLowerCase())}.` : ''}` : `${p} puntos. Has llegado arriba del todo.`}</span>
           <button class="btn small" type="button" data-a="editav">Cambiar mi jugadora</button></div></section>
       <section class="card"><h2>Cómo se ganan puntos</h2><ul class="pts">
         <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li><li><span>Antes y después de cada partido</span><b>+${PTS.partido} y +${PTS.partido}</b></li>
-        <li><span>Escribir tu diario de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si cumpliste tu compromiso</span><b>+${PTS.revisar}</b></li></ul>
-        <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos.</p></section>
-      <section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, del 1 al 10, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
+        <li><span>Tu diario de cada día</span><b>+${PTS.diario}</b></li><li><span>Tu compromiso de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si lo cumpliste</span><b>+${PTS.revisar}</b></li></ul>
+        <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos. Con la mitad de tus puntos tienes monedas para la tienda.</p></section>`;
+  }
+  function evolHTML() {
+    const t = today(), sem = Object.keys(U.semanas).sort().reverse().slice(0, 8);
+    return `<section class="card"><h2>Cómo llegas a los entrenos</h2><p class="sub">Media de tus cinco respuestas, del 1 al 10, en los últimos 28 días.${baseline(U.dias, t) != null ? ' La franja es lo normal en ti.' : ''}</p>${wellChart(U.dias, t)}</section>
       <section class="card"><h2>Tu carga por semana</h2><p class="sub">Esfuerzo × minutos de cada sesión, sumado por semana. La barra clara es la semana en curso.</p>${loadChart(U.dias, t)}</section>
       ${(L => L.length ? `<section class="strip"><div class="strip-h"><h2>Mis partidos</h2><span class="sub">${L.length === 1 ? '1 partido' : L.length + ' partidos'}</span></div><div class="cromos">${L.slice(0, 20).map(([k, id, pd]) => cromoHTML(k, id, pd, allPart(calJ()).find(y => y.id === id), 'yo-btn')).join('')}</div></section>` : '')(misPartidos(U.dias))}
-      <section class="strip"><div class="strip-h"><h2>Tus compromisos</h2></div>${sem.length ? `<div class="notes">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<div class="note"><span class="d">Semana del ${esc(fmtShort(k))}</span><span class="t">${esc(compOf(x) || '—')}</span>${nx && nx.cumplida ? `<span class="stamp ${nx.cumplida}">${esc(STAMP[nx.cumplida] || '')}</span>` : ''}</div>`; }).join('')}</div>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`, { nav: navJ() });
+      <section class="strip"><div class="strip-h"><h2>Tus compromisos</h2></div>${sem.length ? `<div class="notes">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<div class="note"><span class="d">Semana del ${esc(fmtShort(k))}</span><span class="t">${esc(compOf(x) || '—')}</span>${nx && nx.cumplida ? `<span class="stamp ${nx.cumplida}">${esc(STAMP[nx.cumplida] || '')}</span>` : ''}</div>`; }).join('')}</div>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`;
   }
+  // la mascota (se completa con el tamagotchi)
+  function tamaHTML() { const id = yoJ().mascota; return id ? `<section class="card">${mscH(id, 'msc big')}</section>` : `<section class="card"><p class="sub">Todavía no tienes mascota. Sácala de un cofre en la tienda.</p></section>`; }
   function editAvView(lv) {
     if (isAdmin()) lv = 9;
     const a = draft.av = draft.av || avNorm(isAdmin() ? miAv() : U.perfil.av, lv);
@@ -794,10 +827,10 @@
         <div class="row"><button class="btn primary" type="button" data-a="saveav">Guardar</button><button class="btn ghost" type="button" data-a="noeditav">Cancelar</button></div></section>`, { nav: isAdmin() ? navA() : navJ() });
   }
   actions.editav = async () => { draft.editAv = true; draft.av = null; render(); scrollTo({ top: 0 }); };
-  actions.noeditav = async () => { draft.editAv = false; draft.av = null; if (isAdmin()) view = 'reto'; else if (draft.avBack) { view = draft.avBack; draft.avBack = null; } render(); };
+  actions.noeditav = async () => { draft.editAv = false; draft.av = null; if (isAdmin()) { view = draft.avBack || 'reto'; draft.avBack = null; } else if (draft.avBack) { view = draft.avBack; draft.avBack = null; } render(); };
   actions.saveav = async () => {
     const av = Object.assign({}, draft.av);
-    if (isAdmin()) { await B.merge('juego/' + me.uid, Object.assign(perfilJ(), { av })); J.todos[me.uid] = Object.assign({}, yoJ(), { av }); draft.editAv = false; draft.av = null; view = 'reto'; render(); scrollTo({ top: 0 }); toast('Guardado.'); return; }
+    if (isAdmin()) { await B.merge('juego/' + me.uid, Object.assign(perfilJ(), { av })); J.todos[me.uid] = Object.assign({}, yoJ(), { av }); draft.editAv = false; draft.av = null; view = draft.avBack || 'reto'; draft.avBack = null; render(); scrollTo({ top: 0 }); toast('Guardado.'); return; }
     await B.merge('jugadoras/' + me.uid, { av }); U.perfil = Object.assign({}, U.perfil, { av }); jSync();
     if (draft.avBack) { view = draft.avBack; draft.avBack = null; }
     U.perfil = Object.assign({}, U.perfil, { av }); draft.editAv = false; draft.av = null; toast('Guardada.'); render(); scrollTo({ top: 0 });
@@ -959,6 +992,7 @@
   root.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || isAdmin()) return;
     if (b.dataset.pp) { goPart(b.dataset.pp); return; }
+    if (b.dataset.ytab) { draft.ytab = b.dataset.ytab; draft.editAv = false; render(); return; }
     if (b.dataset.v2) { view = b.dataset.v2; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.pcatj) { ls.set('smbf-pcat', b.dataset.pcatj); draft.cday = ''; render(); return; }
     if (b.dataset.pmes) { draft.mes = b.dataset.pmes; draft.cday = ''; render(); return; }
@@ -1125,8 +1159,8 @@
     } catch (e) { console.error(e); if (/permission/i.test(e.code || e.message || '')) { J.sinReglas = true; render(); toast(isAdmin() ? 'No se ha guardado: faltan las reglas del reto en Firebase.' : 'La partida no se ha guardado: el reto todavía no está activo.'); } else toast('No se ha podido guardar la partida. Revisa la conexión.'); }
   }
   actions.jugar = async () => { if (puedeJugar(false)) jugar(Math.floor(Math.random() * 2e9), null); };
-  actions.editavj = async () => { view = 'yo'; draft.editAv = true; draft.av = null; draft.avBack = 'reto'; render(); scrollTo({ top: 0 }); };
-  actions.editavdt = async () => { view = 'avdt'; draft.editAv = true; draft.av = null; render(); scrollTo({ top: 0 }); };
+  actions.editavj = async () => { view = 'yo'; draft.ytab = 'personaje'; draft.editAv = true; draft.av = null; draft.avBack = 'reto'; render(); scrollTo({ top: 0 }); };
+  actions.editavdt = async () => { draft.avBack = view === 'mundo' ? 'mundo' : 'reto'; view = 'avdt'; draft.editAv = true; draft.av = null; render(); scrollTo({ top: 0 }); };
   actions.retar = async b => {
     if (!puedeJugar(false)) return;
     const id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), d = { a: meU(), b: b.dataset.u, seed: Math.floor(Math.random() * 2e9), modo: juegoDe(today())[0], pa: null, pb: null, ts: Date.now() };
@@ -1210,8 +1244,28 @@
     const R = retosPend(); if (!R.length) return '';
     return `<section class="card rt-reto"><span class="rt-ra">${avatarSVG((J.todos[R[0].a] || {}).av, (J.todos[R[0].a] || {}).lv || 0, '')}</span><div><b>${esc((J.todos[R[0].a] || {}).n || 'Alguien')} te ha retado${R.length > 1 ? ` (y ${R.length - 1} más)` : ''}</b><span class="sub">Ha hecho ${fmtInt(R[0].pa)} puntos. ¿Le ganas?</span></div><button class="btn primary" type="button" data-a="jugarduelo" data-id="${R[0].id}">Jugar</button></section>`;
   }
+  // la tienda (27 oct, tarde: pasa de «Juegos» a «Mi mundo»)
+  function tiendaHTML() {
+    const tt = draft.ttab || 'mascotas', mis = MSC().LISTA.filter(([id]) => tiene('mascota', id)).length;
+    const itemCard = ([c, v, n, p]) => { const own = tiene(c, v), on = own && puesto(c, v);
+      const prev = c === 'cele' ? `<span class="sh-c">${esc(v)}</span>` : c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
+      return `<div class="sh${own ? ' own' : ''}"><span class="sh-p">${prev}</span><b>${esc(n)}</b><small>${CAT_N[c]}</small>${own ? (on ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Ponérmelo</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`}</div>`; };
+    const petCard = ([id, n, r, , ev]) => { const own = tiene('mascota', id), on = own && puesto('mascota', id), R = MSC().RAREZA[r] || ['', '#999'];
+      return `<div class="sh pet ${r}${own ? ' own' : ' falta'}"><span class="rz" style="background:${R[1]}">${R[0]}</span><span class="sh-p">${own ? mscH(id, 'msc big') : `<span class="sil">${mscH(id, 'msc big')}<i>?</i></span>`}</span><b>${own ? esc(n) : '???'}</b>${own ? (on ? '<span class="pill">Te acompaña</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="mascota" data-v="${id}">Llevarla</button>`) : `<small>${ev ? 'Cofre de ' + esc((MSC().EVENTOS || {})[ev] || '') : 'Sale en cofres'}</small>`}</div>`; };
+    const y0 = yoJ(), cofresH = `<div class="cofres">${COFRES.filter(c => !c.hasta || today() <= c.hasta).sort((a, b) => (b.ev ? 1 : 0) - (a.ev ? 1 : 0)).map(c => `<div class="cf ${c.k}">${c.hasta ? `<span class="cf-ev">Hasta el ${esc(fmtShort(c.hasta))}</span>` : ''}${cofreSVG(c)}<b>${c.n}</b><span class="cf-odds">${Object.entries(c.o).filter(([, v]) => v).map(([r, v]) => `<i style="color:${(MSC().RAREZA[r] || [])[1]}">${(MSC().RAREZA[r] || [''])[0]} ${v}%</i>`).join('')}</span><button class="btn small${monedas() >= c.p ? ' primary' : ''}" type="button" data-a="abrircofre" data-k="${c.k}">${fmtInt(c.p)} monedas</button></div>`).join('')}</div>
+      <p class="sub">Las repetidas te devuelven monedas. Si llevas 20 cofres sin épica, el siguiente trae épica o legendaria${(y0.sinLeg || 0) > 0 ? `; legendaria asegurada en ${60 - (y0.sinLeg || 0)} cofres` : ''}.</p>`;
+    return `<section class="card"><div class="card-h"><h2>Tienda</h2><span class="pill coin">${fmtInt(monedas())} monedas</span></div>
+        <p class="sub">${isAdmin() ? 'Ganas monedas recogiendo bolas, con las misiones y entrando a diario.' : 'Ganas monedas recogiendo bolas, con las misiones, entrando a diario y contestando la app.'}</p>
+        <div class="chips-cat">${[['mascotas', 'Mascotas'], ['personaje', 'Personaje'], ['estelas', 'Estelas'], ['goles', 'Celebraciones']].map(([k, l]) => `<button type="button" class="cc" data-a="ttab" data-k="${k}" aria-pressed="${tt === k}">${l}</button>`).join('')}</div>
+        ${tt === 'mascotas' ? `${cofresH}<h3 class="rz-h">Tu colección · ${mis} de ${MSC().LISTA.length}</h3><p class="sub">Te acompañan en la liga, en los duelos y patinando a tu lado.</p>
+          ${Object.entries(MSC().EVENTOS || {}).map(([ev, en]) => `<h3 class="rz-h ev">${esc(en)} <small>${MSC().LISTA.filter(x => x[4] === ev && tiene('mascota', x[0])).length} de ${MSC().LISTA.filter(x => x[4] === ev).length}</small></h3><div class="shop">${MSC().LISTA.filter(x => x[4] === ev).map(petCard).join('')}</div>`).join('')}
+          ${Object.entries(MSC().RAREZA).map(([r, [rn, rc]]) => `<h3 class="rz-h" style="color:${rc}">${rn}${r === 'legendaria' ? 's' : r === 'comun' ? 'es' : 's'}</h3><div class="shop">${MSC().LISTA.filter(x => x[2] === r && !x[4]).map(petCard).join('')}</div>`).join('')}
+          ${yoJ().mascota ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="mascota" data-v="">Ir sin mascota</button>' : ''}`
+        : `<div class="shop">${TIENDA.filter(([c]) => tt === 'personaje' ? !['estela', 'cele'].includes(c) : tt === 'estelas' ? c === 'estela' : c === 'cele').map(itemCard).join('')}</div>
+          <div class="row">${tt === 'estelas' && (yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${tt === 'goles' && (yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div>`}</section>`;
+  }
   function retoView() {
-    const y = yoJ(), t = today(), lunes = mondayOf(t), yo_ = meU(), tab = draft.rtab || 'liga', res = draft.res;
+    const y = yoJ(), t = today(), lunes = mondayOf(t), yo_ = meU(), tab = draft.rtab === 'duelos' ? 'duelos' : 'liga', res = draft.res;
     const todos = Object.entries(J.todos).filter(([, d]) => d && d.n && !d.oculta);
     const avJ = d => avatarSVG(d.av, d.lv || 0, d.n), ch = campeona(), cw = u => ch && ch.u === u ? CORONA : '', pet = d => mscH(d.mascota, 'msc chico');
     const liga = todos.map(([u, d]) => ({ u, d, p: semPts(d, lunes) })).filter(r => r.p > 0).sort((a, b) => b.p - a.p);
@@ -1228,23 +1282,6 @@
         ${todos.filter(([u]) => u !== yo_).length ? `<div class="pfs">${todos.filter(([u]) => u !== yo_).sort((a, b) => (b[1].adm ? 1 : 0) - (a[1].adm ? 1 : 0)).map(([u, d]) => `<button type="button" class="pf ok" data-a="retar" data-u="${u}"><span class="pf-av">${avJ(d)}${pet(d)}</span><b>${cw(u)}${esc(d.n)}</b><small>${d.adm ? 'el jefe final' : 'récord ' + fmtInt(recDe(d, juegoDe(t)[0]))}${(d.compras || []).filter(x => x.startsWith('mascota|')).length ? ` · ${(d.compras || []).filter(x => x.startsWith('mascota|')).length} mascotas` : ''}</small></button>`).join('')}</div>` : '<p class="sub">Todavía no hay nadie más. En cuanto entren tus compañeras, salen aquí.</p>'}
         <p class="sub">El duelo es del juego de hoy (${esc(juegoDe(t)[1])}). Las dos jugáis exactamente lo mismo; gana quien saque más puntos. Tiene 7 días para contestar.</p></section>
       ${Ds.length ? `<section class="card"><h2>Tus duelos</h2><div class="dls">${Ds.slice(0, 12).map(d => { const o = J.todos[otro(d)] || {}, [k, l] = est(d); return `<div class="dl-r"><span class="lg-av">${avJ(o)}${pet(o)}</span><span class="dl-b"><b>${esc(o.n || '—')}</b><small>${esc(modoN(d.modo || 'patina'))} · ${mio(d) == null ? '—' : fmtInt(mio(d))} – ${suyo(d) == null ? '—' : fmtInt(suyo(d))}</small></span>${k === 'tuyo' ? `<button class="btn small primary" type="button" data-a="jugarduelo" data-id="${d.id}">Jugar</button>` : `<span class="res ${k}">${l}</span>`}</div>`; }).join('')}</div></section>` : ''}`;
-    const tt = draft.ttab || 'mascotas', mis = MSC().LISTA.filter(([id]) => tiene('mascota', id)).length;
-    const itemCard = ([c, v, n, p]) => { const own = tiene(c, v), on = own && puesto(c, v);
-      const prev = c === 'cele' ? `<span class="sh-c">${esc(v)}</span>` : c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
-      return `<div class="sh${own ? ' own' : ''}"><span class="sh-p">${prev}</span><b>${esc(n)}</b><small>${CAT_N[c]}</small>${own ? (on ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Ponérmelo</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`}</div>`; };
-    const petCard = ([id, n, r, , ev]) => { const own = tiene('mascota', id), on = own && puesto('mascota', id), R = MSC().RAREZA[r] || ['', '#999'];
-      return `<div class="sh pet ${r}${own ? ' own' : ' falta'}"><span class="rz" style="background:${R[1]}">${R[0]}</span><span class="sh-p">${own ? mscH(id, 'msc big') : `<span class="sil">${mscH(id, 'msc big')}<i>?</i></span>`}</span><b>${own ? esc(n) : '???'}</b>${own ? (on ? '<span class="pill">Te acompaña</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="mascota" data-v="${id}">Llevarla</button>`) : `<small>${ev ? 'Cofre de ' + esc((MSC().EVENTOS || {})[ev] || '') : 'Sale en cofres'}</small>`}</div>`; };
-    const y0 = yoJ(), cofresH = `<div class="cofres">${COFRES.filter(c => !c.hasta || today() <= c.hasta).sort((a, b) => (b.ev ? 1 : 0) - (a.ev ? 1 : 0)).map(c => `<div class="cf ${c.k}">${c.hasta ? `<span class="cf-ev">Hasta el ${esc(fmtShort(c.hasta))}</span>` : ''}${cofreSVG(c)}<b>${c.n}</b><span class="cf-odds">${Object.entries(c.o).filter(([, v]) => v).map(([r, v]) => `<i style="color:${(MSC().RAREZA[r] || [])[1]}">${(MSC().RAREZA[r] || [''])[0]} ${v}%</i>`).join('')}</span><button class="btn small${monedas() >= c.p ? ' primary' : ''}" type="button" data-a="abrircofre" data-k="${c.k}">${fmtInt(c.p)} monedas</button></div>`).join('')}</div>
-      <p class="sub">Las repetidas te devuelven monedas. Si llevas 20 cofres sin épica, el siguiente trae épica o legendaria${(y0.sinLeg || 0) > 0 ? `; legendaria asegurada en ${60 - (y0.sinLeg || 0)} cofres` : ''}.</p>`;
-    const tiendaH = `<section class="card"><div class="card-h"><h2>Tienda</h2><span class="pill coin">${fmtInt(monedas())} monedas</span></div>
-        <p class="sub">${isAdmin() ? 'Ganas monedas recogiendo bolas, con las misiones y entrando a diario.' : 'Ganas monedas recogiendo bolas, con las misiones, entrando a diario y contestando la app.'}</p>
-        <div class="chips-cat">${[['mascotas', 'Mascotas'], ['personaje', 'Personaje'], ['estelas', 'Estelas'], ['goles', 'Celebraciones']].map(([k, l]) => `<button type="button" class="cc" data-a="ttab" data-k="${k}" aria-pressed="${tt === k}">${l}</button>`).join('')}</div>
-        ${tt === 'mascotas' ? `${cofresH}<h3 class="rz-h">Tu colección · ${mis} de ${MSC().LISTA.length}</h3><p class="sub">Te acompañan en la liga, en los duelos y patinando a tu lado.</p>
-          ${Object.entries(MSC().EVENTOS || {}).map(([ev, en]) => `<h3 class="rz-h ev">${esc(en)} <small>${MSC().LISTA.filter(x => x[4] === ev && tiene('mascota', x[0])).length} de ${MSC().LISTA.filter(x => x[4] === ev).length}</small></h3><div class="shop">${MSC().LISTA.filter(x => x[4] === ev).map(petCard).join('')}</div>`).join('')}
-          ${Object.entries(MSC().RAREZA).map(([r, [rn, rc]]) => `<h3 class="rz-h" style="color:${rc}">${rn}${r === 'legendaria' ? 's' : r === 'comun' ? 'es' : 's'}</h3><div class="shop">${MSC().LISTA.filter(x => x[2] === r && !x[4]).map(petCard).join('')}</div>`).join('')}
-          ${yoJ().mascota ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="mascota" data-v="">Ir sin mascota</button>' : ''}`
-        : `<div class="shop">${TIENDA.filter(([c]) => tt === 'personaje' ? !['estela', 'cele'].includes(c) : tt === 'estelas' ? c === 'estela' : c === 'cele').map(itemCard).join('')}</div>
-          <div class="row">${tt === 'estelas' && (yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${tt === 'goles' && (yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div>`}</section>`;
     const resH = res ? (() => { const d = res.duelo && J.duelos[res.duelo], o = d ? J.todos[otro(d)] || {} : null, su = d ? suyo(d) : null;
       return `<section class="card rt-res"><button class="rt-cl" type="button" data-a="cerrarres" aria-label="Cerrar">×</button><span class="kicker">${res.duelo ? 'Duelo contra ' + esc((o || {}).n || '') : 'Tu partida'}</span>
         <b class="rt-pts">${fmtInt(res.puntos)}<small> puntos</small></b>
@@ -1265,15 +1302,16 @@
         <span class="rt-next">Mañana: ${esc(juegoDe(addDays(t, 1))[1])}</span></section>
       ${J.sinReglas ? `<section class="card aviso-reglas"><h2>${isAdmin() ? 'Faltan las reglas del reto' : 'El reto todavía no está listo'}</h2><p>${isAdmin() ? 'Firebase no deja guardar nada del juego (partidas, duelos, tienda ni tu personaje) porque las reglas nuevas no están publicadas. Ve a la consola de Firebase, Firestore → Reglas, pega el archivo <b>firestore.rules</b> y pulsa «Publicar».' : 'Puedes jugar, pero todavía no se guardan las partidas. Carlos lo activa en breve.'}</p></section>` : ''}
       ${resH}
+      ${isAdmin() ? `<button class="prox-l" type="button" data-av="mundo">${fx('corazon')}<span><small>Lo tuyo</small><b>Mi mundo: mascota, personaje y tienda</b></span>›</button>` : ''}
       ${(() => { const f = today(), mh = (y.mis && y.mis.f === f) ? y.mis.h || [] : [], L = misionesHoy(f), pr = !(y.dias || {})[f];
         return `<section class="card rt-mis"><div class="card-h"><h2>Misiones de hoy</h2><span class="sub">${mh.length} de 3</span></div>
           <ul>${L.map(m => `<li class="${mh.includes(m.k) ? 'ok' : ''}"><i>${mh.includes(m.k) ? '✓' : ''}</i><span>${esc(m.t)}</span><b>+${m.p}</b></li>`).join('')}</ul>
           ${pr ? `<p class="sub">Tu primera partida de hoy da <b>${premioDia(rachaJ(y) + 1)} monedas</b> de premio por entrar a diario.</p>` : ''}</section>`; })()}
       ${retosPend().map(d => `<section class="card rt-reto"><span class="rt-ra">${avJ(J.todos[d.a] || {})}</span><div><b>${esc((J.todos[d.a] || {}).n || 'Alguien')} te ha retado</b><span class="sub">Ha hecho ${fmtInt(d.pa)} puntos. ¿Le ganas?</span></div><button class="btn primary" type="button" data-a="jugarduelo" data-id="${d.id}">Jugar el duelo</button></section>`).join('')}
-      <div class="seg etab rt-tabs" role="tablist">${[['liga', 'Liga'], ['duelos', 'Duelos'], ['tienda', 'Tienda']].map(([k, l]) => `<button type="button" role="tab" data-a="rtab" data-k="${k}" aria-pressed="${tab === k}">${l}${k === 'duelos' && retosPend().length ? ` · ${retosPend().length}` : ''}</button>`).join('')}</div>
+      <div class="seg etab rt-tabs" role="tablist">${[['liga', 'Liga'], ['duelos', 'Duelos']].map(([k, l]) => `<button type="button" role="tab" data-a="rtab" data-k="${k}" aria-pressed="${tab === k}">${l}${k === 'duelos' && retosPend().length ? ` · ${retosPend().length}` : ''}</button>`).join('')}</div>
       ${tab === 'liga' ? (() => { const F = Object.entries(J.todos).filter(([, d]) => d && d.ultima && !d.oculta && Date.now() - d.ultima.ts < 4 * 864e5).sort((a, b) => b[1].ultima.ts - a[1].ultima.ts).slice(0, 4);
           return F.length ? `<section class="card hall"><h2>Lo último que ha salido</h2>${F.map(([u, d]) => { const m = MSC().LISTA.find(x => x[0] === d.ultima.id) || [], R = MSC().RAREZA[m[2]] || ['', '#999']; return `<div class="hl">${mscH(d.ultima.id, 'msc hl-p')}<span><b>${esc(d.n)}</b> ha sacado ${/a$/.test(m[1] || '') ? 'una' : 'un'} <b style="color:${R[1]}">${esc(m[1] || '')}</b> <small>${R[0].toLowerCase()}</small></span></div>`; }).join('')}</section>` : ''; })() : ''}
-      ${tab === 'liga' ? `<section class="card"><div class="card-h"><h2>Liga de la semana</h2><span class="sub">tu mejor partida de cada día · se reinicia el lunes</span></div>${ligaH}</section>` : tab === 'duelos' ? duelosH : tiendaH}
+      ${tab === 'liga' ? `<section class="card"><div class="card-h"><h2>Liga de la semana</h2><span class="sub">tu mejor partida de cada día · se reinicia el lunes</span></div>${ligaH}</section>` : duelosH}
       ${y.oculta ? '<p class="sub">No sales en la liga ni te pueden retar. Lo cambias en «Mis datos».</p>' : ''}`, { nav: isAdmin() ? navA() : navJ(), right: isAdmin() ? '<button class="btn ghost small" type="button" data-a="out">Salir</button>' : '' });
   }
 
@@ -1348,6 +1386,7 @@
       <svg class="spark" viewBox="0 0 140 34" preserveAspectRatio="none" role="img" aria-label="Cómo ha llegado en sus últimas respuestas">${band}${line}${dot}</svg>
       <span class="nums"><span>Llega<b>${fmt1(e.s)}</b></span><span>Carga<b>${e.L.ratio == null ? '—' : '×' + fmt1(e.L.ratio)}</b></span><span>Responde<b>${resp}/${ent}</b></span></span></button>`;
   }
+  actions.imptodas = async () => { A.impTodas = true; render(); };
   actions.tabla = async () => { A.tabla = !A.tabla; render(); };
   function equipoView() {
     const t = today(), lunes = mondayOf(t), U2 = activas();
@@ -1504,10 +1543,9 @@
     const hoy = `<div class="kstrip">${ks(fmt1(media), 'Cómo llegan', mLvl, base != null ? 'suele ' + fmt1(base) : 'del 1 al 10')}${ks(`${resp}/${us.length}`, 'Antes', resp < us.length / 2 ? 'warn' : '', `después ${conD.length} · diario ${us.filter(u => (diasDe(u)[t] || {}).diario).length}`)}<button type="button" class="ks ks-b ${pcTot ? 'info' : ''}" data-av="buzon"><b>${pcTot}</b><span>Por contestar</span><small>abrir el buzón ›</small></button></div>
       ${pendientes().length ? `<button type="button" class="aviso-altas" data-av="acceso">${ico('acceso')}<span><b>${pendientes().length === 1 ? '1 cuenta espera' : pendientes().length + ' cuentas esperan'} el alta</b><small>Actívalas cuando tengas el consentimiento firmado</small></span>›</button>` : ''}
       <section class="card imp-card"><div class="card-h"><h2>Lo importante</h2><span class="leg">${['bad', 'warn'].map(k => cnt(k) ? `<span class="lg ${k}"><i></i>${cnt(k)}</span>` : '').join('')}</span></div>
-        ${imp.length ? `<div class="imps">${imp.map(impHTML).join('')}</div>` : `<p class="calm">${ric('ok')}Todo en orden. Nadie con avisos ni nada por contestar.</p>`}</section>
+        ${imp.length ? `<div class="imps">${imp.slice(0, A.impTodas ? 99 : 5).map(impHTML).join('')}</div>${imp.length > 5 && !A.impTodas ? `<button class="btn ghost small" type="button" data-a="imptodas">Ver las ${imp.length}</button>` : ''}` : `<p class="calm">${ric('ok')}Todo en orden. Nadie con avisos ni nada por contestar.</p>`}</section>
       ${despH}
       ${prox.length ? `<section class="strip"><div class="strip-h"><h2>${prox[0].fecha === t ? 'Partido de hoy' : 'Próximo partido'}</h2></div><div class="tkts">${prox.map(x => ticketHTML(x, nR(x), `data-part="${x.id}"`)).join('')}</div></section>` : ''}
-      <section class="card"><div class="card-h"><h2>Cada una</h2><span class="sub">toca para ver su ficha</span></div><div class="pfs">${rows.map(pf).join('')}</div></section>
       <section class="card"><div class="card-h"><h2>Las cinco</h2><span class="sub">hoy · ↑↓ frente a lo normal</span></div><div class="cinco">${cinco}</div></section>`;
     const semana = `<div class="kstrip">${ks(pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + '%', 'Carga', pctC == null ? '' : pctC > 30 ? 'bad' : pctC > 15 || pctC < -20 ? 'warn' : 'ok', 'frente a su mes')}${ks(us.length ? Math.round(dSem / (us.length * nd) * 100) + '%' : '—', 'Diarios', dSem < us.length * nd / 2 ? 'warn' : '', 'de los días posibles')}${ks(cu.length ? Math.round(cuN('si') / cu.length * 100) + '%' : '—', 'Compromisos', '', 'cumplidos')}</div>
       <section class="card"><h2>Cómo llegan · 4 semanas</h2>${wellChart(teamDias, t)}</section>
@@ -1763,6 +1801,7 @@
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
     if (b.dataset.btab) { A.btab = b.dataset.btab; render(); return; }
+    if (b.dataset.ytab) { draft.ytab = b.dataset.ytab; render(); return; }
     if (b.dataset.ptabs) { A.ptabs = b.dataset.ptabs; render(); return; }
     if (b.dataset.pmes) { A.mes = b.dataset.pmes; A.cday = ''; render(); return; }
     if (b.dataset.cday != null && view === 'partidos') { A.cday = b.dataset.cday; render(); return; }
@@ -1804,7 +1843,7 @@
     if (me === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!me) return loginView();
     if (!ADMIN.length) return gate(`<h2>Falta un paso de configuración</h2><p>Copia este código y ponlo en <b>firebase-config.js</b> (SMBF_ADMIN) y en las reglas (ADMIN_UID). Es tu código de usuario: con él la app sabe que eres la Dirección Técnica.</p><p class="code">${esc(me.uid)}</p><button class="btn ghost" type="button" data-a="out">Salir</button>`);
-    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'partidos') return partidosView(); if (view === 'partido') return partidoView(); if (view === 'reto') return retoView(); if (view === 'avdt') return editAvView(9); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); if (view === 'buzon') return buzonView(); return resumenView(); }
+    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'partidos') return partidosView(); if (view === 'partido') return partidoView(); if (view === 'reto') return retoView(); if (view === 'avdt') return editAvView(9); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); if (view === 'buzon') return buzonView(); if (view === 'mundo') return mundoView(); return resumenView(); }
     if (U.perfil === undefined || U.acceso === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!U.perfil || !U.perfil.acepta || U.editAlta) return altaView();
     if (!U.acceso || !U.acceso.activa) return esperaView();
@@ -1812,7 +1851,7 @@
     if (view === 'antes') return antesFlowView();
     if (view === 'mflow' && draft.mf) return mfView();
     if (view === 'partidos') return partidosJView(); if (view === 'partido') return partidoJView(); if (view === 'reto') return retoView();
-    if (view === 'semana') return diarioView(); if (view === 'yo' || view === 'evol') return yoView(); if (view === 'datos') return datosView();
+    if (view === 'semana') return diarioView(); if (view === 'yo' || view === 'evol') return mundoView(); if (view === 'datos') return datosView();
     return hoyView();
   }
   me = undefined; render();

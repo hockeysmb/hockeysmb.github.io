@@ -82,6 +82,7 @@ async def main():
         await pg.click('[data-etab="semana"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_1b_semana.png', full_page=True); await pg.click('[data-etab="hoy"]'); await pg.wait_for_timeout(200)
         dd = await pg.locator('.desp-dt').count(); print(tag, 'después del entreno en Equipo:', ' '.join((await pg.text_content('.desp-dt .card-h') or '').split()) if dd else 'NO', '·', await pg.locator('.desp-dt .ef').count(), 'esfuerzos')
         if not dd: errs.append('no sale el después del entreno en Equipo')
+        if await pg.locator('[data-a="imptodas"]').count(): await pg.click('[data-a="imptodas"]'); await pg.wait_for_timeout(200)
         rc = await pg.locator('.imp:has-text("Su rincón")').count(); print(tag, 'rincón en lo importante:', rc)
         if not rc: errs.append('no sale «Mi rincón» en lo importante')
         # buzón: lo que cuentan, con preguntas rápidas y «Leído»

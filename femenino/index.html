@@ -721,6 +721,30 @@ body.jg-on { overflow: hidden; }
 .cf { position: relative; } .cf-ev { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; color: #fff; background: #4a2a6b; padding: 2px 8px; border-radius: 999px; z-index: 1; }
 .cf.halloween { grid-column: 1 / -1; padding-top: 16px; background: linear-gradient(160deg, color-mix(in srgb, #ff8c1a 20%, var(--fill)), color-mix(in srgb, #6a3fb0 20%, var(--fill))); }
 .rz-h.ev { color: #c2620a; } .rz-h small { color: var(--muted); font-weight: 600; font-size: 12px; }
+
+/* orden nuevo (27 oct, tarde): «Lo de hoy» y «Mi mundo» */
+.fx { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+.tareas { display: grid; gap: 2px; margin: 0 -6px; }
+.tarea { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 6px; border-radius: 14px; }
+.tarea + .tarea { border-top: 1px solid var(--line); border-radius: 0 0 14px 14px; }
+.ta-ic { position: relative; width: 46px; height: 46px; border-radius: 14px; background: var(--fill); padding: 7px; }
+.tarea.ok .ta-ic { background: color-mix(in srgb, var(--good) 14%, var(--fill)); }
+.tarea.ok .ta-ic > .fx { opacity: .55; filter: saturate(.6); }
+.ta-ok { position: absolute; right: -5px; bottom: -5px; width: 22px; height: 22px; }
+.ta-b { display: grid; gap: 2px; min-width: 0; } .ta-b b { font-size: 15px; } .ta-b small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tarea.ok .ta-b b { color: var(--muted); }
+.ta-a { display: flex; flex-direction: column; gap: 4px; align-items: stretch; } .ta-a .btn { min-height: 36px; padding: 6px 12px; white-space: nowrap; }
+.ta-prog { position: relative; width: 44px; height: 44px; display: grid; place-items: center; } .ta-prog svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ta-prog circle { fill: none; stroke: var(--fill); stroke-width: 5; } .ta-prog circle.on { stroke: var(--good); stroke-linecap: round; transition: stroke-dasharray .6s; } .ta-prog b { font-size: 12px; font-variant-numeric: tabular-nums; }
+.ta-fin { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; border-radius: 16px; padding: 10px 14px; background: linear-gradient(120deg, #ffd21f, #ffb000); color: #2a1a00; font: inherit; text-align: left; cursor: pointer; font-size: 20px; }
+.ta-fin .fx { width: 40px; height: 40px; flex: none; } .ta-fin span { display: grid; flex: 1; } .ta-fin b { font-size: 16px; } .ta-fin small { font-size: 12.5px; opacity: .8; }
+.prox-l { display: flex; align-items: center; gap: 12px; width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 16px; padding: 10px 14px; font: inherit; text-align: left; cursor: pointer; font-size: 20px; }
+.prox-l .fx { width: 34px; height: 34px; flex: none; } .prox-l span { display: grid; flex: 1; min-width: 0; } .prox-l b { font-size: 14.5px; } .prox-l small { font-size: 12px; color: var(--muted); }
+.mtabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+.mtabs button { display: grid; justify-items: center; gap: 2px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 16px; padding: 8px 4px 7px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.mtabs button .fx { width: 30px; height: 30px; transition: transform .2s; } .mtabs button[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); } .mtabs button[aria-selected="true"] .fx { transform: scale(1.12) translateY(-1px); }
+.tarea.part-card { border: 0; box-shadow: none; background: transparent; outline: 0; }
+.tarea + .tarea.part-card { border-top: 1px solid var(--line); }
 </style>
 </head>
 <body>
@@ -728,12 +752,12 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261027e"></script>
-<script src="firebase-config.js?v=20261027e"></script>
-<script src="mascotas.js?v=20261027e"></script>
-<script src="juego.js?v=20261027e"></script>
-<script src="juegos2.js?v=20261027e"></script>
-<script src="app.js?v=20261027e"></script>
+<script src="lib/avatar.js?v=20261027g"></script>
+<script src="firebase-config.js?v=20261027g"></script>
+<script src="mascotas.js?v=20261027g"></script>
+<script src="juego.js?v=20261027g"></script>
+<script src="juegos2.js?v=20261027g"></script>
+<script src="app.js?v=20261027g"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>
