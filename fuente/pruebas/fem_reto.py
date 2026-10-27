@@ -71,7 +71,7 @@ async def main():
       await pg.click('.rt-play'); await partida()
       j = await db('juego/demo03'); print('tras la partida:', j.get('dias'), 'bolas', j.get('bolas'), 'partidas', j.get('partidas'), 'premios', j.get('premios'), 'misiones', j.get('mis'))
       if not j.get('premios'): errs.append('no da el premio diario')
-      if not (j.get('dias') or {}).get('2026-10-27'): errs.append('no se guarda la partida')
+      if '2026-10-27' not in (j.get('dias') or {}) or not j.get('partidas'): errs.append('no se guarda la partida')
       print('récords', j.get('recs'))
       await pg.screenshot(path=O + '3_resultado.png', full_page=True)
       # 4. jugar el duelo pendiente
@@ -103,6 +103,17 @@ async def main():
       if await pg.locator('[data-cf="poner"]').count(): await pg.click('[data-cf="poner"]')
       else: await pg.click('[data-cf="cerrar"]')
       await pg.wait_for_timeout(400); j3 = await db('juego/demo03')
+      # cofre de Halloween: solo trae mascotas de Halloween y no toca las garantías
+      await pg.evaluate("window.__fake.put('juego/demo03', { bolas: 6000 })"); await pg.wait_for_timeout(300)
+      hw = await pg.locator('[data-a="abrircofre"][data-k="halloween"]').count(); print('cofre de Halloween a la vista:', hw)
+      if not hw: errs.append('no sale el cofre de Halloween')
+      else:
+        sin0 = (await db('juego/demo03')).get('sinEp')
+        await pg.click('[data-a="abrircofre"][data-k="halloween"]'); await pg.wait_for_timeout(2200); await pg.screenshot(path=O + '6e_halloween.png')
+        await pg.click('[data-cf="cerrar"]') if await pg.locator('[data-cf="cerrar"]').count() else None; await pg.wait_for_timeout(300)
+        jh = await db('juego/demo03'); hwp = [x for x in jh.get('compras', []) if x.split('|')[-1] in ('calabaza', 'murcielago', 'arana', 'fantasma', 'gatobrujo', 'momia', 'vampiro', 'reycalabaza')]
+        print('del cofre de Halloween:', hwp, '· garantía sin tocar:', jh.get('sinEp') == sin0)
+        if not hwp or jh.get('sinEp') != sin0: errs.append('el cofre de Halloween no va bien')
       print('cofre:', j3.get('cofres'), [x for x in j3.get('compras', []) if x.startswith('mascota|')], 'puesta', j3.get('mascota'), 'ultima', j3.get('ultima'))
       if j3.get('cofres') != 1 or not any(x.startswith('mascota|') for x in j3.get('compras', [])) or not j3.get('mascota'): errs.append('no se abre el cofre')
       await pg.screenshot(path=O + '6b_mascotas.png', full_page=True)

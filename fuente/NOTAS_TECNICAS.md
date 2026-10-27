@@ -240,3 +240,22 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 
 - Campo opcional `diario.rincon` (máximo 500 caracteres), entre «Lo mejor» y «Lo que cambiaría»: lo que no ha ido bien o le ronda la cabeza. Solo lo lee la DT.
 - La DT lo ve en el buzón, en «Te ha contado» de la ficha («Su rincón»), en el CSV y como aviso informativo «Su rincón» en «Lo importante» si es de hoy o de ayer (`estado`).
+
+## Más mascotas y cofre de Halloween (27 oct)
+
+- 11 animales nuevos en `mascotas.js`:
+  - comunes: mosca, abejita, mariquita y ovejita;
+  - raras: caracol, erizo y pulpo;
+  - épicas: ballena, león y perezoso;
+  - legendaria: medusa de neón.
+
+  En total hay 33 normales.
+- Mascotas de evento: llevan un quinto campo en `LISTA` (`'hw'`) y `EVENTOS = {hw: 'Halloween'}`. Las de Halloween son 8:
+  - comunes: calabacita, murciélago y arañita;
+  - raras: fantasmita y gato brujo;
+  - épicas: momia y vampirito;
+  - legendaria: rey calabaza.
+
+  No salen en los cofres normales.
+- `COFRES` admite `ev` y `hasta`. El «Cofre de Halloween» cuesta 500 y sale con probabilidades 50/30/15/5 hasta el 3 de noviembre de 2026; después desaparece de la tienda y quien tenga mascotas de Halloween se las queda. No cuenta para las garantías de los cofres normales. En la colección sale primero una sección «Halloween».
+- Para otro evento (Navidad, por ejemplo): se añaden las mascotas con su código, el evento en `EVENTOS` y un cofre con `ev` y `hasta`.

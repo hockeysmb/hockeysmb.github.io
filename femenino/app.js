@@ -1142,26 +1142,29 @@
     { k: 'madera', n: 'Cofre de madera', p: 250, o: { comun: 72, rara: 22, epica: 5, legendaria: 1 }, c: ['#b5793e', '#7a4a1e'] },
     { k: 'plata', n: 'Cofre de plata', p: 600, o: { comun: 35, rara: 45, epica: 16, legendaria: 4 }, c: ['#c9d1d9', '#7d8892'] },
     { k: 'oro', n: 'Cofre de oro', p: 1400, o: { comun: 0, rara: 45, epica: 42, legendaria: 13 }, c: ['#ffd84d', '#c99a00'] },
+    // de temporada (27 oct): solo trae las mascotas de su evento y desaparece después de la fecha (las que tengas, te las quedas)
+    { k: 'halloween', n: 'Cofre de Halloween', p: 500, o: { comun: 50, rara: 30, epica: 15, legendaria: 5 }, c: ['#ff8c1a', '#4a2a6b'], ev: 'hw', hasta: '2026-11-03' },
   ];
   const REPE = { comun: 15, rara: 40, epica: 100, legendaria: 250 };
   const cofreSVG = (c, cls = 'cofre') => `<svg class="${cls}" viewBox="0 0 100 90" aria-hidden="true"><ellipse cx="50" cy="84" rx="36" ry="5" fill="rgba(0,0,0,.15)"/><rect x="12" y="38" width="76" height="44" rx="8" fill="${c.c[0]}"/><rect x="12" y="38" width="76" height="44" rx="8" fill="none" stroke="${c.c[1]}" stroke-width="4"/>
     <path d="M12 40 Q12 12 50 12 Q88 12 88 40 Z" fill="${c.c[0]}" stroke="${c.c[1]}" stroke-width="4"/><rect x="44" y="34" width="12" height="16" rx="3" fill="${c.c[1]}"/><circle cx="50" cy="42" r="2.4" fill="${c.c[0]}"/>
-    <path d="M24 46 v30 M76 46 v30" stroke="${c.c[1]}" stroke-width="3" opacity=".5"/>${c.k === 'oro' ? '<path d="M30 20 l2 4 4 .6 -3 3 .7 4 -3.7 -2 -3.7 2 .7 -4 -3 -3 4 -.6 Z M70 22 l1.6 3.2 3.2 .5 -2.4 2.3 .6 3.2 -3 -1.6 -3 1.6 .6 -3.2 -2.4 -2.3 3.2 -.5 Z" fill="#fff"/>' : ''}</svg>`;
+    <path d="M24 46 v30 M76 46 v30" stroke="${c.c[1]}" stroke-width="3" opacity=".5"/>${c.k === 'halloween' ? `<path d="M30 58 l6 -6 l6 6 Z M58 58 l6 -6 l6 6 Z M34 68 Q50 78 66 68 L62 68 L59 72 L55 68 L45 68 L41 72 L38 68 Z" fill="${c.c[1]}"/>` : ''}${c.k === 'oro' ? '<path d="M30 20 l2 4 4 .6 -3 3 .7 4 -3.7 -2 -3.7 2 .7 -4 -3 -3 4 -.6 Z M70 22 l1.6 3.2 3.2 .5 -2.4 2.3 .6 3.2 -3 -1.6 -3 1.6 .6 -3.2 -2.4 -2.3 3.2 -.5 Z" fill="#fff"/>' : ''}</svg>`;
   function tirar(c, y) {
     const sinEp = y.sinEp || 0, sinLeg = y.sinLeg || 0;
     let r;
-    if (sinLeg >= 59) r = 'legendaria';
-    else if (sinEp >= 19) r = Math.random() < 0.2 ? 'legendaria' : 'epica';
+    if (!c.ev && sinLeg >= 59) r = 'legendaria';
+    else if (!c.ev && sinEp >= 19) r = Math.random() < 0.2 ? 'legendaria' : 'epica';
     else { let x = Math.random() * 100; r = 'comun'; for (const k of ['legendaria', 'epica', 'rara', 'comun']) { x -= c.o[k]; if (x < 0) { r = k; break; } } }
-    const L = MSC().LISTA.filter(m => m[2] === r), m = L[Math.floor(Math.random() * L.length)];
+    const L = MSC().LISTA.filter(m => m[2] === r && (c.ev ? m[4] === c.ev : !m[4])), m = L[Math.floor(Math.random() * L.length)];
     return { id: m[0], n: m[1], r };
   }
   actions.abrircofre = async b => {
-    const c = COFRES.find(x => x.k === b.dataset.k), y = yoJ(); if (!c) return;
+    const c = COFRES.find(x => x.k === b.dataset.k), y = yoJ(); if (!c || (c.hasta && today() > c.hasta)) return;
     if (monedas() < c.p) { toast('Te faltan monedas. ¡A jugar!'); return; }
     const sale = tirar(c, y), nueva = !tiene('mascota', sale.id), dev = nueva ? 0 : REPE[sale.r];
     const doc = Object.assign({}, perfilJ(), { gastado: (y.gastado || 0) + c.p - dev, compras: nueva ? [...(y.compras || []), 'mascota|' + sale.id] : (y.compras || []), cofres: (y.cofres || 0) + 1,
-      sinEp: ['epica', 'legendaria'].includes(sale.r) ? 0 : (y.sinEp || 0) + 1, sinLeg: sale.r === 'legendaria' ? 0 : (y.sinLeg || 0) + 1 });
+      // las garantías (épica a los 20, legendaria a los 60) solo cuentan los cofres normales
+      sinEp: c.ev ? (y.sinEp || 0) : ['epica', 'legendaria'].includes(sale.r) ? 0 : (y.sinEp || 0) + 1, sinLeg: c.ev ? (y.sinLeg || 0) : sale.r === 'legendaria' ? 0 : (y.sinLeg || 0) + 1 });
     if (nueva && (sale.r === 'epica' || sale.r === 'legendaria')) doc.ultima = { id: sale.id, ts: Date.now() };
     J.todos[meU()] = Object.assign({}, y, doc);
     abrirAnim(c, sale, nueva, dev);
@@ -1229,15 +1232,16 @@
     const itemCard = ([c, v, n, p]) => { const own = tiene(c, v), on = own && puesto(c, v);
       const prev = c === 'cele' ? `<span class="sh-c">${esc(v)}</span>` : c === 'estela' ? `<span class="sh-e" style="background:linear-gradient(90deg,${(window.SMBJuego ? window.SMBJuego.ESTELAS[v] : ['#681825']).join(',')})"></span>` : avatarSVG(Object.assign({}, miAv(), { [c]: v }), 9, n);
       return `<div class="sh${own ? ' own' : ''}"><span class="sh-p">${prev}</span><b>${esc(n)}</b><small>${CAT_N[c]}</small>${own ? (on ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Ponérmelo</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`}</div>`; };
-    const petCard = ([id, n, r]) => { const own = tiene('mascota', id), on = own && puesto('mascota', id), R = MSC().RAREZA[r] || ['', '#999'];
-      return `<div class="sh pet ${r}${own ? ' own' : ' falta'}"><span class="rz" style="background:${R[1]}">${R[0]}</span><span class="sh-p">${own ? mscH(id, 'msc big') : `<span class="sil">${mscH(id, 'msc big')}<i>?</i></span>`}</span><b>${own ? esc(n) : '???'}</b>${own ? (on ? '<span class="pill">Te acompaña</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="mascota" data-v="${id}">Llevarla</button>`) : '<small>Sale en cofres</small>'}</div>`; };
-    const y0 = yoJ(), cofresH = `<div class="cofres">${COFRES.map(c => `<div class="cf ${c.k}">${cofreSVG(c)}<b>${c.n}</b><span class="cf-odds">${Object.entries(c.o).filter(([, v]) => v).map(([r, v]) => `<i style="color:${(MSC().RAREZA[r] || [])[1]}">${(MSC().RAREZA[r] || [''])[0]} ${v}%</i>`).join('')}</span><button class="btn small${monedas() >= c.p ? ' primary' : ''}" type="button" data-a="abrircofre" data-k="${c.k}">${fmtInt(c.p)} monedas</button></div>`).join('')}</div>
+    const petCard = ([id, n, r, , ev]) => { const own = tiene('mascota', id), on = own && puesto('mascota', id), R = MSC().RAREZA[r] || ['', '#999'];
+      return `<div class="sh pet ${r}${own ? ' own' : ' falta'}"><span class="rz" style="background:${R[1]}">${R[0]}</span><span class="sh-p">${own ? mscH(id, 'msc big') : `<span class="sil">${mscH(id, 'msc big')}<i>?</i></span>`}</span><b>${own ? esc(n) : '???'}</b>${own ? (on ? '<span class="pill">Te acompaña</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="mascota" data-v="${id}">Llevarla</button>`) : `<small>${ev ? 'Cofre de ' + esc((MSC().EVENTOS || {})[ev] || '') : 'Sale en cofres'}</small>`}</div>`; };
+    const y0 = yoJ(), cofresH = `<div class="cofres">${COFRES.filter(c => !c.hasta || today() <= c.hasta).sort((a, b) => (b.ev ? 1 : 0) - (a.ev ? 1 : 0)).map(c => `<div class="cf ${c.k}">${c.hasta ? `<span class="cf-ev">Hasta el ${esc(fmtShort(c.hasta))}</span>` : ''}${cofreSVG(c)}<b>${c.n}</b><span class="cf-odds">${Object.entries(c.o).filter(([, v]) => v).map(([r, v]) => `<i style="color:${(MSC().RAREZA[r] || [])[1]}">${(MSC().RAREZA[r] || [''])[0]} ${v}%</i>`).join('')}</span><button class="btn small${monedas() >= c.p ? ' primary' : ''}" type="button" data-a="abrircofre" data-k="${c.k}">${fmtInt(c.p)} monedas</button></div>`).join('')}</div>
       <p class="sub">Las repetidas te devuelven monedas. Si llevas 20 cofres sin épica, el siguiente trae épica o legendaria${(y0.sinLeg || 0) > 0 ? `; legendaria asegurada en ${60 - (y0.sinLeg || 0)} cofres` : ''}.</p>`;
     const tiendaH = `<section class="card"><div class="card-h"><h2>Tienda</h2><span class="pill coin">${fmtInt(monedas())} monedas</span></div>
         <p class="sub">${isAdmin() ? 'Ganas monedas recogiendo bolas, con las misiones y entrando a diario.' : 'Ganas monedas recogiendo bolas, con las misiones, entrando a diario y contestando la app.'}</p>
         <div class="chips-cat">${[['mascotas', 'Mascotas'], ['personaje', 'Personaje'], ['estelas', 'Estelas'], ['goles', 'Celebraciones']].map(([k, l]) => `<button type="button" class="cc" data-a="ttab" data-k="${k}" aria-pressed="${tt === k}">${l}</button>`).join('')}</div>
         ${tt === 'mascotas' ? `${cofresH}<h3 class="rz-h">Tu colección · ${mis} de ${MSC().LISTA.length}</h3><p class="sub">Te acompañan en la liga, en los duelos y patinando a tu lado.</p>
-          ${Object.entries(MSC().RAREZA).map(([r, [rn, rc]]) => `<h3 class="rz-h" style="color:${rc}">${rn}${r === 'legendaria' ? 's' : r === 'comun' ? 'es' : 's'}</h3><div class="shop">${MSC().LISTA.filter(x => x[2] === r).map(petCard).join('')}</div>`).join('')}
+          ${Object.entries(MSC().EVENTOS || {}).map(([ev, en]) => `<h3 class="rz-h ev">${esc(en)} <small>${MSC().LISTA.filter(x => x[4] === ev && tiene('mascota', x[0])).length} de ${MSC().LISTA.filter(x => x[4] === ev).length}</small></h3><div class="shop">${MSC().LISTA.filter(x => x[4] === ev).map(petCard).join('')}</div>`).join('')}
+          ${Object.entries(MSC().RAREZA).map(([r, [rn, rc]]) => `<h3 class="rz-h" style="color:${rc}">${rn}${r === 'legendaria' ? 's' : r === 'comun' ? 'es' : 's'}</h3><div class="shop">${MSC().LISTA.filter(x => x[2] === r && !x[4]).map(petCard).join('')}</div>`).join('')}
           ${yoJ().mascota ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="mascota" data-v="">Ir sin mascota</button>' : ''}`
         : `<div class="shop">${TIENDA.filter(([c]) => tt === 'personaje' ? !['estela', 'cele'].includes(c) : tt === 'estelas' ? c === 'estela' : c === 'cele').map(itemCard).join('')}</div>
           <div class="row">${tt === 'estelas' && (yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${tt === 'goles' && (yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div>`}</section>`;
