@@ -235,3 +235,8 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   - se ve la zona en la que estás y un círculo en la portería que marca a dónde va cada tiro.
 - El diario es de hockey: «¿Qué tal hoy en el hockey?», con una línea que lo explica y ejemplos de juego.
 - Prueba nueva `fem_juegos`: juega los tres juegos en un móvil hasta que se acaban solos y comprueba que se guardan.
+
+## «Mi rincón» en el diario (27 oct)
+
+- Campo opcional `diario.rincon` (máximo 500 caracteres), entre «Lo mejor» y «Lo que cambiaría»: lo que no ha ido bien o le ronda la cabeza. Solo lo lee la DT.
+- La DT lo ve en el buzón, en «Te ha contado» de la ficha («Su rincón»), en el CSV y como aviso informativo «Su rincón» en «Lo importante» si es de hoy o de ayer (`estado`).

@@ -239,6 +239,8 @@
     else if (s != null && base != null && s <= base - 1.8) add('warn', `Hoy está por debajo de lo normal en ella (${fmt1(s)}; suele estar en ${fmt1(base)}).`, `${fmt1(s)} · suele ${fmt1(base)}`, 'baja');
     if (a && diez(a.dolor, a) <= 3) add('warn', 'Molestias musculares altas.', `Molestias ${Math.round(diez(a.dolor, a))}`, 'dolor');
     if (a && a.nota) add('info', `Ha escrito: «${a.nota}»`, 'Ha escrito', 'nota');
+    // «Mi rincón» del diario (27 oct): lo que no ha ido bien o le ronda la cabeza; de hoy o de ayer
+    [ref, addDays(ref, -1)].forEach(k => { const r = ((dias[k] || {}).diario || {}).rincon; if (r) add('info', `En su rincón${k === ref ? '' : ' (ayer)'}: «${r}»`, 'Su rincón', 'nota'); });
     Object.keys(dias).filter(k => k <= ref && daysBetween(k, ref) <= 2).forEach(k => Object.values((dias[k] || {}).partidos || {}).forEach(pd => {
       const m = (pd.emociones || []).filter(e => EMOC_MAL.includes(e));
       if (m.length) add('info', `Después del partido contra ${pd.rival || '—'} se siente ${m.join(', ').toLowerCase()}.`, m.join(', '), 'partido');
@@ -469,18 +471,19 @@
   }
   function rachaDia() { let n = 0, k = today(); if (!(U.dias[k] || {}).diario) k = addDays(k, -1); while ((U.dias[k] || {}).diario) { n++; k = addDays(k, -1); } return n; }
   const IC_MEJOR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
+  const IC_RINCON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-7l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>';
   const IC_CAMB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>';
   const IC_COMO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>';
   function diarioView() {
     const t = today(), lunes = mondayOf(t), hoyD = (U.dias[t] || {}).diario, edit = !hoyD || draft.editDia;
-    if (edit && (!draft.dia || draft.dia.f !== t)) draft.dia = Object.assign({ tiempo: 0, mejor: '', cambiar: '', como: '' }, hoyD ? clone(hoyD) : {}, { f: t });
+    if (edit && (!draft.dia || draft.dia.f !== t)) draft.dia = Object.assign({ tiempo: 0, mejor: '', rincon: '', cambiar: '', como: '' }, hoyD ? clone(hoyD) : {}, { f: t });
     const d = edit ? draft.dia : hoyD, r = rachaDia(), ver = draft.verDia && draft.verDia !== t ? draft.verDia : null;
     // la semana en una tira: el tiempo de cada día
     const tira = `<div class="dsem" role="group" aria-label="Tu semana">${[0, 1, 2, 3, 4, 5, 6].map(i => { const k = addDays(lunes, i), x = (U.dias[k] || {}).diario, fut = k > t;
       return `<button type="button" class="dsd${k === t ? ' hoy' : ''}${x ? ' ok' : ''}${fut ? ' fut' : ''}${k === (ver || t) ? ' sel' : ''}" data-verdia="${k}"${fut ? ' disabled' : ''} aria-label="${esc(fmtDay(k))}${x ? ': ' + TIEMPO[(x.tiempo || 3) - 1][1] : ''}"><small>${DOW.find(z => z[0] === dateOf(k).getDay())[1]}</small><span class="dsd-i">${x ? wx(x.tiempo) : k === t ? '<i class="dot"></i>' : ''}</span><b>${dateOf(k).getDate()}</b></button>`; }).join('')}</div>`;
     const ln = (ic, tit, v) => v ? `<div class="dl-r"><i>${ic}</i><span><b>${tit}</b>${esc(v)}</span></div>` : '';
     const entrada = (k, x) => `<article class="dentry"><div class="de-h"><span class="de-wx">${wx(x.tiempo)}</span><span><b>${esc(k === t ? 'Hoy' : fmtDay(k))}</b><small>${esc(TIEMPO[(x.tiempo || 3) - 1][1])}</small></span></div>
-      ${ln(IC_MEJOR, 'Lo mejor', x.mejor)}${ln(IC_CAMB, 'Cambiaría', x.cambiar)}${ln(IC_COMO, 'Cómo lo voy a hacer', x.como)}
+      ${ln(IC_MEJOR, 'Lo mejor', x.mejor)}${ln(IC_RINCON, 'Mi rincón', x.rincon)}${ln(IC_CAMB, 'Cambiaría', x.cambiar)}${ln(IC_COMO, 'Cómo lo voy a hacer', x.como)}
       ${(rr => rr && rr.t ? `<div class="de-resp"><span class="kicker">Carlos te ha contestado</span><p>${esc(rr.t)}</p></div>` : '')(respOf(U.acceso, 'd:' + k))}${vistoTag('d:' + k)}</article>`;
     const fld = (id, ic, tit, ph, val) => `<label class="dfield"><span class="df-h"><i>${ic}</i>${tit}</span><textarea id="${id}" rows="2" maxlength="300" placeholder="${ph}">${esc(val)}</textarea></label>`;
     const form = `<section class="card dform"><div class="card-h"><h2>¿Qué tal hoy en el hockey?</h2><span class="sub">${esc(fmtDay(t))}</span></div>
@@ -488,6 +491,7 @@
         <div class="wxs dk" role="group" aria-label="Qué tal hoy en el hockey">${TIEMPO.map(([v, l]) => `<button type="button" class="wx" data-tiempo="${v}" aria-pressed="${d.tiempo === v}" aria-label="${l}">${wx(v)}</button>`).join('')}</div>
         <span class="wx-l">${d.tiempo ? esc(TIEMPO[d.tiempo - 1][1]) : 'De tormenta a sol: elige uno'}</span>
         ${fld('d-mejor', IC_MEJOR, 'Lo mejor', 'Una acción, una decisión, algo que te salió…', d.mejor || '')}
+        <label class="dfield rincon"><span class="df-h"><i>${IC_RINCON}</i>Mi rincón</span><small class="df-s">Lo que no ha ido bien o te ronda la cabeza. Opcional. Solo lo lee Carlos.</small><textarea id="d-rincon" rows="2" maxlength="500" placeholder="Algo que no te salió, algo que te frustró o te preocupa…">${esc(d.rincon || '')}</textarea></label>
         ${fld('d-cambiar', IC_CAMB, 'Lo que cambiaría', 'Algo de tu juego que harías distinto (opcional)', d.cambiar || '')}
         ${fld('d-como', IC_COMO, 'Cómo lo voy a hacer', 'Qué vas a probar en el próximo entreno (opcional)', d.como || '')}
         <div class="row"><button class="btn primary big grow" type="button" data-a="savedia">Guardar mi diario</button>${hoyD ? '<button class="btn ghost" type="button" data-a="noeditdia">Cancelar</button>' : ''}</div><p class="msg" id="msg"></p></section>`;
@@ -916,17 +920,17 @@
   actions.showdia = async () => { draft.showDia = true; render(); };
   actions.editsem = async () => { draft.editSem = true; render(); };
   // lo escrito no se pierde al repintar (al elegir el tiempo)
-  const keepDia = () => { if (!draft.dia) return; ['mejor', 'cambiar', 'como'].forEach(k => { const el = document.getElementById('d-' + k); if (el) draft.dia[k] = el.value; }); const c = document.getElementById('d-comp'); if (c && draft.sem) draft.sem.compromiso = c.value; };
+  const keepDia = () => { if (!draft.dia) return; ['mejor', 'rincon', 'cambiar', 'como'].forEach(k => { const el = document.getElementById('d-' + k); if (el) draft.dia[k] = el.value; }); const c = document.getElementById('d-comp'); if (c && draft.sem) draft.sem.compromiso = c.value; };
   actions.editdia = async () => { draft.editDia = true; render(); };
   actions.noeditdia = async () => { draft.editDia = false; draft.dia = null; render(); };
   actions.diamas = async () => { draft.diaMas = true; render(); };
   actions.savedia = async () => {
     const t = today(), d = draft.dia, m = $('#msg'), err = x => { m.className = 'msg err'; m.textContent = x; };
     const val = id => ((document.getElementById(id) || {}).value || '').trim();
-    d.mejor = val('d-mejor'); d.cambiar = val('d-cambiar'); d.como = val('d-como');
+    d.mejor = val('d-mejor'); d.rincon = val('d-rincon'); d.cambiar = val('d-cambiar'); d.como = val('d-como');
     if (!d.tiempo) return err('Elige qué tal ha ido hoy.');
     if (!d.mejor) return err('Escribe lo mejor de hoy en el hockey.');
-    const doc = { tiempo: d.tiempo, mejor: d.mejor, cambiar: d.cambiar, como: d.como, ts: Date.now() }, p0 = puntos(U.dias, U.semanas);
+    const doc = { tiempo: d.tiempo, mejor: d.mejor, rincon: d.rincon || '', cambiar: d.cambiar, como: d.como, ts: Date.now() }, p0 = puntos(U.dias, U.semanas);
     await B.merge(`registros/${me.uid}/dias/${t}`, { diario: doc, ts: Date.now() });
     U.dias[t] = Object.assign({}, U.dias[t] || {}, { diario: doc }); draft.editDia = false; draft.dia = null; premio(p0); render(); scrollTo({ top: 0 });
   };
@@ -1391,7 +1395,7 @@
     for (let i = 0; i < n; i++) { const k = addDays(t, -i), d = D[k] || {}, tx = [];
       if ((d.antes || {}).nota) tx.push(['Antes del entreno', d.antes.nota]);
       (d.ses || []).filter(z => z.nota && !z.pid).forEach(z => tx.push([`Después · esfuerzo ${z.rpe}, ${z.min} min`, z.nota]));
-      if (d.diario) { const x = d.diario; [['Diario · ' + (TIEMPO[(x.tiempo || 3) - 1] || [])[1] + ' · lo mejor', x.mejor], ['Cambiaría', x.cambiar], ['Cómo lo hará', x.como]].forEach(z => { if (z[1]) tx.push(z); }); }
+      if (d.diario) { const x = d.diario; [['Diario · ' + (TIEMPO[(x.tiempo || 3) - 1] || [])[1] + ' · lo mejor', x.mejor], ['Mi rincón', x.rincon], ['Cambiaría', x.cambiar], ['Cómo lo hará', x.como]].forEach(z => { if (z[1]) tx.push(z); }); }
       if (tx.length) out.push({ u, k: 'd:' + k, f: k, tit: '', tx });   // la fecha ya va en el título del grupo
       Object.entries(d.partidos || {}).forEach(([id, pd]) => { if (!pd) return; const tp = [['Antes: se fija en', (pd.pre || {}).objetivo], ['Mejor decisión', pd.mejor], ['Cambiaría', pd.cambiar], ['Se lleva', pd.llevo]].filter(x => x[1]);
         if (tp.length) out.push({ u, k: 'p:' + k + ':' + id, f: k, tit: `Partido · ${pd.cat || ''} contra ${pd.rival || ''}`, tx: tp }); }); }
@@ -1536,7 +1540,7 @@
   function contadoHTML(u, D, t) {
     const L = []; for (let i = 0; i < 21; i++) { const k = addDays(t, -i), d = D[k] || {}, n = [(d.antes || {}).nota, ...(d.ses || []).map(x => x.nota)].filter(Boolean); if (n.length || d.diario) L.push([k, n, d.diario]); }
     const dl = (l, v) => v ? `<p class="dw-m"><span>${l}</span>${esc(v)}</p>` : '';
-    return L.length ? `<section class="card"><h2>Te ha contado</h2>${L.map(([k, n, x]) => `<div class="said"><div class="said-q"><span class="kicker">${x ? `<span class="dw-wx" title="${esc(TIEMPO[(x.tiempo || 3) - 1][1])}">${wx(x.tiempo)}</span>` : ''}${esc(fmtDay(k))}</span>${n.length ? `<p class="nota-p">«${esc(n.join(' · '))}»</p>` : ''}${x ? dl('Lo mejor', x.mejor) + dl('Cambiaría', x.cambiar) + dl('Cómo lo hará', x.como) : ''}</div>${respBox(u, 'd:' + k)}</div>`).join('')}</section>` : '';
+    return L.length ? `<section class="card"><h2>Te ha contado</h2>${L.map(([k, n, x]) => `<div class="said"><div class="said-q"><span class="kicker">${x ? `<span class="dw-wx" title="${esc(TIEMPO[(x.tiempo || 3) - 1][1])}">${wx(x.tiempo)}</span>` : ''}${esc(fmtDay(k))}</span>${n.length ? `<p class="nota-p">«${esc(n.join(' · '))}»</p>` : ''}${x ? dl('Lo mejor', x.mejor) + dl('Su rincón', x.rincon) + dl('Cambiaría', x.cambiar) + dl('Cómo lo hará', x.como) : ''}</div>${respBox(u, 'd:' + k)}</div>`).join('')}</section>` : '';
   }
   function detalleView() {
     A.view2 = 'detalle';
@@ -1737,9 +1741,9 @@
     await B.batch(['sub17', 'senior', EQ].map(e => ({ op: 'del', path: 'equipos/' + e }))); toast('Temporada borrada.');
   };
   actions.csv = async () => {
-    const rows = [['jugadora', 'equipo', 'fecha', ...WELL.map(w => w.n), 'bienestar (media)', 'sesiones', 'esfuerzo', 'minutos', 'carga', 'notas', 'partido', 'minutos jugados', 'se vio (1-10)', 'mejor decisión', 'cambiaría', 'ganas (antes)', 'nervios (antes)', 'confianza (antes)', 'cree que irá', 'le importa', 'se fija en', 'disfrute', 'lo consiguió', 'cómo se siente', 'se lleva', 'diario: el día (1-5)', 'diario: lo mejor', 'diario: cambiaría', 'diario: cómo lo hará']];
+    const rows = [['jugadora', 'equipo', 'fecha', ...WELL.map(w => w.n), 'bienestar (media)', 'sesiones', 'esfuerzo', 'minutos', 'carga', 'notas', 'partido', 'minutos jugados', 'se vio (1-10)', 'mejor decisión', 'cambiaría', 'ganas (antes)', 'nervios (antes)', 'confianza (antes)', 'cree que irá', 'le importa', 'se fija en', 'disfrute', 'lo consiguió', 'cómo se siente', 'se lleva', 'diario: el día (1-5)', 'diario: lo mejor', 'diario: mi rincón', 'diario: cambiaría', 'diario: cómo lo hará']];
     activas().concat(desactivadas()).forEach(u => Object.keys(diasDe(u)).sort().forEach(k => { const d = diasDe(u)[k], a = d.antes || {}, L = d.ses || [];
-      rows.push([A.jug[u].nombre, eqName(eqDe(u)), k, ...WELL.map(w => a[w.k] >= 1 ? r1(diez(a[w.k], a)) : ''), wellScore(a) == null ? '' : r1(wellScore(a)), L.map(s => s.tipo).join(' + '), L.map(s => s.rpe).join(' + '), L.map(s => s.min).join(' + '), L.length ? dayLoad(d) : '', [a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · '), ...(pp => [pp.map(x => x.cat + ' ' + x.rival).join(' + '), pp.map(x => x.min).join(' + '), pp.map(x => x.visto ?? '').join(' + '), pp.map(x => x.mejor).filter(Boolean).join(' · '), pp.map(x => x.cambiar).filter(Boolean).join(' · '), ...['ganas', 'nervios', 'confianza'].map(c => pp.map(x => (x.pre || {})[c] ?? '').join(' + ')), pp.map(x => lbl(ESPERA, (x.pre || {}).espera)).join(' + '), pp.map(x => lbl(IMPORTA, (x.pre || {}).importa)).join(' + '), pp.map(x => (x.pre || {}).objetivo).filter(Boolean).join(' · '), pp.map(x => x.disfrute ?? '').join(' + '), pp.map(x => lbl(CUMPLIDO, x.cumplido)).join(' + '), pp.map(x => (x.emociones || []).join(', ')).join(' + '), pp.map(x => x.llevo).filter(Boolean).join(' · ')])(Object.values(d.partidos || {})), ...(x => [x.tiempo || '', x.mejor || '', x.cambiar || '', x.como || ''])(d.diario || {})]); }));
+      rows.push([A.jug[u].nombre, eqName(eqDe(u)), k, ...WELL.map(w => a[w.k] >= 1 ? r1(diez(a[w.k], a)) : ''), wellScore(a) == null ? '' : r1(wellScore(a)), L.map(s => s.tipo).join(' + '), L.map(s => s.rpe).join(' + '), L.map(s => s.min).join(' + '), L.length ? dayLoad(d) : '', [a.nota, ...L.map(s => s.nota)].filter(Boolean).join(' · '), ...(pp => [pp.map(x => x.cat + ' ' + x.rival).join(' + '), pp.map(x => x.min).join(' + '), pp.map(x => x.visto ?? '').join(' + '), pp.map(x => x.mejor).filter(Boolean).join(' · '), pp.map(x => x.cambiar).filter(Boolean).join(' · '), ...['ganas', 'nervios', 'confianza'].map(c => pp.map(x => (x.pre || {})[c] ?? '').join(' + ')), pp.map(x => lbl(ESPERA, (x.pre || {}).espera)).join(' + '), pp.map(x => lbl(IMPORTA, (x.pre || {}).importa)).join(' + '), pp.map(x => (x.pre || {}).objetivo).filter(Boolean).join(' · '), pp.map(x => x.disfrute ?? '').join(' + '), pp.map(x => lbl(CUMPLIDO, x.cumplido)).join(' + '), pp.map(x => (x.emociones || []).join(', ')).join(' + '), pp.map(x => x.llevo).filter(Boolean).join(' · ')])(Object.values(d.partidos || {})), ...(x => [x.tiempo || '', x.mejor || '', x.rincon || '', x.cambiar || '', x.como || ''])(d.diario || {})]); }));
     const csv = '﻿' + rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `smb-femenino-${today()}.csv`; document.body.appendChild(a); a.click(); a.remove();
   };

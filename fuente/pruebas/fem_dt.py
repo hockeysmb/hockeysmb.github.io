@@ -44,6 +44,8 @@ def seed():
       if R.random() < 0.35 or (back == 0 and n.startswith(('Irene', 'Sara'))): continue
       k = 'registros/%s/dias/%s' % (u, (HOY - datetime.timedelta(days=back)).isoformat())
       db.setdefault(k, {'ts': 1})['diario'] = {'tiempo': R.choice([2, 3, 4, 4, 5, 5]), 'mejor': R.choice(['Me salió el 2c1', 'Aprobé el examen de mates', 'Presioné bien el pase atrás', 'Llegué puntual']), 'cambiar': R.choice(['', 'Hablar más en defensa', 'No enfadarme tanto']), 'como': R.choice(['', 'Respirar antes de contestar', 'Pedirla de cara']), 'ts': 1}
+    if n.startswith('Carla'):
+      db['registros/%s/dias/%s' % (u, HOY.isoformat())].setdefault('diario', {'tiempo': 2, 'mejor': 'Pedí la bola de cara', 'cambiar': '', 'como': '', 'ts': 1})['rincon'] = 'Me agobia no saber si voy convocada el domingo'
     # diario de las semanas
     for w in (2, 1, 0):
       lunes = (HOY - datetime.timedelta(days=HOY.weekday() + 7 * w)).isoformat()
@@ -80,6 +82,8 @@ async def main():
         await pg.click('[data-etab="semana"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_1b_semana.png', full_page=True); await pg.click('[data-etab="hoy"]'); await pg.wait_for_timeout(200)
         dd = await pg.locator('.desp-dt').count(); print(tag, 'después del entreno en Equipo:', ' '.join((await pg.text_content('.desp-dt .card-h') or '').split()) if dd else 'NO', '·', await pg.locator('.desp-dt .ef').count(), 'esfuerzos')
         if not dd: errs.append('no sale el después del entreno en Equipo')
+        rc = await pg.locator('.imp:has-text("Su rincón")').count(); print(tag, 'rincón en lo importante:', rc)
+        if not rc: errs.append('no sale «Mi rincón» en lo importante')
         # buzón: lo que cuentan, con preguntas rápidas y «Leído»
         await pg.click('.nav [data-av="buzon"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_5_buzon.png', full_page=True)
         nbz = await pg.locator('.bz.pend').count(); print(tag, 'buzón:', nbz, 'por contestar ·', await pg.text_content('.nav [data-av="buzon"]'))
