@@ -745,6 +745,68 @@ body.jg-on { overflow: hidden; }
 .mtabs button .fx { width: 30px; height: 30px; transition: transform .2s; } .mtabs button[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); } .mtabs button[aria-selected="true"] .fx { transform: scale(1.12) translateY(-1px); }
 .tarea.part-card { border: 0; box-shadow: none; background: transparent; outline: 0; }
 .tarea + .tarea.part-card { border-top: 1px solid var(--line); }
+
+/* tamagotchi (27 oct, tarde) */
+.ndot { position: absolute; top: 6px; left: calc(50% + 8px); width: 9px; height: 9px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 2px var(--surface); }
+.tama { display: grid; gap: 12px; }
+.tm-room { position: relative; aspect-ratio: 4 / 3.1; max-height: 340px; width: 100%; border-radius: 24px; overflow: hidden; background: linear-gradient(#fde7d6 0%, #f9d6c6 62%, #c9915f 62%, #b37c4c 100%); box-shadow: inset 0 -2px 0 rgba(0,0,0,.08), var(--shadow); }
+.tm-room::before { content: ""; position: absolute; left: 0; right: 0; top: 62%; height: 38%; background: repeating-linear-gradient(90deg, transparent 0 46px, rgba(0,0,0,.07) 46px 48px); }
+.tm-room.noche { background: linear-gradient(#2b2f5c 0%, #3a3a6e 62%, #5a4632 62%, #4a3826 100%); }
+.tm-room.noche .tm-d .fx { filter: brightness(.55) saturate(.7); }
+.tm-room.noche::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 70%, rgba(255,220,150,.18), transparent 55%); pointer-events: none; }
+.tm-d { position: absolute; display: block; pointer-events: none; }
+.tm-win { left: 7%; top: 8%; width: 24%; } .tm-pic { right: 9%; top: 10%; width: 18%; } .tm-plant { left: 4%; top: 48%; width: 17%; } .tm-bed { right: 3%; top: 52%; width: 28%; }
+.tm-suelo { position: absolute; left: 30%; right: 30%; top: 88%; height: 6%; border-radius: 50%; background: rgba(0,0,0,.14); filter: blur(2px); }
+.tm-pet { position: absolute; left: 50%; top: 58%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%) scale(var(--tm, 1)); border: 0; background: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; z-index: 2; }
+.tm-pet .tm-svg { width: 100%; height: 100%; display: block; transform-origin: 50% 95%; animation: tmIdle 2.6s ease-in-out infinite; }
+.tm-pet.dormido .tm-svg { animation: tmSleep 3.8s ease-in-out infinite; } .tm-pet.triste .tm-svg { animation: tmSad 3.4s ease-in-out infinite; filter: saturate(.75); }
+.tm-pet.feliz .tm-svg { animation: tmHappy 1.6s ease-in-out infinite; }
+.tm-pet.salta .tm-svg { animation: tmJump .5s ease-out 3; } .tm-pet.come .tm-svg { animation: tmChomp .22s ease-in-out 4; } .tm-pet.mimo .tm-svg { animation: tmSquish .45s ease-out 1; }
+.tm-pet.bano .tm-svg { animation: tmWiggle .3s ease-in-out 6; }
+.tm-pet.leyenda::before { content: ""; position: absolute; inset: -12%; border-radius: 50%; background: radial-gradient(circle, rgba(255,230,140,.55), transparent 65%); animation: tmGlow 2.4s ease-in-out infinite; }
+.tm-cor { position: absolute; left: 34%; top: -14%; width: 32%; transform: rotate(-8deg); }
+.tm-sucio { position: absolute; inset: 0; pointer-events: none; } .tm-sucio .fx { position: absolute; width: 18%; height: auto; animation: tmFly 2.2s linear infinite; } .tm-sucio .fx:last-child { animation-delay: -1.1s; animation-duration: 2.8s; }
+.tm-bub { position: absolute; left: 62%; top: 14%; width: 15%; aspect-ratio: 1; padding: 2.2%; background: #fff; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,.12); z-index: 3; animation: tmBub 2s ease-in-out infinite; }
+.tm-bub::after { content: ""; position: absolute; left: 6%; bottom: -10%; width: 22%; height: 22%; background: #fff; border-radius: 50%; }
+.tm-p { position: absolute; width: 13%; transform: translate(-50%, -50%); pointer-events: none; z-index: 4; }
+.tm-p.vuela { width: 16%; animation: tmVuela .8s cubic-bezier(.3,.1,.6,1) forwards; } .tm-p.sube { width: 9%; animation: tmSube 1s ease-out forwards; }
+.tm-p.bota { width: 11%; animation: tmBota 1.6s linear forwards; } .tm-p.tina { width: 54%; top: 76% !important; z-index: 3; animation: tmTina 1.9s ease forwards; }
+.tm-p.burbuja { width: 8%; z-index: 5; animation: tmBurbuja 1.3s ease-out forwards; }
+@keyframes tmIdle { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-3%) scale(1.02, .98); } }
+@keyframes tmHappy { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-6%) rotate(-3deg); } 50% { transform: translateY(0) rotate(0); } 75% { transform: translateY(-6%) rotate(3deg); } }
+@keyframes tmSleep { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, .96); } }
+@keyframes tmSad { 0%, 100% { transform: translateY(1%) rotate(-1deg); } 50% { transform: translateY(2%) rotate(1deg); } }
+@keyframes tmJump { 0% { transform: translateY(0) scale(1.1, .9); } 40% { transform: translateY(-22%) scale(.95, 1.06); } 80% { transform: translateY(0) scale(1.08, .92); } 100% { transform: translateY(0); } }
+@keyframes tmChomp { 50% { transform: scale(1.08, .9); } }
+@keyframes tmSquish { 0% { transform: scale(1); } 30% { transform: scale(1.12, .88); } 60% { transform: scale(.94, 1.06); } 100% { transform: scale(1); } }
+@keyframes tmWiggle { 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+@keyframes tmGlow { 50% { opacity: .55; transform: scale(1.06); } }
+@keyframes tmFly { 0% { left: 10%; top: 10%; } 25% { left: 75%; top: 0%; } 50% { left: 80%; top: 50%; } 75% { left: 5%; top: 45%; } 100% { left: 10%; top: 10%; } }
+@keyframes tmBub { 50% { transform: translateY(-6%) scale(1.04); } }
+@keyframes tmVuela { 0% { top: 8%; opacity: 0; transform: translate(-50%, -50%) scale(.6) rotate(-20deg); } 20% { opacity: 1; } 100% { top: 56%; opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(20deg); } }
+@keyframes tmSube { 0% { opacity: 0; transform: translate(-50%, 0) scale(.5); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -260%) scale(1.1); } }
+@keyframes tmBota { 0% { left: 10%; top: 62%; } 15% { top: 40%; } 30% { left: 40%; top: 66%; } 45% { top: 44%; } 60% { left: 68%; top: 66%; } 75% { top: 48%; } 90% { left: 88%; top: 68%; opacity: 1; } 100% { left: 96%; top: 68%; opacity: 0; } }
+@keyframes tmTina { 0% { opacity: 0; transform: translate(-50%, -20%); } 15%, 85% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -50%); } }
+@keyframes tmBurbuja { 0% { opacity: 0; transform: translate(-50%, 0) scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -380%) scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { .tm-pet .tm-svg, .tm-bub, .tm-sucio .fx { animation: none !important; } }
+.tm-name { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; } .tm-name > div { display: grid; } .tm-name b { font: 700 22px/1.1 var(--font-display); } .tm-name > div > span { font-size: 13px; color: var(--muted); }
+.tm-xp { display: flex; align-items: center; gap: 6px; } .tm-xp .fx { width: 22px; height: 22px; } .tm-xp > span { width: 90px; height: 8px; border-radius: 99px; background: var(--fill); overflow: hidden; } .tm-xp i { display: block; height: 100%; background: linear-gradient(90deg, #ff6f91, #ff3b6b); border-radius: inherit; } .tm-xp small { font-size: 11.5px; color: var(--muted); font-weight: 700; }
+.tbs { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; }
+.tb { display: grid; grid-template-columns: 26px 72px minmax(0, 1fr) 30px; align-items: center; gap: 8px; } .tb-i { width: 26px; height: 26px; } .tb-l { font-size: 13px; font-weight: 700; }
+.tb-b { height: 12px; border-radius: 99px; background: var(--fill); overflow: hidden; } .tb-b i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #46c37b, #2fa863); transition: width .6s; }
+.tb-b i.med { background: linear-gradient(90deg, #ffc94d, #f5a623); } .tb-b i.mal { background: linear-gradient(90deg, #ff7a6b, #e5484d); animation: tmBlink 1.4s ease-in-out infinite; }
+@keyframes tmBlink { 50% { opacity: .55; } }
+.tb > b { font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.tm-acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tm-acts button { display: grid; justify-items: center; gap: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 18px; padding: 10px 4px 8px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 var(--line); transition: transform .1s; }
+.tm-acts button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); } .tm-acts button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.tm-acts button:disabled { opacity: .45; } .tm-acts .fx { width: 40px; height: 40px; } .tm-acts span { display: grid; justify-items: center; } .tm-acts small { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+.tm-tray { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px; }
+.tm-items { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x mandatory; }
+.tm-items button { flex: none; width: 92px; scroll-snap-align: start; display: grid; justify-items: center; gap: 2px; border: 1px solid var(--line); background: var(--fill); color: var(--fg); border-radius: 16px; padding: 8px 4px; font: inherit; cursor: pointer; }
+.tm-items .fx { width: 46px; height: 46px; transition: transform .15s; } .tm-items button:active .fx { transform: scale(1.15); } .tm-items b { font-size: 12.5px; } .tm-items small { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.25; } .tm-items .caro { opacity: .5; }
+.tm-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .tm-4 button { display: grid; justify-items: center; gap: 4px; border: 1px solid var(--line); background: var(--fill); border-radius: 18px; padding: 8px 4px; font: inherit; cursor: pointer; color: var(--fg); } .tm-4 .msc { width: 64px; height: 64px; } .tm-4 b { font-size: 12.5px; }
+.tm-premio { animation: tmBub 1.8s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -752,12 +814,12 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261027g"></script>
-<script src="firebase-config.js?v=20261027g"></script>
-<script src="mascotas.js?v=20261027g"></script>
-<script src="juego.js?v=20261027g"></script>
-<script src="juegos2.js?v=20261027g"></script>
-<script src="app.js?v=20261027g"></script>
+<script src="lib/avatar.js?v=20261027h"></script>
+<script src="firebase-config.js?v=20261027h"></script>
+<script src="mascotas.js?v=20261027h"></script>
+<script src="juego.js?v=20261027h"></script>
+<script src="juegos2.js?v=20261027h"></script>
+<script src="app.js?v=20261027h"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

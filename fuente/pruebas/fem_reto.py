@@ -54,6 +54,22 @@ async def main():
         await pg.click('[data-a="ayerdesp"]'); await pg.wait_for_timeout(300); await pg.click('#c-desp [data-rpe="6"]'); await pg.click('#c-desp [data-a="saveses"]'); await pg.wait_for_timeout(400)
         d26 = await db('registros/demo03/dias/2026-10-26'); print('después de ayer guardado:', [(x['rpe'], x['min']) for x in d26.get('ses', [])], '· hoy sin tocar:', len((await db('registros/demo03/dias/2026-10-27')).get('ses', [])))
         if len(d26.get('ses', [])) != 1: errs.append('no se guarda el después de ayer')
+      # 1c. la mascota (tamagotchi): primera gratis, comer, jugar, bañar y mimos
+      await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + '1c_primera_mascota.png', full_page=True)
+      await pg.click('[data-a="primera"][data-k="gato"]'); await pg.wait_for_timeout(400)
+      await pg.click('[data-a="tcomida"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="tcomer"][data-k="pescado"]'); await pg.wait_for_timeout(700); await pg.screenshot(path=O + '1d_comiendo.png'); await pg.wait_for_timeout(1200)
+      await pg.click('[data-a="tjuguetes"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="tjugar"][data-k="pelota"]'); await pg.wait_for_timeout(2000)
+      await pg.click('[data-a="tbanar"]'); await pg.wait_for_timeout(900); await pg.screenshot(path=O + '1e_banando.png'); await pg.wait_for_timeout(1500)
+      await pg.click('.tm-pet'); await pg.wait_for_timeout(1000)
+      jt = await db('juego/demo03'); g = (jt.get('tama') or {}).get('gato') or {}; print('tamagotchi:', jt.get('mascota'), {k: g.get(k) for k in ('h', 'a', 'l', 'xp', 'jg', 'mi')}, 'gastado', jt.get('gastado'))
+      if jt.get('mascota') != 'gato' or not g or g.get('xp', 0) < 8 or g.get('l') != 100 or (jt.get('gastado') or 0) < 20: errs.append('el tamagotchi no guarda bien')
+      await pg.screenshot(path=O + '1f_mascota.png', full_page=True)
+      # cuatro días sin cuidarla: baja todo, avisa en la pestaña y se pone triste
+      await pg.evaluate("ts => { const d = window.__fake.db()['juego/demo03']; window.__fake.put('juego/demo03', { tama: { gato: Object.assign({}, d.tama.gato, { ts }) } }); }", 1793120400000 - 4 * 864e5); await pg.wait_for_timeout(400)
+      dot = await pg.locator('.nav [data-v="yo"] .ndot').count(); triste = await pg.locator('.tm-pet.triste').count(); print('tras 4 días sin cuidarla: aviso en la pestaña', bool(dot), '· triste', bool(triste), '·', ' '.join((await pg.text_content('.tbs')).split()))
+      if not dot or not triste: errs.append('la mascota no se resiente si no la cuidas')
+      await pg.screenshot(path=O + '1g_mascota_descuidada.png', full_page=True)
+      await pg.click('.nav [data-v="hoy"]'); await pg.wait_for_timeout(300)
       # 2. el reto: liga
       await pg.click('.nav [data-v="reto"]'); await pg.wait_for_timeout(500); await pg.screenshot(path=O + '2_reto_liga.png', full_page=True)
       print('liga:', await pg.locator('.pd:not(.vacio)').count(), 'en el podio ·', await pg.locator('.lg-rows li').count(), 'en la tabla')

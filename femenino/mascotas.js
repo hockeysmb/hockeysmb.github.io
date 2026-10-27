@@ -26,18 +26,28 @@
   const E = (x, y, rx, ry, f, extra = '') => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}" ${extra}/>`;
   const C = (x, y, r, f, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${extra}/>`;
   const Pth = (d, f, extra = '') => `<path d="${d}" fill="${f}" ${extra}/>`;
-  // cara básica: ojos grandes con brillo, mofletes y boquita
+  // cara básica: ojos grandes con brillo, mofletes y boquita. MOOD (27 oct, tamagotchi): 'feliz', 'triste', 'dormido' o '' (normal)
+  let MOOD = '';
+  const ojoArco = (x, y, arriba, c) => `<path d="M${x - 4.2} ${y + (arriba ? 1.5 : -0.5)} Q${x} ${y + (arriba ? -4 : 3.2)} ${x + 4.2} ${y + (arriba ? 1.5 : -0.5)}" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
   function cara(o = {}) {
     const y = o.y || 54, dx = o.dx || 11, ec = o.ec || '#2a1d1a', r = o.r || 4.6;
     let s = '';
     if (o.mask) s += E(50 - dx, y, 9, 7, o.mask) + E(50 + dx, y, 9, 7, o.mask);
-    if (o.pupil) [50 - dx, 50 + dx].forEach(x => { s += C(x, y, r, '#fff') + C(x + 0.6, y + 0.4, r * 0.62, o.pupil) + C(x + 1.4, y - 1, 1.1, '#fff'); });
+    const ojoC = o.mask ? '#fff' : (o.pupil || ec);
+    if (MOOD === 'dormido') s += ojoArco(50 - dx, y, false, ojoC) + ojoArco(50 + dx, y, false, ojoC);
+    else if (MOOD === 'feliz') s += ojoArco(50 - dx, y, true, ojoC) + ojoArco(50 + dx, y, true, ojoC);
+    else if (o.pupil) [50 - dx, 50 + dx].forEach(x => { s += C(x, y, r, '#fff') + C(x + 0.6, y + 0.4, r * 0.62, o.pupil) + C(x + 1.4, y - 1, 1.1, '#fff'); });
     else s += C(50 - dx, y, r, ec) + C(50 + dx, y, r, ec) + C(50 - dx + 1.6, y - 1.8, 1.6, '#fff') + C(50 + dx + 1.6, y - 1.8, 1.6, '#fff');
+    if (MOOD === 'triste') s += `<path d="M${50 - dx - 5} ${y - 7} L${50 - dx + 4} ${y - 10} M${50 + dx - 4} ${y - 10} L${50 + dx + 5} ${y - 7}" stroke="${ojoC}" stroke-width="1.8" stroke-linecap="round"/>` + `<path d="M${50 - dx - 1} ${y + 5} q-2.6 4.2 0 5.6 q2.6 -1.4 0 -5.6 Z" fill="#7cc4ff"/>`;
     if (!o.noBlush) s += E(50 - dx - 6, y + 8, 4.5, 2.6, o.blush || '#ff9fb0', 'opacity=".7"') + E(50 + dx + 6, y + 8, 4.5, 2.6, o.blush || '#ff9fb0', 'opacity=".7"');
     if (o.beak) s += Pth(`M${50 - 5} ${y + 5} L${50 + 5} ${y + 5} L50 ${y + 12} Z`, o.beak);
     else if (o.snout) s += E(50, y + 9, 8, 6, o.snout) + C(47, y + 9, 1.4, '#a84f5e') + C(53, y + 9, 1.4, '#a84f5e');
-    else if (o.nose) s += E(50, y + 6, 3, 2.2, o.nose) + Pth(`M46 ${y + 10} Q48 ${y + 12.5} 50 ${y + 10} Q52 ${y + 12.5} 54 ${y + 10}`, 'none', 'stroke="#2a1d1a" stroke-width="1.4" stroke-linecap="round"');
-    else s += Pth(`M46 ${y + 9} Q48 ${y + 11.5} 50 ${y + 9} Q52 ${y + 11.5} 54 ${y + 9}`, 'none', 'stroke="#2a1d1a" stroke-width="1.4" stroke-linecap="round"');
+    else { const my = o.nose ? y + 10 : y + 9;
+      if (o.nose) s += E(50, y + 6, 3, 2.2, o.nose);
+      if (MOOD === 'feliz') s += Pth(`M45.5 ${my - 0.5} Q50 ${my + 7} 54.5 ${my - 0.5} Z`, '#8a2b3c') + E(50, my + 3.2, 2.4, 1.4, '#ff8fa6');
+      else if (MOOD === 'triste') s += Pth(`M46 ${my + 2.5} Q50 ${my - 1.5} 54 ${my + 2.5}`, 'none', 'stroke="#2a1d1a" stroke-width="1.5" stroke-linecap="round"');
+      else if (MOOD === 'dormido') s += E(50, my + 1, 1.8, 1.4, '#8a2b3c');
+      else s += Pth(`M46 ${my} Q48 ${my + 2.5} 50 ${my} Q52 ${my + 2.5} 54 ${my}`, 'none', 'stroke="#2a1d1a" stroke-width="1.4" stroke-linecap="round"'); }
     return s;
   }
   const cuerpo = (c, b) => E(50, 76, 24, 16, c) + (b ? E(50, 79, 14, 10, b) : '') + C(50, 55, 27, c);
@@ -117,11 +127,13 @@
     reycalabaza: () => calabazaBase() + Pth('M34 34 L36 18 L43 26 L50 14 L57 26 L64 18 L66 34 Z', '#ffd21f', 'stroke="#c99a00" stroke-width="1.5"') + C(50, 20, 2.4, '#ff3b6b') + C(36, 22, 1.8, '#3bd1ff') + C(64, 22, 1.8, '#3bd1ff')
       + Pth('M36 56 L42 50 L48 56 Z M52 56 L58 50 L64 56 Z', '#5a2a00') + Pth('M38 66 Q50 76 62 66 L58 66 L55 70 L52 66 L48 66 L45 70 L42 66 Z', '#5a2a00') + E(32, 64, 4, 2.4, '#ff6f61', 'opacity=".7"') + E(68, 64, 4, 2.4, '#ff6f61', 'opacity=".7"'),
   });
-  function svg(id, cls) {
+  function svg(id, cls, mood) {
     const f = D[id]; if (!f) return '';
+    MOOD = mood || ''; let cuerpoSVG = ''; try { cuerpoSVG = f(); } finally { MOOD = ''; }
+    const zz = mood === 'dormido' ? '<g fill="#7a8cff" font-family="Arial,sans-serif" font-weight="900"><text x="70" y="26" font-size="11">z</text><text x="78" y="16" font-size="14">z</text><text x="88" y="8" font-size="10">z</text></g>' : '';
     const it = LISTA.find(x => x[0] === id), r = it ? it[2] : 'comun', k = 'msc' + (++n);
     const brillo = r === 'legendaria' ? `<defs><radialGradient id="${k}"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="55" r="48" fill="url(#${k})"/>` : '';
-    return `<svg class="${cls || 'msc'}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${it ? it[1] : id}">${brillo}<ellipse cx="50" cy="95" rx="24" ry="4" fill="rgba(0,0,0,.12)"/>${f()}</svg>`;
+    return `<svg class="${cls || 'msc'}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${it ? it[1] : id}">${brillo}<ellipse cx="50" cy="95" rx="24" ry="4" fill="rgba(0,0,0,.12)"/>${cuerpoSVG}${zz}</svg>`;
   }
   window.SMBMascotas = { LISTA, RAREZA, EVENTOS, svg };
 })();

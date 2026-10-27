@@ -400,7 +400,7 @@
   // dibujos 3D (Fluent Emoji de Microsoft, licencia MIT, en img/; ver img/LICENCIA.txt)
   const fx = (n, cls = '') => `<img class="fx${cls ? ' ' + cls : ''}" src="img/${n}.webp" alt="" draggable="false">`;
   // pestañas (27 oct, tarde): lo de cada día a la izquierda y lo del juego a la derecha
-  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy', 'hoy'], ['semana', 'Diario', 'semana'], ['partidos', 'Partidos', 'partidos'], ['reto', 'Juegos', 'reto'], ['yo', 'Mi mundo', 'mundo']].map(([k, l, i]) => `<button type="button" data-v="${k}" aria-current="${view === k || (view === 'partido' && k === 'partidos') || (view === 'datos' && k === 'yo') ? 'page' : 'false'}">${ico(i)}${l}</button>`).join('')}</nav>`;
+  const navJ = () => `<nav class="nav" aria-label="Secciones">${[['hoy', 'Hoy', 'hoy'], ['semana', 'Diario', 'semana'], ['partidos', 'Partidos', 'partidos'], ['reto', 'Juegos', 'reto'], ['yo', 'Mi mundo', 'mundo']].map(([k, l, i]) => `<button type="button" data-v="${k}" aria-current="${view === k || (view === 'partido' && k === 'partidos') || (view === 'datos' && k === 'yo') ? 'page' : 'false'}">${ico(i)}${l}${k === 'yo' && tamaAvisa() ? '<i class="ndot" aria-label="Tu mascota te necesita"></i>' : ''}</button>`).join('')}</nav>`;
   const calJ = () => calOf(U.equipo);
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
@@ -803,8 +803,117 @@
       ${(L => L.length ? `<section class="strip"><div class="strip-h"><h2>Mis partidos</h2><span class="sub">${L.length === 1 ? '1 partido' : L.length + ' partidos'}</span></div><div class="cromos">${L.slice(0, 20).map(([k, id, pd]) => cromoHTML(k, id, pd, allPart(calJ()).find(y => y.id === id), 'yo-btn')).join('')}</div></section>` : '')(misPartidos(U.dias))}
       <section class="strip"><div class="strip-h"><h2>Tus compromisos</h2></div>${sem.length ? `<div class="notes">${sem.map(k => { const x = U.semanas[k], nx = U.semanas[addDays(k, 7)]; return `<div class="note"><span class="d">Semana del ${esc(fmtShort(k))}</span><span class="t">${esc(compOf(x) || '—')}</span>${nx && nx.cumplida ? `<span class="stamp ${nx.cumplida}">${esc(STAMP[nx.cumplida] || '')}</span>` : ''}</div>`; }).join('')}</div>` : '<p class="sub">Aquí saldrán los compromisos de tu diario.</p>'}</section>`;
   }
-  // la mascota (se completa con el tamagotchi)
-  function tamaHTML() { const id = yoJ().mascota; return id ? `<section class="card">${mscH(id, 'msc big')}</section>` : `<section class="card"><p class="sub">Todavía no tienes mascota. Sácala de un cofre en la tienda.</p></section>`; }
+  // ================= tamagotchi (27 oct, tarde): cuidar a la mascota que llevas =================
+  // juego/{uid}.tama[id] = {h llenura, a ánimo, l limpieza (0-100), xp cariño, ts (última cuenta), jg {f, n} juegos de hoy, mi {f, n} mimos de hoy, pr día del premio por contestar}
+  // Bajan con el tiempo (la mitad de noche, de 22:00 a 7:30). Si las tres están muy bajas pierde cariño poco a poco; nunca se va ni enferma.
+  const TAMA0 = { h: 80, a: 80, l: 80, xp: 0 };
+  const COMIDA = [['manzana', 'Manzana', 10, { h: 20 }], ['zanahoria', 'Zanahoria', 10, { h: 20 }], ['fresa', 'Fresas', 15, { h: 15, a: 5 }], ['galleta', 'Galleta', 15, { h: 10, a: 10 }], ['pescado', 'Pescado', 20, { h: 35 }], ['sandia', 'Sandía', 20, { h: 25, a: 5 }], ['carne', 'Filete', 25, { h: 45 }], ['helado', 'Helado', 30, { h: 15, a: 20 }], ['tarta', 'Tarta', 40, { h: 30, a: 25 }]];
+  const JUGUETES = [['pelota', 'Pelota'], ['peluche', 'Peluche'], ['ovillo', 'Ovillo'], ['yoyo', 'Yoyó'], ['cometa', 'Cometa']];
+  const ETAPAS = [[0, 'Recién llegada'], [30, 'Confiada'], [100, 'Amiga'], [250, 'Inseparable'], [500, 'Leyenda']];
+  const JUEGOS_DIA = 5, MIMOS_DIA = 10;
+  const esNoche = (d = new Date()) => { const h = d.getHours() + d.getMinutes() / 60; return h >= 22 || h < 7.5; };
+  function tamaDe(id, now = Date.now()) {
+    const g = Object.assign({}, TAMA0, ((yoJ().tama || {})[id]) || {}); if (!g.ts) { g.ts = now; return g; }
+    let hrs = Math.min(24 * 14, Math.max(0, (now - g.ts) / 36e5)), t0 = g.ts;
+    while (hrs > 0) { const st = Math.min(1, hrs), k = esNoche(new Date(t0)) ? 0.5 : 1;
+      g.h = Math.max(0, g.h - 1.4 * st * k); g.l = Math.max(0, g.l - 1.1 * st * k);
+      g.a = Math.max(0, g.a - (0.9 + (g.h < 30 ? 0.8 : 0) + (g.l < 30 ? 0.8 : 0)) * st * k);
+      const m = (g.h + g.a + g.l) / 3; if (m < 25) g.xp = Math.max(0, g.xp - 0.25 * st); else if (m > 70) g.xp += 0.1 * st;
+      hrs -= st; t0 += st * 36e5; }
+    g.ts = now; return g;
+  }
+  const tamaMedia = g => (g.h + g.a + g.l) / 3;
+  const tamaMood = g => esNoche() ? 'dormido' : tamaMedia(g) < 30 ? 'triste' : tamaMedia(g) > 65 ? 'feliz' : '';
+  const etapaDe = xp => { let i = 0; ETAPAS.forEach((e, k) => { if (xp >= e[0]) i = k; }); return i; };
+  const tamaAvisa = () => { const id = yoJ().mascota; if (!id) return false; const g = tamaDe(id); return g.h < 30 || g.a < 30 || g.l < 30; };
+  async function tamaGuardar(id, g) {
+    const y = yoJ(), r = v => Math.round(v * 10) / 10, gg = Object.assign({}, g, { h: r(g.h), a: r(g.a), l: r(g.l), xp: r(g.xp), ts: Date.now() });
+    const tama = Object.assign({}, y.tama || {}, { [id]: gg }); J.todos[meU()] = Object.assign({}, y, { tama });
+    try { await B.merge('juego/' + meU(), Object.assign(perfilJ(), { tama })); } catch (e) { console.error(e); toast('No se ha podido guardar. Revisa la conexión.'); }
+  }
+  // efectos en la habitación (no repinta hasta que acaban)
+  function tmFx(tipo, src) {
+    const room = document.querySelector('.tm-room'), pet = document.querySelector('.tm-pet'); if (!room || !pet) return 400;
+    const add = (html, cls, x, y, ms) => { const e = document.createElement('span'); e.className = 'tm-p ' + cls; e.innerHTML = html; e.style.left = x + '%'; e.style.top = y + '%'; room.appendChild(e); setTimeout(() => e.remove(), ms); return e; };
+    pet.classList.remove('salta', 'come', 'bano', 'mimo'); void pet.offsetWidth;
+    if (tipo === 'comer') { add(fx(src), 'vuela', 50, 8, 900); setTimeout(() => pet.classList.add('come'), 600); for (let i = 0; i < 3; i++) setTimeout(() => add(fx('chispa'), 'sube', 38 + i * 12, 48, 900), 900 + i * 120); return 1500; }
+    if (tipo === 'jugar') { add(fx(src), 'bota', 10, 62, 1600); pet.classList.add('salta'); for (let i = 0; i < 4; i++) setTimeout(() => add(fx('nota'), 'sube', 30 + i * 13, 40, 1000), 300 + i * 220); return 1700; }
+    if (tipo === 'banar') { add(fx('banera'), 'tina', 50, 60, 1900); pet.classList.add('bano'); for (let i = 0; i < 9; i++) setTimeout(() => add(fx('burbujas'), 'burbuja', 28 + Math.random() * 44, 55 + Math.random() * 15, 1300), 150 + i * 150); setTimeout(() => add(fx('chispa'), 'sube', 50, 35, 900), 1500); return 2100; }
+    if (tipo === 'mimo') { pet.classList.add('mimo'); for (let i = 0; i < 3; i++) setTimeout(() => add(fx('corazon'), 'sube', 35 + Math.random() * 30, 35 + Math.random() * 10, 1000), i * 120); return 700; }
+    if (tipo === 'premio') { for (let i = 0; i < 8; i++) setTimeout(() => add(fx(i % 2 ? 'estrella' : 'corazon'), 'sube', 15 + Math.random() * 70, 30 + Math.random() * 30, 1100), i * 90); pet.classList.add('salta'); return 1300; }
+    return 400;
+  }
+  const tmBusy = { on: false };
+  async function tmAccion(tipo, src, cambio, msg) {
+    if (tmBusy.on) return; tmBusy.on = true; const ms = tmFx(tipo, src);
+    setTimeout(async () => { await cambio(); tmBusy.on = false; render(); if (msg) toast(msg); }, ms);
+  }
+  actions.tcomida = async () => { draft.tcomida = !draft.tcomida; draft.tjuguete = false; render(); };
+  actions.tjuguetes = async () => { draft.tjuguete = !draft.tjuguete; draft.tcomida = false; render(); };
+  actions.tcomer = async b => {
+    const id = yoJ().mascota, c = COMIDA.find(x => x[0] === b.dataset.k); if (!id || !c) return;
+    const g = tamaDe(id); if (g.h >= 95) { toast('No tiene hambre. ¡Está llenísima!'); return; }
+    if (monedas() < c[2]) { toast('Te faltan monedas. ¡A jugar!'); return; }
+    tmAccion('comer', c[0], async () => { const y = yoJ(); J.todos[meU()] = Object.assign({}, y, { gastado: (y.gastado || 0) + c[2] }); g.h = Math.min(100, g.h + (c[3].h || 0)); g.a = Math.min(100, g.a + (c[3].a || 0)); g.xp += 2; await B.merge('juego/' + meU(), { gastado: (y.gastado || 0) + c[2] }).catch(() => {}); await tamaGuardar(id, g); }, '¡Ñam! +' + c[3].h + ' llenura');
+  };
+  actions.tjugar = async b => {
+    const id = yoJ().mascota; if (!id) return; const g = tamaDe(id), t = today(), n = g.jg && g.jg.f === t ? g.jg.n : 0;
+    if (esNoche()) { toast('Está durmiendo. Mañana jugáis.'); return; }
+    if (n >= JUEGOS_DIA) { toast('Por hoy ya ha jugado bastante. ¡Está agotada!'); return; }
+    tmAccion('jugar', b.dataset.k || 'pelota', async () => { g.a = Math.min(100, g.a + 15); g.h = Math.max(0, g.h - 4); g.l = Math.max(0, g.l - 6); g.xp += 3; g.jg = { f: t, n: n + 1 }; await tamaGuardar(id, g); }, '¡Qué bien lo ha pasado! +15 ánimo');
+  };
+  actions.tbanar = async () => {
+    const id = yoJ().mascota; if (!id) return; const g = tamaDe(id); if (g.l >= 85) { toast('Ya está limpísima.'); return; }
+    tmAccion('banar', '', async () => { g.l = 100; g.a = Math.min(100, g.a + 5); g.xp += 3; await tamaGuardar(id, g); }, '¡Como nueva!');
+  };
+  actions.tmimo = async () => {
+    const id = yoJ().mascota; if (!id) return; const g = tamaDe(id), t = today(), n = g.mi && g.mi.f === t ? g.mi.n : 0;
+    if (n >= MIMOS_DIA) { tmFx('mimo'); return; }
+    tmAccion('mimo', '', async () => { g.a = Math.min(100, g.a + 2); g.xp += 1; g.mi = { f: t, n: n + 1 }; await tamaGuardar(id, g); });
+  };
+  actions.tpremio = async () => {
+    const id = yoJ().mascota; if (!id || tocaHoy().length) return; const g = tamaDe(id); if (g.pr === today()) return;
+    tmAccion('premio', '', async () => { g.a = Math.min(100, g.a + 20); g.xp += 10; g.pr = today(); await tamaGuardar(id, g); }, '¡Está orgullosísima de ti! +20 ánimo, +10 cariño');
+  };
+  // primera mascota gratis (para que todas puedan empezar a cuidar una)
+  const PRIMERAS = ['perro', 'gato', 'conejo', 'hamster'];
+  actions.primera = async b => {
+    const y = yoJ(), id = b.dataset.k; if (!PRIMERAS.includes(id) || (y.compras || []).some(x => x.startsWith('mascota|'))) return;
+    const doc = Object.assign({}, perfilJ(), { compras: [...(y.compras || []), 'mascota|' + id], mascota: id, tama: Object.assign({}, y.tama || {}, { [id]: Object.assign({}, TAMA0, { ts: Date.now() }) }) });
+    J.todos[meU()] = Object.assign({}, y, doc); render(); await B.merge('juego/' + meU(), doc); toast('¡Ya es tuya! Cuídala bien.');
+  };
+  function tamaHTML() {
+    const y = yoJ(), id = y.mascota, tieneAlguna = (y.compras || []).some(x => x.startsWith('mascota|'));
+    if (!id) return tieneAlguna ? `<section class="card"><h2>¿Quién te acompaña?</h2><p class="sub">Elige una de tu colección en la tienda («Llevarla») y la cuidas aquí.</p><button class="btn primary" type="button" data-ytab="tienda">Ir a mi colección</button></section>`
+      : `<section class="card tm-elige"><h2>Elige tu primera mascota</h2><p class="sub">Es gratis. Tendrás que darle de comer, jugar con ella y bañarla. Las demás salen de los cofres de la tienda.</p>
+        <div class="tm-4">${PRIMERAS.map(k => `<button type="button" data-a="primera" data-k="${k}">${MSC().svg(k, 'msc', 'feliz')}<b>${esc((MSC().LISTA.find(x => x[0] === k) || [])[1] || k)}</b></button>`).join('')}</div></section>`;
+    const g = tamaDe(id), mood = tamaMood(g), m = MSC().LISTA.find(x => x[0] === id) || [id, id, 'comun'], et = etapaDe(g.xp), sig = ETAPAS[et + 1];
+    const pct = sig ? Math.round((g.xp - ETAPAS[et][0]) / (sig[0] - ETAPAS[et][0]) * 100) : 100, t = today(), noche = esNoche();
+    const nJ = g.jg && g.jg.f === t ? g.jg.n : 0, premio = !tocaHoy().length && g.pr !== t && !isAdmin();
+    const bar = (ic, l, v) => `<div class="tb"><span class="tb-i">${fx(ic)}</span><span class="tb-l">${l}</span><span class="tb-b"><i class="${v < 30 ? 'mal' : v < 60 ? 'med' : ''}" style="width:${Math.round(v)}%"></i></span><b>${Math.round(v)}</b></div>`;
+    const necesita = [g.h < 35 ? ['hambre', 'Tiene hambre'] : null, g.l < 35 ? ['sucio', 'Necesita un baño'] : null, g.a < 35 && !noche ? ['triste', 'Se aburre'] : null].filter(Boolean);
+    return `<section class="tama">
+        <div class="tm-room${noche ? ' noche' : ''}">
+          <span class="tm-d tm-win">${fx('ventana')}</span><span class="tm-d tm-pic">${fx('cuadro')}</span><span class="tm-d tm-plant">${fx('planta')}</span><span class="tm-d tm-bed">${fx('cama')}</span>
+          ${necesita.length && !noche ? `<span class="tm-bub">${fx(necesita[0][0])}</span>` : ''}
+          <button class="tm-pet ${mood || 'normal'}${et >= 4 ? ' leyenda' : ''}" type="button" data-a="tmimo" aria-label="Hacerle mimos a ${esc(m[1])}" style="--tm:${0.82 + et * 0.06}">${MSC().svg(id, 'msc tm-svg', mood)}${g.l < 35 ? `<span class="tm-sucio">${fx('sucio')}${fx('sucio')}</span>` : ''}${et >= 4 ? `<span class="tm-cor">${fx('corona')}</span>` : ''}</button>
+          <span class="tm-suelo"></span>
+        </div>
+        <div class="tm-name"><div><b>${esc(m[1])}</b><span>${esc(ETAPAS[et][1])}${noche ? ' · durmiendo' : necesita.length ? ' · ' + necesita.map(x => x[1].toLowerCase()).join(', ') : mood === 'feliz' ? ' · feliz' : ''}</span></div>
+          <span class="tm-xp" role="img" aria-label="Cariño: ${pct} % hasta ${sig ? sig[1] : 'el máximo'}">${fx('corazon')}<span><i style="width:${pct}%"></i></span><small>${sig ? sig[1] : 'Máximo'}</small></span></div>
+        ${premio ? `<button class="ta-fin tm-premio" type="button" data-a="tpremio">${fx('regalo')}<span><b>Has contestado todo hoy</b><small>Tu mascota está orgullosa: recoge +20 ánimo y +10 cariño</small></span>›</button>` : ''}
+        <div class="tbs">${bar('carne', 'Llenura', g.h)}${bar('feliz', 'Ánimo', g.a)}${bar('jabon', 'Limpieza', g.l)}</div>
+        <div class="tm-acts">
+          <button type="button" data-a="tcomida" aria-pressed="${!!draft.tcomida}">${fx('manzana')}<span>Comer</span></button>
+          <button type="button" data-a="tjuguetes" aria-pressed="${!!draft.tjuguete}"${noche ? ' disabled' : ''}>${fx('pelota')}<span>Jugar<small>${JUEGOS_DIA - nJ}/${JUEGOS_DIA}</small></span></button>
+          <button type="button" data-a="tbanar">${fx('banera')}<span>Bañar</span></button>
+          <button type="button" data-ytab="tienda">${fx('tienda')}<span>Cambiar</span></button>
+        </div>
+        ${draft.tcomida ? `<div class="tm-tray"><span class="pill coin">${fmtInt(monedas())} monedas</span><div class="tm-items">${COMIDA.map(([k, n, p, e]) => `<button type="button" data-a="tcomer" data-k="${k}"${monedas() < p ? ' class="caro"' : ''}>${fx(k)}<b>${n}</b><small>${p} monedas · +${e.h}${e.a ? ' · ánimo +' + e.a : ''}</small></button>`).join('')}</div></div>` : ''}
+        ${draft.tjuguete && !noche ? `<div class="tm-tray"><div class="tm-items">${JUGUETES.map(([k, n]) => `<button type="button" data-a="tjugar" data-k="${k}">${fx(k)}<b>${n}</b><small>gratis</small></button>`).join('')}</div></div>` : ''}
+        <p class="sub center">${noche ? 'De 22:00 a 7:30 duerme: las barras bajan más despacio.' : 'Tócala para hacerle mimos. Si se te olvida cuidarla, se pone triste y pierde cariño.'}</p>
+      </section>`;
+  }
   function editAvView(lv) {
     if (isAdmin()) lv = 9;
     const a = draft.av = draft.av || avNorm(isAdmin() ? miAv() : U.perfil.av, lv);

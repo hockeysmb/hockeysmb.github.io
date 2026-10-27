@@ -268,3 +268,23 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   - «Juegos» (`retoView`) se queda con el juego del día, las misiones, la liga y los duelos.
 - **DT.** En Equipo · Hoy, «Lo importante» enseña 5 y un botón «Ver las N». «Cada una» se quita de ahí (ya está en Jugadoras). En Reto hay un acceso a «Mi mundo».
 - **Dibujos 3D** en `femenino/img/`: Fluent Emoji de Microsoft (licencia MIT, `img/LICENCIA.txt`), con nombre en español. Se usan con `fx('nombre')`. El service worker sirve `img/` y `lib/` primero desde lo guardado.
+
+## Tamagotchi de la mascota (27 oct, tarde)
+
+- Se cuida la mascota que llevas puesta, en «Mi mundo · Mascota» (`tamaHTML`). Se guarda en `juego/{uid}.tama[id] = {h llenura, a ánimo, l limpieza (0-100), xp cariño, ts, jg {f, n}, mi {f, n}, pr}`. Las reglas de Firebase ya lo permiten (`juego` lo escribe cada una).
+- `tamaDe(id)` calcula el estado al momento a partir de `ts`:
+  - por hora baja la llenura 1,4, la limpieza 1,1 y el ánimo 0,9, más 0,8 por cada necesidad por debajo de 30;
+  - de noche (22:00–7:30) baja a la mitad;
+  - si la media está por debajo de 25 pierde 0,25 de cariño por hora; por encima de 70 gana 0,1.
+
+  No muere ni enferma.
+- Acciones:
+  - comer: `COMIDA`, cuesta monedas;
+  - jugar: `JUGUETES`, gratis, 5 al día, no de noche;
+  - bañar;
+  - mimos: tocándola, 10 al día suben ánimo;
+  - premio diario por tener todo lo de hoy contestado: +20 ánimo y +10 cariño, se recoge con un botón.
+- Cariño → etapas (`ETAPAS`): Recién llegada, Confiada, Amiga, Inseparable y Leyenda (con corona y brillo). La mascota crece un poco en cada etapa.
+- Expresiones: `SMBMascotas.svg(id, cls, mood)` con `mood` 'feliz', 'triste' o 'dormido' (ojos, cejas, lágrima, boca, zzz).
+- Quien no tiene ninguna mascota elige una gratis (perrito, gatito, conejito o hámster: `PRIMERAS`).
+- Punto rojo en la pestaña «Mi mundo» si alguna barra baja de 30 (`tamaAvisa`).
