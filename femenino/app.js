@@ -465,7 +465,7 @@
   function semanaMini() {
     const x = diaHoy().diario;
     if (x) return `<section class="card done"><div class="card-h"><h2>Tu diario de hoy</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div><p class="sub dia-l">${wx(x.tiempo)}${esc(x.mejor || '')}</p></section>`;
-    return `<section class="card"><div class="card-h"><h2>Tu diario de hoy</h2><span class="sub">1 minuto</span></div><p class="sub">Qué tal el día, lo mejor y lo que cambiarías.</p><button class="btn primary" type="button" data-a="gosemana">Escribir mi diario</button></section>`;
+    return `<section class="card"><div class="card-h"><h2>Tu diario de hoy</h2><span class="sub">1 minuto</span></div><p class="sub">Tu día de hockey: qué tal, lo mejor y lo que cambiarías.</p><button class="btn primary" type="button" data-a="gosemana">Escribir mi diario</button></section>`;
   }
   function rachaDia() { let n = 0, k = today(); if (!(U.dias[k] || {}).diario) k = addDays(k, -1); while ((U.dias[k] || {}).diario) { n++; k = addDays(k, -1); } return n; }
   const IC_MEJOR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
@@ -483,12 +483,13 @@
       ${ln(IC_MEJOR, 'Lo mejor', x.mejor)}${ln(IC_CAMB, 'Cambiaría', x.cambiar)}${ln(IC_COMO, 'Cómo lo voy a hacer', x.como)}
       ${(rr => rr && rr.t ? `<div class="de-resp"><span class="kicker">Carlos te ha contestado</span><p>${esc(rr.t)}</p></div>` : '')(respOf(U.acceso, 'd:' + k))}${vistoTag('d:' + k)}</article>`;
     const fld = (id, ic, tit, ph, val) => `<label class="dfield"><span class="df-h"><i>${ic}</i>${tit}</span><textarea id="${id}" rows="2" maxlength="300" placeholder="${ph}">${esc(val)}</textarea></label>`;
-    const form = `<section class="card dform"><div class="card-h"><h2>¿Qué tal el día?</h2><span class="sub">${esc(fmtDay(t))}</span></div>
-        <div class="wxs dk" role="group" aria-label="Qué tal el día">${TIEMPO.map(([v, l]) => `<button type="button" class="wx" data-tiempo="${v}" aria-pressed="${d.tiempo === v}" aria-label="${l}">${wx(v)}</button>`).join('')}</div>
+    const form = `<section class="card dform"><div class="card-h"><h2>¿Qué tal hoy en el hockey?</h2><span class="sub">${esc(fmtDay(t))}</span></div>
+        <p class="sub d-tip">Es tu diario de hockey: el entreno, el partido, cómo te has sentido en la pista o algo del juego que hayas visto o pensado. ${entrena(calJ(), t) || partDe(calJ(), t).length ? '' : 'Si hoy no hay entreno, piensa en el último o en el próximo.'}</p>
+        <div class="wxs dk" role="group" aria-label="Qué tal hoy en el hockey">${TIEMPO.map(([v, l]) => `<button type="button" class="wx" data-tiempo="${v}" aria-pressed="${d.tiempo === v}" aria-label="${l}">${wx(v)}</button>`).join('')}</div>
         <span class="wx-l">${d.tiempo ? esc(TIEMPO[d.tiempo - 1][1]) : 'De tormenta a sol: elige uno'}</span>
-        ${fld('d-mejor', IC_MEJOR, 'Lo mejor de hoy', 'En la pista, en clase, con tus amigas…', d.mejor || '')}
-        ${fld('d-cambiar', IC_CAMB, 'Lo que cambiaría', 'Algo que harías distinto (opcional)', d.cambiar || '')}
-        ${fld('d-como', IC_COMO, 'Cómo lo voy a hacer', 'Qué vas a probar (opcional)', d.como || '')}
+        ${fld('d-mejor', IC_MEJOR, 'Lo mejor', 'Una acción, una decisión, algo que te salió…', d.mejor || '')}
+        ${fld('d-cambiar', IC_CAMB, 'Lo que cambiaría', 'Algo de tu juego que harías distinto (opcional)', d.cambiar || '')}
+        ${fld('d-como', IC_COMO, 'Cómo lo voy a hacer', 'Qué vas a probar en el próximo entreno (opcional)', d.como || '')}
         <div class="row"><button class="btn primary big grow" type="button" data-a="savedia">Guardar mi diario</button>${hoyD ? '<button class="btn ghost" type="button" data-a="noeditdia">Cancelar</button>' : ''}</div><p class="msg" id="msg"></p></section>`;
     // compromiso de la semana (opcional) y si se cumplió el de la anterior
     const prevK = addDays(lunes, -7), cs = U.semanas[lunes], cp = U.semanas[prevK], editC = !compOf(cs) || draft.editSem;
@@ -506,7 +507,7 @@
     const hoyBloque = ver ? ((U.dias[ver] || {}).diario ? entrada(ver, U.dias[ver].diario) : `<section class="card"><p class="sub">El ${esc(fmtDay(ver))} no escribiste.</p></section>`) + '<button class="btn ghost small" type="button" data-verdia="' + t + '">Volver a hoy</button>'
       : edit ? form : entrada(t, hoyD) + '<button class="btn small" type="button" data-a="editdia">Cambiar lo de hoy</button>';
     shell(`<section class="diary-hero"><div class="row between"><span class="kicker">Mi diario</span>${r > 1 ? `<span class="sm">${r} días seguidos</span>` : ''}</div>
-        <h1>${hoyD ? 'Hoy ya has escrito' : 'Cuéntame tu día'}</h1>${tira}</section>
+        <h1>${hoyD ? 'Hoy ya has escrito' : 'Tu día de hockey'}</h1>${tira}</section>
       ${hoyBloque}
       ${pledge}
       ${hist.length && !ver ? `<div class="row between"><span class="kicker">Días anteriores</span><span class="sub">${nHist} ${nHist === 1 ? 'día' : 'días'}</span></div><div class="dentries">${hist.map(k => entrada(k, U.dias[k].diario)).join('')}</div>${nHist > 7 && !draft.diaMas ? '<button class="btn ghost" type="button" data-a="diamas">Ver todos</button>' : ''}` : ''}`, { nav: navJ() });
@@ -739,7 +740,7 @@
     const nombre = (U.perfil.nombre || '').split(' ')[0], p = puntos(U.dias, U.semanas), lv = nivelDe(p);
     const pHoy = vis[0], lineaHoy = pHoy ? `Hoy juegas · ${pHoy.cat} contra ${pHoy.rival}${pHoy.hora ? ', ' + pHoy.hora : ''}` : ent ? 'Hoy hay entreno. ¿Cómo llegas?' : 'Hoy no hay entreno. Descansa bien.';
     // día de partido: el «antes» del día va dentro del antes del partido (si ya está contestado, se enseña hecho)
-    const antes = dia.antes || !hayPart ? antesHTML() : '';
+    const antes = dia.antes || ent || !hayPart ? antesHTML() : '';   // el día de entreno sale siempre (también si hay partido: no todas juegan)
     shell(`<section class="hero"><div class="hi"><span class="kicker">${esc(fmtDay(t))}</span><h1>Hola, ${esc(nombre)}</h1><p class="today">${esc(lineaHoy)}</p></div>
         <button class="me-chip" type="button" data-v="yo" aria-label="Mi jugadora: nivel ${lv + 1}, ${p} puntos">${avatarSVG(U.perfil.av, lv)}<span><b>Nivel ${lv + 1}</b><small>${p} pts</small></span></button></section>
       ${respuestasHTML()}${retoAvisoHTML()}
@@ -923,8 +924,8 @@
     const t = today(), d = draft.dia, m = $('#msg'), err = x => { m.className = 'msg err'; m.textContent = x; };
     const val = id => ((document.getElementById(id) || {}).value || '').trim();
     d.mejor = val('d-mejor'); d.cambiar = val('d-cambiar'); d.como = val('d-como');
-    if (!d.tiempo) return err('Elige qué tal ha ido el día.');
-    if (!d.mejor) return err('Escribe lo mejor de hoy.');
+    if (!d.tiempo) return err('Elige qué tal ha ido hoy.');
+    if (!d.mejor) return err('Escribe lo mejor de hoy en el hockey.');
     const doc = { tiempo: d.tiempo, mejor: d.mejor, cambiar: d.cambiar, como: d.como, ts: Date.now() }, p0 = puntos(U.dias, U.semanas);
     await B.merge(`registros/${me.uid}/dias/${t}`, { diario: doc, ts: Date.now() });
     U.dias[t] = Object.assign({}, U.dias[t] || {}, { diario: doc }); draft.editDia = false; draft.dia = null; premio(p0); render(); scrollTo({ top: 0 });
@@ -1046,19 +1047,15 @@
   const juegoDe = f => (window.SMBJuego && window.SMBJuego.delDia) ? window.SMBJuego.delDia(f) : JUEGOS[0];
   const modoN = m => (JUEGOS.find(x => x[0] === m) || JUEGOS[0])[1];
   const misionesHoy = f => { const md = juegoDe(f)[0]; let h = 0; for (const c of f) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = MISIONES.filter(m => m.m === '*' || (m.m || 'patina') === md), out = []; while (out.length < 3 && L.length) { h = (h * 1103515245 + 12345) >>> 0; out.push(L.splice(h % L.length, 1)[0]); } return out; };
-  // partidas sin límite desde el 27 oct (antes 3 al día, y 2 más con monedas). Para que la tienda siga costando,
-  // solo las 5 primeras partidas del día dan bolas (monedas); las demás cuentan para la liga, el récord y las misiones.
-  const PARTIDAS_MONEDAS = 5;
-  const jugadasHoy = () => { const y = yoJ(); return y.jd && y.jd.f === today() ? y.jd.n || 0 : 0; };
-  const conMonedas = () => isAdmin() ? 99 : Math.max(0, PARTIDAS_MONEDAS - jugadasHoy());
+  // partidas sin límite y todas dan monedas (27 oct)
   const recDe = (d, m) => ((d || {}).recs || {})[m] != null ? d.recs[m] : m === 'patina' ? (d || {}).rec || 0 : 0;
-  // lo que toca contestar hoy antes de poder jugar: el antes (o el antes del partido), el después a partir de la hora del aviso y el diario del día
+  // lo que toca contestar hoy antes de poder jugar: el antes del entreno (el antes del partido también lo cuenta), el después a partir de la hora del aviso y el diario del día.
+  // Los partidos no bloquean (27 oct): salen todos los de la sección y la app no sabe quién juega cada uno.
   function tocaHoy() {
     if (isAdmin() || !U.perfil) return [];
     const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), ent = entrena(calJ(), t), L = [], n = new Date();
     const hm = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
-    vis.forEach(x => { if (!(pdOf(x) || {}).pre) L.push({ t: 'Antes del partido', at: `data-pp="${x.id}"` }); });
-    if (ent && !vis.length && !dia.antes) L.push({ t: 'Antes del entreno', at: 'data-a="startantes"' });
+    if (ent && !dia.antes) L.push({ t: 'Antes del entreno', at: 'data-a="startantes"' });
     if (ent && hm >= (avPrefs().despues || '21:00') && !(dia.ses || []).some(z => !z.pid)) L.push({ t: 'Después del entreno', at: 'data-a="irdespues"' });
     if (!dia.diario) L.push({ t: 'Tu diario de hoy', at: 'data-a="gosemana"' });
     return L;
@@ -1110,14 +1107,12 @@
     const t = today(), y = yoJ(), dias = {}, prev = (y.dias || {})[t] || 0, md = r.modo || 'patina', delDia = md === juegoDe(t)[0];
     // a la liga solo va el juego del día (un duelo de otro día, con otro juego, no cuenta para la tabla)
     Object.entries(y.dias || {}).forEach(([k, v]) => { if (daysBetween(k, t) <= 60) dias[k] = v; }); if (delDia) dias[t] = Math.max(prev, r.puntos); else if (prev) dias[t] = prev;
-    const sinBolas = !isAdmin() && jugadasHoy() >= PARTIDAS_MONEDAS, jd = isAdmin() ? null : { f: t, n: jugadasHoy() + 1 };
-    if (sinBolas) r = Object.assign({}, r, { bolasJuego: r.bolas, bolas: 0, sinBolas: true });
+    
     // premio por entrar a diario (la primera partida del día) y misiones del día
     const prim = !prev && delDia, rch = rachaJ(Object.assign({}, y, { dias })), pd = prim ? premioDia(rch) : 0;
     const mis = (y.mis && y.mis.f === t) ? { f: t, h: [...(y.mis.h || [])] } : { f: t, h: [] }, nuevas = misionesHoy(t).filter(m => !mis.h.includes(m.k) && (m.m === '*' || (m.m || 'patina') === md) && m.ok(r, duelo));
     nuevas.forEach(m => mis.h.push(m.k)); const pm = nuevas.reduce((a, m) => a + m.p, 0);
     const doc = Object.assign({}, y, perfilJ(), { bolas: (y.bolas || 0) + r.bolas, premios: (y.premios || 0) + pd + pm, mis, dias, rec: md === 'patina' ? Math.max(y.rec || 0, r.puntos) : (y.rec || 0), recs: Object.assign({}, y.recs || {}, { [md]: Math.max(recDe(y, md), r.puntos) }), partidas: (y.partidas || 0) + 1, ts: Date.now() });
-    if (jd) doc.jd = jd;
     draft.res = Object.assign({}, r, { duelo, nuevoRec: r.puntos > recDe(y, md) && recDe(y, md) > 0, mejorHoy: delDia && r.puntos > prev && prev > 0, pd, rch, nuevas });
     J.todos[meU()] = doc; view = 'reto'; draft.rtab = duelo ? 'duelos' : draft.rtab; render(); scrollTo({ top: 0 });
     try {
@@ -1247,19 +1242,18 @@
         <b class="rt-pts">${fmtInt(res.puntos)}<small> puntos</small></b>
         <div class="rt-st sm">${(res.modo === 'penaltis' ? [[res.goles, res.goles === 1 ? 'gol' : 'goles'], [res.escuadras || 0, 'a la escuadra'], [res.racha || 0, 'seguidos'], [res.lanzamientos || 0, 'tiros']]
           : res.modo === 'portera' ? [[res.paradas || 0, 'paradas'], [res.racha || 0, 'seguidas'], [res.segundos || 0, 'segundos']]
-          : [[res.bolasJuego ?? res.bolas, 'bolas'], [res.goles, res.goles === 1 ? 'gol' : 'goles'], [res.regates || 0, 'regates'], ['×' + (res.combo || 1), 'combo'], [res.nivel || 1, 'nivel']]).map(([v, l]) => `<span><b>${v}</b>${l}</span>`).join('')}</div>
+          : [[res.bolas, 'bolas'], [res.goles, res.goles === 1 ? 'gol' : 'goles'], [res.regates || 0, 'regates'], ['×' + (res.combo || 1), 'combo'], [res.nivel || 1, 'nivel']]).map(([v, l]) => `<span><b>${v}</b>${l}</span>`).join('')}</div>
         <div class="rt-coins"><span class="pill coin">+${res.bolas + (res.pd || 0) + (res.nuevas || []).reduce((a, m) => a + m.p, 0)} monedas</span>${res.pd ? `<span class="sub">incluye ${res.pd} por ${res.rch} ${res.rch === 1 ? 'día' : 'días seguidos'}</span>` : ''}</div>
         ${(res.nuevas || []).map(m => `<span class="rt-badge mis">Misión cumplida: ${esc(m.t)} · +${m.p}</span>`).join('')}
         ${res.nuevoRec ? '<span class="rt-badge">¡Nuevo récord!</span>' : res.mejorHoy ? '<span class="rt-badge">Tu mejor partida de hoy</span>' : ''}
         ${d ? (su == null ? `<p class="sub">Ahora le toca a ${esc(o.n || '')}. Lo verá al entrar.</p>` : `<p class="rt-vs ${res.puntos > su ? 'g' : res.puntos < su ? 'p' : 'e'}">${res.puntos > su ? '¡Has ganado!' : res.puntos < su ? 'Esta vez gana ' + esc(o.n || '') : '¡Empate!'} · ${fmtInt(res.puntos)} – ${fmtInt(su)}</p>`) : ''}
-        ${res.sinBolas ? `<p class="sub">Desde la partida ${PARTIDAS_MONEDAS + 1} del día ya no se ganan monedas con las bolas: sí cuentan la liga, el récord y las misiones.</p>` : ''}
         <div class="row"><button class="btn primary" type="button" data-a="jugar">Otra vez</button>${d && su != null ? `<button class="btn" type="button" data-a="retar" data-u="${otro(d)}">Revancha</button>` : ''}</div></section>`; })() : '';
     shell(`<section class="rt-hero"><button type="button" class="rt-av" data-a="${isAdmin() ? 'editavdt' : 'editavj'}" aria-label="Cambiar mi personaje">${avatarSVG(miAv(), miLv(), miNombre())}<span class="rt-ed">Cambiar</span>${mscH(y.mascota, 'msc hero')}</button>
         <div class="rt-b"><span class="kicker">El reto · juego de hoy</span><h1>${esc(juegoDe(t)[1])}</h1><span class="rt-desc">${esc(juegoDe(t)[2])}</span>${(campeona() || {}).u === yo_ ? `<span class="rt-camp">${CORONA}${isAdmin() ? 'Campeón' : 'Campeona'} de la semana pasada</span>` : ''}
           <div class="rt-st"><span><b>${fmtInt(monedas())}</b>monedas</span><span><b>${fmtInt(recDe(y, juegoDe(t)[0]))}</b>récord</span><span><b>${rachaJ(y)}</b>${rachaJ(y) === 1 ? 'día' : 'días'} seguidos</span></div></div>
-        ${(() => { const T = tocaHoy(), q = conMonedas();
+        ${(() => { const T = tocaHoy();
           if (T.length) return `<div class="rt-gate"><b>Antes de jugar, contesta lo de hoy</b><div class="row">${T.map(x => `<button class="btn small primary" type="button" ${x.at}>${esc(x.t)}</button>`).join('')}</div></div><button class="btn big rt-play" type="button" disabled aria-disabled="true">Jugar</button>`;
-          return `<button class="btn big rt-play" type="button" data-a="jugar">Jugar</button>${isAdmin() ? '' : `<span class="rt-left">${q ? `<span class="rt-pips" aria-hidden="true">${Array.from({ length: PARTIDAS_MONEDAS }, (_, i) => `<i class="${i < q ? 'on' : ''}"></i>`).join('')}</span>${q === 1 ? 'Juega lo que quieras · 1 partida más con monedas' : `Juega lo que quieras · ${q} partidas más con monedas`}` : 'Juega lo que quieras · hoy ya no se ganan más monedas'}</span>`}`; })()}
+          return `<button class="btn big rt-play" type="button" data-a="jugar">Jugar</button>`; })()}
         <span class="rt-next">Mañana: ${esc(juegoDe(addDays(t, 1))[1])}</span></section>
       ${J.sinReglas ? `<section class="card aviso-reglas"><h2>${isAdmin() ? 'Faltan las reglas del reto' : 'El reto todavía no está listo'}</h2><p>${isAdmin() ? 'Firebase no deja guardar nada del juego (partidas, duelos, tienda ni tu personaje) porque las reglas nuevas no están publicadas. Ve a la consola de Firebase, Firestore → Reglas, pega el archivo <b>firestore.rules</b> y pulsa «Publicar».' : 'Puedes jugar, pero todavía no se guardan las partidas. Carlos lo activa en breve.'}</p></section>` : ''}
       ${resH}

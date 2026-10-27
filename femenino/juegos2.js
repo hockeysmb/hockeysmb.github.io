@@ -108,14 +108,15 @@
   function porteraJ(o) {
     const M = marco(o, 'Toca izquierda, centro o derecha para llegar al tiro'), R = rng(o.seed || 1), cx = M.cx;
     const av = M.img(o.avatarSrc), pet = M.img(o.mascotaSrc);
-    let fase = 'cuenta', cnt = 3, ct = 0, t = 0, lane = 1, px = null, vidas = 3, puntos = 0, paradas = 0, racha = 0, maxR = 0, tiros = [], next = 1.2, n = 0, parts = [], msg = null, alive = true, last = 0, shake = 0;
+    let fase = 'cuenta', cnt = 3, ct = 0, t = 0, lane = 1, px = null, vidas = 3, puntos = 0, paradas = 0, racha = 0, maxR = 0, tiros = [], next = 1.5, n = 0, parts = [], msg = null, alive = true, last = 0, shake = 0;
     M.lives(vidas);
     const LX = i => M.W * (0.2 + 0.3 * i), GY = () => M.H * 0.82;
     function nuevo() {
-      n++; const desde = 0.15 + R() * 0.7, a = Math.floor(R() * 3), amaga = n > 6 && R() < Math.min(0.45, 0.1 + n * 0.02);
-      const b = amaga ? (a + 1 + Math.floor(R() * 2)) % 3 : a, aviso = Math.max(0.35, 0.9 - n * 0.025), vuelo = Math.max(0.55, 1.15 - n * 0.025);
+      // 27 oct: más fácil al principio (las jugadoras decían que se acababa enseguida); los amagos, desde el tiro 9
+      n++; const desde = 0.15 + R() * 0.7, a = Math.floor(R() * 3), amaga = n > 8 && R() < Math.min(0.4, 0.08 + n * 0.015);
+      const b = amaga ? (a + 1 + Math.floor(R() * 2)) % 3 : a, aviso = Math.max(0.45, 1.1 - n * 0.02), vuelo = Math.max(0.6, 1.3 - n * 0.02);
       tiros.push({ sx: desde, a, b, aviso, vuelo, t: 0, amaga, fin: false });
-      next = Math.max(0.55, 1.6 - n * 0.04) + (R() < 0.2 && n > 10 ? -0.4 : 0);
+      next = Math.max(0.7, 2 - n * 0.035) + (R() < 0.2 && n > 12 ? -0.35 : 0);
     }
     function ir(l) { if (!alive || fase !== 'juego') return; lane = Math.max(0, Math.min(2, l)); M.hint.classList.add('off'); }
     M.cv.addEventListener('pointerdown', e => { e.preventDefault(); const r = M.cv.getBoundingClientRect(), f = (e.clientX - r.left) / r.width; ir(f < 0.34 ? 0 : f < 0.66 ? 1 : 2); });
@@ -140,6 +141,11 @@
       cx.strokeStyle = 'rgba(200,40,60,.25)'; cx.lineWidth = 3; cx.beginPath(); cx.arc(W / 2, GY(), W * 0.36, Math.PI, 0); cx.stroke();
       [0.35, 0.65].forEach(f => { cx.strokeStyle = 'rgba(104,24,37,.08)'; cx.setLineDash([10 * S, 12 * S]); cx.beginPath(); cx.moveTo(W * f, H * 0.35); cx.lineTo(W * f, H); cx.stroke(); }); cx.setLineDash([]);
       porteria(M, W * 0.06, GY() + 8 * S, W * 0.88, 24 * S);
+      // las tres zonas que se tocan: la tuya, marcada
+      [0, 1, 2].forEach(i => { cx.fillStyle = i === lane ? 'rgba(104,24,37,.08)' : 'rgba(104,24,37,.025)'; cx.fillRect(W * i / 3, H * 0.62, W / 3, H * 0.38); });
+      // a dónde va cada tiro: un círculo en la portería
+      tiros.forEach(s => { if (s.fin) return; const l = s.t < s.aviso ? (s.amaga && s.t > s.aviso * 0.55 ? s.b : s.a) : s.b, pulso = 1 + 0.12 * Math.sin(t * 14);
+        cx.strokeStyle = '#ff3b1f'; cx.lineWidth = 3 * S; cx.beginPath(); cx.arc(LX(l), GY() - 40 * S, 34 * S * pulso, 0, 6.29); cx.stroke(); });
       tiros.forEach(s => {
         const x0 = W * s.sx, y0 = H * 0.16;
         cx.fillStyle = '#2c5fb3'; cx.beginPath(); cx.arc(x0, y0, 18 * S, 0, 6.29); cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = 2.5 * S; cx.stroke(); cx.fillStyle = '#f2d2b6'; cx.beginPath(); cx.arc(x0, y0 - 4 * S, 7 * S, 0, 6.29); cx.fill();

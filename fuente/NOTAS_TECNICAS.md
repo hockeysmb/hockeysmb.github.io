@@ -224,3 +224,14 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - `postAbre(x)`: el día del partido, el después se abre a la hora del partido + 75 min (`POST_MIN`). Si no hay hora, se abre todo el día. Los partidos pasados están siempre abiertos y los futuros, cerrados.
 - Mientras está cerrado no salen los botones «Contar el partido» ni «Ya ha terminado: contarlo»: sale «El después se abre al acabar el partido, a las HH:MM». `actions.postpart` también lo comprueba. Cambiar un después ya contado se puede siempre.
 - El después del entreno no tiene hora (en «Altas» solo hay días), así que sigue abierto todo el día.
+
+## Revisión del juego y diario de hockey (27 oct, mañana)
+
+- **Fallo arreglado:** los partidos del día bloqueaban el juego a todas, porque la app enseña los partidos de todas las categorías y no sabe quién juega. Ahora `tocaHoy` no pide el antes del partido. En día de entreno pide el antes del entreno, aunque haya partido. Ese día la tarjeta del antes sale siempre en «Hoy», y el antes del partido también cuenta como antes. Luego pide el después a partir de la hora del aviso y el diario.
+- Todas las partidas dan monedas. Se quitan `PARTIDAS_MONEDAS` y `juego.jd`; el campo puede quedar en documentos antiguos, pero no se usa.
+- «La portera» es más fácil al principio:
+  - el aviso pasa de 0,9 s a 1,1 s, el vuelo de 1,15 s a 1,3 s y el primer intervalo de 1,6 s a 2 s;
+  - los amagos salen desde el tiro 9;
+  - se ve la zona en la que estás y un círculo en la portería que marca a dónde va cada tiro.
+- El diario es de hockey: «¿Qué tal hoy en el hockey?», con una línea que lo explica y ejemplos de juego.
+- Prueba nueva `fem_juegos`: juega los tres juegos en un móvil hasta que se acaban solos y comprueba que se guardan.
