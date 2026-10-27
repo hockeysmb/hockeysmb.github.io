@@ -288,3 +288,14 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Expresiones: `SMBMascotas.svg(id, cls, mood)` con `mood` 'feliz', 'triste' o 'dormido' (ojos, cejas, lágrima, boca, zzz).
 - Quien no tiene ninguna mascota elige una gratis (perrito, gatito, conejito o hámster: `PRIMERAS`).
 - Punto rojo en la pestaña «Mi mundo» si alguna barra baja de 30 (`tamaAvisa`).
+
+## Juegos con Phaser (27 oct, tarde)
+
+- Los tres juegos están ahora en `femenino/juegos.js` y usan el motor Phaser 3.90 (`femenino/lib/phaser.min.js`, licencia MIT en `lib/LICENCIA-phaser.md`). Se han borrado `juego.js` y `juegos2.js`.
+- Phaser se carga la primera vez que se juega (`cargarPhaser`). Mientras tanto la capa del juego enseña «Cargando…». Está en el `SHELL` del service worker, así que funciona sin conexión.
+- La lógica es la misma de antes, con la misma semilla, para que los duelos sigan siendo justos. Lo que cambia es el dibujo:
+  - texturas propias: personaje en círculo, rival, portera, bola con brillo, portería con red, grada con público y bandas «SANTA MARÍA»;
+  - dibujos 3D de `img/`: cono, imán, escudo, bolsa ×2, guantes y estrellas;
+  - partículas (estela, chispas, confeti), animaciones, sacudida y destello.
+- El marcador, las vidas, el sonido y «Salir» siguen en HTML (`.jg-ov`), y el campo es el lienzo de Phaser dentro de `.jg-cv`. Los toques y las teclas se escuchan en el contenedor y en `window`, como antes.
+- La API no cambia: `SMBJuego.jugar({modo, avatarSrc, mascotaSrc, seed, estela, cele, titulo, onEnd})`, más `delDia`, `JUEGOS` y `ESTELAS`.

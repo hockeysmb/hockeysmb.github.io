@@ -44,7 +44,7 @@ async def main():
             if modo == 'patina': await pg.keyboard.press(random.choice(['ArrowLeft', 'ArrowRight', 'ArrowUp'])); await pg.wait_for_timeout(700)
             elif modo == 'penaltis': await pg.touchscreen.tap(box['x'] + box['width'] / 2, box['y'] + box['height'] * 0.6); await pg.wait_for_timeout(random.randint(250, 900))
             else: await pg.touchscreen.tap(box['x'] + box['width'] * random.choice([0.15, 0.5, 0.85]), box['y'] + box['height'] * 0.7); await pg.wait_for_timeout(500)
-            if n == 6: await pg.screenshot(path=O + f'{modo}_{vez}_jugando.png')
+            if n == 14: await pg.screenshot(path=O + f'{modo}_{vez}_jugando.png')
           await pg.wait_for_timeout(1500)
           j1 = await pg.evaluate("window.__fake.db()['juego/demo03'] || {}")
           res = await pg.locator('.rt-res').count(); txt = ' '.join((await pg.text_content('.rt-res') or '').split())[:120] if res else ''

@@ -807,6 +807,8 @@ body.jg-on { overflow: hidden; }
 .tm-items .fx { width: 46px; height: 46px; transition: transform .15s; } .tm-items button:active .fx { transform: scale(1.15); } .tm-items b { font-size: 12.5px; } .tm-items small { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.25; } .tm-items .caro { opacity: .5; }
 .tm-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .tm-4 button { display: grid; justify-items: center; gap: 4px; border: 1px solid var(--line); background: var(--fill); border-radius: 18px; padding: 8px 4px; font: inherit; cursor: pointer; color: var(--fg); } .tm-4 .msc { width: 64px; height: 64px; } .tm-4 b { font-size: 12.5px; }
 .tm-premio { animation: tmBub 1.8s ease-in-out infinite; }
+.jg-cv { display: flex; justify-content: center; align-items: stretch; } .jg-cv canvas { display: block; touch-action: none; }
+.jg-load { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; background: #22304f; }
 </style>
 </head>
 <body>
@@ -814,12 +816,11 @@ body.jg-on { overflow: hidden; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261027h"></script>
-<script src="firebase-config.js?v=20261027h"></script>
-<script src="mascotas.js?v=20261027h"></script>
-<script src="juego.js?v=20261027h"></script>
-<script src="juegos2.js?v=20261027h"></script>
-<script src="app.js?v=20261027h"></script>
+<script src="lib/avatar.js?v=20261027j"></script>
+<script src="firebase-config.js?v=20261027j"></script>
+<script src="mascotas.js?v=20261027j"></script>
+<script src="juegos.js?v=20261027j"></script>
+<script src="app.js?v=20261027j"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>
