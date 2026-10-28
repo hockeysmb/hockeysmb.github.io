@@ -742,6 +742,14 @@
       ${rsp && rsp.t ? `<section class="card msg-card"><span class="kicker">Carlos te ha contestado</span><p>${esc(rsp.t)}</p></section>` : rsp ? `<p>${vistoTag('p:' + pdAt(U.dias, x).k + ':' + x.id)}</p>` : ''}
       ${pre}${post}`, { nav: navJ() });
   }
+  // regalos de monedas de Carlos que todavía no ha visto
+  const regVistoK = () => 'smbf-regalo-' + (me && me.uid);
+  function regaloHTML() {
+    const v = +(ls.get(regVistoK()) || 0), R = regalosDe(U.acceso).filter(r => r.ts > v && Date.now() - r.ts < 14 * 864e5); if (!R.length) return '';
+    const tot = R.reduce((a, r) => a + (+r.m || 0), 0);
+    return `<section class="card regalo"><span class="rg-ic">${fx('moneda')}</span><div><span class="kicker">Carlos te ha mandado</span><b>${tot} monedas</b>${R.map(r => `<p>«${esc(r.t)}»</p>`).join('')}</div><button class="btn primary small" type="button" data-a="regalovisto">¡Gracias!</button></section>`;
+  }
+  actions.regalovisto = async () => { ls.set(regVistoK(), String(Date.now())); render(); };
   // «Hoy» (27 oct, tarde): una lista con lo que toca hoy, cada cosa con su botón; lo demás, en su pestaña
   function hoyView() {
     const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), ent = entrena(calJ(), t);
@@ -767,7 +775,7 @@
         <div class="tareas">${L.map(x => x.h).join('')}</div>
         ${T.length ? '' : `<button class="ta-fin" type="button" data-v2="reto">${fx('mando')}<span><b>Todo listo. ¡A jugar!</b><small>Hoy toca ${esc(juegoDe(t)[1])}</small></span>›</button>`}</section>
       ${abierto ? despuesHTML(draft.sesFecha || undefined) : ''}
-      ${respuestasHTML()}${retoAvisoHTML()}
+      ${regaloHTML()}${respuestasHTML()}${retoAvisoHTML()}
       ${!ent && !sesH.length && !abierto ? '<button class="btn ghost small" type="button" data-a="opendesp">¿Has entrenado por tu cuenta? Apúntalo</button>' : ''}
       ${prox ? `<button class="prox-l" type="button" data-pp="${prox.id}">${fx('calendario')}<span><small>Próximo partido</small><b>${esc(prox.cat)} contra ${esc(prox.rival)}</b><small>${esc(fmtDay(prox.fecha))}${prox.hora ? ' · ' + esc(prox.hora) : ''}</small></span>›</button>` : ''}`, { nav: navJ() });
   }
@@ -794,7 +802,7 @@
       <section class="card"><h2>Cómo se ganan puntos</h2><ul class="pts">
         <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li><li><span>Antes y después de cada partido</span><b>+${PTS.partido} y +${PTS.partido}</b></li>
         <li><span>Tu diario de cada día</span><b>+${PTS.diario}</b></li><li><span>Tu compromiso de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si lo cumpliste</span><b>+${PTS.revisar}</b></li></ul>
-        <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos. Con la mitad de tus puntos tienes monedas para la tienda.</p></section>`;
+        <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos. Cada punto es también una moneda para la tienda.</p></section>`;
   }
   function evolHTML() {
     const t = today(), sem = Object.keys(U.semanas).sort().reverse().slice(0, 8);
@@ -807,7 +815,9 @@
   // juego/{uid}.tama[id] = {h llenura, a ánimo, l limpieza (0-100), xp cariño, ts (última cuenta), jg {f, n} juegos de hoy, mi {f, n} mimos de hoy, pr día del premio por contestar}
   // Bajan con el tiempo (la mitad de noche, de 22:00 a 7:30). Si las tres están muy bajas pierde cariño poco a poco; nunca se va ni enferma.
   const TAMA0 = { h: 80, a: 80, l: 80, xp: 0 };
-  const COMIDA = [['manzana', 'Manzana', 10, { h: 20 }], ['zanahoria', 'Zanahoria', 10, { h: 20 }], ['fresa', 'Fresas', 15, { h: 15, a: 5 }], ['galleta', 'Galleta', 15, { h: 10, a: 10 }], ['pescado', 'Pescado', 20, { h: 35 }], ['sandia', 'Sandía', 20, { h: 25, a: 5 }], ['carne', 'Filete', 25, { h: 45 }], ['helado', 'Helado', 30, { h: 15, a: 20 }], ['tarta', 'Tarta', 40, { h: 30, a: 25 }]];
+  // comida (28 oct): la básica es gratis (3 al día); los caprichos cuestan y dan extra de ánimo y cariño
+  const COMIDA = [['manzana', 'Manzana', 0, { h: 20 }], ['zanahoria', 'Zanahoria', 0, { h: 20 }], ['fresa', 'Fresas', 10, { h: 15, a: 10, xp: 3 }], ['galleta', 'Galleta', 10, { h: 10, a: 15, xp: 3 }], ['pescado', 'Pescado', 15, { h: 35, a: 5, xp: 3 }], ['sandia', 'Sandía', 15, { h: 25, a: 10, xp: 3 }], ['carne', 'Filete', 20, { h: 45, a: 5, xp: 4 }], ['helado', 'Helado', 25, { h: 15, a: 25, xp: 5 }], ['tarta', 'Tarta', 35, { h: 30, a: 30, xp: 8 }]];
+  const GRATIS_DIA = 3;
   const JUGUETES = [['pelota', 'Pelota'], ['peluche', 'Peluche'], ['ovillo', 'Ovillo'], ['yoyo', 'Yoyó'], ['cometa', 'Cometa']];
   const ETAPAS = [[0, 'Recién llegada'], [30, 'Confiada'], [100, 'Amiga'], [250, 'Inseparable'], [500, 'Leyenda']];
   const JUEGOS_DIA = 5, MIMOS_DIA = 10;
@@ -835,11 +845,11 @@
   function tmFx(tipo, src) {
     const room = document.querySelector('.tm-room'), pet = document.querySelector('.tm-pet'); if (!room || !pet) return 400;
     const add = (html, cls, x, y, ms) => { const e = document.createElement('span'); e.className = 'tm-p ' + cls; e.innerHTML = html; e.style.left = x + '%'; e.style.top = y + '%'; room.appendChild(e); setTimeout(() => e.remove(), ms); return e; };
-    pet.classList.remove('salta', 'come', 'bano', 'mimo'); void pet.offsetWidth;
-    if (tipo === 'comer') { add(fx(src), 'vuela', 50, 8, 900); setTimeout(() => pet.classList.add('come'), 600); for (let i = 0; i < 3; i++) setTimeout(() => add(fx('chispa'), 'sube', 38 + i * 12, 48, 900), 900 + i * 120); return 1500; }
+    pet.classList.remove('salta', 'come', 'bano', 'mimo'); void pet.offsetWidth; const PX = draft.tmX || 50;
+    if (tipo === 'comer') { add(fx(src), 'vuela', PX, 8, 900); setTimeout(() => pet.classList.add('come'), 600); for (let i = 0; i < 3; i++) setTimeout(() => add(fx('chispa'), 'sube', PX - 12 + i * 12, 48, 900), 900 + i * 120); return 1500; }
     if (tipo === 'jugar') { add(fx(src), 'bota', 10, 62, 1600); pet.classList.add('salta'); for (let i = 0; i < 4; i++) setTimeout(() => add(fx('nota'), 'sube', 30 + i * 13, 40, 1000), 300 + i * 220); return 1700; }
-    if (tipo === 'banar') { add(fx('banera'), 'tina', 50, 60, 1900); pet.classList.add('bano'); for (let i = 0; i < 9; i++) setTimeout(() => add(fx('burbujas'), 'burbuja', 28 + Math.random() * 44, 55 + Math.random() * 15, 1300), 150 + i * 150); setTimeout(() => add(fx('chispa'), 'sube', 50, 35, 900), 1500); return 2100; }
-    if (tipo === 'mimo') { pet.classList.add('mimo'); for (let i = 0; i < 3; i++) setTimeout(() => add(fx('corazon'), 'sube', 35 + Math.random() * 30, 35 + Math.random() * 10, 1000), i * 120); return 700; }
+    if (tipo === 'banar') { add(fx('banera'), 'tina', PX, 60, 1900); pet.classList.add('bano'); for (let i = 0; i < 9; i++) setTimeout(() => add(fx('burbujas'), 'burbuja', PX - 22 + Math.random() * 44, 55 + Math.random() * 15, 1300), 150 + i * 150); setTimeout(() => add(fx('chispa'), 'sube', PX, 35, 900), 1500); return 2100; }
+    if (tipo === 'mimo') { pet.classList.add('mimo'); for (let i = 0; i < 3; i++) setTimeout(() => add(fx('corazon'), 'sube', PX - 15 + Math.random() * 30, 35 + Math.random() * 10, 1000), i * 120); return 700; }
     if (tipo === 'premio') { for (let i = 0; i < 8; i++) setTimeout(() => add(fx(i % 2 ? 'estrella' : 'corazon'), 'sube', 15 + Math.random() * 70, 30 + Math.random() * 30, 1100), i * 90); pet.classList.add('salta'); return 1300; }
     return 400;
   }
@@ -853,8 +863,12 @@
   actions.tcomer = async b => {
     const id = yoJ().mascota, c = COMIDA.find(x => x[0] === b.dataset.k); if (!id || !c) return;
     const g = tamaDe(id); if (g.h >= 95) { toast('No tiene hambre. ¡Está llenísima!'); return; }
+    const t = today(), nG = g.gr && g.gr.f === t ? g.gr.n : 0;
+    if (!c[2] && nG >= GRATIS_DIA) { toast(`Hoy ya le has dado ${GRATIS_DIA} comidas gratis. Prueba con un capricho.`); return; }
     if (monedas() < c[2]) { toast('Te faltan monedas. ¡A jugar!'); return; }
-    tmAccion('comer', c[0], async () => { const y = yoJ(); J.todos[meU()] = Object.assign({}, y, { gastado: (y.gastado || 0) + c[2] }); g.h = Math.min(100, g.h + (c[3].h || 0)); g.a = Math.min(100, g.a + (c[3].a || 0)); g.xp += 2; await B.merge('juego/' + meU(), { gastado: (y.gastado || 0) + c[2] }).catch(() => {}); await tamaGuardar(id, g); }, '¡Ñam! +' + c[3].h + ' llenura');
+    tmAccion('comer', c[0], async () => { const y = yoJ(); g.h = Math.min(100, g.h + (c[3].h || 0)); g.a = Math.min(100, g.a + (c[3].a || 0)); g.xp += 2 + (c[3].xp || 0); if (!c[2]) g.gr = { f: t, n: nG + 1 };
+      if (c[2]) { J.todos[meU()] = Object.assign({}, y, { gastado: (y.gastado || 0) + c[2] }); await B.merge('juego/' + meU(), { gastado: (y.gastado || 0) + c[2] }).catch(() => {}); }
+      await tamaGuardar(id, g); }, '¡Ñam! +' + c[3].h + ' llenura' + (c[3].xp ? ' y +' + (2 + c[3].xp) + ' cariño' : ''));
   };
   actions.tjugar = async b => {
     const id = yoJ().mascota; if (!id) return; const g = tamaDe(id), t = today(), n = g.jg && g.jg.f === t ? g.jg.n : 0;
@@ -882,7 +896,33 @@
     const doc = Object.assign({}, perfilJ(), { compras: [...(y.compras || []), 'mascota|' + id], mascota: id, tama: Object.assign({}, y.tama || {}, { [id]: Object.assign({}, TAMA0, { ts: Date.now() }) }) });
     J.todos[meU()] = Object.assign({}, y, doc); render(); await B.merge('juego/' + meU(), doc); toast('¡Ya es tuya! Cuídala bien.');
   };
+  // decorar: temas y muebles por hueco (comprar y poner)
+  function decoHTML() {
+    const cs = casaDe(), btn = (c, v, p) => tiene(c, v) ? (puesto(c, v) ? '<span class="pill">Puesto</span>' : `<button class="btn small" type="button" data-a="ponerj" data-c="${c}" data-v="${v}">Poner</button>`) : `<button class="btn small${monedas() >= p ? ' primary' : ''}" type="button" data-a="comprar" data-c="${c}" data-v="${v}" data-p="${p}">${p} monedas</button>`;
+    return `<div class="tm-tray deco"><div class="card-h"><b>Tu habitación</b><span class="pill coin">${fmtInt(monedas())} monedas</span></div>
+      <div class="tm-temas">${Object.entries(TEMAS).map(([k, T]) => `<div class="tm-tema${puesto('tema', k) ? ' on' : ''}"><span class="tt-prev${T.estrellas ? ' estrellas' : ''}" style="--p0:${T.pared[0]};--p1:${T.pared[1]};--s0:${T.suelo[0]};--s1:${T.suelo[1]}">${T.deco[0] ? fx(T.deco[0][0]) : ''}</span><b>${esc(T.n)}</b>${btn('tema', k, T.p)}</div>`).join('')}</div>
+      ${Object.entries(HUECOS).map(([h, hn]) => `<h3 class="rz-h">${esc(hn)}</h3><div class="tm-items">${MUEBLES.filter(x => x[0] === h).map(([, id, n, p]) => `<div class="tm-mu${cs.m[h] === id ? ' on' : ''}">${fx(id)}<b>${esc(n)}</b>${btn('mueble', h + ':' + id, p)}</div>`).join('')}</div>`).join('')}</div>`;
+  }
+  actions.tdeco = async () => { draft.tdeco = !draft.tdeco; draft.tcomida = false; draft.tjuguete = false; render(); };
+  // interacción con la habitación: cama = siesta (3 al día, +4 ánimo); juguete = jugar; lo demás, se mueve
+  const SIESTAS_DIA = 3;
+  function tmIr(x, cb) { const pet = document.querySelector('.tm-pet'); if (!pet) return; const izq = x < (draft.tmX || 50); draft.tmIzq = izq; draft.tmX = x; pet.querySelector('.tm-flip').classList.toggle('izq', izq); pet.classList.add('anda'); pet.style.left = x + '%'; setTimeout(() => { pet.classList.remove('anda'); cb && cb(); }, 1000); }
+  async function tmMueble(h) {
+    const el = document.querySelector('.tm-' + h); if (el) { el.classList.remove('meneo'); void el.offsetWidth; el.classList.add('meneo'); }
+    const id = yoJ().mascota, cs = casaDe(); if (!id || tmBusy.on) return;
+    if (h === 'suelo2') { if (esNoche()) { toast('Ya está durmiendo.'); return; }
+      const g = tamaDe(id), t = today(), n = g.si && g.si.f === t ? g.si.n : 0; tmBusy.on = true;
+      tmIr(78, () => { const pet = document.querySelector('.tm-pet'); if (!pet) { tmBusy.on = false; return; } pet.querySelector('.tm-flip').innerHTML = MSC().svg(id, 'msc tm-svg', 'dormido'); pet.classList.add('siesta');
+        setTimeout(async () => { tmBusy.on = false; if (n < SIESTAS_DIA) { g.a = Math.min(100, g.a + 4); g.xp += 1; g.si = { f: t, n: n + 1 }; await tamaGuardar(id, g); toast('¡Qué siesta más buena! +4 ánimo'); } else toast('Ha descansado un ratito.'); draft.tmX = 50; render(); }, 4500); });
+      return; }
+    if (h === 'juguete') { tmIr(30, () => actions.tjugar({ dataset: { k: cs.m.juguete } })); return; }
+    tmIr(h === 'pared1' || h === 'suelo1' ? 32 : 66);
+  }
+  // paseo tranquilo por la habitación cuando no se hace nada con ella
+  let tmPaseo = null;
+  function tmPasear() { if (tmPaseo) return; tmPaseo = setInterval(() => { const pet = document.querySelector('.tm-pet'); if (!pet || tmBusy.on || esNoche() || document.hidden || pet.classList.contains('triste')) return; if (Math.random() < 0.45) tmIr(32 + Math.round(Math.random() * 36)); }, 3600); }
   function tamaHTML() {
+    tmPasear();
     const y = yoJ(), id = y.mascota, tieneAlguna = (y.compras || []).some(x => x.startsWith('mascota|'));
     if (!id) return tieneAlguna ? `<section class="card"><h2>¿Quién te acompaña?</h2><p class="sub">Elige una de tu colección en la tienda («Llevarla») y la cuidas aquí.</p><button class="btn primary" type="button" data-ytab="tienda">Ir a mi colección</button></section>`
       : `<section class="card tm-elige"><h2>Elige tu primera mascota</h2><p class="sub">Es gratis. Tendrás que darle de comer, jugar con ella y bañarla. Las demás salen de los cofres de la tienda.</p>
@@ -893,10 +933,12 @@
     const bar = (ic, l, v) => `<div class="tb"><span class="tb-i">${fx(ic)}</span><span class="tb-l">${l}</span><span class="tb-b"><i class="${v < 30 ? 'mal' : v < 60 ? 'med' : ''}" style="width:${Math.round(v)}%"></i></span><b>${Math.round(v)}</b></div>`;
     const necesita = [g.h < 35 ? ['hambre', 'Tiene hambre'] : null, g.l < 35 ? ['sucio', 'Necesita un baño'] : null, g.a < 35 && !noche ? ['triste', 'Se aburre'] : null].filter(Boolean);
     return `<section class="tama">
-        <div class="tm-room${noche ? ' noche' : ''}">
-          <span class="tm-d tm-win">${fx('ventana')}</span><span class="tm-d tm-pic">${fx('cuadro')}</span><span class="tm-d tm-plant">${fx('planta')}</span><span class="tm-d tm-bed">${fx('cama')}</span>
+        ${(() => { const cs = casaDe(), T = TEMAS[cs.tema];
+          return `<div class="tm-room${noche ? ' noche' : ''}${T.estrellas ? ' estrellas' : ''}" style="--p0:${T.pared[0]};--p1:${T.pared[1]};--s0:${T.suelo[0]};--s1:${T.suelo[1]}">
+          ${T.deco.map(([k, x, y0, w]) => `<span class="tm-deco" style="left:${x}%;top:${y0}%;width:${w}%">${fx(k)}</span>`).join('')}
+          ${['pared1', 'pared2', 'suelo1', 'suelo2', 'juguete'].map(h => `<button type="button" class="tm-d tm-${h}" data-tmu="${h}" aria-label="${esc(((MUEBLES.find(x => x[0] === h && x[1] === cs.m[h]) || [])[2]) || h)}">${fx(cs.m[h])}</button>`).join('')}`; })()}
           ${necesita.length && !noche ? `<span class="tm-bub">${fx(necesita[0][0])}</span>` : ''}
-          <button class="tm-pet ${mood || 'normal'}${et >= 4 ? ' leyenda' : ''}" type="button" data-a="tmimo" aria-label="Hacerle mimos a ${esc(m[1])}" style="--tm:${0.82 + et * 0.06}">${MSC().svg(id, 'msc tm-svg', mood)}${g.l < 35 ? `<span class="tm-sucio">${fx('sucio')}${fx('sucio')}</span>` : ''}${et >= 4 ? `<span class="tm-cor">${fx('corona')}</span>` : ''}</button>
+          <button class="tm-pet ${mood || 'normal'}${et >= 4 ? ' leyenda' : ''}" type="button" data-a="tmimo" aria-label="Hacerle mimos a ${esc(m[1])}" style="--tm:${0.82 + et * 0.06};left:${draft.tmX || 50}%"><span class="tm-flip${draft.tmIzq ? ' izq' : ''}">${MSC().svg(id, 'msc tm-svg', mood)}</span>${g.l < 35 ? `<span class="tm-sucio">${fx('sucio')}${fx('sucio')}</span>` : ''}${et >= 4 ? `<span class="tm-cor">${fx('corona')}</span>` : ''}</button>
           <span class="tm-suelo"></span>
         </div>
         <div class="tm-name"><div><b>${esc(m[1])}</b><span>${esc(ETAPAS[et][1])}${noche ? ' · durmiendo' : necesita.length ? ' · ' + necesita.map(x => x[1].toLowerCase()).join(', ') : mood === 'feliz' ? ' · feliz' : ''}</span></div>
@@ -907,11 +949,13 @@
           <button type="button" data-a="tcomida" aria-pressed="${!!draft.tcomida}">${fx('manzana')}<span>Comer</span></button>
           <button type="button" data-a="tjuguetes" aria-pressed="${!!draft.tjuguete}"${noche ? ' disabled' : ''}>${fx('pelota')}<span>Jugar<small>${JUEGOS_DIA - nJ}/${JUEGOS_DIA}</small></span></button>
           <button type="button" data-a="tbanar">${fx('banera')}<span>Bañar</span></button>
-          <button type="button" data-ytab="tienda">${fx('tienda')}<span>Cambiar</span></button>
+          <button type="button" data-a="tdeco" aria-pressed="${!!draft.tdeco}">${fx('cuadro')}<span>Decorar</span></button>
         </div>
-        ${draft.tcomida ? `<div class="tm-tray"><span class="pill coin">${fmtInt(monedas())} monedas</span><div class="tm-items">${COMIDA.map(([k, n, p, e]) => `<button type="button" data-a="tcomer" data-k="${k}"${monedas() < p ? ' class="caro"' : ''}>${fx(k)}<b>${n}</b><small>${p} monedas · +${e.h}${e.a ? ' · ánimo +' + e.a : ''}</small></button>`).join('')}</div></div>` : ''}
+        ${draft.tdeco ? decoHTML() : ''}
+        ${draft.tcomida ? `<div class="tm-tray"><span class="pill coin">${fmtInt(monedas())} monedas</span><div class="tm-items">${(nG => COMIDA.map(([k, n, p, e]) => `<button type="button" data-a="tcomer" data-k="${k}"${(p ? monedas() < p : nG >= GRATIS_DIA) ? ' class="caro"' : ''}>${fx(k)}<b>${n}</b><small>${p ? `${p} monedas · +${e.h} · ánimo +${e.a} · cariño +${2 + e.xp}` : `gratis (${Math.max(0, GRATIS_DIA - nG)} hoy) · +${e.h}`}</small></button>`).join(''))(g.gr && g.gr.f === t ? g.gr.n : 0)}</div></div>` : ''}
         ${draft.tjuguete && !noche ? `<div class="tm-tray"><div class="tm-items">${JUGUETES.map(([k, n]) => `<button type="button" data-a="tjugar" data-k="${k}">${fx(k)}<b>${n}</b><small>gratis</small></button>`).join('')}</div></div>` : ''}
-        <p class="sub center">${noche ? 'De 22:00 a 7:30 duerme: las barras bajan más despacio.' : 'Tócala para hacerle mimos. Si se te olvida cuidarla, se pone triste y pierde cariño.'}</p>
+        <p class="sub center">${noche ? 'De 22:00 a 7:30 duerme: las barras bajan más despacio.' : 'Tócala para hacerle mimos, toca la cama para que se eche la siesta o su juguete para jugar. Si se te olvida cuidarla, se pone triste y pierde cariño.'}</p>
+        <button class="btn ghost small" type="button" data-ytab="tienda">Cambiar de mascota</button>
       </section>`;
   }
   function editAvView(lv) {
@@ -1102,6 +1146,7 @@
     const b = e.target.closest('button'); if (!b || isAdmin()) return;
     if (b.dataset.pp) { goPart(b.dataset.pp); return; }
     if (b.dataset.ytab) { draft.ytab = b.dataset.ytab; draft.editAv = false; render(); return; }
+    if (b.dataset.tmu) { tmMueble(b.dataset.tmu); return; }
     if (b.dataset.v2) { view = b.dataset.v2; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.pcatj) { ls.set('smbf-pcat', b.dataset.pcatj); draft.cday = ''; render(); return; }
     if (b.dataset.pmes) { draft.mes = b.dataset.pmes; draft.cday = ''; render(); return; }
@@ -1226,11 +1271,33 @@
   const miAv = () => isAdmin() ? Object.assign({}, DT_AV, yoJ().av || {}) : Object.assign({}, (U.perfil || {}).av || {});
   const miLv = () => isAdmin() ? 9 : nivelDe(puntos(U.dias, U.semanas));
   const perfilJ = () => ({ n: miNombre(), av: miAv(), lv: miLv(), adm: isAdmin() });
-  const monedas = () => { const y = yoJ(); return (isAdmin() ? 0 : Math.floor(puntos(U.dias, U.semanas) / 2)) + (y.bolas || 0) + (y.premios || 0) - (y.gastado || 0); };
+  // monedas (28 oct): cada punto por contestar es una moneda (antes, la mitad), más las bolas, los premios y los regalos de Carlos (acceso/{uid}.regalos)
+  const regalosDe = acc => ((acc || {}).regalos || []);
+  const monedas = () => { const y = yoJ(); return (isAdmin() ? 0 : puntos(U.dias, U.semanas) + regalosDe(U.acceso).reduce((a, r) => a + (+r.m || 0), 0)) + (y.bolas || 0) + (y.premios || 0) - (y.gastado || 0); };
   const semPts = (d, l) => { let s = 0; for (let i = 0; i < 7; i++) s += (d.dias || {})[addDays(l, i)] || 0; return s; };
   const rachaJ = d => { let n = 0, k = today(); if (!(d.dias || {})[k]) k = addDays(k, -1); while ((d.dias || {})[k]) { n++; k = addDays(k, -1); } return n; };
-  const tiene = (c, v) => (c === 'estela' && v === 'granate') || (c === 'cele' && v === '¡GOL!') || (yoJ().compras || []).includes(c + '|' + v);
-  const puesto = (c, v) => c === 'mascota' ? yoJ().mascota === v : c === 'estela' ? (yoJ().estela || 'granate') === v : c === 'cele' ? (yoJ().cele || '¡GOL!') === v : miAv()[c] === v;
+  const tiene = (c, v) => (c === 'estela' && v === 'granate') || (c === 'cele' && v === '¡GOL!') || (c === 'tema' && !(TEMAS[v] || {}).p) || (c === 'mueble' && !((MUEBLES.find(m => m[0] + ':' + m[1] === v) || [])[3])) || (yoJ().compras || []).includes(c + '|' + v);
+  const puesto = (c, v) => c === 'mascota' ? yoJ().mascota === v : c === 'estela' ? (yoJ().estela || 'granate') === v : c === 'cele' ? (yoJ().cele || '¡GOL!') === v : c === 'tema' ? casaDe().tema === v : c === 'mueble' ? casaDe().m[v.split(':')[0]] === v.split(':')[1] : miAv()[c] === v;
+  // ================= la habitación de la mascota (28 oct): temas de pared y suelo, y muebles por hueco =================
+  // juego/{uid}.casa = {tema, m: {pared1, pared2, suelo1, suelo2, juguete}}; lo comprado va en compras como 'tema|id' y 'mueble|hueco:id'
+  const TEMAS = {
+    casa: { n: 'Mi cuarto', p: 0, pared: ['#fde7d6', '#f9d6c6'], suelo: ['#c9915f', '#b37c4c'], deco: [] },
+    playa: { n: 'Playa', p: 300, pared: ['#8fd3ff', '#d6f1ff'], suelo: ['#f3d9a4', '#e6c27f'], deco: [['sol', 70, 4, 16], ['palmera', 2, 30, 22], ['concha', 40, 86, 8], ['ola', 78, 64, 14]] },
+    bosque: { n: 'Bosque', p: 300, pared: ['#bfe8c4', '#e3f6dd'], suelo: ['#7cbf5a', '#5fa344'], deco: [['pino', 70, 18, 18], ['seta', 40, 84, 8], ['mariposa', 46, 14, 9]] },
+    nieve: { n: 'Nieve', p: 300, pared: ['#d6ecff', '#f2f8ff'], suelo: ['#ffffff', '#e4eef8'], deco: [['muneco', 76, 30, 14], ['copo', 30, 8, 7], ['copo', 58, 18, 5]] },
+    espacio: { n: 'Espacio', p: 450, pared: ['#1b1446', '#3a2a7a'], suelo: ['#8d8aa6', '#6d6a88'], deco: [['planeta', 64, 6, 18], ['cohete', 36, 10, 10], ['luna', 8, 26, 9]], estrellas: true },
+    vestuario: { n: 'Vestuario SMB', p: 400, pared: ['#7a1d2c', '#a3364a'], suelo: ['#d9dde3', '#c3c9d1'], deco: [['banderin', 44, 6, 10], ['trofeo', 80, 30, 11], ['patin', 40, 84, 11]] },
+  };
+  // [hueco, id, nombre, precio, dibujo, se puede dormir]
+  const MUEBLES = [
+    ['pared1', 'ventana', 'Ventana', 0], ['pared1', 'relojp', 'Reloj', 80], ['pared1', 'espejo', 'Espejo', 120], ['pared1', 'globos', 'Globos', 150], ['pared1', 'arcoiris', 'Arcoíris', 200],
+    ['pared2', 'cuadro', 'Cuadro', 0], ['pared2', 'medalla', 'Medalla', 100], ['pared2', 'trofeo', 'Trofeo', 150], ['pared2', 'fugaz', 'Estrella fugaz', 150], ['pared2', 'guitarra', 'Guitarra', 200],
+    ['suelo1', 'planta', 'Planta', 0], ['suelo1', 'cactus', 'Cactus', 60], ['suelo1', 'tulipan', 'Tulipán', 80], ['suelo1', 'girasol', 'Girasol', 80], ['suelo1', 'robot', 'Robot', 180], ['suelo1', 'dinosaurio', 'Dinosaurio', 220], ['suelo1', 'piano', 'Piano', 250],
+    ['suelo2', 'cama', 'Cama', 0, 1], ['suelo2', 'cesta', 'Cesta', 80, 1], ['suelo2', 'sofa', 'Sofá', 200, 1], ['suelo2', 'campana', 'Tienda de campaña', 250, 1],
+    ['juguete', 'pelota', 'Pelota', 0], ['juguete', 'ovillo', 'Ovillo', 50], ['juguete', 'peluche', 'Peluche', 60], ['juguete', 'balon', 'Balón', 70], ['juguete', 'dado', 'Dado', 70], ['juguete', 'tambor', 'Tambor', 120],
+  ];
+  const HUECOS = { pared1: 'Pared izquierda', pared2: 'Pared derecha', suelo1: 'Suelo', suelo2: 'Para dormir', juguete: 'Juguete' };
+  const casaDe = () => { const c = yoJ().casa || {}; return { tema: TEMAS[c.tema] ? c.tema : 'casa', m: Object.assign({ pared1: 'ventana', pared2: 'cuadro', suelo1: 'planta', suelo2: 'cama', juguete: 'pelota' }, c.m || {}) }; };
   const avSrc = (av, lv, n) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatarSVG(av, lv, n).replace('<svg class="av"', '<svg width="280" height="280" class="av"'));
   function jStart() {
     if (J.on) return; J.on = true;
@@ -1334,10 +1401,14 @@
     const c = b.dataset.c, v = b.dataset.v, p = +b.dataset.p, y = yoJ();
     if (tiene(c, v)) return; if (monedas() < p) { toast('Te faltan monedas. ¡A jugar!'); return; }
     const doc = Object.assign({}, perfilJ(), { gastado: (y.gastado || 0) + p, compras: [...(y.compras || []), c + '|' + v] });
-    J.todos[meU()] = Object.assign({}, y, doc); render(); await B.merge('juego/' + meU(), doc); toast('¡Comprado! Ya te lo puedes poner.');
+    J.todos[meU()] = Object.assign({}, y, doc); render(); await B.merge('juego/' + meU(), doc);
+    if (c === 'tema' || c === 'mueble') { await actions.ponerj(b); return; }
+    toast('¡Comprado! Ya te lo puedes poner.');
   };
   actions.ponerj = async b => {
     const c = b.dataset.c, v = b.dataset.v;
+    if (c === 'tema' || c === 'mueble') { const cs = casaDe(); if (c === 'tema') cs.tema = v; else cs.m[v.split(':')[0]] = v.split(':')[1];
+      J.todos[meU()] = Object.assign({}, yoJ(), { casa: cs }); render(); await B.merge('juego/' + meU(), Object.assign(perfilJ(), { casa: cs })); toast('¡Qué bonito!'); return; }
     if (c === 'estela' || c === 'cele' || c === 'mascota') { J.todos[meU()] = Object.assign({}, yoJ(), { [c]: v }); render(); await B.merge('juego/' + meU(), { [c]: v }); toast(c === 'cele' ? 'Así celebrarás tus goles.' : c === 'mascota' ? (v ? '¡Ya te acompaña!' : 'Vale, sin mascota.') : '¡Te queda genial!'); return; }
     const av = Object.assign({}, miAv(), { [c]: v });
     if (isAdmin()) { J.todos[meU()] = Object.assign({}, yoJ(), { av }); render(); await B.merge('juego/' + meU(), { av }); }
@@ -1474,7 +1545,7 @@
 
   // ================= Dirección Técnica =================
   // pestañas de la DT (26 oct, noche): Altas pasa a estar dentro de «Jugadoras» y entra el «Buzón»
-  const navA = () => { const nb = buzonItems(today()).filter(x => x.pend).length, na = pendientes().length;
+  const navA = () => { const nb = new Set(buzonItems(today()).filter(x => x.pend).map(x => x.u)).size, na = pendientes().length;
     return `<nav class="nav" aria-label="Secciones">${[['resumen', 'Equipo'], ['buzon', 'Buzón'], ['equipo', 'Jugadoras'], ['partidos', 'Partidos'], ['reto', 'Reto']].map(([k, l]) => `<button type="button" data-av="${k}" aria-current="${view === k || ((view === 'detalle' || view === 'acceso') && k === 'equipo') || (view === 'partido' && k === 'partidos') ? 'page' : 'false'}">${ico(k)}${l}${k === 'buzon' && nb ? `<i class="nbad">${nb}</i>` : ''}${k === 'equipo' && na ? `<i class="nbad">${na}</i>` : ''}</button>`).join('')}</nav>`; };
   const activas = () => Object.keys(A.jug).filter(u => (A.acc[u] || {}).activa).sort((a, b) => (A.jug[a].nombre || '').localeCompare(A.jug[b].nombre || '', 'es'));
   const pendientes = () => Object.keys(A.jug).filter(u => !(A.acc[u] || {}).activa && !(A.acc[u] || {}).ts);
@@ -1483,25 +1554,25 @@
   const diasDe = u => (A.regs[u] || {}).dias || {};
   const semDe = u => (A.regs[u] || {}).semanas || {};
   // tarjeta de una jugadora: su personaje, cómo está y su línea de las últimas sesiones
+  // tarjeta de una jugadora (28 oct): cómo está hoy, su compromiso de la semana y su último partido
   function pcardHTML({ u, e }) {
-    const D = diasDe(u), t = today(), ks = Object.keys(D).filter(k => k <= t && wellScore((D[k] || {}).antes) != null).sort().slice(-8);
-    const v = ks.map(k => wellScore(D[k].antes)), Y = x => 31 - (x - 1) / 9 * 28, X = i => 4 + i * (132 / Math.max(1, 7));
-    const col = { bad: 'var(--bad)', warn: 'var(--warn)', ok: 'var(--accent)', none: 'var(--muted)' }[e.lvl];
-    const band = e.base != null ? `<rect x="0" y="${Y(Math.min(10, e.base + 0.9)).toFixed(1)}" width="140" height="${(Y(Math.max(1, e.base - 0.9)) - Y(Math.min(10, e.base + 0.9))).toFixed(1)}" rx="4" style="fill:var(--blush)"/>` : '';
-    const line = v.length > 1 ? `<polyline points="${v.map((x, i) => X(i).toFixed(1) + ',' + Y(x).toFixed(1)).join(' ')}" style="fill:none;stroke:${col};stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/>` : '';
-    const dot = v.length ? `<circle cx="${X(v.length - 1).toFixed(1)}" cy="${Y(v[v.length - 1]).toFixed(1)}" r="3.2" style="fill:${col}"/>` : '';
-    let resp = 0, ent = 0; for (let i = 0; i < 14; i++) { const d = addDays(t, -i); if (entrena(calOf(A.cal), d)) { ent++; if ((D[d] || {}).antes) resp++; } }
-    return `<button type="button" class="pcard" data-jug="${u}"><span class="top2">${avatarSVG((A.jug[u] || {}).av, nivelDe(puntos(D, semDe(u))), 'Su jugadora')}<span style="min-width:0"><span class="nm">${esc((A.jug[u].nombre || '').split(' ')[0])}</span>${stHTML(e.lvl)}</span></span>
-      <svg class="spark" viewBox="0 0 140 34" preserveAspectRatio="none" role="img" aria-label="Cómo ha llegado en sus últimas respuestas">${band}${line}${dot}</svg>
-      <span class="nums"><span>Llega<b>${fmt1(e.s)}</b></span><span>Carga<b>${e.L.ratio == null ? '—' : '×' + fmt1(e.L.ratio)}</b></span><span>Responde<b>${resp}/${ent}</b></span></span></button>`;
+    const D = diasDe(u), S = semDe(u), t = today(), lunes = mondayOf(t), a = (D[t] || {}).antes, s0 = a ? wellScore(a) : null, dl = s0 != null && e.base != null ? s0 - e.base : null;
+    const cs = S[lunes], cp = compOf(cs), cumpl = (cs || {}).cumplida, mp = misPartidos(D).find(([, , pd]) => pd && pd.juega), pd = mp && mp[2];
+    const hoyH = s0 != null ? `<span class="pc-hoy ${hcls(Math.round(s0))}">${face(Math.max(1, Math.min(5, Math.ceil(s0 / 2))))}<b>${fmt1(s0)}</b>${dl != null && Math.abs(dl) >= 0.8 ? `<small class="${dl < 0 ? 'down' : 'up'}">${dl < 0 ? '↓' : '↑'}${fmt1(Math.abs(dl))} frente a lo normal</small>` : '<small>lo normal en ella</small>'}</span>`
+      : `<span class="pc-hoy none"><small>${entrena(calOf(A.cal), t) ? 'Hoy sin responder' : 'Hoy no entrena'}${e.last ? ' · última vez ' + esc(e.last === t ? 'hoy' : fmtShort(e.last)) : ''}</small></span>`;
+    return `<button type="button" class="pcard" data-jug="${u}"><span class="top2">${avatarSVG((A.jug[u] || {}).av, nivelDe(puntos(D, S)), 'Su jugadora')}<span style="min-width:0"><span class="nm">${esc((A.jug[u].nombre || '').split(' ')[0])}</span>${stHTML(e.lvl)}</span></span>
+      ${hoyH}
+      <span class="pc-l"><i>${fx('diario')}</i><span>${cp ? `«${esc(cp.length > 46 ? cp.slice(0, 44) + '…' : cp)}»` : '<em>Sin compromiso esta semana</em>'}${cumpl ? ` <span class="stamp mini ${cumpl}">${esc(STAMP[cumpl] || '')}</span>` : ''}</span></span>
+      <span class="pc-l"><i>${fx('partido')}</i><span>${pd ? `${esc(pd.cat || '')} · ${pd.juega === 'si' ? `${pd.min} min · se vio ${pd.visto}` : 'convocada'}` : '<em>Sin partidos contados</em>'}</span></span></button>`;
   }
-  actions.imptodas = async () => { A.impTodas = true; render(); };
+  actions.imptodas = async () => { A.impTodas = !A.impTodas; render(); };
+  actions.vermirar = async () => { A.pf = 'mirar'; view = 'equipo'; render(); scrollTo({ top: 0 }); };
   actions.tabla = async () => { A.tabla = !A.tabla; render(); };
   function equipoView() {
     const t = today(), lunes = mondayOf(t), U2 = activas();
     const rows = ordenadas(t);
     const n = { bad: 0, warn: 0 }; rows.forEach(r => { if (n[r.e.lvl] != null) n[r.e.lvl]++; });
-    shell(`<div class="dt-h"><div><span class="kicker">${esc(fmtDay(t))}</span><h1>Jugadoras</h1></div><button class="btn small${pendientes().length ? ' primary' : ''}" type="button" data-av="acceso">${ico('acceso')}Altas${pendientes().length ? ' · ' + pendientes().length : ''}</button></div><div><p class="sub">${rows.length} ${rows.length === 1 ? 'activa' : 'activas'}${n.bad ? ` · ${n.bad} para revisar` : ''}${n.warn ? ` · ${n.warn} con algo que mirar` : ''}. Solo lo ves tú.</p></div>
+    shell(`<div class="dt-h"><div><span class="kicker">${esc(fmtDay(t))}</span><h1>Jugadoras</h1></div><span class="row tight"><button class="btn small" type="button" data-a="premiar">${fx('moneda', 'bt-ic')}Premiar</button><button class="btn small${pendientes().length ? ' primary' : ''}" type="button" data-av="acceso">${ico('acceso')}Altas${pendientes().length ? ' · ' + pendientes().length : ''}</button></span></div><div><p class="sub">${rows.length} ${rows.length === 1 ? 'activa' : 'activas'}${n.bad ? ` · ${n.bad} para revisar` : ''}${n.warn ? ` · ${n.warn} con algo que mirar` : ''}. Solo lo ves tú.</p></div>
       <div class="row between"><div class="seg" role="group" aria-label="Filtrar">${[['todas', `Todas · ${rows.length}`], ['mirar', `Para mirar · ${rows.filter(r => r.e.lvl === 'bad' || r.e.lvl === 'warn').length}`], ['sin', `Sin responder · ${rows.filter(r => r.e.lvl === 'none' || (r.e.last && daysBetween(r.e.last, t) >= 4)).length}`]].map(([k, l]) => `<button type="button" data-pf="${k}" aria-pressed="${(A.pf || 'todas') === k}">${l}</button>`).join('')}</div>
         <button class="btn ghost small" type="button" data-a="tabla">${A.tabla ? 'Ver tarjetas' : 'Ver tabla'}</button></div>
       ${A.tabla ? '' : `<div class="pcards">${rows.filter(r => (A.pf || 'todas') === 'todas' || (A.pf === 'mirar' ? (r.e.lvl === 'bad' || r.e.lvl === 'warn') : (r.e.lvl === 'none' || (r.e.last && daysBetween(r.e.last, t) >= 4)))).map(pcardHTML).join('') || '<p class="sub">Nadie en este grupo.</p>'}</div>`}
@@ -1570,21 +1641,53 @@
   const buzItemHTML = x => { const id = ('bz-' + x.u + '-' + x.k).replace(/[^a-z0-9-]/gi, '');
     return `<article class="bz${x.pend ? ' pend' : ''}"><header class="bz-h"><button type="button" class="bz-who" data-jug="${x.u}"><span class="bav">${avDe(x.u)}</span><b>${esc(nom1(x.u))}</b></button>${x.tit ? `<span class="bz-t">${esc(x.tit)}</span>` : ''}</header>
       ${x.tx.map(([l, v]) => `<p class="bz-q"><span>${esc(l)}</span>«${esc(v)}»</p>`).join('')}${buzRespHTML(x, id)}</article>`; };
+  // buzón por jugadora (28 oct): una fila por jugadora con lo que tiene sin contestar; al tocarla, su conversación
+  // ================= regalos de monedas de la DT (28 oct): acceso/{uid}.regalos = [{m, t, ts}]; solo lo ve ella =================
+  actions.premiar = async b => { A.prSel = new Set(b.dataset.u ? [b.dataset.u] : []); A.prM = A.prM || 50; A.prBack = view; view = 'premio'; render(); scrollTo({ top: 0 }); };
+  actions.prtodas = async () => { const L = activas(); A.prSel = A.prSel.size === L.length ? new Set() : new Set(L); render(); };
+  actions.prmandar = async b => {
+    const L = [...(A.prSel || [])], m = A.prM || 50, t = ((document.getElementById('pr-t') || {}).value || '').trim();
+    if (!L.length) { toast('Elige al menos a una.'); return; } if (!t) { toast('Escribe el motivo: es lo que más ilusión le hará.'); return; }
+    b.disabled = true; const ts = Date.now();
+    for (const u of L) { const regalos = [...regalosDe(A.acc[u]).slice(-29), { m, t, ts }]; await B.merge('acceso/' + u, { regalos }); A.acc[u] = Object.assign({}, A.acc[u] || {}, { regalos }); }
+    toast(L.length === 1 ? `Mandadas ${m} monedas a ${nom1(L[0])}.` : `Mandadas ${m} monedas a ${L.length} jugadoras.`); view = A.prBack || 'equipo'; render(); scrollTo({ top: 0 });
+  };
+  function premioView() {
+    const sel = A.prSel || (A.prSel = new Set()), m = A.prM || 50, L = activas();
+    shell(`<button class="btn ghost small back" type="button" data-av="${A.prBack === 'detalle' ? 'detalle' : 'equipo'}">← Volver</button>
+      <div><span class="kicker">Reconocimiento</span><h1>Mandar monedas</h1><p class="sub">Para premiar un entreno o un partido. Le llega con tu mensaje y solo lo ve ella.</p></div>
+      <section class="card"><div class="card-h"><h2>¿A quién?</h2><button class="btn ghost small" type="button" data-a="prtodas">${sel.size === L.length ? 'Ninguna' : 'Todas'}</button></div>
+        <div class="pfs">${L.map(u => `<button type="button" class="pf pr${sel.has(u) ? ' on' : ''}" data-prsel="${u}" aria-pressed="${sel.has(u)}"><span class="pf-av">${avDe(u)}${sel.has(u) ? `<i class="pr-ok">${fx('check')}</i>` : ''}</span><b>${esc(nom1(u))}</b></button>`).join('')}</div></section>
+      <section class="card"><h2>¿Cuántas?</h2><div class="seg" role="group" aria-label="Monedas">${[25, 50, 100, 200].map(v => `<button type="button" data-prm="${v}" aria-pressed="${m === v}">${v}</button>`).join('')}</div></section>
+      <section class="card"><h2>¿Por qué?</h2><textarea id="pr-t" class="pr-t" maxlength="140" rows="2" placeholder="Por ejemplo: por cómo presionaste el pase atrás hoy"></textarea></section>
+      <button class="btn primary big" type="button" data-a="prmandar">${fx('moneda', 'bt-ic')}Mandar ${m} monedas${sel.size ? sel.size === 1 ? ' a ' + esc(nom1([...sel][0])) : ' a ' + sel.size : ''}</button>`,
+      { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
+  }
   function buzonView() {
-    const t = today(), L = buzonItems(t), P = L.filter(x => x.pend), tab = A.btab || (P.length ? 'pend' : 'todo'), V = tab === 'pend' ? P : L;
-    const fechas = [...new Set(V.map(x => x.f))];
+    const t = today(), L = buzonItems(t), P = L.filter(x => x.pend), tab = A.btab || (P.length ? 'pend' : 'todo');
+    const u0 = A.bzU && A.jug[A.bzU] ? A.bzU : null;
+    if (u0) { const M = L.filter(x => x.u === u0), np = M.filter(x => x.pend).length;
+      return shell(`<button class="btn ghost small back" type="button" data-bzu="">← Buzón</button>
+        <section class="bz-yo"><span class="bav">${avDe(u0)}</span><div><span class="kicker">Lo que te cuenta · ${BUZ_DIAS} días</span><h1>${esc(nom1(u0))}</h1><span class="sub">${np ? np === 1 ? '1 cosa sin contestar' : np + ' cosas sin contestar' : 'Todo contestado'}</span></div><button class="btn small" type="button" data-jug="${u0}">Su ficha</button></section>
+        <p class="sub">Mejor contestar con una pregunta: les hace pensar. Si no hace falta escribir, «Leído».</p>
+        ${np > 1 ? `<button class="btn ghost small" type="button" data-a="leertodo" data-u="${u0}">Marcar las ${np} como leídas</button>` : ''}
+        ${M.length ? `<div class="bzs">${M.map(x => buzItemHTML(Object.assign({}, x, { tit: (x.tit ? x.tit + ' · ' : '') + (x.f === t ? 'hoy' : fmtDay(x.f)) }))).join('')}</div>` : '<section class="card"><p class="sub">No ha escrito nada en estos días.</p></section>'}`,
+        { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' }); }
+    const porU = {}; L.forEach(x => { (porU[x.u] = porU[x.u] || []).push(x); });
+    const filas = Object.entries(porU).map(([u, M]) => ({ u, M, np: M.filter(x => x.pend).length, ult: M[0] })).filter(r => tab === 'todo' || r.np)
+      .sort((a, b) => (b.np ? 1 : 0) - (a.np ? 1 : 0) || b.ult.f.localeCompare(a.ult.f) || nom1(a.u).localeCompare(nom1(b.u), 'es'));
     shell(`<div class="dt-h"><div><span class="kicker">Lo que te cuentan · últimos ${BUZ_DIAS} días</span><h1>Buzón</h1></div>
-        <div class="seg etab" role="tablist">${[['pend', `Por contestar${P.length ? ' · ' + P.length : ''}`], ['todo', 'Todo']].map(([k, l]) => `<button type="button" role="tab" data-btab="${k}" aria-pressed="${tab === k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div></div>
-      <p class="sub">Mejor contestar con una pregunta: les hace pensar. Si no hace falta escribir, «Leído»: verán que lo has leído.</p>
-      ${tab === 'pend' && P.length > 5 ? `<button class="btn ghost small" type="button" data-a="leertodo">Marcar las ${P.length} como leídas</button>` : ''}
-      ${V.length ? fechas.map(f => `<h3 class="bz-d">${esc(f === t ? 'Hoy' : fmtDay(f))}</h3><div class="bzs">${V.filter(x => x.f === f).map(buzItemHTML).join('')}</div>`).join('')
+        <div class="seg etab" role="tablist">${[['pend', `Por contestar${P.length ? ' · ' + new Set(P.map(x => x.u)).size : ''}`], ['todo', 'Todas']].map(([k, l]) => `<button type="button" role="tab" data-btab="${k}" aria-pressed="${tab === k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div></div>
+      ${filas.length ? `<div class="bzl">${filas.map(({ u, M, np, ult }) => { const x = M.find(y => y.pend) || ult, tx = (x.tx[0] || ['', ''])[1];
+          return `<button type="button" class="bzf${np ? ' pend' : ''}" data-bzu="${u}"><span class="bav">${avDe(u)}</span><span class="bzf-b"><b>${esc(nom1(u))}</b><small>«${esc(tx.length > 70 ? tx.slice(0, 67) + '…' : tx)}»</small></span><span class="bzf-r"><small>${esc(x.f === t ? 'hoy' : fmtShort(x.f))}</small>${np ? `<i class="nbad2">${np}</i>` : `<span class="bz-ok">${ric('ok')}</span>`}</span></button>`; }).join('')}</div>
+        ${tab === 'pend' && P.length > 5 ? `<button class="btn ghost small" type="button" data-a="leertodo">Marcar las ${P.length} como leídas</button>` : ''}`
         : tab === 'pend' ? `<section class="card"><p class="calm">${ric('ok')}Todo contestado.</p></section>` : '<section class="card"><p class="sub">Nadie ha escrito nada en estos días.</p></section>'}`,
       { nav: navA(), right: '<button class="btn ghost small" type="button" data-a="out">Salir</button>' });
   }
   actions.pregunta = async b => { const el = document.getElementById(b.dataset.in); if (!el) return; const q = PREG[+b.dataset.q] || ''; el.value = (el.value.trim() ? el.value.trim() + ' ' : '') + q; el.focus(); el.setSelectionRange(el.value.length, el.value.length); };
   actions.leertodo = async b => {
     if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Pulsa otra vez: todas verán «Leído»'; return; }
-    const P = buzonItems(today()).filter(x => x.pend), ts = Date.now(), por = {};
+    const P = buzonItems(today()).filter(x => x.pend && (!b.dataset.u || x.u === b.dataset.u)), ts = Date.now(), por = {};
     P.forEach(x => { por[x.u] = por[x.u] || Object.assign({}, (A.acc[x.u] || {}).resp || {}); por[x.u][x.k] = { visto: true, ts }; });
     for (const [u, resp] of Object.entries(por)) { await B.merge('acceso/' + u, { resp }); A.acc[u] = Object.assign({}, A.acc[u] || {}, { resp }); }
     toast('Todo marcado como leído.'); render();
@@ -1622,7 +1725,7 @@
     const base = baseline(teamDias, ref), mLvl = media == null ? '' : media <= 4.5 ? 'bad' : base != null && media <= base - 1 ? 'warn' : 'ok';
     let acute = 0, chronic = 0, conDatos = 0; us.forEach(u => { const L = loads(diasDe(u), t); acute += L.acute; chronic += L.chronic; if (L.span >= 21) conDatos++; });
     const ratio = chronic > 0 && conDatos ? acute / chronic : null, pctC = ratio == null ? null : Math.round((ratio - 1) * 100);
-    const imp = rows.filter(r => r.rk <= 2), pcTot = rows.reduce((s, r) => s + r.pc.length, 0), cnt = k => rows.filter(r => r.e.lvl === k).length;
+    const imp = rows.filter(r => r.rk <= 2), pcTot = rows.filter(r => r.pc.length).length, cnt = k => rows.filter(r => r.e.lvl === k).length;
     // diario de cada día (desde el 27 oct): cuántas lo han escrito hoy y el tiempo de toda la semana; el compromiso sigue siendo semanal
     const lunes = mondayOf(t), nd = daysBetween(lunes, t) + 1, diaDe = (u, k) => (diasDe(u)[k] || {}).diario;
     const dHoy = us.filter(u => diaDe(u, t)).length, dSem = us.reduce((a, u) => a + [...Array(nd)].filter((_, i) => diaDe(u, addDays(lunes, i))).length, 0);
@@ -1649,14 +1752,22 @@
         <div class="efs">${efH}</div>${faltan.length ? `<p class="sub">Contaron el antes pero no el después: ${faltan.map(u => esc(nom1(u))).join(', ')}.</p>` : ''}
         ${notasD.length ? `<div class="bubs">${notasD.slice(0, 4).map(([u, n]) => bubHTML(u, n, 'después')).join('')}</div>${notasD.length > 4 ? `<button class="btn ghost small" type="button" data-av="buzon">Ver las ${notasD.length} en el buzón</button>` : ''}` : ''}`
         : `<p class="sub">${ref === t ? 'Todavía nadie lo ha contado. Les llega el aviso al acabar (a las 21:00 si no lo han cambiado).' : 'Nadie contó el después de ese entreno.'}</p>`}</section>` : '';
-    const hoy = `<div class="kstrip">${ks(fmt1(media), 'Cómo llegan', mLvl, base != null ? 'suele ' + fmt1(base) : 'del 1 al 10')}${ks(`${resp}/${us.length}`, 'Antes', resp < us.length / 2 ? 'warn' : '', `después ${conD.length} · diario ${us.filter(u => (diasDe(u)[t] || {}).diario).length}`)}<button type="button" class="ks ks-b ${pcTot ? 'info' : ''}" data-av="buzon"><b>${pcTot}</b><span>Por contestar</span><small>abrir el buzón ›</small></button></div>
-      ${pendientes().length ? `<button type="button" class="aviso-altas" data-av="acceso">${ico('acceso')}<span><b>${pendientes().length === 1 ? '1 cuenta espera' : pendientes().length + ' cuentas esperan'} el alta</b><small>Actívalas cuando tengas el consentimiento firmado</small></span>›</button>` : ''}
-      <section class="card imp-card"><div class="card-h"><h2>Lo importante</h2><span class="leg">${['bad', 'warn'].map(k => cnt(k) ? `<span class="lg ${k}"><i></i>${cnt(k)}</span>` : '').join('')}</span></div>
-        ${imp.length ? `<div class="imps">${imp.slice(0, A.impTodas ? 99 : 5).map(impHTML).join('')}</div>${imp.length > 5 && !A.impTodas ? `<button class="btn ghost small" type="button" data-a="imptodas">Ver las ${imp.length}</button>` : ''}` : `<p class="calm">${ric('ok')}Todo en orden. Nadie con avisos ni nada por contestar.</p>`}</section>
-      ${despH}
-      ${prox.length ? `<section class="strip"><div class="strip-h"><h2>${prox[0].fecha === t ? 'Partido de hoy' : 'Próximo partido'}</h2></div><div class="tkts">${prox.map(x => ticketHTML(x, nR(x), `data-part="${x.id}"`)).join('')}</div></section>` : ''}
-      <section class="card"><div class="card-h"><h2>Las cinco</h2><span class="sub">hoy · ↑↓ frente a lo normal</span></div><div class="cinco">${cinco}</div></section>`;
+    // Hoy (28 oct): dos tarjetas (antes y después), «A quién mirar» con tres como mucho y el partido
+    const cincoH = `<section class="card"><div class="card-h"><h2>Las cinco</h2><span class="sub">último entreno · ↑↓ frente a lo normal</span></div><div class="cinco">${cinco}</div></section>`;
+    const mira = imp.slice(0, A.impTodas ? imp.length : 3).map(({ u, e, pc }) => { const r0 = e.R.filter(r => r.lvl !== 'none' && !suave(r)).sort(byOrd)[0];
+      return `<button type="button" class="mira ${e.lvl}" data-jug="${u}"><span class="mira-av">${avDe(u)}</span><b>${esc(nom1(u))}</b><span class="mira-r ${r0 ? r0.lvl : 'info'}">${ric(r0 ? r0.ic : 'nota')}${esc(r0 ? (r0.c || r0.txt) : pc.length === 1 ? 'Te ha escrito' : pc.length + ' por contestar')}</span><span class="imp-go" aria-hidden="true">›</span></button>`; }).join('');
+    const hb = A.hb || '';
+    const hoy = `${pendientes().length ? `<button type="button" class="aviso-altas" data-av="acceso">${ico('acceso')}<span><b>${pendientes().length === 1 ? '1 cuenta espera' : pendientes().length + ' cuentas esperan'} el alta</b><small>Actívalas cuando tengas el consentimiento firmado</small></span>›</button>` : ''}
+      <div class="hoy2">
+        <button type="button" class="hb${hb === 'antes' ? ' on' : ''}" data-hb="antes"><span class="hb-h">${fx('antes')}<b>Antes</b><small>${resp} de ${us.length}</small></span><b class="hb-v ${mLvl}">${fmt1(media)}</b><small>cómo llegan${base != null ? ' · suelen ' + fmt1(base) : ''}</small></button>
+        <button type="button" class="hb${hb === 'despues' ? ' on' : ''}" data-hb="despues"><span class="hb-h">${fx('despues')}<b>Después</b><small>${conD.length} de ${us.length}</small></span><b class="hb-v${dR != null && dR >= 1 ? ' warn' : ''}">${fmt1(rM)}</b><small>esfuerzo${sM != null ? ' · suelen ' + fmt1(sM) : ''}</small></button>
+      </div>
+      ${hb === 'antes' ? cincoH : hb === 'despues' ? despH : ''}
+      <section class="card imp-card"><div class="card-h"><h2>A quién mirar</h2>${pcTot ? `<button class="btn ghost small" type="button" data-av="buzon">${pcTot === 1 ? '1 te ha escrito' : pcTot + ' te han escrito'} ›</button>` : ''}</div>
+        ${mira ? `<div class="miras">${mira}</div>${imp.length > 3 ? `<button class="btn ghost small" type="button" data-a="imptodas">${A.impTodas ? 'Ver solo tres' : `Ver las ${imp.length}`}</button>` : ''}` : `<p class="calm">${ric('ok')}Todo en orden. Nadie con avisos.</p>`}</section>
+      ${prox.length ? `<section class="strip"><div class="strip-h"><h2>${prox[0].fecha === t ? 'Partido de hoy' : 'Próximo partido'}</h2></div><div class="tkts">${prox.map(x => ticketHTML(x, nR(x), `data-part="${x.id}"`)).join('')}</div></section>` : ''}`;
     const semana = `<div class="kstrip">${ks(pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + '%', 'Carga', pctC == null ? '' : pctC > 30 ? 'bad' : pctC > 15 || pctC < -20 ? 'warn' : 'ok', 'frente a su mes')}${ks(us.length ? Math.round(dSem / (us.length * nd) * 100) + '%' : '—', 'Diarios', dSem < us.length * nd / 2 ? 'warn' : '', 'de los días posibles')}${ks(cu.length ? Math.round(cuN('si') / cu.length * 100) + '%' : '—', 'Compromisos', '', 'cumplidos')}</div>
+      ${cincoH}
       <section class="card"><h2>Cómo llegan · 4 semanas</h2>${wellChart(teamDias, t)}</section>
       ${cuadranteHTML(us, ref)}
       <section class="card"><div class="card-h"><h2>Diario de la semana</h2><span class="sub">hoy ${dHoy} de ${us.length} · ${cerradas} con compromiso</span></div>
@@ -1707,6 +1818,7 @@
       <section class="fhead ${e.lvl}"><span class="fh-av">${avatarSVG(J.av, lv, J.nombre)}</span>
         <div class="fh-b"><span class="kicker">Nivel ${lv + 1} · ${esc(NIVELES[lv][0])}</span><h1>${esc(J.nombre)}</h1><span class="fh-st">${stHTML(e.lvl)}${pc.length ? `<span class="pc">${ric('nota')}${pc.length} por contestar</span>` : ''}</span></div></section>
       ${e.R.length ? chipsHTML(e.R.slice().sort(byOrd)) : ''}
+      <button class="btn small fh-pr" type="button" data-a="premiar" data-u="${u}">${fx('moneda', 'bt-ic')}Mandarle monedas</button>
       <div class="kpis">
         <div class="kpi">${ric('baja')}<b>${fmt1(e.s)}</b><span>Llega hoy${dl != null ? ` <em class="${dl < -1 ? 'bad' : dl > 0.5 ? 'ok' : ''}">${dl < 0 ? '↓' : '↑'}${fmt1(Math.abs(dl))}</em>` : ''}</span></div>
         <div class="kpi">${ric('carga')}<b>${e.L.ratio == null ? '—' : '×' + fmt1(e.L.ratio)}</b><span>Carga / mes</span></div>
@@ -1910,7 +2022,12 @@
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
     if (b.dataset.btab) { A.btab = b.dataset.btab; render(); return; }
+    if (b.dataset.bzu != null && b.dataset.bzu !== undefined && 'bzu' in b.dataset) { A.bzU = b.dataset.bzu; render(); scrollTo({ top: 0 }); return; }
+    if (b.dataset.prsel) { const S0 = A.prSel || (A.prSel = new Set()); if (S0.has(b.dataset.prsel)) S0.delete(b.dataset.prsel); else S0.add(b.dataset.prsel); const y = scrollY, tx = (document.getElementById('pr-t') || {}).value; render(); scrollTo({ top: y }); if (tx) document.getElementById('pr-t').value = tx; return; }
+    if (b.dataset.prm) { A.prM = +b.dataset.prm; const y = scrollY, tx = (document.getElementById('pr-t') || {}).value; render(); scrollTo({ top: y }); if (tx) document.getElementById('pr-t').value = tx; return; }
+    if (b.dataset.hb) { A.hb = A.hb === b.dataset.hb ? '' : b.dataset.hb; render(); return; }
     if (b.dataset.ytab) { draft.ytab = b.dataset.ytab; render(); return; }
+    if (b.dataset.tmu) { tmMueble(b.dataset.tmu); return; }
     if (b.dataset.ptabs) { A.ptabs = b.dataset.ptabs; render(); return; }
     if (b.dataset.pmes) { A.mes = b.dataset.pmes; A.cday = ''; render(); return; }
     if (b.dataset.cday != null && view === 'partidos') { A.cday = b.dataset.cday; render(); return; }
@@ -1952,7 +2069,7 @@
     if (me === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!me) return loginView();
     if (!ADMIN.length) return gate(`<h2>Falta un paso de configuración</h2><p>Copia este código y ponlo en <b>firebase-config.js</b> (SMBF_ADMIN) y en las reglas (ADMIN_UID). Es tu código de usuario: con él la app sabe que eres la Dirección Técnica.</p><p class="code">${esc(me.uid)}</p><button class="btn ghost" type="button" data-a="out">Salir</button>`);
-    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'partidos') return partidosView(); if (view === 'partido') return partidoView(); if (view === 'reto') return retoView(); if (view === 'avdt') return editAvView(9); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); if (view === 'buzon') return buzonView(); if (view === 'mundo') return mundoView(); return resumenView(); }
+    if (isAdmin()) { if (view === 'detalle') return detalleView(); if (view === 'temporada') return temporadaView(); if (view === 'partidos') return partidosView(); if (view === 'partido') return partidoView(); if (view === 'reto') return retoView(); if (view === 'avdt') return editAvView(9); if (view === 'acceso') return accesoView(); if (view === 'equipo') return equipoView(); if (view === 'buzon') return buzonView(); if (view === 'mundo') return mundoView(); if (view === 'premio') return premioView(); return resumenView(); }
     if (U.perfil === undefined || U.acceso === undefined) { gate('<p class="sub" style="text-align:center">Cargando…</p>'); return; }
     if (!U.perfil || !U.perfil.acepta || U.editAlta) return altaView();
     if (!U.acceso || !U.acceso.activa) return esperaView();

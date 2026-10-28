@@ -291,7 +291,7 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 
 ## Juegos con Phaser (27 oct, tarde)
 
-- Los tres juegos están ahora en `femenino/juegos.js` y usan el motor Phaser 3.90 (`femenino/lib/phaser.min.js`, licencia MIT en `lib/LICENCIA-phaser.md`). Se han borrado `juego.js` y `juegos2.js`.
+- Los tres juegos están ahora en `femenino/juegos.js` y usan el motor Phaser (desde el 28 oct, la 4.2.1; `femenino/lib/phaser.min.js`, licencia MIT en `lib/LICENCIA-phaser.md`). Se han borrado `juego.js` y `juegos2.js`.
 - Phaser se carga la primera vez que se juega (`cargarPhaser`). Mientras tanto la capa del juego enseña «Cargando…». Está en el `SHELL` del service worker, así que funciona sin conexión.
 - La lógica es la misma de antes, con la misma semilla, para que los duelos sigan siendo justos. Lo que cambia es el dibujo:
   - texturas propias: personaje en círculo, rival, portera, bola con brillo, portería con red, grada con público y bandas «SANTA MARÍA»;
@@ -299,3 +299,23 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   - partículas (estela, chispas, confeti), animaciones, sacudida y destello.
 - El marcador, las vidas, el sonido y «Salir» siguen en HTML (`.jg-ov`), y el campo es el lienzo de Phaser dentro de `.jg-cv`. Los toques y las teclas se escuchan en el contenedor y en `window`, como antes.
 - La API no cambia: `SMBJuego.jugar({modo, avatarSrc, mascotaSrc, seed, estela, cele, titulo, onEnd})`, más `delDia`, `JUEGOS` y `ESTELAS`.
+
+## Cambios del 28 oct (lo que pidió Carlos tras usarla)
+
+- **Equipo · Hoy en tres bloques.** Dos botones, «Antes» (cómo llegan, media y lo normal) y «Después» (esfuerzo medio). Al tocar uno se abre debajo su detalle (`A.hb`): «Las cinco» con «Antes» y el después del entreno con «Después». Luego viene «A quién mirar», con tres como mucho; «Ver las N» despliega las demás (`A.impTodas`). «Las cinco» también está en la pestaña «Semana».
+- **Buzón por jugadora.** La lista es una fila por jugadora (`.bzf`, con sus pendientes); al tocarla se abre su conversación (`A.bzU`) con «Contestar», «Leído» y «Marcar las N como leídas». El número del menú y el de «Por contestar» cuentan jugadoras, no mensajes.
+- **Tarjetas de Jugadoras** (`pcardHTML`): cómo llega hoy frente a lo normal en ella, su compromiso de la semana con el sello, y su último partido. Ya no salen la carga ni lo que responde.
+- **Monedas:**
+  - Cada punto por contestar vale una moneda (antes, media).
+  - Comida básica gratis, tres al día (manzana y zanahoria, `GRATIS_DIA`, contador `tama[id].gr`). Los caprichos cuestan y dan cariño extra.
+- **Regalos de la DT.** Desde Jugadoras («Premiar», a una o a varias) o desde la ficha («Mandarle monedas»). Se elige cantidad (25, 50, 100 o 200) y se escribe un motivo obligatorio.
+  - Se guarda en `acceso/{uid}.regalos = [{m, t, ts}]` (las 30 últimas) y suma en `monedas()`.
+  - La jugadora ve una tarjeta en Hoy con el mensaje hasta que pulsa «¡Gracias!» (se recuerda en el móvil con `smbf-regalo-{uid}`).
+  - Solo lo ven ella y la DT. No hacen falta reglas nuevas: `acceso` ya lo escribe la DT y lo lee la jugadora.
+- **Habitación de la mascota** (`juego/{uid}.casa = {tema, m: {pared1, pared2, suelo1, suelo2, juguete}}`). Hay seis temas (`TEMAS`): Mi cuarto gratis; playa, bosque, nieve, espacio y vestuario SMB de pago. Los muebles van por hueco (`MUEBLES`, `HUECOS`) y uno de cada hueco es gratis. Lo comprado va en `compras` como `tema|id` y `mueble|hueco:id`. Se cambia con «Decorar».
+- **Interacción con la habitación.** Al tocar la cama (o el sitio para dormir comprado), la mascota va andando y se echa la siesta: +4 de ánimo, tres al día (`tama[id].si`). El juguete hace que juegue, y los demás muebles se menean. Además, la mascota pasea sola por la habitación.
+- **Juegos en Phaser 4.2.1:**
+  - Por qué este motor: es la versión nueva del mismo motor, con el renderizado reescrito (más rápido en móvil) y la misma API.
+  - Las jugadoras tienen cuerpo visto desde arriba (`sc.patinadora`: patines con zancada, camiseta, stick y cabeza), se inclinan al cambiar de carril y las rivales patinan.
+  - Con el lanzamiento se mueve el stick; la portera se estira hacia el lado al que va y los guantes golpean en la parada.
+  - Hay viñeta suave de cámara (solo WebGL) y objetivo de 60 fps.

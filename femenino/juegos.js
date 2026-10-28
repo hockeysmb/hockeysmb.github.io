@@ -25,7 +25,7 @@
   let phaserP = null;
   function cargarPhaser() {
     if (window.Phaser) return Promise.resolve();
-    if (!phaserP) phaserP = new Promise((ok, mal) => { const s = document.createElement('script'); s.src = 'lib/phaser.min.js?v=3.90.0'; s.onload = () => ok(); s.onerror = () => { phaserP = null; mal(new Error('phaser')); }; document.head.appendChild(s); });
+    if (!phaserP) phaserP = new Promise((ok, mal) => { const s = document.createElement('script'); s.src = 'lib/phaser.min.js?v=4.2.1'; s.onload = () => ok(); s.onerror = () => { phaserP = null; mal(new Error('phaser')); }; document.head.appendChild(s); });
     return phaserP;
   }
   const cargaImg = src => new Promise(ok => { if (!src) return ok(null); const i = new Image(); const to = setTimeout(() => ok(null), 2500); i.onload = () => { clearTimeout(to); ok(i); }; i.onerror = () => { clearTimeout(to); ok(null); }; i.src = src; });
@@ -57,7 +57,7 @@
       if (!M.alive) return;
       M.imgAv = av; M.imgPet = pet;
       M.game = new Phaser.Game({ type: Phaser.AUTO, parent: cont, width: M.W, height: M.H, backgroundColor: fondo || '#eaf1f8', banner: false,
-        scale: { mode: Phaser.Scale.NONE, zoom: 1 / D }, input: { keyboard: false }, audio: { noAudio: true }, render: { antialias: true, roundPixels: false },
+        scale: { mode: Phaser.Scale.NONE, zoom: 1 / D }, input: { keyboard: false }, audio: { noAudio: true }, render: { antialias: true, roundPixels: false, powerPreference: 'high-performance' }, fps: { target: 60, smoothStep: true },
         scene: { preload() { FX.forEach(k => this.load.image(k, 'img/' + k + '.webp')); }, create() { ov.querySelector('.jg-load').remove(); comunes(this, M); escena.create.call(this); }, update(t, dl) { if (M.alive) escena.update.call(this, Math.min(0.05, dl / 1000)); } } });
       M.canvas = () => cont.querySelector('canvas');
     };
@@ -77,6 +77,25 @@
     if (M.imgPet) lienzo(sc, 'pet', 160, 160, (c) => c.drawImage(M.imgPet, 0, 0, 160, 160));
     // rival (vista desde arriba): camiseta azul, cara y stick
     lienzo(sc, 'rival', 128, 128, (c) => { c.strokeStyle = '#3b2a1a'; c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.moveTo(80, 70); c.lineTo(100, 118); c.stroke(); const g = c.createRadialGradient(54, 52, 8, 64, 64, 44); g.addColorStop(0, '#5b8ee6'); g.addColorStop(1, '#1f4a99'); c.fillStyle = g; c.beginPath(); c.arc(64, 64, 42, 0, 6.29); c.fill(); c.lineWidth = 6; c.strokeStyle = '#fff'; c.stroke(); c.fillStyle = '#f2d2b6'; c.beginPath(); c.arc(64, 54, 18, 0, 6.29); c.fill(); c.fillStyle = '#4a2f1d'; c.beginPath(); c.arc(64, 48, 18, Math.PI, 0); c.fill(); c.fillStyle = '#2a1d1a'; c.beginPath(); c.arc(57, 57, 2.6, 0, 6.29); c.arc(71, 57, 2.6, 0, 6.29); c.fill(); });
+    // cuerpos vistos desde arriba: camiseta con hombros y manos; patín con ruedas; cabeza de rival
+    const cuerpo = (key, c1, c2, txt) => lienzo(sc, key, 160, 110, (c) => { const g = c.createLinearGradient(0, 0, 0, 110); g.addColorStop(0, c1); g.addColorStop(1, c2);
+      c.fillStyle = g; c.beginPath(); c.ellipse(80, 58, 62, 38, 0, 0, 6.29); c.fill(); c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 3; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.ellipse(64, 42, 30, 12, -0.3, 0, 6.29); c.fill();
+      c.fillStyle = '#f2d2b6'; c.beginPath(); c.arc(18, 52, 11, 0, 6.29); c.arc(142, 52, 11, 0, 6.29); c.fill();
+      if (txt) { c.fillStyle = 'rgba(255,255,255,.9)'; c.font = '900 22px Inter, Arial, sans-serif'; c.textAlign = 'center'; c.fillText(txt, 80, 80); } });
+    cuerpo('cuerpoP', '#a8394b', '#681825', 'SMB'); cuerpo('cuerpoR', '#5b8ee6', '#1f4a99', '');
+    lienzo(sc, 'patinT', 40, 80, (c) => { c.fillStyle = '#2b2b33'; c.beginPath(); c.roundRect ? c.roundRect(6, 4, 28, 72, 12) : c.rect(6, 4, 28, 72); c.fill(); c.fillStyle = '#ff5a7a'; [14, 30, 46, 62].forEach(y => { c.beginPath(); c.arc(20, y, 6, 0, 6.29); c.fill(); }); });
+    lienzo(sc, 'cabezaR', 96, 96, (c) => { c.fillStyle = '#f2d2b6'; c.beginPath(); c.arc(48, 50, 34, 0, 6.29); c.fill(); c.fillStyle = '#4a2f1d'; c.beginPath(); c.arc(48, 42, 35, Math.PI * 1.02, Math.PI * 1.98); c.fill(); c.fillRect(13, 36, 70, 8);
+      c.fillStyle = '#2a1d1a'; c.beginPath(); c.arc(37, 56, 4, 0, 6.29); c.arc(59, 56, 4, 0, 6.29); c.fill(); c.strokeStyle = '#2a1d1a'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(41, 70); c.quadraticCurveTo(48, 75, 55, 70); c.stroke();
+      c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(48, 50, 35, 0, 6.29); c.stroke(); });
+    // una patinadora completa (contenedor): patines que se mueven al patinar, cuerpo, stick y cabeza
+    sc.patinadora = (x, y, T, rival) => { const c = sc.add.container(x, y), sh = sc.add.image(0, T * 0.45, 'sombra').setDisplaySize(T * 1.4, T * 0.4),
+        p1 = sc.add.image(-T * 0.24, T * 0.18, 'patinT').setDisplaySize(T * 0.24, T * 0.48), p2 = sc.add.image(T * 0.24, T * 0.18, 'patinT').setDisplaySize(T * 0.24, T * 0.48),
+        cu = sc.add.image(0, T * 0.12, rival ? 'cuerpoR' : 'cuerpoP').setDisplaySize(T * 1.2, T * 0.82), st = sc.add.image(T * 0.42, -T * 0.3, 'stick').setDisplaySize(T * 0.85, T * 0.85).setAngle(rival ? 150 : -20),
+        cab = sc.add.image(0, -T * 0.02, rival ? 'cabezaR' : 'yo').setDisplaySize(T * 0.8, T * 0.8);
+      c.add([sh, p1, p2, cu, st, cab]); c.T = T; c.p = { sh, p1, p2, cu, st, cab };
+      c.paso = (fase, amp = 1) => { const a = Math.sin(fase) * T * 0.1 * amp; p1.y = T * 0.18 + a; p2.y = T * 0.18 - a; p1.angle = -6 - Math.sin(fase) * 8 * amp; p2.angle = 6 - Math.sin(fase) * 8 * amp; cu.y = T * 0.12 + Math.abs(Math.sin(fase)) * T * 0.02; };
+      return c; };
     // portera de frente (peto, guantes y espinilleras)
     lienzo(sc, 'portero', 160, 200, (c) => { const r = (x, y, w, h, rr, f) => { c.fillStyle = f; c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, rr) : c.rect(x, y, w, h); c.fill(); };
       r(38, 132, 34, 64, 10, '#ffd21f'); r(88, 132, 34, 64, 10, '#ffd21f'); r(46, 70, 68, 70, 16, '#1f1f1f'); r(54, 82, 52, 8, 4, '#ffd21f'); r(8, 70, 36, 40, 12, '#ffd21f'); r(116, 70, 36, 40, 12, '#ffd21f');
@@ -127,7 +146,8 @@
           const cambia = k === 'rival' && lv >= 1 && nObs === 1 && R() < 0.3 ? (l === 0 ? 1 : l === 2 ? -1 : (R() < 0.5 ? -1 : 1)) : 0;
           const e = { k, l, y, wob: R() * 6.28, cambia, lx: l };
           e.sh = sc.add.image(laneX(l), y + 22 * S, 'sombra').setDisplaySize(50 * S, 16 * S).setDepth(3);
-          e.sp = k === 'rival' ? sc.add.image(laneX(l), y, 'rival').setDisplaySize(56 * S, 56 * S).setDepth(8) : sc.add.image(laneX(l), y, 'cono').setDisplaySize(50 * S, 50 * S).setDepth(8);
+          e.sp = k === 'rival' ? sc.patinadora(laneX(l), y, 54 * S, true).setDepth(8) : sc.add.image(laneX(l), y, 'cono').setDisplaySize(50 * S, 50 * S).setDepth(8);
+          if (k === 'rival') { e.sh.setVisible(false); e.fase = R() * 6; }
           if (cambia) e.fl = sc.add.text(laneX(l), y - 34 * S, cambia > 0 ? '→' : '←', { fontFamily: 'Inter, Arial', fontSize: Math.round(22 * S) + 'px', fontStyle: '900', color: '#ff3b1f', stroke: '#fff', strokeThickness: Math.round(4 * S) }).setOrigin(0.5).setDepth(9);
           ents.push(e);
         }
@@ -162,15 +182,16 @@
         sc.bandaI = sc.add.tileSprite(0, 0, 32, H / (16 * S / 32), 'banda').setOrigin(0, 0).setScale(16 * S / 32).setDepth(20);
         sc.bandaD = sc.add.tileSprite(W - 16 * S, 0, 32, H / (16 * S / 32), 'bandaD').setOrigin(0, 0).setScale(16 * S / 32).setDepth(20);
         estela = sc.add.particles(0, 0, 'punto', { speedY: { min: 180 * S, max: 320 * S }, speedX: { min: -30 * S, max: 30 * S }, lifespan: 520, scale: { start: 0.65 * S, end: 0 }, alpha: { start: 0.95, end: 0 }, tint: colsE, frequency: 14 }).setDepth(9);
-        sombra = sc.add.image(px, PY + 26 * S, 'sombra').setDisplaySize(62 * S, 18 * S).setDepth(9);
+        sombra = { setScale() {}, x: 0 };
         if (sc.textures.exists('pet')) pet = sc.add.image(px + 40 * S, PY + 8 * S, 'pet').setDisplaySize(46 * S, 46 * S).setDepth(10);
         aura = sc.add.image(px, PY, 'brillo').setDisplaySize(96 * S, 96 * S).setDepth(10).setAlpha(0);
-        yo = sc.add.image(px, PY, 'yo').setDisplaySize(58 * S, 58 * S).setDepth(11);
-        estela.startFollow(yo, 0, 26 * S);
+        yo = sc.patinadora(px, PY, 60 * S, false).setDepth(11);
+        estela.startFollow(yo, 0, 30 * S);
+        sc.cameras.main.filters && sc.cameras.main.filters.external.addVignette(0.5, 0.5, 0.95, 0.25);
       },
       update(dt) {
         px += (laneX(lane) - px) * Math.min(1, dt * 16);
-        if (!started) { if (cuenta(M, dt, st)) started = true; yo.x = px; return; }
+        if (!started) { if (cuenta(M, dt, st)) started = true; yo.x = px; yo.paso(performance.now() / 120, 0.3); return; }
         t += dt; const v = speed(), dy = v * dt; dist += dy;
         const nv = Math.floor(t / 25); if (nv > nivel) { nivel = nv; beep('nivel'); zona(); banner(); }
         if (dist >= nextRow) { spawnRow(); nextRow += 165 * S; }
@@ -186,7 +207,7 @@
               else { goles++; ganar(100, px, PY - 50 * S, '#2e6b46'); sc.grita(cele, true, nivel % 2 ? 'oscuro' : ''); beep('gol'); sc.cameras.main.flash(250, 255, 255, 255); sc.confeti.explode(60, px, PY - 30 * S); } }
             return; }
           const x = e.k === 'rival' ? rx(e) + (e.cambia ? 0 : Math.sin(t * 3 + e.wob) * 6 * S) : e.x != null ? e.x : laneX(e.l);
-          if (e.sp) { e.sp.x = x; e.sp.y = e.y; } if (e.sh) { e.sh.x = x; e.sh.y = e.y + 24 * S; } if (e.gl) { e.gl.x = x; e.gl.y = e.y; } if (e.fl) { e.fl.x = x; e.fl.y = e.y - 36 * S; e.fl.setVisible(e.y < H * 0.32); }
+          if (e.sp) { if (e.k === 'rival' && e.sp.paso) { const vx = (x - e.sp.x) / Math.max(dt, 0.001); e.sp.angle += (Math.max(-20, Math.min(20, vx / (8 * S))) - e.sp.angle) * Math.min(1, dt * 8); if (!e.done) { e.fase += dt * 10; e.sp.paso(e.fase); } } e.sp.x = x; e.sp.y = e.y; } if (e.sh) { e.sh.x = x; e.sh.y = e.y + 24 * S; } if (e.gl) { e.gl.x = x; e.gl.y = e.y; } if (e.fl) { e.fl.x = x; e.fl.y = e.y - 36 * S; e.fl.setVisible(e.y < H * 0.32); }
           if (e.k === 'bola') e.sp.angle += dt * 360;
           const near = Math.abs(px - x) < 30 * S, dyy = Math.abs(e.y - PY);
           if (e.k === 'bola') { if (near && dyy < 28 * S) { e.gone = true; bolas++; combo++; mult = Math.min(5, 1 + Math.floor(combo / 6)); maxMult = Math.max(maxMult, mult); ganar(10, px, PY - 40 * S); beep('bola'); sc.chispas.setParticleTint(colsE[0]); sc.chispas.explode(8, px, PY - 10 * S); } return; }
@@ -197,15 +218,18 @@
             e.done = true;
             if (escudo) { escudo = false; inv = 0.8; sc.grita('¡Salvada!', true); beep('pot'); return; }
             lives--; inv = 1.3; combo = 0; mult = 1; beep('golpe'); sc.cameras.main.shake(260, 0.012); sc.grita(lives > 0 ? '¡Ay!' : 'Fin', false);
-            if (e.sp) sc.tweens.add({ targets: e.sp, angle: 40, alpha: 0.4, duration: 300 });
+            if (e.sp) sc.tweens.add({ targets: e.sp, angle: e.k === 'rival' ? 200 : 40, scale: 0.8, alpha: 0.35, duration: 450, ease: 'Cubic.easeOut' });
+            sc.tweens.add({ targets: yo, angle: (px < x ? -1 : 1) * 35, duration: 120, yoyo: true });
             if (navigator.vibrate) try { navigator.vibrate(70); } catch (er) {}
             if (lives <= 0) fin(false);
           }
         });
         ents = ents.filter(e => { const fuera = e.y > H + 90 * S || e.gone; if (fuera) quita(e); return !fuera; });
         const j = salto > 0 ? Math.sin((0.6 - salto) / 0.6 * Math.PI) : 0;
-        yo.x = px; yo.y = PY - j * 26 * S; yo.setDisplaySize(58 * S * (1 + j * 0.3), 58 * S * (1 + j * 0.3)); yo.setAlpha(inv > 0 && Math.floor(inv * 10) % 2 ? 0.25 : 1);
-        sombra.x = px; sombra.setScale((62 * S / sombra.width) * (1 - j * 0.3), (18 * S / sombra.height) * (1 - j * 0.3));
+        // inclinación hacia donde cambia de carril, zancada que va más rápida con la velocidad y salto en el regate
+        const lean = Math.max(-1, Math.min(1, (laneX(lane) - px) / (W * 0.15)));
+        yo.x = px; yo.y = PY - j * 26 * S; yo.angle += (lean * 22 - yo.angle) * Math.min(1, dt * 12); yo.setScale(1 + j * 0.28); yo.setAlpha(inv > 0 && Math.floor(inv * 10) % 2 ? 0.25 : 1);
+        yo.paso(t * (9 + v / (60 * S)), salto > 0 ? 0 : 1); yo.p.sh.setAlpha(1 - j * 0.6); yo.p.st.angle = -20 + Math.sin(t * 6) * 6 + (salto > 0 ? -40 * j : 0);
         aura.x = px; aura.y = yo.y; aura.setAlpha(iman > 0 || escudo || x2 > 0 ? 0.55 + Math.sin(t * 10) * 0.15 : 0); aura.setTint(escudo ? 0x5ad16b : x2 > 0 ? 0xffb800 : 0x4da6ff);
         if (pet) { const side = px > W * 0.6 ? -1 : 1; pet.x += (px + side * 42 * S - pet.x) * 0.08; pet.y = PY + 10 * S + Math.sin(t * 9) * 3 * S; }
         M.score(puntos); hud();
@@ -228,6 +252,9 @@
       if (!M.alive) return; M.hint.classList.add('off');
       if (fase === 'x') { tx = mx; fase = 'y'; vy = 1; my = 0; beep('bola'); }
       else if (fase === 'y') { ty = my; fase = 'tiro'; bt = 0; beep('regate');
+        // golpeo: el stick va atrás y chuta, y el cuerpo acompaña
+        sc.tweens.add({ targets: yo.p.st, angle: -70, duration: 90, yoyo: false, onComplete: () => sc.tweens.add({ targets: yo.p.st, angle: 25, duration: 110, ease: 'Back.easeOut', onComplete: () => sc.tweens.add({ targets: yo.p.st, angle: -20, duration: 300, delay: 250 }) }) });
+        sc.tweens.add({ targets: yo, angle: (tx - 0.5) * 24, duration: 160, yoyo: true, hold: 300 });
         const guess = R() < Math.min(0.62, 0.22 + tiro * 0.045);
         gk.tx = guess ? Math.max(0.12, Math.min(0.88, tx)) : (tx < 0.5 ? 0.62 + R() * 0.26 : 0.12 + R() * 0.26); gk.ty = guess ? ty : 0.55 + R() * 0.3;
         // la portera se tira (a la altura y al lado que ha elegido)
@@ -266,7 +293,8 @@
         bsh = sc.add.image(W / 2, H * 0.74, 'sombra').setDisplaySize(40 * S, 12 * S).setDepth(6);
         ball = sc.add.image(W / 2, H * 0.72, 'bola').setDisplaySize(26 * S, 26 * S).setDepth(7);
         if (sc.textures.exists('pet')) pet = sc.add.image(W / 2 + 62 * S, H * 0.86, 'pet').setDisplaySize(52 * S, 52 * S).setDepth(8);
-        yo = sc.add.image(W / 2, H * 0.86, 'yo').setDisplaySize(70 * S, 70 * S).setDepth(8);
+        yo = sc.patinadora(W / 2, H * 0.86, 76 * S, false).setDepth(8);
+        sc.cameras.main.filters && sc.cameras.main.filters.external.addVignette(0.5, 0.45, 0.9, 0.3);
         rotulo = sc.add.text(W / 2, gy + gh + 64 * S, 'Lanzamiento 1', { fontFamily: 'Inter, Arial', fontSize: Math.round(14 * S) + 'px', fontStyle: '700', color: 'rgba(255,255,255,.75)' }).setOrigin(0.5).setDepth(6);
       },
       update(dt) {
@@ -285,7 +313,7 @@
         if (fase === 'y') { const lx = gx + tx * gw, ly = gy + my * gh; linea.lineStyle(3 * S, 0xffd21f, 0.55); for (let yy = gy; yy < gy + gh; yy += 14 * S) linea.lineBetween(lx, yy, lx, yy + 7 * S); mira.setVisible(true).setPosition(lx, ly); flecha.x = lx; }
         else mira.setVisible(false);
         if (fase === 'x' || fase === 'y') keeper.x = gx + gw / 2 + Math.sin(t * 2.5) * 10 * S;
-        yo.y = H * 0.86 + (fase === 'tiro' ? -6 * S : Math.sin(t * 3) * 2 * S); if (pet) pet.y = H * 0.87 + Math.sin(t * 6) * 3 * S;
+        yo.y = H * 0.86 + (fase === 'tiro' ? -6 * S : Math.sin(t * 3) * 2 * S); yo.paso(t * 2.5, 0.25); if (pet) pet.y = H * 0.87 + Math.sin(t * 6) * 3 * S;
         M.score(puntos);
       },
     }, '#0f1a33');
@@ -301,7 +329,7 @@
       n++; const desde = 0.15 + R() * 0.7, a = Math.floor(R() * 3), amaga = n > 8 && R() < Math.min(0.4, 0.08 + n * 0.015);
       const b = amaga ? (a + 1 + Math.floor(R() * 2)) % 3 : a, aviso = Math.max(0.45, 1.1 - n * 0.02), vuelo = Math.max(0.6, 1.3 - n * 0.02);
       const s = { sx: desde, a, b, aviso, vuelo, t: 0, amaga, fin: false };
-      s.sp = sc.add.image(W * desde, H * 0.16, 'rival').setDisplaySize(52 * S, 52 * S).setDepth(5).setAlpha(0); sc.tweens.add({ targets: s.sp, alpha: 1, duration: 200 });
+      s.sp = sc.patinadora(W * desde, H * 0.16, 50 * S, true).setDepth(5).setAlpha(0); s.sp.p.st.setAngle(200); sc.tweens.add({ targets: s.sp, alpha: 1, duration: 200 });
       s.ln = sc.add.graphics().setDepth(4); s.bola = sc.add.image(W * desde, H * 0.16, 'bola').setDisplaySize(24 * S, 24 * S).setDepth(6).setVisible(false);
       tiros.push(s); next = Math.max(0.7, 2 - n * 0.035) + (R() < 0.2 && n > 12 ? -0.35 : 0);
     }
@@ -324,8 +352,9 @@
         sc.add.image(W / 2, GY() + 34 * S, sc.porteriaTex('redpor', Math.round(W * 0.9), Math.round(40 * S))).setOrigin(0.5, 1).setDepth(2);
         dianas = sc.add.graphics().setDepth(3);
         if (sc.textures.exists('pet')) pet = sc.add.image(LX(1) + 40 * S, GY() - 20 * S, 'pet').setDisplaySize(46 * S, 46 * S).setDepth(6);
-        guantes = [sc.add.image(0, 0, 'guante').setDisplaySize(30 * S, 30 * S).setDepth(8).setFlipX(true), sc.add.image(0, 0, 'guante').setDisplaySize(30 * S, 30 * S).setDepth(8)];
-        yo = sc.add.image(LX(1), GY() - 40 * S, 'yo').setDisplaySize(60 * S, 60 * S).setDepth(7);
+        guantes = [sc.add.image(0, 0, 'guante').setDisplaySize(32 * S, 32 * S).setDepth(8).setFlipX(true), sc.add.image(0, 0, 'guante').setDisplaySize(32 * S, 32 * S).setDepth(8)];
+        yo = sc.patinadora(LX(1), GY() - 40 * S, 66 * S, false).setDepth(7); yo.p.st.setVisible(false);
+        sc.cameras.main.filters && sc.cameras.main.filters.external.addVignette(0.5, 0.5, 0.95, 0.22);
         guantes[0].setPosition(LX(1) - 34 * S, GY() - 34 * S); guantes[1].setPosition(LX(1) + 34 * S, GY() - 34 * S);
       },
       update(dt) {
@@ -341,16 +370,20 @@
           if (s.t < s.aviso) { const cambio = s.amaga && s.t > s.aviso * 0.55, l = cambio ? s.b : s.a; s.ln.lineStyle(4 * S, 0xff3b1f, cambio ? 0.95 : 0.55);
             const tx = LX(l), ty = GY() - 44 * S, segs = 14; for (let i = 0; i < segs; i += 2) { const f0 = i / segs, f1 = (i + 1) / segs; s.ln.lineBetween(x0 + (tx - x0) * f0, y0 + 26 * S + (ty - y0 - 26 * S) * f0, x0 + (tx - x0) * f1, y0 + 26 * S + (ty - y0 - 26 * S) * f1); }
             dianas.lineStyle(3 * S, 0xff3b1f, 0.9); dianas.strokeCircle(LX(l), GY() - 40 * S, 34 * S * (1 + 0.12 * Math.sin(t * 14))); }
-          else { const k = (s.t - s.aviso) / s.vuelo; s.bola.setVisible(true).setPosition(x0 + (LX(s.b) - x0) * k, y0 + (GY() - 20 * S - y0) * k); s.bola.angle += dt * 720; s.bola.setDisplaySize((20 + 10 * k) * S, (20 + 10 * k) * S);
+          else { if (!s.chut) { s.chut = true; sc.tweens.add({ targets: s.sp.p.st, angle: 140, duration: 80, yoyo: true }); sc.tweens.add({ targets: s.sp, angle: (LX(s.b) - W * s.sx) / W * 30, duration: 150 }); }
+            const k = (s.t - s.aviso) / s.vuelo; s.bola.setVisible(true).setPosition(x0 + (LX(s.b) - x0) * k, y0 + (GY() - 20 * S - y0) * k); s.bola.angle += dt * 720; s.bola.setDisplaySize((20 + 10 * k) * S, (20 + 10 * k) * S);
             dianas.lineStyle(3 * S, 0xff3b1f, 0.9); dianas.strokeCircle(LX(s.b), GY() - 40 * S, 34 * S); }
           if (s.t >= s.aviso + s.vuelo) { s.fin = true;
             if (lane === s.b) { paradas++; racha++; maxR = Math.max(maxR, racha); const v = 50 * (1 + Math.floor(racha / 5)); puntos += v; sc.grita(s.amaga ? '¡No te ha engañado!' : '¡Paradón!', true); sc.pop('+' + v, LX(s.b), GY() - 100 * S, '#2e6b46'); beep('gol'); sc.chispas.setParticleTint(0xffd21f); sc.chispas.explode(18, LX(s.b), GY() - 40 * S);
-              sc.tweens.add({ targets: s.bola, y: s.bola.y - 160 * S, x: s.bola.x + (R() - 0.5) * 120 * S, alpha: 0, duration: 450 }); }
+              sc.tweens.add({ targets: s.bola, y: s.bola.y - 160 * S, x: s.bola.x + (R() - 0.5) * 120 * S, alpha: 0, duration: 450 }); sc.tweens.add({ targets: guantes, scale: '*=1.35', duration: 90, yoyo: true }); }
             else { vidas--; racha = 0; sc.cameras.main.shake(260, 0.012); sc.grita('¡Gol en contra!', false); beep('golpe'); M.lives(vidas); sc.tweens.add({ targets: s.bola, y: GY() + 20 * S, alpha: 0, duration: 300 }); if (vidas <= 0) setTimeout(() => fin(false), 450); }
             sc.tweens.add({ targets: s.sp, alpha: 0, delay: 250, duration: 250 }); s.ln.clear(); setTimeout(() => { try { s.sp.destroy(); s.ln.destroy(); s.bola.destroy(); } catch (e) {} }, 700); }
         });
         tiros = tiros.filter(s => !s.fin);
-        yo.x = px; yo.y = GY() - 40 * S; guantes[0].setPosition(px - 34 * S, GY() - 34 * S); guantes[1].setPosition(px + 34 * S, GY() - 34 * S);
+        // se estira hacia el lado al que va (más cuanto más lejos está) y vuelve
+        const tira = Math.max(-1, Math.min(1, (LX(lane) - px) / (W * 0.12)));
+        yo.x = px; yo.y = GY() - 40 * S; yo.angle += (tira * 28 - yo.angle) * Math.min(1, dt * 14); yo.scaleX = 1 + Math.abs(tira) * 0.12; yo.paso(t * 4, 0.3);
+        guantes[0].setPosition(px - (36 + (tira < 0 ? -tira * 18 : 0)) * S, GY() - (36 + Math.abs(tira) * 6) * S).setAngle(-20 + tira * 20); guantes[1].setPosition(px + (36 + (tira > 0 ? tira * 18 : 0)) * S, GY() - (36 + Math.abs(tira) * 6) * S).setAngle(20 + tira * 20);
         if (pet) { pet.x += (px + (lane === 2 ? -64 : 64) * S - pet.x) * 0.1; pet.y = GY() - 14 * S + Math.sin(t * 7) * 3 * S; }
         M.mu(racha >= 5 ? '×' + (1 + Math.floor(racha / 5)) : ''); M.score(puntos);
       },
