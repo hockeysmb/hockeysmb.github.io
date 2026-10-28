@@ -24,7 +24,7 @@ async def main():
       async def go(): await pg.goto(U); await pg.wait_for_timeout(700)
       async def salir():
         if await pg.query_selector('.nav [data-v="yo"]'): await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(150); await pg.click('[data-v2="datos"]')
-        await pg.click('[data-a="out"]'); await pg.wait_for_timeout(500)
+        await out(pg); await pg.wait_for_timeout(500)
       await go(); await pg.screenshot(path=O + '0_entrar.png')
       # 1. alta de Ana (menor)
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="up"]'); await pg.wait_for_timeout(600)
@@ -37,13 +37,14 @@ async def main():
       try:
         await pg.evaluate(f"window.SMBF_BACKEND.set('registros/{uid}/dias/2026-10-26', {{x:1}})"); errs.append('escribe sin estar activa')
       except Exception: print('sin activar no puede escribir: ok')
-      await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
+      await out(pg); await pg.wait_for_timeout(400)
       # 2. la DT la activa y pone objetivos
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(800)
-      await pg.click('.nav [data-av="equipo"]'); await pg.wait_for_timeout(200); await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
+      await pg.click('.hme'); await pg.wait_for_timeout(200); await pg.click('.ptile[data-av="acceso"]'); await pg.wait_for_timeout(300)
       print('pendiente:', ' '.join((await pg.text_content('.list .li')).split()))
       await pg.click(f'[data-a="activar"][data-u="{uid}"]'); await pg.wait_for_timeout(500)
-      # días de entreno: quitar el jueves y volverlo a poner, y un festivo
+      # días de entreno (en Mi perfil): quitar el jueves y volverlo a poner, y un festivo
+      await pg.click('.hback'); await pg.wait_for_timeout(200); await pg.click('.ptile[data-av="dias"]'); await pg.wait_for_timeout(300)
       await pg.click('[data-cdia="4"]'); await pg.wait_for_timeout(200); await pg.click('[data-cdia="4"]'); await pg.wait_for_timeout(200)
       await pg.fill('#c-sin', '2026-11-02'); await pg.click('[data-a="addsin"]'); await pg.wait_for_timeout(300)
       cal = await pg.evaluate("window.__fake.db()['equipos/femenino']"); print('calendario:', cal)
@@ -56,7 +57,7 @@ async def main():
         window.__fake.put('registros/' + uid + '/dias/' + k, { antes: { sueno: 4, fatiga: hard ? 3 : 4, dolor: 4, estres: 4, animo: 4, ts: 1 }, ses: [{ tipo: dow === 6 ? 'partido' : 'entreno', rpe: hard ? 8 : 5, min: dow === 6 ? 50 : 90, nota: '', ts: 1 }], ts: 1 }); }
         window.__fake.put('registros/' + uid + '/semanas/2026-10-12', { tiempo: 3, mejor: '', cambiar: '', compromiso: 'Hablar más en defensa', area: 'Equipo', cumplida: '', ts: 1 });
         window.__fake.put('registros/' + uid + '/semanas/2026-10-19', { tiempo: 4, mejor: 'Buen 2c1', cambiar: '', compromiso: 'Pedir la bola de cara', area: 'Técnica', cumplida: 'si', ts: 1 }); }""", uid)
-      await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
+      await out(pg); await pg.wait_for_timeout(400)
       # 3. Ana responde hoy
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
       # bienvenida: avisos en el calendario
@@ -143,10 +144,10 @@ async def main():
       print('temporada:', ' | '.join(' '.join(t.split()) for t in await pg.locator('.tile').all_inner_texts()))
       await pg.screenshot(path=O + '7c_temporada.png', full_page=True)
       await pg.screenshot(path=O + '7_dt_detalle.png', full_page=True)
-      await pg.click('.nav [data-av="equipo"]'); await pg.wait_for_timeout(200); await pg.click('[data-av="acceso"]'); await pg.wait_for_timeout(300)
+      await pg.click('.hme'); await pg.wait_for_timeout(200); await pg.click('.ptile[data-av="datosdt"]'); await pg.wait_for_timeout(300)
       async with pg.expect_download() as dl: await pg.click('[data-a="csv"]')
       path = await (await dl.value).path(); lines = open(path, encoding='utf-8-sig').read().splitlines(); print('CSV:', len(lines), 'líneas |', lines[0][:80])
-      await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
+      await out(pg); await pg.wait_for_timeout(400)
       # 4b. día de partido: martes 27, Sub-17 en Tres Cantos a las 19:00
       await pg.set_viewport_size({'width': 390, 'height': 844})
       async def entrar():
@@ -201,7 +202,7 @@ async def main():
       if not dq or dq['s17-2']['juega'] != 'conv' or dq['s17-2']['llevo'] != 'Ver desde el banquillo cómo presionan': errs.append('no se cuenta un partido pasado')
       if not await pg.locator('.cromos.one .cromo').count(): errs.append('después de contarlo no vuelve a la página del partido')
       await pg.screenshot(path=O + '9i_partido_pasado_contado.png', full_page=True)
-      await pg.click('.back'); await pg.wait_for_timeout(300); await pg.click('[data-pmodo="lista"]'); await pg.click('[data-pcatj="Sub-17"]'); await pg.wait_for_timeout(300)
+      await pg.click('.hback'); await pg.wait_for_timeout(300); await pg.click('[data-pmodo="lista"]'); await pg.click('[data-pcatj="Sub-17"]'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=O + '9j_lista_sub17.png', full_page=True)
       await salir()
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(800)
@@ -234,7 +235,7 @@ async def main():
       await pg.click('[data-a="prmandar"]'); await pg.wait_for_timeout(400)
       rg = await pg.evaluate(f"(window.__fake.db()['acceso/{uid}'] || {{}}).regalos"); print('regalo de la DT:', rg)
       if not rg or rg[-1].get('m') != 100: errs.append('no se manda el regalo de monedas')
-      await pg.click('.nav [data-av="resumen"]'); await pg.wait_for_timeout(300); await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
+      await pg.click('.nav [data-av="resumen"]'); await pg.wait_for_timeout(300); await out(pg); await pg.wait_for_timeout(400)
       # 5. Ana borra sus datos
       await pg.fill('#l-email', 'ana@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(900)
       mc = ' '.join((await pg.text_content('.msg-card')).split()); print('Ana ve:', mc[:200])

@@ -112,7 +112,16 @@ async def main():
         n0 = await pg.text_content('.fhead h1'); await pg.click('.fnav [data-jnav="1"]'); await pg.wait_for_timeout(300); n1 = await pg.text_content('.fhead h1')
         await pg.click('.fnav [data-jnav="-1"]'); await pg.wait_for_timeout(300); n2 = await pg.text_content('.fhead h1'); print(tag, 'fichas:', n0, '→', n1, '→', n2, '|', await pg.text_content('.fn-p'))
         if n1 == n0 or n2 != n0: errs.append('no pasa de una ficha a otra')
+        # el «atrás» del móvil vuelve a la pantalla de antes (no a la ficha anterior ni fuera de la app), y «adelante» vuelve
+        await pg.go_back(); await pg.wait_for_timeout(400); h_atras = await pg.text_content('main h1'); await pg.go_forward(); await pg.wait_for_timeout(400); h_adel = await pg.text_content('.fhead h1')
+        print(tag, 'atrás del móvil desde la ficha →', h_atras, '· adelante →', h_adel)
+        if h_atras != 'Equipo' or h_adel != n0: errs.append('el atrás del móvil no vuelve a la pantalla anterior')
         await pg.screenshot(path=O + tag + '_3a_ficha_top.png')
+        # Mi perfil: tu personaje arriba
+        await pg.click('.hme'); await pg.wait_for_timeout(300); nt = await pg.locator('.ptile').count(); print(tag, 'Mi perfil:', nt, 'accesos ·', ' | '.join(' '.join(t.split()) for t in await pg.locator('.ptile b').all_inner_texts()))
+        await pg.screenshot(path=O + tag + '_6_perfil.png', full_page=True)
+        if nt < 6 or not await pg.locator('[data-a="out"]').count(): errs.append('Mi perfil incompleto')
+        await pg.click('.hback'); await pg.wait_for_timeout(300)
         await pg.click('[data-av="resumen"]'); await pg.wait_for_timeout(300)
         await pg.click('[data-av="equipo"]'); await pg.wait_for_timeout(400); await pg.screenshot(path=O + tag + '_2_jugadoras.png', full_page=True)
         await pg.click('[data-jug="demo00"]'); await pg.wait_for_timeout(400); await pg.screenshot(path=O + tag + '_3_ficha.png', full_page=True)

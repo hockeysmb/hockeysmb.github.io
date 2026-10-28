@@ -157,7 +157,7 @@ async def main():
         await pg.evaluate("m => SMBJuego.jugar({ modo: m, seed: 7, titulo: m, onEnd: r => { window.__rp = r; } })", m); await partida(); rp = await pg.evaluate('window.__rp'); print(m + ':', rp)
         if not rp or rp.get('puntos') is None: errs.append('el juego ' + m + ' no acaba bien')
       # 7. la DT entra, juega y reta a Ana
-      await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(200); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="out"]'); await pg.wait_for_timeout(500)
+      await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(200); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(200); await out(pg); await pg.wait_for_timeout(500)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(900)
       await pg.click('.nav [data-av="reto"]'); await pg.wait_for_timeout(500); await pg.screenshot(path=O + '7_dt_reto.png', full_page=True)
       await pg.click('[data-a="editavdt"]'); await pg.wait_for_timeout(300); await pg.click('[data-avk="gafas"][data-avv="kurt"]'); await pg.click('[data-avk="barba"][data-avv="beardMedium"]'); await pg.wait_for_timeout(200); await pg.screenshot(path=O + '7b_dt_personaje.png', full_page=True)
@@ -171,7 +171,7 @@ async def main():
       if not ds or ds[0]['pa'] is None: errs.append('la DT no puede retar')
       await pg.screenshot(path=O + '8_dt_duelos.png', full_page=True)
       # 8. Ana ve que Carlos la ha retado
-      await pg.click('[data-a="out"]'); await pg.wait_for_timeout(400)
+      await out(pg); await pg.wait_for_timeout(400)
       await pg.fill('#l-email', 'demo03@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(1000)
       t = ' '.join((await pg.text_content('.rt-reto') or '').split()); print('Ana ve:', t[:80])
       if 'Carlos' not in t: errs.append('Ana no ve el reto de Carlos')

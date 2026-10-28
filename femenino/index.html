@@ -867,6 +867,34 @@ button.tm-d { border: 0; background: none; padding: 0; cursor: pointer; pointer-
 .tt-prev { position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; background: linear-gradient(var(--p0) 0%, var(--p1) 62%, var(--s0) 62%, var(--s1) 100%); display: grid; place-items: center; } .tt-prev .fx { width: 42%; height: auto; }
 .tm-mu { flex: none; width: 96px; display: grid; justify-items: center; gap: 3px; border: 1px solid var(--line); background: var(--fill); border-radius: 14px; padding: 8px 4px; } .tm-mu.on { border-color: var(--accent); }
 .tm-mu .fx { width: 44px; height: 44px; } .tm-mu b { font-size: 12px; text-align: center; } .tm-mu .btn { min-height: 30px; padding: 4px 8px; font-size: 11.5px; }
+
+/* ===== 28 oct: cabecera con volver, Mi perfil de la DT y botones más cómodos para el dedo ===== */
+.top-r { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.top-in.in { min-height: 56px; }
+.hback { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 14px 0 8px; margin-left: -6px; border: 0; border-radius: 14px; background: var(--fill); color: var(--accent); font: 700 15px var(--font); cursor: pointer; flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hback span { font-size: 26px; line-height: 1; margin-top: -3px; }
+.hback:active { transform: scale(.97); }
+.top-in.in::after { content: ""; flex: 1; order: 1; }
+.top-in.in .top-r { order: 2; }
+.hme { position: relative; width: 44px; height: 44px; padding: 0; border: 2px solid var(--accent-soft); border-radius: 50%; background: var(--accent-soft); cursor: pointer; overflow: visible; flex: none; }
+.hme > svg, .hme > .av { width: 100%; height: 100%; border-radius: 50%; display: block; }
+.hme .nbad { top: -4px; left: auto; right: -4px; }
+.pf-hero { display: flex; align-items: center; gap: 16px; }
+.pf-hero h1 { margin: 2px 0; }
+.pf-big { width: 96px; height: 96px; flex: none; border-radius: 50%; background: var(--accent-soft); box-shadow: var(--shadow); overflow: hidden; }
+.pf-big svg { width: 100%; height: 100%; display: block; }
+.ptiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 720px) { .ptiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ptile { position: relative; display: grid; gap: 4px; align-content: start; text-align: left; min-height: 132px; padding: 16px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); color: var(--fg); font: inherit; cursor: pointer; }
+.ptile:active { transform: scale(.98); }
+.ptile .pt-ic { width: 46px; height: 46px; display: grid; place-items: center; margin-bottom: 6px; }
+.ptile .pt-ic img, .ptile .pt-ic svg { width: 46px; height: 46px; }
+.ptile b { font-size: 16px; line-height: 1.2; }
+.ptile small { color: var(--muted); font-size: 13px; line-height: 1.3; }
+.ptile .nbad { top: 12px; left: auto; right: 12px; min-width: 22px; height: 22px; border-radius: 11px; font-size: 12px; line-height: 22px; }
+.btn.small { min-height: 42px; padding: 8px 14px; }
+.seg button { min-height: 42px; padding: 9px 14px; }
+.fnav button { min-width: 44px; min-height: 44px; }
 </style>
 </head>
 <body>
@@ -874,11 +902,11 @@ button.tm-d { border: 0; background: none; padding: 0; cursor: pointer; pointer-
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261028a"></script>
-<script src="firebase-config.js?v=20261028a"></script>
-<script src="mascotas.js?v=20261028a"></script>
-<script src="juegos.js?v=20261028a"></script>
-<script src="app.js?v=20261028a"></script>
+<script src="lib/avatar.js?v=20261028b"></script>
+<script src="firebase-config.js?v=20261028b"></script>
+<script src="mascotas.js?v=20261028b"></script>
+<script src="juegos.js?v=20261028b"></script>
+<script src="app.js?v=20261028b"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

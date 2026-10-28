@@ -29,3 +29,10 @@ MOCK_ART = open(P + 'mock_artifact.js').read()   # window.claude falso para el a
 SHOTS = F + '_capturas/'
 for d in ('', 'lav/after', 'club/shots', 'lg/shots', 'fx/shots', 'al/shots', 'rn/shots', 't5', 'tec2', 'bd'):
     os.makedirs(SHOTS + d, exist_ok=True)
+
+async def out(pg):
+  # cerrar sesión: la DT lo tiene en «Mi perfil» (su personaje arriba) y la jugadora en «Mis datos»
+  if not await pg.locator('[data-a="out"]').count() and await pg.locator('.hme').count(): await pg.click('.hme'); await pg.wait_for_timeout(250)
+  if not await pg.locator('[data-a="out"]').count() and await pg.locator('.nav [data-v="yo"]').count():
+    await pg.click('.nav [data-v="yo"]'); await pg.wait_for_timeout(150); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(150)
+  await pg.click('[data-a="out"]')

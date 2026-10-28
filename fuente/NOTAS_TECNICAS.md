@@ -319,3 +319,24 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   - Las jugadoras tienen cuerpo visto desde arriba (`sc.patinadora`: patines con zancada, camiseta, stick y cabeza), se inclinan al cambiar de carril y las rivales patinan.
   - Con el lanzamiento se mueve el stick; la portera se estira hacia el lado al que va y los guantes golpean en la parada.
   - Hay viñeta suave de cámara (solo WebGL) y objetivo de 60 fps.
+
+## Navegación: atrás del móvil y «Mi perfil» de la DT (28 oct, mediodía)
+
+- **Atrás y adelante** (`navSync`, `popstate` en `app.js`):
+  - Cada pantalla es una entrada del historial del navegador, así que el gesto o botón «atrás» del móvil vuelve a la anterior en vez de cerrar la app.
+  - La clave de pantalla es `navKey()`: la vista, más la conversación del buzón o el partido abierto. Lo necesario para volver a pintarla se guarda en `history.state.s` (`navSnap`).
+  - Pasar de una ficha a otra con las flechas o deslizando no crea entradas: «atrás» vuelve a la lista.
+  - Si un botón de la app lleva a la pantalla justo anterior, se retrocede en el historial en vez de apilar otra.
+  - Con un juego abierto, «atrás» lo cierra y te deja en la misma pantalla.
+  - `render()` ahora es `pintar()` + `navSync()`.
+- **Cabecera** (`shell`):
+  - El primer botón `← …` de una pantalla sube a la cabecera como `.hback`, grande (44 px) y siempre visible al bajar. Si hay historial retrocede de verdad; si no, va a donde dice.
+  - A la derecha, para la DT, su personaje (`.hme`), con el número de cuentas que esperan el alta.
+- **Mi perfil de la DT** (`view = 'perfil'`, `perfilView`): mandar monedas, altas y cuentas, días de entreno (`diasView`), su mascota y personaje, cambiar su personaje, datos de la temporada (`datosDtView`: CSV y borrar) y cerrar sesión.
+  - «Salir» ya no está en las cabeceras.
+  - Premiar y Altas ya no están en Jugadoras (en la ficha sigue «Mandarle monedas»).
+  - Los días de entreno y los datos de la temporada salen de Altas y tienen su propia pantalla.
+- **Jugadora:** «Mis datos» tiene su «‹ Mi mundo» y el partido su «‹ Partidos», en la cabecera.
+- **Botones más cómodos para el dedo:** `.btn.small` y los selectores (`.seg`) pasan a 42 px de alto, y las flechas de la ficha a 44 px.
+- **Pruebas:** `out(pg)` en `conf.py` cierra sesión esté donde esté (DT: Mi perfil; jugadora: Mis datos). `fem_dt` comprueba el atrás del móvil desde la ficha y Mi perfil.
+- **Dibujos nuevos:** `img/llave.webp` e `img/archivo.webp` (Fluent Emoji, MIT).
