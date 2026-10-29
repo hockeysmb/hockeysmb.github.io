@@ -1280,7 +1280,7 @@
   const perfilJ = () => ({ n: miNombre(), av: miAv(), lv: miLv(), adm: isAdmin() });
   // monedas (28 oct): cada punto por contestar es una moneda (antes, la mitad), más las bolas, los premios y los regalos de Carlos (acceso/{uid}.regalos)
   const regalosDe = acc => ((acc || {}).regalos || []);
-  const monedas = () => { const y = yoJ(); return (isAdmin() ? 0 : puntos(U.dias, U.semanas) + regalosDe(U.acceso).reduce((a, r) => a + (+r.m || 0), 0)) + (y.bolas || 0) + (y.premios || 0) - (y.gastado || 0); };
+  const monedas = () => { const y = yoJ(); return (isAdmin() ? (+y.extra || 0) : puntos(U.dias, U.semanas) + regalosDe(U.acceso).reduce((a, r) => a + (+r.m || 0), 0)) + (y.bolas || 0) + (y.premios || 0) - (y.gastado || 0); };
   const semPts = (d, l) => { let s = 0; for (let i = 0; i < 7; i++) s += (d.dias || {})[addDays(l, i)] || 0; return s; };
   const rachaJ = d => { let n = 0, k = today(); if (!(d.dias || {})[k]) k = addDays(k, -1); while ((d.dias || {})[k]) { n++; k = addDays(k, -1); } return n; };
   const tiene = (c, v) => (c === 'estela' && v === 'granate') || (c === 'cele' && v === '¡GOL!') || (c === 'tema' && !(TEMAS[v] || {}).p) || (c === 'mueble' && !((MUEBLES.find(m => m[0] + ':' + m[1] === v) || [])[3])) || (yoJ().compras || []).includes(c + '|' + v);
@@ -1773,7 +1773,7 @@
       <section class="card imp-card"><div class="card-h"><h2>A quién mirar</h2>${pcTot ? `<button class="btn ghost small" type="button" data-av="buzon">${pcTot === 1 ? '1 te ha escrito' : pcTot + ' te han escrito'} ›</button>` : ''}</div>
         ${mira ? `<div class="miras">${mira}</div>${imp.length > 3 ? `<button class="btn ghost small" type="button" data-a="imptodas">${A.impTodas ? 'Ver solo tres' : `Ver las ${imp.length}`}</button>` : ''}` : `<p class="calm">${ric('ok')}Todo en orden. Nadie con avisos.</p>`}</section>
       ${prox.length ? `<section class="strip"><div class="strip-h"><h2>${prox[0].fecha === t ? 'Partido de hoy' : 'Próximo partido'}</h2></div><div class="tkts">${prox.map(x => ticketHTML(x, nR(x), `data-part="${x.id}"`)).join('')}</div></section>` : ''}`;
-    const semana = `<div class="kstrip">${ks(pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + '%', 'Carga', pctC == null ? '' : pctC > 30 ? 'bad' : pctC > 15 || pctC < -20 ? 'warn' : 'ok', 'frente a su mes')}${ks(us.length ? Math.round(dSem / (us.length * nd) * 100) + '%' : '—', 'Diarios', dSem < us.length * nd / 2 ? 'warn' : '', 'de los días posibles')}${ks(cu.length ? Math.round(cuN('si') / cu.length * 100) + '%' : '—', 'Compromisos', '', 'cumplidos')}</div>
+    const semana = `${entrenosHTML()}<div class="kstrip">${ks(pctC == null ? '—' : (pctC > 0 ? '+' : '') + pctC + '%', 'Carga', pctC == null ? '' : pctC > 30 ? 'bad' : pctC > 15 || pctC < -20 ? 'warn' : 'ok', 'frente a su mes')}${ks(us.length ? Math.round(dSem / (us.length * nd) * 100) + '%' : '—', 'Diarios', dSem < us.length * nd / 2 ? 'warn' : '', 'de los días posibles')}${ks(cu.length ? Math.round(cuN('si') / cu.length * 100) + '%' : '—', 'Compromisos', '', 'cumplidos')}</div>
       ${cincoH}
       <section class="card"><h2>Cómo llegan · 4 semanas</h2>${wellChart(teamDias, t)}</section>
       ${cuadranteHTML(us, ref)}
@@ -1853,6 +1853,26 @@
   const whoDots = x => `<span class="who" aria-label="Quién ha contestado">${activas().map(u => `<i class="${respEst(u, x)}" title="${esc(nom1(u))}">${esc(iniDe(u))}</i>`).join('')}</span>`;
   const whoCount = x => { const us = activas(), a = us.filter(u => respEst(u, x)).length, d = us.filter(u => respEst(u, x) === 'post').length; return `<span class="whoc"><b>${a}</b>/${us.length} antes · <b>${d}</b> después</span>`; };
   const WHO_LEG = '<span class="who-leg"><span><i class="post"></i>antes y después</span><span><i class="pre"></i>solo antes</span><span><i></i>nada</span></span>';
+  // entrenos de la semana (29 oct): una tarjeta por entreno con quién ha contestado, como en los partidos; flechas para otras semanas
+  const entEst = (u, d) => { const x = diasDe(u)[d] || {}, an = !!x.antes, de = (x.ses || []).some(z => !z.pid); return an && de ? 'post' : an || de ? 'pre' : ''; };
+  function entrenosHTML() {
+    const t = today(), cal = calOf(A.cal), off = Math.min(0, A.esem || 0), l0 = addDays(mondayOf(t), 7 * off), us = activas();
+    const D = [...Array(7)].map((_, i) => addDays(l0, i)), E = D.filter(d => entrena(cal, d)), F = D.filter(d => cal.dias.includes(dateOf(d).getDay()) && cal.sin.includes(d));
+    const pas = E.filter(d => d <= t), nA = pas.reduce((a, d) => a + us.filter(u => (diasDe(u)[d] || {}).antes).length, 0), nD = pas.reduce((a, d) => a + us.filter(u => ((diasDe(u)[d] || {}).ses || []).some(z => !z.pid)).length, 0);
+    const nunca = pas.length ? us.filter(u => pas.every(d => !entEst(u, d))) : [];
+    const tk = d => { const dd = dateOf(d), fut = d > t, a = us.filter(u => (diasDe(u)[d] || {}).antes).length, de = us.filter(u => entEst(u, d) === 'post').length;
+      return `<article class="tkt cent${fut ? ' fut' : ''}"><span class="tkt-d"><small>${DIAS3[dd.getDay()]}</small><b>${dd.getDate()}</b><small>${MESES[dd.getMonth()]}</small></span>
+        <span class="tkt-b"><span class="cat">Entreno${d === t ? ' · hoy' : ''}</span>${fut ? '<span class="meta">Todavía no ha llegado</span>' : `<span class="whoc"><b>${a}</b>/${us.length} antes · <b>${de}</b> después</span>
+        <span class="who" aria-label="Quién ha contestado">${us.map(u => `<i class="${entEst(u, d)}" title="${esc(nom1(u))}">${esc(iniDe(u))}</i>`).join('')}</span>`}</span></article>`; };
+    const rango = `${dateOf(l0).getDate()} ${MESES[dateOf(l0).getMonth()]} – ${dateOf(addDays(l0, 6)).getDate()} ${MESES[dateOf(addDays(l0, 6)).getMonth()]}`;
+    return `<section class="card ent-sem"><div class="card-h"><h2>Entrenos</h2>
+        <span class="wk-nav"><button type="button" data-esem="-1" aria-label="Semana anterior">‹</button><span>${off === 0 ? 'Esta semana' : off === -1 ? 'La semana pasada' : esc(rango)}</span><button type="button" data-esem="1" aria-label="Semana siguiente"${off >= 0 ? ' disabled' : ''}>›</button></span></div>
+      ${E.length ? `${pas.length ? `<p class="sub">${pas.length === 1 ? '1 entreno' : pas.length + ' entrenos'} · ${nA} de ${pas.length * us.length} antes · ${nD} de ${pas.length * us.length} después</p>` : ''}
+        <span class="who-leg"><span><i class="post"></i>antes y después</span><span><i class="pre"></i>solo uno</span><span><i></i>nada</span></span>
+        <div class="tkts col">${E.map(tk).join('')}</div>
+        ${nunca.length ? `<p class="sub">Sin contestar ningún entreno esta semana: ${nunca.map(u => `<button type="button" class="lnk" data-jug="${u}">${esc(nom1(u))}</button>`).join(', ')}.</p>` : ''}` : '<p class="sub">No hay entrenos esta semana.</p>'}
+      ${F.length ? `<p class="sub">Sin entreno (festivo): ${F.map(d => esc(fmtDay(d))).join(', ')}.</p>` : ''}</section>`;
+  }
   function partidosView() {
     const t = today(), cat = A.pcat || 'todas', all = allPart(A.cal), L = all.filter(x => cat === 'todas' || x.cat === cat), tab = A.ptabs || 'proximos';
     const fut = L.filter(x => x.fecha >= t), pas = L.filter(x => x.fecha < t).reverse();
@@ -1985,6 +2005,8 @@
     const tile = (attrs, ic, t, sub, extra = '') => `<button type="button" class="ptile" ${attrs}><span class="pt-ic">${ic}</span><b>${t}</b><small>${sub}</small>${extra}</button>`;
     shell(`<button class="btn ghost small back" type="button" data-av="resumen">← Volver</button>
       <section class="pf-hero"><span class="pf-big">${avatarSVG(miAv(), 9, 'Tu personaje')}</span><div><span class="kicker">Dirección Técnica · ${esc(EQ_N)}</span><h1>${esc(miNombre())}</h1><span class="sub">${esc(me.email || '')}</span></div></section>
+      <section class="card mis-mon"><span class="mm-ic">${fx('moneda')}</span><div><span class="kicker">Tus monedas</span><b class="num">${fmtInt(monedas())}</b></div>
+        ${A.darme ? `<div class="seg" role="group" aria-label="Cuántas te das">${[100, 500, 1000, 5000].map(v => `<button type="button" data-a="darme" data-m="${v}">+${fmtInt(v)}</button>`).join('')}</div>` : '<button class="btn primary small" type="button" data-a="darmeabre">Darme monedas</button>'}</section>
       <div class="ptiles">
         ${tile('data-a="premiar"', fx('moneda'), 'Mandar monedas', 'A una o a varias, con tu mensaje')}
         ${tile('data-av="acceso"', fx('llave'), 'Altas y cuentas', P.length ? `${P.length === 1 ? '1 espera' : P.length + ' esperan'} el alta` : `${activas().length} activas`, P.length ? `<i class="nbad">${P.length}</i>` : '')}
@@ -1996,6 +2018,9 @@
       <button class="btn ghost big" type="button" data-a="out">Cerrar sesión</button>
       <p class="sub center">Versión de la app ${esc(APP_V)}${J.sinReglas ? ' · faltan las reglas del reto en Firebase' : ''}</p>`, { nav: navA() });
   }
+  actions.darmeabre = async () => { A.darme = true; render(); };
+  actions.darme = async b => { const m = +b.dataset.m || 0, y = yoJ(), extra = (+y.extra || 0) + m;
+    J.todos[me.uid] = Object.assign({}, y, { extra }); A.darme = false; render(); await B.merge('juego/' + me.uid, Object.assign(perfilJ(), { extra })).catch(() => toast('No se ha podido guardar.')); toast(`+${fmtInt(m)} monedas para ti.`); };
   function diasView() {
     shell(`<button class="btn ghost small back" type="button" data-av="perfil">← Mi perfil</button><div><span class="kicker">Calendario</span><h1>Días de entreno</h1></div>${calHTML()}`, { nav: navA() });
   }
@@ -2051,6 +2076,7 @@
     if (b.dataset.avk && draft.av) { draft.av[b.dataset.avk] = b.dataset.avv; const y = scrollY; render(); scrollTo({ top: y }); return; }
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
     if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
+    if (b.dataset.esem) { A.esem = Math.min(0, (A.esem || 0) + +b.dataset.esem); render(); return; }
     if (b.dataset.btab) { A.btab = b.dataset.btab; render(); return; }
     if (b.dataset.bzu != null && b.dataset.bzu !== undefined && 'bzu' in b.dataset) { A.bzU = b.dataset.bzu; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.prsel) { const S0 = A.prSel || (A.prSel = new Set()); if (S0.has(b.dataset.prsel)) S0.delete(b.dataset.prsel); else S0.add(b.dataset.prsel); const y = scrollY, tx = (document.getElementById('pr-t') || {}).value; render(); scrollTo({ top: y }); if (tx) document.getElementById('pr-t').value = tx; return; }

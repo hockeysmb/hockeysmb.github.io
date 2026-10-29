@@ -79,7 +79,13 @@ async def main():
         await pg.goto('http://localhost:8769/femenino/'); await pg.wait_for_timeout(700)
         await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-a="google"]'); await pg.wait_for_timeout(900)
         await pg.screenshot(path=O + tag + '_1_equipo.png', full_page=True)
-        await pg.click('[data-etab="semana"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_1b_semana.png', full_page=True); await pg.click('[data-etab="hoy"]'); await pg.wait_for_timeout(200)
+        await pg.click('[data-etab="semana"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O + tag + '_1b_semana.png', full_page=True)
+        # entrenos de la semana: una tarjeta por entreno con quién ha contestado; la semana pasada con la flecha
+        ne = await pg.locator('.ent-sem .tkt').count(); wc = ' | '.join(' '.join(x.split()) for x in await pg.locator('.ent-sem .whoc').all_inner_texts()); print(tag, 'entrenos esta semana:', ne, '·', wc)
+        await pg.click('[data-esem="-1"]'); await pg.wait_for_timeout(200); ne2 = await pg.locator('.ent-sem .tkt').count(); print(tag, 'semana pasada:', ne2, '·', ' '.join((await pg.text_content('.ent-sem p.sub') or '').split()))
+        await pg.screenshot(path=O + tag + '_1e_entrenos_pasada.png'); await pg.click('[data-esem="1"]'); await pg.wait_for_timeout(200)
+        if ne != 3 or ne2 != 3 or '/12 antes' not in wc: errs.append('no salen bien los entrenos de la semana')
+        await pg.click('[data-etab="hoy"]'); await pg.wait_for_timeout(200)
         # Hoy en tres bloques: antes / después (se cambia con dos botones) y «A quién mirar»
         nm = await pg.locator('.mira').count(); print(tag, 'a quién mirar:', ' | '.join(' '.join(t.split()) for t in await pg.locator('.mira').all_inner_texts()))
         if not nm or nm > 3: errs.append('«A quién mirar» no sale o sale con más de tres')
@@ -121,6 +127,10 @@ async def main():
         await pg.click('.hme'); await pg.wait_for_timeout(300); nt = await pg.locator('.ptile').count(); print(tag, 'Mi perfil:', nt, 'accesos ·', ' | '.join(' '.join(t.split()) for t in await pg.locator('.ptile b').all_inner_texts()))
         await pg.screenshot(path=O + tag + '_6_perfil.png', full_page=True)
         if nt < 6 or not await pg.locator('[data-a="out"]').count(): errs.append('Mi perfil incompleto')
+        # darse monedas a sí misma
+        await pg.click('[data-a="darmeabre"]'); await pg.wait_for_timeout(200); await pg.click('[data-a="darme"][data-m="500"]'); await pg.wait_for_timeout(400)
+        ex = await pg.evaluate("(window.__fake.db()['juego/" + DT['uid'] + "'] || {}).extra"); mm = ' '.join((await pg.text_content('.mis-mon b')).split()); print(tag, 'se da monedas:', ex, '· ve', mm)
+        if ex is None or ex < 500 or '500' not in mm.replace('.', ''): errs.append('la DT no se puede dar monedas')
         await pg.click('.hback'); await pg.wait_for_timeout(300)
         await pg.click('[data-av="resumen"]'); await pg.wait_for_timeout(300)
         await pg.click('[data-av="equipo"]'); await pg.wait_for_timeout(400); await pg.screenshot(path=O + tag + '_2_jugadoras.png', full_page=True)

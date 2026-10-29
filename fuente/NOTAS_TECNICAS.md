@@ -340,3 +340,13 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **Botones más cómodos para el dedo:** `.btn.small` y los selectores (`.seg`) pasan a 42 px de alto, y las flechas de la ficha a 44 px.
 - **Pruebas:** `out(pg)` en `conf.py` cierra sesión esté donde esté (DT: Mi perfil; jugadora: Mis datos). `fem_dt` comprueba el atrás del móvil desde la ficha y Mi perfil.
 - **Dibujos nuevos:** `img/llave.webp` e `img/archivo.webp` (Fluent Emoji, MIT).
+
+## Entrenos de la semana y monedas de la DT (29 oct)
+
+- **Equipo → Semana empieza con «Entrenos»** (`entrenosHTML`). Hay una tarjeta por cada día de entreno de la semana, con quién ha contestado (`entEst`):
+  - verde: antes y después;
+  - ámbar: solo uno de los dos;
+  - gris: nada.
+  
+  Encima, el total de la semana; debajo, quién no ha contestado ningún entreno, con enlace a su ficha. Las flechas cambian de semana (`A.esem`, 0 = esta, negativo = anteriores). Los festivos salen aparte.
+- **La DT se puede dar monedas** desde Mi perfil («Darme monedas»: +100, +500, +1.000, +5.000). Se guardan en `juego/{uid}.extra` y solo cuentan para ella (`monedas()`). No necesita reglas nuevas: `juego/{uid}` lo escribe su dueña.
