@@ -487,20 +487,30 @@
   const IC_RINCON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-7l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>';
   const IC_CAMB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>';
   const IC_COMO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>';
+  // diario (30 oct): los días de hockey, el de siempre; los demás, una línea opcional «¿Qué tal el día?» (cole, descanso, cómo está)
+  const diaHockey = k => { const D = U.dias[k] || {}, cal = calJ(); return (entrena(cal, k) && !D.noent) || (D.ses || []).length > 0 || partDe(cal, k).some(x => { const pd = pdOf(x) || {}; return pd.pre || pd.juega; }); };
   function diarioView() {
     const t = today(), lunes = mondayOf(t), hoyD = (U.dias[t] || {}).diario, edit = !hoyD || draft.editDia;
-    if (edit && (!draft.dia || draft.dia.f !== t)) draft.dia = Object.assign({ tiempo: 0, mejor: '', rincon: '', cambiar: '', como: '' }, hoyD ? clone(hoyD) : {}, { f: t });
+    if (edit && (!draft.dia || draft.dia.f !== t)) draft.dia = Object.assign({ tiempo: 0, mejor: '', rincon: '', cambiar: '', como: '', linea: '' }, hoyD ? clone(hoyD) : {}, { f: t });
+    const libre = edit ? !diaHockey(t) && !draft.diaHk : !!(hoyD || {}).libre;
     const d = edit ? draft.dia : hoyD, r = rachaDia(), ver = draft.verDia && draft.verDia !== t ? draft.verDia : null;
     // la semana en una tira: el tiempo de cada día
     const tira = `<div class="dsem" role="group" aria-label="Tu semana">${[0, 1, 2, 3, 4, 5, 6].map(i => { const k = addDays(lunes, i), x = (U.dias[k] || {}).diario, fut = k > t;
       return `<button type="button" class="dsd${k === t ? ' hoy' : ''}${x ? ' ok' : ''}${fut ? ' fut' : ''}${k === (ver || t) ? ' sel' : ''}" data-verdia="${k}"${fut ? ' disabled' : ''} aria-label="${esc(fmtDay(k))}${x ? ': ' + TIEMPO[(x.tiempo || 3) - 1][1] : ''}"><small>${DOW.find(z => z[0] === dateOf(k).getDay())[1]}</small><span class="dsd-i">${x ? wx(x.tiempo) : k === t ? '<i class="dot"></i>' : ''}</span><b>${dateOf(k).getDate()}</b></button>`; }).join('')}</div>`;
     const ln = (ic, tit, v) => v ? `<div class="dl-r"><i>${ic}</i><span><b>${tit}</b>${esc(v)}</span></div>` : '';
     const entrada = (k, x) => `<article class="dentry"><div class="de-h"><span class="de-wx">${wx(x.tiempo)}</span><span><b>${esc(k === t ? 'Hoy' : fmtDay(k))}</b><small>${esc(TIEMPO[(x.tiempo || 3) - 1][1])}</small></span></div>
-      ${ln(IC_MEJOR, 'Lo mejor', x.mejor)}${ln(IC_RINCON, 'Mi rincón', x.rincon)}${ln(IC_CAMB, 'Cambiaría', x.cambiar)}${ln(IC_COMO, 'Cómo lo voy a hacer', x.como)}
+      ${ln(IC_MEJOR, 'Mi día', x.linea)}${ln(IC_MEJOR, 'Lo mejor', x.mejor)}${ln(IC_RINCON, 'Mi rincón', x.rincon)}${ln(IC_CAMB, 'Cambiaría', x.cambiar)}${ln(IC_COMO, 'Cómo lo voy a hacer', x.como)}
       ${(rr => rr && rr.t ? `<div class="de-resp"><span class="kicker">Carlos te ha contestado</span><p>${esc(rr.t)}</p></div>` : '')(respOf(U.acceso, 'd:' + k))}${vistoTag('d:' + k)}</article>`;
     const fld = (id, ic, tit, ph, val) => `<label class="dfield"><span class="df-h"><i>${ic}</i>${tit}</span><textarea id="${id}" rows="2" maxlength="300" placeholder="${ph}">${esc(val)}</textarea></label>`;
+    const formLibre = `<section class="card dform"><div class="card-h"><h2>¿Qué tal el día?</h2><span class="sub">${esc(fmtDay(t))}</span></div>
+        <p class="sub d-tip">Hoy no tienes hockey. Si te apetece, cuéntalo en una línea: el cole, cómo has descansado, cómo estás. Es opcional y lo lee Carlos.</p>
+        <div class="wxs dk" role="group" aria-label="Qué tal el día">${TIEMPO.map(([v, l]) => `<button type="button" class="wx" data-tiempo="${v}" aria-pressed="${d.tiempo === v}" aria-label="${l}">${wx(v)}</button>`).join('')}</div>
+        <span class="wx-l">${d.tiempo ? esc(TIEMPO[d.tiempo - 1][1]) : 'De tormenta a sol: elige uno'}</span>
+        <label class="dfield"><span class="df-h"><i>${IC_MEJOR}</i>En una línea</span><textarea id="d-linea" rows="2" maxlength="200" placeholder="Por ejemplo: he terminado el trabajo de biología y estoy más tranquila">${esc(d.linea || '')}</textarea></label>
+        <div class="row"><button class="btn primary big grow" type="button" data-a="savedia">Guardar</button>${hoyD ? '<button class="btn ghost" type="button" data-a="noeditdia">Cancelar</button>' : ''}</div>
+        <button class="btn ghost small" type="button" data-a="diahk">He hecho hockey hoy: diario de hockey</button><p class="msg" id="msg"></p></section>`;
     const form = `<section class="card dform"><div class="card-h"><h2>¿Qué tal hoy en el hockey?</h2><span class="sub">${esc(fmtDay(t))}</span></div>
-        <p class="sub d-tip">Es tu diario de hockey: el entreno, el partido, cómo te has sentido en la pista o algo del juego que hayas visto o pensado. ${entrena(calJ(), t) || partDe(calJ(), t).length ? '' : 'Si hoy no hay entreno, piensa en el último o en el próximo.'}</p>
+        <p class="sub d-tip">Es tu diario de hockey: el entreno, el partido, cómo te has sentido en la pista o algo del juego que hayas visto o pensado.</p>
         <div class="wxs dk" role="group" aria-label="Qué tal hoy en el hockey">${TIEMPO.map(([v, l]) => `<button type="button" class="wx" data-tiempo="${v}" aria-pressed="${d.tiempo === v}" aria-label="${l}">${wx(v)}</button>`).join('')}</div>
         <span class="wx-l">${d.tiempo ? esc(TIEMPO[d.tiempo - 1][1]) : 'De tormenta a sol: elige uno'}</span>
         ${fld('d-mejor', IC_MEJOR, 'Lo mejor', 'Una acción, una decisión, algo que te salió…', d.mejor || '')}
@@ -522,9 +532,9 @@
     const hist = Object.keys(U.dias).filter(k => k < t && (U.dias[k] || {}).diario).sort().reverse().slice(0, draft.diaMas ? 60 : 7);
     const nHist = Object.keys(U.dias).filter(k => k < t && (U.dias[k] || {}).diario).length;
     const hoyBloque = ver ? ((U.dias[ver] || {}).diario ? entrada(ver, U.dias[ver].diario) : `<section class="card"><p class="sub">El ${esc(fmtDay(ver))} no escribiste.</p></section>`) + '<button class="btn ghost small" type="button" data-verdia="' + t + '">Volver a hoy</button>'
-      : edit ? form : entrada(t, hoyD) + '<button class="btn small" type="button" data-a="editdia">Cambiar lo de hoy</button>';
+      : edit ? (libre ? formLibre : form) : entrada(t, hoyD) + '<button class="btn small" type="button" data-a="editdia">Cambiar lo de hoy</button>';
     shell(`<section class="diary-hero"><div class="row between"><span class="kicker">Mi diario</span>${r > 1 ? `<span class="sm">${r} días seguidos</span>` : ''}</div>
-        <h1>${hoyD ? 'Hoy ya has escrito' : 'Tu día de hockey'}</h1>${tira}</section>
+        <h1>${hoyD ? 'Hoy ya has escrito' : libre ? 'Hoy no hay hockey' : 'Tu día de hockey'}</h1>${tira}</section>
       ${hoyBloque}
       ${pledge}
       ${hist.length && !ver ? `<div class="row between"><span class="kicker">Días anteriores</span><span class="sub">${nHist} ${nHist === 1 ? 'día' : 'días'}</span></div><div class="dentries">${hist.map(k => entrada(k, U.dias[k].diario)).join('')}</div>${nHist > 7 && !draft.diaMas ? '<button class="btn ghost" type="button" data-a="diamas">Ver todos</button>' : ''}` : ''}`, { nav: navJ() });
@@ -776,7 +786,7 @@
     if (dia.noent && !sesH.length) fila('despues', 'Después del entreno', 'Hoy no has ido. ¡Que te mejores!', true, '<button class="btn small ghost" type="button" data-a="sient">Sí he ido</button>');
     else if (ent || sesH.length) fila('despues', 'Después del entreno', sesH.length ? `Hecho · esfuerzo ${sesH.map(z => z.rpe).join(' y ')}, ${sesH.reduce((a, z) => a + z.min, 0)} min` : 'Al acabar: lo duro que ha sido y los minutos', !!sesH.length, sesH.length ? '<button class="btn small ghost" type="button" data-a="moreses">Añadir</button>' : `<button class="btn small primary" type="button" data-a="opendesp">Ya he entrenado</button>${ent ? '<button class="btn small ghost" type="button" data-a="noent">No he ido</button>' : ''}`);
     if (entrena(calJ(), ay) && !despHecho(U.dias[ay])) fila('reloj', 'El entreno de ayer', 'No contaste el después. Hasta que lo cuentes, no se puede jugar.', false, `<button class="btn small primary" type="button" data-a="ayerdesp">Contarlo</button><button class="btn small ghost" type="button" data-a="noent" data-f="${ay}">No fui</button>`);
-    fila('diario', 'Tu diario de hockey', dia.diario ? `Hecho · «${esc((dia.diario.mejor || '').slice(0, 60))}»` : 'Qué tal hoy, lo mejor y lo que cambiarías', !!dia.diario, dia.diario ? '<button class="btn small ghost" type="button" data-a="gosemana">Ver</button>' : '<button class="btn small primary" type="button" data-a="gosemana">Escribir</button>');
+    fila('diario', diaHockey(t) ? 'Tu diario de hockey' : '¿Qué tal el día?', dia.diario ? `Hecho${(dia.diario.mejor || dia.diario.linea) ? ` · «${esc((dia.diario.mejor || dia.diario.linea).slice(0, 60))}»` : ''}` : diaHockey(t) ? 'Qué tal hoy, lo mejor y lo que cambiarías' : 'Opcional · una línea sobre tu día', !!dia.diario, dia.diario ? '<button class="btn small ghost" type="button" data-a="gosemana">Ver</button>' : '<button class="btn small primary" type="button" data-a="gosemana">Escribir</button>');
     const hechas = L.filter(x => x.ok).length, T = tocaHoy(), r = 2 * Math.PI * 17;
     const abierto = draft.openDesp || draft.moreSes || draft.sesFecha;
     const prox = allPart(calJ()).filter(x => x.fecha > t)[0];
@@ -1117,20 +1127,27 @@
   actions.showdia = async () => { draft.showDia = true; render(); };
   actions.editsem = async () => { draft.editSem = true; render(); };
   // lo escrito no se pierde al repintar (al elegir el tiempo)
-  const keepDia = () => { if (!draft.dia) return; ['mejor', 'rincon', 'cambiar', 'como'].forEach(k => { const el = document.getElementById('d-' + k); if (el) draft.dia[k] = el.value; }); const c = document.getElementById('d-comp'); if (c && draft.sem) draft.sem.compromiso = c.value; };
+  const keepDia = () => { if (!draft.dia) return; ['mejor', 'rincon', 'cambiar', 'como', 'linea'].forEach(k => { const el = document.getElementById('d-' + k); if (el) draft.dia[k] = el.value; }); const c = document.getElementById('d-comp'); if (c && draft.sem) draft.sem.compromiso = c.value; };
   actions.editdia = async () => { draft.editDia = true; render(); };
   actions.noeditdia = async () => { draft.editDia = false; draft.dia = null; render(); };
   actions.diamas = async () => { draft.diaMas = true; render(); };
   actions.savedia = async () => {
     const t = today(), d = draft.dia, m = $('#msg'), err = x => { m.className = 'msg err'; m.textContent = x; };
     const val = id => ((document.getElementById(id) || {}).value || '').trim();
+    if (document.getElementById('d-linea')) {
+      if (!d.tiempo) return err('Elige qué tal el día.');
+      const doc = { tiempo: d.tiempo, linea: val('d-linea'), libre: true, ts: Date.now() }, p0 = puntos(U.dias, U.semanas);
+      await B.merge(`registros/${me.uid}/dias/${t}`, { diario: doc, ts: Date.now() });
+      U.dias[t] = Object.assign({}, U.dias[t] || {}, { diario: doc }); draft.editDia = false; draft.dia = null; draft.diaHk = false; premio(p0); render(); scrollTo({ top: 0 }); return;
+    }
     d.mejor = val('d-mejor'); d.rincon = val('d-rincon'); d.cambiar = val('d-cambiar'); d.como = val('d-como');
     if (!d.tiempo) return err('Elige qué tal ha ido hoy.');
     if (!d.mejor) return err('Escribe lo mejor de hoy en el hockey.');
-    const doc = { tiempo: d.tiempo, mejor: d.mejor, rincon: d.rincon || '', cambiar: d.cambiar, como: d.como, ts: Date.now() }, p0 = puntos(U.dias, U.semanas);
+    const doc = { tiempo: d.tiempo, mejor: d.mejor, rincon: d.rincon || '', cambiar: d.cambiar, como: d.como, ts: Date.now() }, p0 = puntos(U.dias, U.semanas); draft.diaHk = false;
     await B.merge(`registros/${me.uid}/dias/${t}`, { diario: doc, ts: Date.now() });
     U.dias[t] = Object.assign({}, U.dias[t] || {}, { diario: doc }); draft.editDia = false; draft.dia = null; premio(p0); render(); scrollTo({ top: 0 });
   };
+  actions.diahk = async () => { keepDia(); draft.diaHk = true; render(); };
   actions.noeditsem = async () => { draft.editSem = false; draft.sem = null; render(); };
   actions.gosemana = async () => { view = 'semana'; render(); scrollTo({ top: 0 }); };
   actions.savesem = async () => {
@@ -1644,7 +1661,7 @@
     for (let i = 0; i < n; i++) { const k = addDays(t, -i), d = D[k] || {}, tx = [];
       if ((d.antes || {}).nota) tx.push(['Antes del entreno', d.antes.nota]);
       (d.ses || []).filter(z => z.nota && !z.pid).forEach(z => tx.push([`Después · esfuerzo ${z.rpe}, ${z.min} min`, z.nota]));
-      if (d.diario) { const x = d.diario; [['Diario · ' + (TIEMPO[(x.tiempo || 3) - 1] || [])[1] + ' · lo mejor', x.mejor], ['Mi rincón', x.rincon], ['Cambiaría', x.cambiar], ['Cómo lo hará', x.como]].forEach(z => { if (z[1]) tx.push(z); }); }
+      if (d.diario) { const x = d.diario; [['Su día · ' + (TIEMPO[(x.tiempo || 3) - 1] || [])[1], x.linea], ['Diario · ' + (TIEMPO[(x.tiempo || 3) - 1] || [])[1] + ' · lo mejor', x.mejor], ['Mi rincón', x.rincon], ['Cambiaría', x.cambiar], ['Cómo lo hará', x.como]].forEach(z => { if (z[1]) tx.push(z); }); }
       if (tx.length) out.push({ u, k: 'd:' + k, f: k, tit: '', tx });   // la fecha ya va en el título del grupo
       Object.entries(d.partidos || {}).forEach(([id, pd]) => { if (!pd) return; const tp = [['Antes: se fija en', (pd.pre || {}).objetivo], ['Mejor decisión', pd.mejor], ['Cambiaría', pd.cambiar], ['Se lleva', pd.llevo]].filter(x => x[1]);
         if (tp.length) out.push({ u, k: 'p:' + k + ':' + id, f: k, tit: `Partido · ${pd.cat || ''} contra ${pd.rival || ''}`, tx: tp }); }); }
@@ -1835,7 +1852,7 @@
   function contadoHTML(u, D, t) {
     const L = []; for (let i = 0; i < 21; i++) { const k = addDays(t, -i), d = D[k] || {}, n = [(d.antes || {}).nota, ...(d.ses || []).map(x => x.nota)].filter(Boolean); if (n.length || d.diario) L.push([k, n, d.diario]); }
     const dl = (l, v) => v ? `<p class="dw-m"><span>${l}</span>${esc(v)}</p>` : '';
-    return L.length ? `<section class="card"><h2>Te ha contado</h2>${L.map(([k, n, x]) => `<div class="said"><div class="said-q"><span class="kicker">${x ? `<span class="dw-wx" title="${esc(TIEMPO[(x.tiempo || 3) - 1][1])}">${wx(x.tiempo)}</span>` : ''}${esc(fmtDay(k))}</span>${n.length ? `<p class="nota-p">«${esc(n.join(' · '))}»</p>` : ''}${x ? dl('Lo mejor', x.mejor) + dl('Su rincón', x.rincon) + dl('Cambiaría', x.cambiar) + dl('Cómo lo hará', x.como) : ''}</div>${respBox(u, 'd:' + k)}</div>`).join('')}</section>` : '';
+    return L.length ? `<section class="card"><h2>Te ha contado</h2>${L.map(([k, n, x]) => `<div class="said"><div class="said-q"><span class="kicker">${x ? `<span class="dw-wx" title="${esc(TIEMPO[(x.tiempo || 3) - 1][1])}">${wx(x.tiempo)}</span>` : ''}${esc(fmtDay(k))}</span>${n.length ? `<p class="nota-p">«${esc(n.join(' · '))}»</p>` : ''}${x ? dl('Su día', x.linea) + dl('Lo mejor', x.mejor) + dl('Su rincón', x.rincon) + dl('Cambiaría', x.cambiar) + dl('Cómo lo hará', x.como) : ''}</div>${respBox(u, 'd:' + k)}</div>`).join('')}</section>` : '';
   }
   function detalleView() {
     A.view2 = 'detalle';

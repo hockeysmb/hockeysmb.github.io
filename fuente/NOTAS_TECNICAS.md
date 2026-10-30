@@ -391,3 +391,13 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **«No juego»** se guarda en `registros/{uid}/dias/{fecha}.nojuego = {idPartido: true}` (antes solo en el móvil) y se lee con `noJuega(x)`. La página del partido tiene «No juego este partido» y, después, «No jugué».
 - **«No he ido» / «No fui»** al entreno: `registros/{uid}/dias/{fecha}.noent = true`. Cuenta como contestado el después (`despHecho`). La DT lo ve como «No entrenó» en el día del Calendario. No es un dato de salud: no dice por qué.
 - No hacen falta reglas nuevas: `registros` lo escribe cada jugadora.
+
+## Diario: hockey o una línea (30 oct, tarde)
+
+- **`diaHockey(k)`** dice si es un día de hockey: hay entreno y no ha marcado «No he ido», ha contado una sesión, o ha contestado un partido. Si lo es, sale el diario de hockey de siempre.
+- **Los demás días** sale «¿Qué tal el día?»: el tiempo más una línea opcional (cole, descanso, cómo está; hasta 200 caracteres).
+  - Se guarda en `diario = {tiempo, linea, libre: true, ts}`. Da los mismos puntos.
+  - Si ese día ha hecho hockey por su cuenta, «He hecho hockey hoy» cambia al de hockey (`draft.diaHk`).
+- **La DT** lo ve como «Su día» en el buzón y en la ficha.
+- **Por qué no es un diario de la vida diaria:** el consentimiento es para un diario de hockey, son menores, y la protección de la infancia pide que la comunicación entre entrenador y jugadora sea profesional. Decidido con la DT el 30 oct.
+- **Prueba nueva:** `fem_diario` (viernes sin entreno y jueves con entreno; la DT lo ve en el buzón).
