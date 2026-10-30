@@ -910,6 +910,25 @@ button.tm-d { border: 0; background: none; padding: 0; cursor: pointer; pointer-
 .mis-mon > div { flex: 1; min-width: 110px; }
 .mis-mon b { display: block; font: 600 28px/1.1 var(--font-display); }
 .mis-mon .seg { flex-basis: 100%; }
+
+/* ===== 30 oct: Calendario, Jugadoras con buzón y monedas en el Reto ===== */
+.wk-bar { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: 8px; background: var(--surface); border-radius: 18px; padding: 6px; box-shadow: var(--shadow); }
+.wk-bar button { width: 48px; height: 48px; border-radius: 14px; border: 0; background: var(--fill); color: var(--accent); font: 700 24px/1 var(--font); cursor: pointer; }
+.wk-bar div { text-align: center; display: grid; }
+.wk-bar b { font: 600 18px/1.2 var(--font-display); }
+.wk-bar small { color: var(--muted); font-size: 12.5px; }
+button.tkt.cent { cursor: pointer; text-align: left; }
+.leg-cal { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.leg-cal i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--cat-ink); margin-right: 5px; vertical-align: -1px; }
+.dots i.cent { background: var(--accent); }
+.hoy2 div.hb { cursor: default; }
+.seg.jb { flex-wrap: nowrap; }
+.mis-mon > .mm-f { display: flex; gap: 8px; align-items: center; flex: 1 1 100%; }
+.mm-in { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; background: var(--fill); border-radius: 14px; padding: 4px 4px 4px 12px; font-weight: 600; font-size: 14px; color: var(--muted); }
+.mm-in input { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font: 700 18px var(--font); padding: 0 10px; font-variant-numeric: tabular-nums; }
+.mm-in.big { margin-bottom: 10px; padding: 6px 14px 6px 6px; }
+.mm-in.big input { height: 52px; font-size: 26px; }
+.mm-pr { flex-basis: 100%; }
 </style>
 </head>
 <body>
@@ -917,11 +936,11 @@ button.tm-d { border: 0; background: none; padding: 0; cursor: pointer; pointer-
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261029a"></script>
-<script src="firebase-config.js?v=20261029a"></script>
-<script src="mascotas.js?v=20261029a"></script>
-<script src="juegos.js?v=20261029a"></script>
-<script src="app.js?v=20261029a"></script>
+<script src="lib/avatar.js?v=20261030a"></script>
+<script src="firebase-config.js?v=20261030a"></script>
+<script src="mascotas.js?v=20261030a"></script>
+<script src="juegos.js?v=20261030a"></script>
+<script src="app.js?v=20261030a"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

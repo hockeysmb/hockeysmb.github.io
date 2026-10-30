@@ -350,3 +350,32 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   
   Encima, el total de la semana; debajo, quién no ha contestado ningún entreno, con enlace a su ficha. Las flechas cambian de semana (`A.esem`, 0 = esta, negativo = anteriores). Los festivos salen aparte.
 - **La DT se puede dar monedas** desde Mi perfil («Darme monedas»: +100, +500, +1.000, +5.000). Se guardan en `juego/{uid}.extra` y solo cuentan para ella (`monedas()`). No necesita reglas nuevas: `juego/{uid}` lo escribe su dueña.
+
+## La DT, en cuatro pestañas (30 oct)
+
+- **Menú de la DT** (`navA`): Equipo, Jugadoras (con el número del buzón), Calendario y Reto.
+- **Equipo** (`resumenView`) es solo del equipo, en una página:
+  - el último entreno, antes y después (tocarlo abre ese día del Calendario);
+  - carga, diarios y compromisos;
+  - las cinco, cómo llegan en 4 semanas y la carga media por jugadora y semana (`teamLoad` con `loadChart`);
+  - el cuadrante y el diario de la semana.
+  
+  Ya no tiene pestañas Hoy/Semana ni «A quién mirar».
+- **Lo de un entreno** está en `datosEntreno(ref)` (antes, las cinco y el después de ese día). Lo usan Equipo y el día del Calendario.
+- **Jugadoras y Buzón** comparten pestaña. Arriba hay un selector Jugadoras / Buzón (`jbTabs`). «A quién mirar» (`miraHTML`) está arriba de Jugadoras.
+- **Calendario** (`view = 'cal'`, `calView`; `'partidos'` sigue llevando aquí):
+  - **Semana** (por defecto): cada entreno (`entTk`) y cada partido (`partTk`) en tarjetas, con quién ha contestado, el total de la semana, quién no ha contestado ningún entreno y los festivos. Las flechas cambian de semana (`A.esem`, también futuras) y hay un «Volver a esta semana».
+  - **Mes** (`A.calt = 'mes'`): la cuadrícula del mes con entrenos (granate) y partidos (color de su categoría). Al tocar un día se ve lo de ese día.
+  - Debajo, «Añadir un partido».
+- **El día de un entreno** (`view = 'dia'`, `A.dia`, `diaView`):
+  - antes y después del equipo;
+  - quién ha contestado, con la cara de cada una (tocar abre su ficha);
+  - las cinco;
+  - lo que contaron antes;
+  - el después con el esfuerzo de cada una y sus notas.
+  
+  Un partido abre su detalle de siempre, que ahora vuelve al Calendario.
+- **Monedas en el Reto** (DT):
+  - Tarjeta «Tus monedas» con un campo para darse las que quiera (`#darme-m`, hasta un millón de golpe).
+  - «Mandar monedas a las jugadoras»: la cantidad se escribe en `#pr-m`, hasta 100.000, con atajos de 25 a 1.000.
+  - Mi perfil se queda con altas, días de entreno, mascota y personaje, datos de la temporada y salir.
