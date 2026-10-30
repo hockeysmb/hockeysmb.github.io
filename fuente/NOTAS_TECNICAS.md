@@ -379,3 +379,15 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
   - Tarjeta «Tus monedas» con un campo para darse las que quiera (`#darme-m`, hasta un millón de golpe).
   - «Mandar monedas a las jugadoras»: la cantidad se escribe en `#pr-m`, hasta 100.000, con atajos de 25 a 1.000.
   - Mi perfil se queda con altas, días de entreno, mascota y personaje, datos de la temporada y salir.
+
+## Cuándo se puede jugar (30 oct, mediodía)
+
+- **`tocaHoy()`** decide lo que falta para jugar:
+  - **Días de entreno:** el antes, y desde la hora del después (`avPrefs().despues`, 21:00 por defecto) el después.
+  - **Entreno de ayer** sin después: bloquea hasta contarlo.
+  - **Partidos de hoy:** cada una contesta el antes o pulsa «No juego». Al acabar (hora + 75 min), quien no haya dicho «No juego» cuenta el después.
+  - **Partido de ayer** con el antes hecho y sin el después: bloquea.
+  - **El diario ya no bloquea.** Los días sin entreno ni partido se juega libre.
+- **«No juego»** se guarda en `registros/{uid}/dias/{fecha}.nojuego = {idPartido: true}` (antes solo en el móvil) y se lee con `noJuega(x)`. La página del partido tiene «No juego este partido» y, después, «No jugué».
+- **«No he ido» / «No fui»** al entreno: `registros/{uid}/dias/{fecha}.noent = true`. Cuenta como contestado el después (`despHecho`). La DT lo ve como «No entrenó» en el día del Calendario. No es un dato de salud: no dice por qué.
+- No hacen falta reglas nuevas: `registros` lo escribe cada jugadora.

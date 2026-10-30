@@ -22,6 +22,8 @@ async def main():
         await ctx.route('**/femenino/firebase-config.js*', lambda r: r.fulfill(body=CFG, content_type='text/javascript'))
         db0 = seed_reto(); f = '2026-10-%02d' % dia
         k = 'registros/demo03/dias/' + f
+        ka = 'registros/demo03/dias/2026-10-%02d' % (dia - 1); db0.setdefault(ka, {'ts': 1})['ses'] = [{'tipo': 'entreno', 'rpe': 6, 'min': 90, 'nota': '', 'ts': 1}]   # el después de ayer, contado
+        for pd in (db0[ka].get('partidos') or {}).values(): pd.setdefault('juega', 'no')   # y el después de los partidos de ayer
         db0.setdefault(k, {'ts': 1}).update({'diario': {'tiempo': 4, 'mejor': 'Presioné bien', 'cambiar': '', 'como': '', 'ts': 1}, 'antes': {'sueno': 8, 'fatiga': 7, 'dolor': 8, 'estres': 7, 'animo': 8, 'esc': 10, 'ts': 1}})
         users = {'demo03@ejemplo.com': {'uid': 'demo03', 'pass': 'hockey1'}}
         await ctx.add_init_script("if (!localStorage.getItem('__seeded')) { localStorage.setItem('__fakefem', " + json.dumps(json.dumps(db0)) + "); localStorage.setItem('__fakefemusers', " + json.dumps(json.dumps(users)) + "); localStorage.setItem('smbf-bienvenida-demo03', '1'); localStorage.setItem('smbf-sonido', 'no'); localStorage.setItem('__seeded', '1'); }")
@@ -30,6 +32,7 @@ async def main():
         await pg.clock.set_system_time(datetime.datetime(2026, 10, dia, 18, 0, 0))
         await pg.goto('http://localhost:8772/femenino/'); await pg.wait_for_timeout(700)
         await pg.fill('#l-email', 'demo03@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(1000)
+        for nb in await pg.locator('[data-a="nojuego"]').all(): await nb.click(); await pg.wait_for_timeout(300)   # los partidos de ese día: no juega
         await pg.click('.nav [data-v="reto"]'); await pg.wait_for_timeout(400)
         h1 = (await pg.text_content('.rt-hero h1')).strip(); dis = await pg.locator('.rt-play[disabled]').count()
         print(f, 'juego del día:', h1, '· jugar bloqueado:', bool(dis), (await pg.text_content('.rt-gate') or '').strip()[:80] if dis else '')

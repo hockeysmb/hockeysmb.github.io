@@ -456,7 +456,9 @@
     if (draft.sesFecha !== ay) return `<section class="card desp-mini"><div><h2>¿Y el entreno de ayer?</h2><p class="sub">No contaste el después. Todavía estás a tiempo.</p></div><button class="btn" type="button" data-a="ayerdesp">Contarlo</button></section>`;
     return despuesHTML(ay);
   }
-  actions.ayerdesp = async () => { draft.sesFecha = addDays(today(), -1); draft.openDesp = false; draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; render(); };
+  actions.noent = async b => { const f = b.dataset.f || today(), D = U.dias[f] || {}; U.dias[f] = Object.assign({}, D, { noent: true }); if (f !== today()) draft.sesFecha = null; render(); await B.merge(`registros/${me.uid}/dias/${f}`, { noent: true, ts: Date.now() }); toast('Apuntado: no fuiste al entreno.'); };
+  actions.sient = async () => { const f = today(), D = U.dias[f] || {}; U.dias[f] = Object.assign({}, D, { noent: false }); render(); await B.merge(`registros/${me.uid}/dias/${f}`, { noent: false, ts: Date.now() }); };
+  actions.ayerdesp = async () => { view = 'hoy'; draft.sesFecha = addDays(today(), -1); draft.openDesp = false; draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; render(); };
   function racha() { let n = 0, k = mondayOf(today()); if (!U.semanas[k]) k = addDays(k, -7); while (U.semanas[k]) { n++; k = addDays(k, -7); } return n; }
   // lo que escribió ella con esa clave (para enseñarlo junto a la respuesta de Carlos)
   function miTexto(k) {
@@ -669,7 +671,7 @@
       <button class="btn primary big" type="button" data-a="prepart" data-id="${id}">${seguir ? 'Seguir' : 'Antes del partido'}</button>
       <div class="row">${postListo(x) ? `<button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Ya ha terminado: contarlo</button>` : ''}<button class="btn ghost small" type="button" data-a="nojuego" data-id="${id}">No juego</button></div></section>`;
   }
-  const partVis = x => !ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || pdOf(x);
+  const partVis = x => !noJuega(x) || !!(pdOf(x) || {}).pre || !!(pdOf(x) || {}).juega;
   // hoy: los partidos de hoy; ayer: solo los que tienen el antes hecho y falta el después (se cuenta al día siguiente)
   function partidosHoyHTML() {
     const t = today(), ayer = partDe(calJ(), addDays(t, -1)).filter(x => { const pd = pdOf(x); return pd && pd.pre && !pd.juega; });
@@ -680,7 +682,8 @@
     return n.length ? `<section class="strip"><div class="strip-h"><h2>Próximos partidos</h2>${n.length > 1 ? '<span class="sub">Desliza</span>' : ''}</div><div class="tkts">${n.map(x => ticketHTML(x, '', `data-pp="${x.id}"`)).join('')}</div></section>` : '';
   }
 
-  actions.nojuego = async b => { ls.set(`smbf-nojuego-${me.uid}-${b.dataset.id}`, '1'); toast('Vale. Si al final juegas, apúntalo en «Después del entreno» como partido.'); render(); };
+  actions.nojuego = async b => { const x = partById(b.dataset.id); ls.set(`smbf-nojuego-${me.uid}-${b.dataset.id}`, '1');
+    if (x) { const D = U.dias[x.fecha] || {}, nojuego = Object.assign({}, D.nojuego || {}, { [x.id]: true }); U.dias[x.fecha] = Object.assign({}, D, { nojuego }); await B.merge(`registros/${me.uid}/dias/${x.fecha}`, { nojuego, ts: Date.now() }).catch(() => {}); } toast('Vale. Si al final juegas, apúntalo en «Después del entreno» como partido.'); render(); };
   // ================= partidos de la jugadora (25 oct): calendario y la página de cada partido =================
   // desde el calendario puede ir a cualquier partido y contar el antes (el mismo día) o el después (ese día o más tarde)
   const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -738,12 +741,12 @@
     const preSum = p ? `<div class="pre-sum"><span>Ganas<b>${p.ganas}</b></span><span>Nervios<b>${p.nervios}</b></span><span>Confianza<b>${p.confianza}</b></span></div>
       <div class="rchips">${p.espera ? `<span class="rchip info">${esc(lbl(ESPERA, p.espera))}</span>` : ''}${p.importa ? `<span class="rchip info">Me importa: ${esc(lbl(IMPORTA, p.importa).toLowerCase())}</span>` : ''}</div>${p.objetivo ? `<p class="nota-p">Me fijo en: «${esc(p.objetivo)}»</p>` : ''}` : '';
     const pre = x.fecha > t ? `<section class="card"><h2>Antes del partido</h2><p class="sub">Lo podrás contestar el día del partido.</p></section>`
-      : x.fecha === t ? `<section class="card"><div class="card-h"><h2>Antes del partido</h2>${p ? stHTML('ok').replace('Bien', 'Hecho') : '<span class="sub">40 segundos</span>'}</div>${p ? preSum + `<button class="btn small" type="button" data-a="prepart" data-id="${id}">Cambiar</button>` : `<button class="btn primary big" type="button" data-a="prepart" data-id="${id}">Empezar</button>`}</section>`
+      : x.fecha === t ? `<section class="card"><div class="card-h"><h2>Antes del partido</h2>${p ? stHTML('ok').replace('Bien', 'Hecho') : '<span class="sub">40 segundos</span>'}</div>${p ? preSum + `<button class="btn small" type="button" data-a="prepart" data-id="${id}">Cambiar</button>` : `<button class="btn primary big" type="button" data-a="prepart" data-id="${id}">Empezar</button>${noJuega(x) ? '<p class="sub center">Has dicho que no juegas. Si al final juegas, empieza el antes.</p>' : `<button class="btn ghost" type="button" data-a="nojuego" data-id="${id}">No juego este partido</button>`}`}</section>`
       : p ? `<section class="card"><h2>Antes del partido</h2>${preSum}</section>` : '';
     const post = x.fecha > t ? '' : pd.juega ? `<section class="strip"><div class="strip-h"><h2>Cómo lo viviste</h2><button class="btn ghost small" type="button" data-a="postpart" data-id="${id}">Cambiar</button></div><div class="cromos one">${cromoHTML(x.fecha, id, pd, x, 'yo')}</div>
         ${pd.mejor || pd.cambiar ? `<section class="card">${pd.mejor ? `<p class="dw-m"><span>La decisión que mejor me salió</span>${esc(pd.mejor)}</p>` : ''}${pd.cambiar ? `<p class="dw-m"><span>Una que cambiaría</span>${esc(pd.cambiar)}</p>` : ''}</section>` : ''}</section>`
       : !postListo(x) ? `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div>${postCerradoHTML(x)}</section>`
-      : `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div><p>${x.fecha === t ? 'Ya ha acabado: cuéntanos cómo lo has vivido.' : '¿Qué tal fue? Cuéntanos cómo lo viviste.'}</p><button class="btn primary big" type="button" data-a="postpart" data-id="${id}">Contar el partido</button></section>`;
+      : `<section class="card part-card"><div class="card-h"><h2>Después del partido</h2><span class="sub">Un minuto</span></div><p>${x.fecha === t ? 'Ya ha acabado: cuéntanos cómo lo has vivido.' : '¿Qué tal fue? Cuéntanos cómo lo viviste.'}</p><button class="btn primary big" type="button" data-a="postpart" data-id="${id}">Contar el partido</button>${!p && !noJuega(x) ? `<button class="btn ghost" type="button" data-a="nojuego" data-id="${id}">No jugué</button>` : ''}</section>`;
     shell(`<button class="btn ghost small back" type="button" data-v2="partidos">← Partidos</button>
       <div class="tkts col big">${ticketHTML(x, r ? `<span class="res ${r.k}">${r.l} ${r.a}–${r.b}</span>` : '')}</div>
       ${rsp && rsp.t ? `<section class="card msg-card"><span class="kicker">Carlos te ha contestado</span><p>${esc(rsp.t)}</p></section>` : rsp ? `<p>${vistoTag('p:' + pdAt(U.dias, x).k + ':' + x.id)}</p>` : ''}
@@ -770,8 +773,9 @@
       else if (pd.pre) fila('partido', tit, postListo(x) ? 'Antes hecho · cuéntanos cómo lo has vivido' : `Antes hecho · el después se abre a las ${postHora(x)}`, false, postListo(x) ? `<button class="btn small primary" type="button" data-a="postpart" data-id="${x.id}">Contar</button>` : `<button class="btn small ghost" type="button" data-pp="${x.id}">Ver</button>`, ' part-card');
       else fila('partido', tit, `${x.casa ? 'En casa' : 'Fuera'}${x.hora ? ' · ' + esc(x.hora) : ''} · si juegas, el antes antes de calentar`, false, `<button class="btn small primary" type="button" data-a="prepart" data-id="${x.id}">Antes</button><button class="btn small ghost" type="button" data-a="nojuego" data-id="${x.id}">No juego</button>`, ' part-card'); });
     const sesH = (dia.ses || []).filter(z => !z.pid);
-    if (ent || sesH.length) fila('despues', 'Después del entreno', sesH.length ? `Hecho · esfuerzo ${sesH.map(z => z.rpe).join(' y ')}, ${sesH.reduce((a, z) => a + z.min, 0)} min` : 'Al acabar: lo duro que ha sido y los minutos', !!sesH.length, sesH.length ? '<button class="btn small ghost" type="button" data-a="moreses">Añadir</button>' : '<button class="btn small primary" type="button" data-a="opendesp">Ya he entrenado</button>');
-    if (entrena(calJ(), ay) && !((U.dias[ay] || {}).ses || []).some(z => !z.pid)) fila('reloj', 'El entreno de ayer', 'No contaste el después. Todavía estás a tiempo.', false, '<button class="btn small" type="button" data-a="ayerdesp">Contarlo</button>');
+    if (dia.noent && !sesH.length) fila('despues', 'Después del entreno', 'Hoy no has ido. ¡Que te mejores!', true, '<button class="btn small ghost" type="button" data-a="sient">Sí he ido</button>');
+    else if (ent || sesH.length) fila('despues', 'Después del entreno', sesH.length ? `Hecho · esfuerzo ${sesH.map(z => z.rpe).join(' y ')}, ${sesH.reduce((a, z) => a + z.min, 0)} min` : 'Al acabar: lo duro que ha sido y los minutos', !!sesH.length, sesH.length ? '<button class="btn small ghost" type="button" data-a="moreses">Añadir</button>' : `<button class="btn small primary" type="button" data-a="opendesp">Ya he entrenado</button>${ent ? '<button class="btn small ghost" type="button" data-a="noent">No he ido</button>' : ''}`);
+    if (entrena(calJ(), ay) && !despHecho(U.dias[ay])) fila('reloj', 'El entreno de ayer', 'No contaste el después. Hasta que lo cuentes, no se puede jugar.', false, `<button class="btn small primary" type="button" data-a="ayerdesp">Contarlo</button><button class="btn small ghost" type="button" data-a="noent" data-f="${ay}">No fui</button>`);
     fila('diario', 'Tu diario de hockey', dia.diario ? `Hecho · «${esc((dia.diario.mejor || '').slice(0, 60))}»` : 'Qué tal hoy, lo mejor y lo que cambiarías', !!dia.diario, dia.diario ? '<button class="btn small ghost" type="button" data-a="gosemana">Ver</button>' : '<button class="btn small primary" type="button" data-a="gosemana">Escribir</button>');
     const hechas = L.filter(x => x.ok).length, T = tocaHoy(), r = 2 * Math.PI * 17;
     const abierto = draft.openDesp || draft.moreSes || draft.sesFecha;
@@ -1250,18 +1254,29 @@
   const recDe = (d, m) => ((d || {}).recs || {})[m] != null ? d.recs[m] : m === 'patina' ? (d || {}).rec || 0 : 0;
   // lo que toca contestar hoy antes de poder jugar: el antes del entreno (el antes del partido también lo cuenta), el después a partir de la hora del aviso y el diario del día.
   // Los partidos no bloquean (27 oct): salen todos los de la sección y la app no sabe quién juega cada uno.
+  // qué hay que contestar para poder jugar (30 oct):
+  // - días con entreno: el antes y, desde la hora del después, el después; si se olvida el después, al día siguiente hasta que lo cuente
+  //   («No he ido» también vale);
+  // - partidos: cada una dice si juega (el antes) o «No juego»; quien juega, el después al acabar o al día siguiente;
+  // - los días sin entreno ni partido, libre. El diario se pide en Hoy pero no bloquea.
+  const despHecho = d => !!d && (!!d.noent || (d.ses || []).some(z => !z.pid));
+  const noJuega = x => !!ls.get(`smbf-nojuego-${me.uid}-${x.id}`) || !!((U.dias[x.fecha] || {}).nojuego || {})[x.id];
   function tocaHoy() {
     if (isAdmin() || !U.perfil) return [];
-    const t = today(), dia = diaHoy(), vis = partDe(calJ(), t).filter(partVis), ent = entrena(calJ(), t), L = [], n = new Date();
+    const t = today(), ay = addDays(t, -1), dia = diaHoy(), cal = calJ(), ent = entrena(cal, t), L = [], n = new Date();
     const hm = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
     if (ent && !dia.antes) L.push({ t: 'Antes del entreno', at: 'data-a="startantes"' });
-    if (ent && hm >= (avPrefs().despues || '21:00') && !(dia.ses || []).some(z => !z.pid)) L.push({ t: 'Después del entreno', at: 'data-a="irdespues"' });
-    if (!dia.diario) L.push({ t: 'Tu diario de hoy', at: 'data-a="gosemana"' });
+    if (ent && hm >= (avPrefs().despues || '21:00') && !despHecho(dia)) L.push({ t: 'Después del entreno', at: 'data-a="irdespues"' });
+    if (entrena(cal, ay) && !despHecho(U.dias[ay])) L.push({ t: 'Después del entreno de ayer', at: 'data-a="ayerdesp"' });
+    partDe(cal, t).forEach(x => { const pd = pdOf(x) || {}; if (pd.juega || noJuega(x)) return;
+      if (!pd.pre && !postListo(x)) L.push({ t: `Partido ${x.cat}: el antes o «No juego»`, at: `data-pp="${x.id}"` });
+      else if (postListo(x)) L.push({ t: `Partido ${x.cat}: el después`, at: `data-pp="${x.id}"` }); });
+    partDe(cal, ay).forEach(x => { const pd = pdOf(x) || {}; if (pd.pre && !pd.juega && !noJuega(x)) L.push({ t: `Partido de ayer (${x.cat}): el después`, at: `data-pp="${x.id}"` }); });
     return L;
   }
   actions.irdespues = async () => { view = 'hoy'; draft.openDesp = true; render(); const el = document.getElementById('c-desp'); if (el) el.scrollIntoView({ block: 'start' }); };
   const puedeJugar = (contestaDuelo) => {
-    const T = tocaHoy(); if (T.length) { toast('Antes de jugar, contesta lo de hoy: ' + T.map(x => x.t.toLowerCase()).join(' y ') + '.'); return false; }
+    const T = tocaHoy(); if (T.length) { toast('Para jugar te falta: ' + T.map(x => x.t.charAt(0).toLowerCase() + x.t.slice(1)).join(', ') + '.'); return false; }
     return true;
   };
   const premioDia = racha => 5 + 5 * Math.min(6, racha);
@@ -1484,7 +1499,7 @@
         <div class="rt-b"><span class="kicker">El reto · juego de hoy</span><h1>${esc(juegoDe(t)[1])}</h1><span class="rt-desc">${esc(juegoDe(t)[2])}</span>${(campeona() || {}).u === yo_ ? `<span class="rt-camp">${CORONA}${isAdmin() ? 'Campeón' : 'Campeona'} de la semana pasada</span>` : ''}
           <div class="rt-st"><span><b>${fmtInt(monedas())}</b>monedas</span><span><b>${fmtInt(recDe(y, juegoDe(t)[0]))}</b>récord</span><span><b>${rachaJ(y)}</b>${rachaJ(y) === 1 ? 'día' : 'días'} seguidos</span></div></div>
         ${(() => { const T = tocaHoy();
-          if (T.length) return `<div class="rt-gate"><b>Antes de jugar, contesta lo de hoy</b><div class="row">${T.map(x => `<button class="btn small primary" type="button" ${x.at}>${esc(x.t)}</button>`).join('')}</div></div><button class="btn big rt-play" type="button" disabled aria-disabled="true">Jugar</button>`;
+          if (T.length) return `<div class="rt-gate"><b>Para jugar, contesta primero</b><div class="row">${T.map(x => `<button class="btn small primary" type="button" ${x.at}>${esc(x.t)}</button>`).join('')}</div></div><button class="btn big rt-play" type="button" disabled aria-disabled="true">Jugar</button>`;
           return `<button class="btn big rt-play" type="button" data-a="jugar">Jugar</button>`; })()}
         <span class="rt-next">Mañana: ${esc(juegoDe(addDays(t, 1))[1])}</span></section>
       ${J.sinReglas ? `<section class="card aviso-reglas"><h2>${isAdmin() ? 'Faltan las reglas del reto' : 'El reto todavía no está listo'}</h2><p>${isAdmin() ? 'Firebase no deja guardar nada del juego (partidas, duelos, tienda ni tu personaje) porque las reglas nuevas no están publicadas. Ve a la consola de Firebase, Firestore → Reglas, pega el archivo <b>firestore.rules</b> y pulsa «Publicar».' : 'Puedes jugar, pero todavía no se guardan las partidas. Carlos lo activa en breve.'}</p></section>` : ''}
@@ -1865,7 +1880,7 @@
   const whoCount = x => { const us = activas(), a = us.filter(u => respEst(u, x)).length, d = us.filter(u => respEst(u, x) === 'post').length; return `<span class="whoc"><b>${a}</b>/${us.length} antes · <b>${d}</b> después</span>`; };
   const WHO_LEG = '<span class="who-leg"><span><i class="post"></i>antes y después</span><span><i class="pre"></i>solo antes</span><span><i></i>nada</span></span>';
   // ================= Calendario de la DT (30 oct): entrenos y partidos juntos =================
-  const entEst = (u, d) => { const x = diasDe(u)[d] || {}, an = !!x.antes, de = (x.ses || []).some(z => !z.pid); return an && de ? 'post' : an || de ? 'pre' : ''; };
+  const entEst = (u, d) => { const x = diasDe(u)[d] || {}, an = !!x.antes, de = !!x.noent || (x.ses || []).some(z => !z.pid); return an && de ? 'post' : an || de ? 'pre' : ''; };
   const entTk = d => { const t = today(), us = activas(), dd = dateOf(d), fut = d > t, a = us.filter(u => (diasDe(u)[d] || {}).antes).length, de = us.filter(u => entEst(u, d) === 'post').length;
     return `<button type="button" class="tkt cent${fut ? ' fut' : ''}" data-dia="${d}"><span class="tkt-d"><small>${DIAS3[dd.getDay()]}</small><b>${dd.getDate()}</b><small>${MESES[dd.getMonth()]}</small></span>
       <span class="tkt-b"><span class="cat">Entreno${d === t ? ' · hoy' : ''}</span>${fut ? '<span class="meta">Todavía no ha llegado</span>' : `<span class="whoc"><b>${a}</b>/${us.length} antes · <b>${de}</b> después</span>
@@ -1924,7 +1939,7 @@
         <div class="hb"><span class="hb-h">${fx('despues')}<b>Después</b><small>${E.conD.length} de ${us.length}</small></span><b class="hb-v${E.dR != null && E.dR >= 1 ? ' warn' : ''}">${fmt1(E.rM)}</b><small>esfuerzo${E.sM != null ? ' · suelen ' + fmt1(E.sM) : ''}</small></div>
       </div>
       <section class="card"><div class="card-h"><h2>Quién ha contestado</h2></div>${CAL_LEG}
-        <div class="pfs who-g">${us.map(u => { const e = entEst(u, d); return `<button type="button" class="pf ${e === 'post' ? 'ok' : e === 'pre' ? 'warn' : 'none'}" data-jug="${u}"><span class="pf-av">${avDe(u)}</span><b>${esc(nom1(u))}</b><small>${e === 'post' ? 'Las dos' : e === 'pre' ? ((diasDe(u)[d] || {}).antes ? 'Solo antes' : 'Solo después') : 'Nada'}</small></button>`; }).join('')}</div></section>
+        <div class="pfs who-g">${us.map(u => { const e = entEst(u, d); return `<button type="button" class="pf ${e === 'post' ? 'ok' : e === 'pre' ? 'warn' : 'none'}" data-jug="${u}"><span class="pf-av">${avDe(u)}</span><b>${esc(nom1(u))}</b><small>${(diasDe(u)[d] || {}).noent ? 'No entrenó' : e === 'post' ? 'Las dos' : e === 'pre' ? ((diasDe(u)[d] || {}).antes ? 'Solo antes' : 'Solo después') : 'Nada'}</small></button>`; }).join('')}</div></section>
       ${E.cincoH}
       ${notasA.length ? `<section class="card"><h2>Lo que contaron antes</h2><div class="bubs">${notasA.map(([u, n]) => bubHTML(u, n, 'antes')).join('')}</div></section>` : ''}
       ${E.despH}
