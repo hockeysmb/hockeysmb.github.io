@@ -4,17 +4,17 @@
 (function () {
   const RAREZA = { comun: ['Común', '#8a939c'], rara: ['Rara', '#2c7be5'], epica: ['Épica', '#8a3ffc'], legendaria: ['Legendaria', '#d99a00'] };
   const LISTA = [
-    ['perro', 'Perrito', 'comun', 60], ['gato', 'Gatito', 'comun', 60], ['conejo', 'Conejito', 'comun', 70], ['pato', 'Patito', 'comun', 70],
-    ['rana', 'Ranita', 'comun', 80], ['hamster', 'Hámster', 'comun', 80], ['cerdito', 'Cerdito', 'comun', 90],
-    ['zorro', 'Zorrito', 'rara', 160], ['panda', 'Panda', 'rara', 180], ['pinguino', 'Pingüino', 'rara', 180], ['koala', 'Koala', 'rara', 200],
-    ['buho', 'Búho', 'rara', 200], ['tortuga', 'Tortuga', 'rara', 220],
-    ['axolote', 'Ajolote', 'epica', 420], ['tigre', 'Tigre', 'epica', 450], ['mapache', 'Mapache', 'epica', 480], ['osopolar', 'Oso polar', 'epica', 500], ['llama', 'Llama', 'epica', 520],
-    ['unicornio', 'Unicornio', 'legendaria', 1000], ['dragon', 'Dragón', 'legendaria', 1200], ['fenix', 'Fénix', 'legendaria', 1300], ['galactico', 'Gato galáctico', 'legendaria', 1500],
+    ['perro', 'Perrito', 'comun', 600], ['gato', 'Gatito', 'comun', 600], ['conejo', 'Conejito', 'comun', 700], ['pato', 'Patito', 'comun', 700],
+    ['rana', 'Ranita', 'comun', 800], ['hamster', 'Hámster', 'comun', 800], ['cerdito', 'Cerdito', 'comun', 900],
+    ['zorro', 'Zorrito', 'rara', 1600], ['panda', 'Panda', 'rara', 1800], ['pinguino', 'Pingüino', 'rara', 1800], ['koala', 'Koala', 'rara', 2000],
+    ['buho', 'Búho', 'rara', 2000], ['tortuga', 'Tortuga', 'rara', 2200],
+    ['axolote', 'Ajolote', 'epica', 4200], ['tigre', 'Tigre', 'epica', 4500], ['mapache', 'Mapache', 'epica', 4800], ['osopolar', 'Oso polar', 'epica', 5000], ['llama', 'Llama', 'epica', 5200],
+    ['unicornio', 'Unicornio', 'legendaria', 10000], ['dragon', 'Dragón', 'legendaria', 12000], ['fenix', 'Fénix', 'legendaria', 13000], ['galactico', 'Gato galáctico', 'legendaria', 15000],
     // 27 oct: más animales (la mosca la pidieron ellas)
-    ['mosca', 'Mosca', 'comun', 60], ['abeja', 'Abejita', 'comun', 70], ['mariquita', 'Mariquita', 'comun', 70], ['oveja', 'Ovejita', 'comun', 80],
-    ['caracol', 'Caracol', 'rara', 180], ['erizo', 'Erizo', 'rara', 190], ['pulpo', 'Pulpo', 'rara', 210],
-    ['ballena', 'Ballena', 'epica', 460], ['leon', 'León', 'epica', 480], ['perezoso', 'Perezoso', 'epica', 500],
-    ['medusa', 'Medusa de neón', 'legendaria', 1400],
+    ['mosca', 'Mosca', 'comun', 600], ['abeja', 'Abejita', 'comun', 700], ['mariquita', 'Mariquita', 'comun', 700], ['oveja', 'Ovejita', 'comun', 800],
+    ['caracol', 'Caracol', 'rara', 1800], ['erizo', 'Erizo', 'rara', 1900], ['pulpo', 'Pulpo', 'rara', 2100],
+    ['ballena', 'Ballena', 'epica', 4600], ['leon', 'León', 'epica', 4800], ['perezoso', 'Perezoso', 'epica', 5000],
+    ['medusa', 'Medusa de neón', 'legendaria', 14000],
     // Halloween (quinto campo 'hw'): solo salen del cofre de Halloween, que está unos días
     ['calabaza', 'Calabacita', 'comun', 0, 'hw'], ['murcielago', 'Murciélago', 'comun', 0, 'hw'], ['arana', 'Arañita', 'comun', 0, 'hw'],
     ['fantasma', 'Fantasmita', 'rara', 0, 'hw'], ['gatobrujo', 'Gato brujo', 'rara', 0, 'hw'],

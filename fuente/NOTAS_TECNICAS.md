@@ -401,3 +401,14 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **La DT** lo ve como «Su día» en el buzón y en la ficha.
 - **Por qué no es un diario de la vida diaria:** el consentimiento es para un diario de hockey, son menores, y la protección de la infancia pide que la comunicación entre entrenador y jugadora sea profesional. Decidido con la DT el 30 oct.
 - **Prueba nueva:** `fem_diario` (viernes sin entreno y jueves con entreno; la DT lo ve en el buzón).
+
+## Precios ×10 (30 oct, tarde)
+
+- Por petición de la DT («las he mimado demasiado»), todo lo de la tienda cuesta diez veces más:
+  - mascotas (`LISTA` en `mascotas.js`): las legendarias, 10.000–15.000;
+  - cofres (`COFRES`): madera 2.500, plata 6.000, oro 14.000 y Halloween 5.000;
+  - ropa, estelas, celebraciones, fondos y marcos (`TIENDA`);
+  - temas y muebles de la habitación (`TEMAS`, `MUEBLES`).
+- Las monedas por repetida (`REPE`) también suben ×10 para que el cofre siga compensando igual.
+- **La comida no cambia:** la básica sigue gratis y los caprichos cuestan lo mismo, para que cuidar a la mascota no se haga cuesta arriba.
+- Lo ya comprado se queda.

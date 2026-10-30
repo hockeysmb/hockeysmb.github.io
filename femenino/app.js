@@ -1237,15 +1237,15 @@
   const APP_V = (((document.currentScript || {}).src || '').split('v=')[1] || '').slice(0, 12);
   const J = { todos: {}, duelos: {}, on: false, synced: false, sinReglas: false };
   const TIENDA = [
-    ['estela', 'rosa', 'Estela rosa', 60], ['estela', 'menta', 'Estela menta', 60], ['estela', 'oro', 'Estela dorada', 150], ['estela', 'arcoiris', 'Estela arcoíris', 300], ['estela', 'fuego', 'Estela de fuego', 450],
-    ['ropa', 'shirtVNeck:2fb5a5', 'Camiseta turquesa', 90], ['ropa', 'shirtScoopNeck:f2c14e', 'Camiseta amarilla', 90], ['ropa', 'hoodie:e05297', 'Sudadera fucsia', 120], ['ropa', 'overall:5b6cff', 'Peto azul', 180],
-    ['gafas', 'prescription02', 'Gafas de pasta', 80], ['gafas', 'wayfarers', 'Gafas de moda', 140],
-    ['gorro', 'winterHat1', 'Gorro de lana', 130], ['gorro', 'hat', 'Sombrero', 200],
-    ['ropa', 'hoodie:2c7be5', 'Sudadera azul', 110], ['ropa', 'graphicShirt:111111', 'Camiseta negra con dibujo', 140], ['ropa', 'collarAndSweater:6fcf6a', 'Jersey verde', 130], ['ropa', 'blazerAndSweater:8a3ffc', 'Americana morada', 260],
-    ['gafas', 'kurt', 'Gafas retro', 120], ['gorro', 'winterHat04', 'Gorro de invierno', 160],
-    ['fondo', 'playa', 'Playa', 220], ['fondo', 'neon', 'Neón', 250], ['fondo', 'bosque', 'Bosque', 220], ['fondo', 'nieve', 'Nieve', 240], ['fondo', 'espacio', 'Espacio', 350],
-    ['marco', 'arcoiris', 'Marco arcoíris', 400], ['marco', 'estrellas', 'Marco de estrellas', 450],
-    ['cele', '¡Golazo!', '¡Golazo!', 50], ['cele', '¡Para casa!', '¡Para casa!', 70], ['cele', '¡A la escuadra!', '¡A la escuadra!', 100], ['cele', '¡Imparable!', '¡Imparable!', 150], ['cele', '¡Santa María!', '¡Santa María!', 200],
+    ['estela', 'rosa', 'Estela rosa', 600], ['estela', 'menta', 'Estela menta', 600], ['estela', 'oro', 'Estela dorada', 1500], ['estela', 'arcoiris', 'Estela arcoíris', 3000], ['estela', 'fuego', 'Estela de fuego', 4500],
+    ['ropa', 'shirtVNeck:2fb5a5', 'Camiseta turquesa', 900], ['ropa', 'shirtScoopNeck:f2c14e', 'Camiseta amarilla', 900], ['ropa', 'hoodie:e05297', 'Sudadera fucsia', 1200], ['ropa', 'overall:5b6cff', 'Peto azul', 1800],
+    ['gafas', 'prescription02', 'Gafas de pasta', 800], ['gafas', 'wayfarers', 'Gafas de moda', 1400],
+    ['gorro', 'winterHat1', 'Gorro de lana', 1300], ['gorro', 'hat', 'Sombrero', 2000],
+    ['ropa', 'hoodie:2c7be5', 'Sudadera azul', 1100], ['ropa', 'graphicShirt:111111', 'Camiseta negra con dibujo', 1400], ['ropa', 'collarAndSweater:6fcf6a', 'Jersey verde', 1300], ['ropa', 'blazerAndSweater:8a3ffc', 'Americana morada', 2600],
+    ['gafas', 'kurt', 'Gafas retro', 1200], ['gorro', 'winterHat04', 'Gorro de invierno', 1600],
+    ['fondo', 'playa', 'Playa', 2200], ['fondo', 'neon', 'Neón', 2500], ['fondo', 'bosque', 'Bosque', 2200], ['fondo', 'nieve', 'Nieve', 2400], ['fondo', 'espacio', 'Espacio', 3500],
+    ['marco', 'arcoiris', 'Marco arcoíris', 4000], ['marco', 'estrellas', 'Marco de estrellas', 4500],
+    ['cele', '¡Golazo!', '¡Golazo!', 500], ['cele', '¡Para casa!', '¡Para casa!', 700], ['cele', '¡A la escuadra!', '¡A la escuadra!', 1000], ['cele', '¡Imparable!', '¡Imparable!', 1500], ['cele', '¡Santa María!', '¡Santa María!', 2000],
   ];
   // misiones del día: las mismas para todas (salen de la fecha); cada una da monedas una vez al día
   const MISIONES = [
@@ -1321,19 +1321,19 @@
   // juego/{uid}.casa = {tema, m: {pared1, pared2, suelo1, suelo2, juguete}}; lo comprado va en compras como 'tema|id' y 'mueble|hueco:id'
   const TEMAS = {
     casa: { n: 'Mi cuarto', p: 0, pared: ['#fde7d6', '#f9d6c6'], suelo: ['#c9915f', '#b37c4c'], deco: [] },
-    playa: { n: 'Playa', p: 300, pared: ['#8fd3ff', '#d6f1ff'], suelo: ['#f3d9a4', '#e6c27f'], deco: [['sol', 70, 4, 16], ['palmera', 2, 30, 22], ['concha', 40, 86, 8], ['ola', 78, 64, 14]] },
-    bosque: { n: 'Bosque', p: 300, pared: ['#bfe8c4', '#e3f6dd'], suelo: ['#7cbf5a', '#5fa344'], deco: [['pino', 70, 18, 18], ['seta', 40, 84, 8], ['mariposa', 46, 14, 9]] },
-    nieve: { n: 'Nieve', p: 300, pared: ['#d6ecff', '#f2f8ff'], suelo: ['#ffffff', '#e4eef8'], deco: [['muneco', 76, 30, 14], ['copo', 30, 8, 7], ['copo', 58, 18, 5]] },
-    espacio: { n: 'Espacio', p: 450, pared: ['#1b1446', '#3a2a7a'], suelo: ['#8d8aa6', '#6d6a88'], deco: [['planeta', 64, 6, 18], ['cohete', 36, 10, 10], ['luna', 8, 26, 9]], estrellas: true },
-    vestuario: { n: 'Vestuario SMB', p: 400, pared: ['#7a1d2c', '#a3364a'], suelo: ['#d9dde3', '#c3c9d1'], deco: [['banderin', 44, 6, 10], ['trofeo', 80, 30, 11], ['patin', 40, 84, 11]] },
+    playa: { n: 'Playa', p: 3000, pared: ['#8fd3ff', '#d6f1ff'], suelo: ['#f3d9a4', '#e6c27f'], deco: [['sol', 70, 4, 16], ['palmera', 2, 30, 22], ['concha', 40, 86, 8], ['ola', 78, 64, 14]] },
+    bosque: { n: 'Bosque', p: 3000, pared: ['#bfe8c4', '#e3f6dd'], suelo: ['#7cbf5a', '#5fa344'], deco: [['pino', 70, 18, 18], ['seta', 40, 84, 8], ['mariposa', 46, 14, 9]] },
+    nieve: { n: 'Nieve', p: 3000, pared: ['#d6ecff', '#f2f8ff'], suelo: ['#ffffff', '#e4eef8'], deco: [['muneco', 76, 30, 14], ['copo', 30, 8, 7], ['copo', 58, 18, 5]] },
+    espacio: { n: 'Espacio', p: 4500, pared: ['#1b1446', '#3a2a7a'], suelo: ['#8d8aa6', '#6d6a88'], deco: [['planeta', 64, 6, 18], ['cohete', 36, 10, 10], ['luna', 8, 26, 9]], estrellas: true },
+    vestuario: { n: 'Vestuario SMB', p: 4000, pared: ['#7a1d2c', '#a3364a'], suelo: ['#d9dde3', '#c3c9d1'], deco: [['banderin', 44, 6, 10], ['trofeo', 80, 30, 11], ['patin', 40, 84, 11]] },
   };
   // [hueco, id, nombre, precio, dibujo, se puede dormir]
   const MUEBLES = [
-    ['pared1', 'ventana', 'Ventana', 0], ['pared1', 'relojp', 'Reloj', 80], ['pared1', 'espejo', 'Espejo', 120], ['pared1', 'globos', 'Globos', 150], ['pared1', 'arcoiris', 'Arcoíris', 200],
-    ['pared2', 'cuadro', 'Cuadro', 0], ['pared2', 'medalla', 'Medalla', 100], ['pared2', 'trofeo', 'Trofeo', 150], ['pared2', 'fugaz', 'Estrella fugaz', 150], ['pared2', 'guitarra', 'Guitarra', 200],
-    ['suelo1', 'planta', 'Planta', 0], ['suelo1', 'cactus', 'Cactus', 60], ['suelo1', 'tulipan', 'Tulipán', 80], ['suelo1', 'girasol', 'Girasol', 80], ['suelo1', 'robot', 'Robot', 180], ['suelo1', 'dinosaurio', 'Dinosaurio', 220], ['suelo1', 'piano', 'Piano', 250],
-    ['suelo2', 'cama', 'Cama', 0, 1], ['suelo2', 'cesta', 'Cesta', 80, 1], ['suelo2', 'sofa', 'Sofá', 200, 1], ['suelo2', 'campana', 'Tienda de campaña', 250, 1],
-    ['juguete', 'pelota', 'Pelota', 0], ['juguete', 'ovillo', 'Ovillo', 50], ['juguete', 'peluche', 'Peluche', 60], ['juguete', 'balon', 'Balón', 70], ['juguete', 'dado', 'Dado', 70], ['juguete', 'tambor', 'Tambor', 120],
+    ['pared1', 'ventana', 'Ventana', 0], ['pared1', 'relojp', 'Reloj', 800], ['pared1', 'espejo', 'Espejo', 1200], ['pared1', 'globos', 'Globos', 1500], ['pared1', 'arcoiris', 'Arcoíris', 2000],
+    ['pared2', 'cuadro', 'Cuadro', 0], ['pared2', 'medalla', 'Medalla', 1000], ['pared2', 'trofeo', 'Trofeo', 1500], ['pared2', 'fugaz', 'Estrella fugaz', 1500], ['pared2', 'guitarra', 'Guitarra', 2000],
+    ['suelo1', 'planta', 'Planta', 0], ['suelo1', 'cactus', 'Cactus', 600], ['suelo1', 'tulipan', 'Tulipán', 800], ['suelo1', 'girasol', 'Girasol', 800], ['suelo1', 'robot', 'Robot', 1800], ['suelo1', 'dinosaurio', 'Dinosaurio', 2200], ['suelo1', 'piano', 'Piano', 2500],
+    ['suelo2', 'cama', 'Cama', 0, 1], ['suelo2', 'cesta', 'Cesta', 800, 1], ['suelo2', 'sofa', 'Sofá', 2000, 1], ['suelo2', 'campana', 'Tienda de campaña', 2500, 1],
+    ['juguete', 'pelota', 'Pelota', 0], ['juguete', 'ovillo', 'Ovillo', 500], ['juguete', 'peluche', 'Peluche', 600], ['juguete', 'balon', 'Balón', 700], ['juguete', 'dado', 'Dado', 700], ['juguete', 'tambor', 'Tambor', 1200],
   ];
   const HUECOS = { pared1: 'Pared izquierda', pared2: 'Pared derecha', suelo1: 'Suelo', suelo2: 'Para dormir', juguete: 'Juguete' };
   const casaDe = () => { const c = yoJ().casa || {}; return { tema: TEMAS[c.tema] ? c.tema : 'casa', m: Object.assign({ pared1: 'ventana', pared2: 'cuadro', suelo1: 'planta', suelo2: 'cama', juguete: 'pelota' }, c.m || {}) }; };
@@ -1388,13 +1388,13 @@
   // ================= cofres de mascotas (26 oct, noche): las mascotas ya no se compran sueltas, salen de cofres =================
   // Probabilidades a la vista. Las repetidas devuelven monedas. Garantías: épica o mejor cada 20 cofres sin ella; legendaria a los 60 sin ella.
   const COFRES = [
-    { k: 'madera', n: 'Cofre de madera', p: 250, o: { comun: 72, rara: 22, epica: 5, legendaria: 1 }, c: ['#b5793e', '#7a4a1e'] },
-    { k: 'plata', n: 'Cofre de plata', p: 600, o: { comun: 35, rara: 45, epica: 16, legendaria: 4 }, c: ['#c9d1d9', '#7d8892'] },
-    { k: 'oro', n: 'Cofre de oro', p: 1400, o: { comun: 0, rara: 45, epica: 42, legendaria: 13 }, c: ['#ffd84d', '#c99a00'] },
+    { k: 'madera', n: 'Cofre de madera', p: 2500, o: { comun: 72, rara: 22, epica: 5, legendaria: 1 }, c: ['#b5793e', '#7a4a1e'] },
+    { k: 'plata', n: 'Cofre de plata', p: 6000, o: { comun: 35, rara: 45, epica: 16, legendaria: 4 }, c: ['#c9d1d9', '#7d8892'] },
+    { k: 'oro', n: 'Cofre de oro', p: 14000, o: { comun: 0, rara: 45, epica: 42, legendaria: 13 }, c: ['#ffd84d', '#c99a00'] },
     // de temporada (27 oct): solo trae las mascotas de su evento y desaparece después de la fecha (las que tengas, te las quedas)
-    { k: 'halloween', n: 'Cofre de Halloween', p: 500, o: { comun: 50, rara: 30, epica: 15, legendaria: 5 }, c: ['#ff8c1a', '#4a2a6b'], ev: 'hw', hasta: '2026-11-03' },
+    { k: 'halloween', n: 'Cofre de Halloween', p: 5000, o: { comun: 50, rara: 30, epica: 15, legendaria: 5 }, c: ['#ff8c1a', '#4a2a6b'], ev: 'hw', hasta: '2026-11-03' },
   ];
-  const REPE = { comun: 15, rara: 40, epica: 100, legendaria: 250 };
+  const REPE = { comun: 150, rara: 400, epica: 1000, legendaria: 2500 };
   const cofreSVG = (c, cls = 'cofre') => `<svg class="${cls}" viewBox="0 0 100 90" aria-hidden="true"><ellipse cx="50" cy="84" rx="36" ry="5" fill="rgba(0,0,0,.15)"/><rect x="12" y="38" width="76" height="44" rx="8" fill="${c.c[0]}"/><rect x="12" y="38" width="76" height="44" rx="8" fill="none" stroke="${c.c[1]}" stroke-width="4"/>
     <path d="M12 40 Q12 12 50 12 Q88 12 88 40 Z" fill="${c.c[0]}" stroke="${c.c[1]}" stroke-width="4"/><rect x="44" y="34" width="12" height="16" rx="3" fill="${c.c[1]}"/><circle cx="50" cy="42" r="2.4" fill="${c.c[0]}"/>
     <path d="M24 46 v30 M76 46 v30" stroke="${c.c[1]}" stroke-width="3" opacity=".5"/>${c.k === 'halloween' ? `<path d="M30 58 l6 -6 l6 6 Z M58 58 l6 -6 l6 6 Z M34 68 Q50 78 66 68 L62 68 L59 72 L55 68 L45 68 L41 72 L38 68 Z" fill="${c.c[1]}"/>` : ''}${c.k === 'oro' ? '<path d="M30 20 l2 4 4 .6 -3 3 .7 4 -3.7 -2 -3.7 2 .7 -4 -3 -3 4 -.6 Z M70 22 l1.6 3.2 3.2 .5 -2.4 2.3 .6 3.2 -3 -1.6 -3 1.6 .6 -3.2 -2.4 -2.3 3.2 -.5 Z" fill="#fff"/>' : ''}</svg>`;
