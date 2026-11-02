@@ -184,11 +184,21 @@ async def main():
       ds = [v for k, v in (await pg.evaluate("window.__fake.db()")).items() if k.startswith('duelos/') and v.get('a') == DT['uid']]; print('duelo de Carlos a Ana:', [(x['pa'], x['pb']) for x in ds])
       if not ds or ds[0]['pa'] is None: errs.append('la DT no puede retar')
       await pg.screenshot(path=O + '8_dt_duelos.png', full_page=True)
+      # 7b. Carlos le da a Ana puntos de liga (con punto de miles): suman en la liga de la semana
+      await pg.click('.nav [data-av="reto"]'); await pg.wait_for_timeout(300); await pg.click('.mm-pr'); await pg.wait_for_timeout(300)
+      await pg.click('[data-prk="l"]'); await pg.fill('#pr-m', '5.000'); await pg.click('[data-prsel="demo03"]'); await pg.fill('#pr-t', 'Por el partido del domingo'); await pg.click('[data-a="prmandar"]'); await pg.wait_for_timeout(400)
       # 8. Ana ve que Carlos la ha retado
       await out(pg); await pg.wait_for_timeout(400)
       await pg.fill('#l-email', 'demo03@ejemplo.com'); await pg.fill('#l-pass', 'hockey1'); await pg.click('[data-a="in"]'); await pg.wait_for_timeout(1000)
       t = ' '.join((await pg.text_content('.rt-reto') or '').split()); print('Ana ve:', t[:80])
       if 'Carlos' not in t: errs.append('Ana no ve el reto de Carlos')
+      rgc = ' '.join((await pg.text_content('.regalo') or '').split()) if await pg.locator('.regalo').count() else ''; print('Ana ve el premio:', rgc[:90])
+      if 'puntos de liga' not in rgc: errs.append('Ana no ve los puntos de liga')
+      await pg.click('.nav [data-v="reto"]'); await pg.wait_for_timeout(400); await pg.click('[data-a="rtab"][data-k="liga"]'); await pg.wait_for_timeout(300)
+      lg = ' '.join((await pg.text_content('.podio') or '').split()); print('podio:', lg[:120])
+      import re as _re
+      if 'Ana' not in lg or not any(int(x.replace('.', '')) >= 5000 for x in _re.findall(r'[0-9][0-9.]*', lg)): errs.append('los puntos de liga no suman en la liga')
+      await pg.click('.nav [data-v="hoy"]'); await pg.wait_for_timeout(300)
       # 9. borrar sus datos borra también lo del juego
       await pg.click('.nav [data-v="yo"]'); await pg.click('[data-v2="datos"]'); await pg.wait_for_timeout(200)
       await pg.click('[data-a="borrartodo"]'); await pg.click('[data-a="borrartodo"]'); await pg.wait_for_timeout(600)

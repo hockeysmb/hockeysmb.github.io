@@ -412,3 +412,14 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - Las monedas por repetida (`REPE`) también suben ×10 para que el cofre siga compensando igual.
 - **La comida no cambia:** la básica sigue gratis y los caprichos cuestan lo mismo, para que cuidar a la mascota no se haga cuesta arriba.
 - Lo ya comprado se queda.
+
+## Premiar con monedas o puntos (2 nov)
+
+- **«Premiar»** (antes «Mandar monedas») elige qué se da (`A.prK`):
+  - **Monedas** (`k: 'm'`, o sin `k` en los regalos antiguos).
+  - **Puntos de nivel** (`k: 'n'`): suben su personaje y no dan monedas. Se suman en `ptsRegalo(acc)`, y la jugadora usa `ptsMias()` para su nivel. La DT los ve en el personaje de sus tarjetas y en su ficha.
+  - **Puntos de liga** (`k: 'l'`): suman en la liga semanal del Reto.
+- **Todos** se guardan en `acceso/{uid}.regalos` (las 50 últimas) con el mensaje, que solo ve ella.
+- **Los puntos de liga** tienen que verlos todas, y la DT no puede escribir en `juego/{uid}` de otra. Por eso van en la ficha de juego de la propia DT: `juego/{uidDT}.bl = {uid: {lunes: puntos}}`. `semPts(d, lunes, u)` los suma con `bonusLiga`. Solo es el número de puntos; el mensaje no se ve. No hacen falta reglas nuevas.
+- **Las cantidades** (premiar y «Darme») se escriben en un campo de texto que acepta el punto de los miles: 1.000 = 1000.
+- **La jugadora** ve en Hoy «Carlos te ha mandado 50 puntos de nivel y 100 monedas» con el mensaje.
