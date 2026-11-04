@@ -423,3 +423,12 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **Los puntos de liga** tienen que verlos todas, y la DT no puede escribir en `juego/{uid}` de otra. Por eso van en la ficha de juego de la propia DT: `juego/{uidDT}.bl = {uid: {lunes: puntos}}`. `semPts(d, lunes, u)` los suma con `bonusLiga`. Solo es el número de puntos; el mensaje no se ve. No hacen falta reglas nuevas.
 - **Las cantidades** (premiar y «Darme») se escriben en un campo de texto que acepta el punto de los miles: 1.000 = 1000.
 - **La jugadora** ve en Hoy «Carlos te ha mandado 50 puntos de nivel y 100 monedas» con el mensaje.
+
+## Banco: meter una tanda de ejercicios de una vez (4 nov)
+
+- **Para qué:** pasar al banco ejercicios de un manual de fuera (el primero, el Manual del Entrenador de Patinkid) sin meterlos de uno en uno.
+- **Cómo lo hace la DT:** Dirección Técnica → «Pegar un código» → «O un archivo de ejercicios». Elige el .json, ve cuántos son nuevos y los fichas («Verlos antes») y pulsa «Meter los N en el banco». También vale pegar el JSON o un código `SMB5:` (el JSON en base64).
+- **Formato:** `{v: 5, nombre, autor, tasks: [...]}`. Cada ejercicio es como los del banco y lleva `orig` (p. ej. `ptk-015-1` = Patinkid, pág. 15, primer ejercicio). `reviewLote(raw, out)` salta los que ya tienen ese `orig` en el banco: el mismo archivo dos veces no duplica.
+- **Cómo entran:** `source: 'club'`, `author` = el `autor` del archivo (p. ej. «Patinkid»), `smb.validado: false` y `alta` de hoy (la pone `saveBank`). Salen en «Revisar» como «Banco · sin validar». El autor no es un entrenador, así que no da puntos a nadie.
+- **Los archivos no van al repositorio:** son material de fuera del club y el repositorio es público. Se preparan aparte y se le pasan a la DT. La prueba `web_lote` usa una tanda inventada sacada del banco de prueba.
+- **Manual Patinkid:** van por tandas. Tanda 1, Pase y control (50 ejercicios, bloque «Pases»). Faltan Conducción (bloque «Control stick-bola»), Disparo y regate («Tiros y remates»), los juegos de patinaje sin gráfico y las fichas de C.P. Alcobendas. Las preguntas, «qué lee» y fácil / difícil las propone Claude y las valida la DT.

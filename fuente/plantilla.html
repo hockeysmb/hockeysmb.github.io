@@ -1571,8 +1571,9 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
       <div id="dt-pre" class="view"></div>
       <div id="dt-dyn" class="dt-dyn"></div>
       <details class="ses-sec dt-code" id="review">
-        <summary><span class="h-sec">Pegar un código</span><span class="sub">Lo que te manden por WhatsApp: un ejercicio, una sesión o un personaje</span></summary>
+        <summary><span class="h-sec">Pegar un código</span><span class="sub">Lo que te manden por WhatsApp: un ejercicio, una sesión o un personaje. O un archivo con varios ejercicios</span></summary>
         <textarea id="review-code" class="code-in" aria-label="Código del entrenador" placeholder="SMB..."></textarea>
+        <label class="ses-f">O un archivo de ejercicios<input type="file" id="review-file" accept=".json,application/json,text/plain"></label>
         <div class="actions"><button class="btn primary" id="btn-review" type="button">Ver qué es</button></div>
         <div id="review-out"></div>
       </details>
@@ -2843,6 +2844,7 @@ document.getElementById('btn-review').addEventListener('click', () => {
     const rawCode = document.getElementById('review-code').value.trim();
     if (rawCode.startsWith('SMB3:')) { reviewAvatar(rawCode, out); return; }
     if (rawCode.startsWith('SMB4:')) { reviewSession(rawCode, out); return; }
+    if (rawCode.startsWith('SMB5:') || rawCode.startsWith('{')) { reviewLote(rawCode, out); return; }
     reviewTask = decodeTask(rawCode);
     reviewTask.id = 'prop-' + uid(); reviewTask.source = 'mine';
     out.innerHTML = `<div class="list">${taskCard(reviewTask, 'review')}</div>
@@ -2866,6 +2868,33 @@ document.getElementById('btn-review').addEventListener('click', () => {
   }
 });
 const today = () => new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+// ---------- varios ejercicios de una vez (un manual, una tanda): archivo .json o código SMB5: ----------
+// {v: 5, nombre, autor, tasks: [...]}; cada ejercicio lleva `orig` para no meterlo dos veces.
+document.getElementById('review-file').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { reviewLote(String(r.result || ''), document.getElementById('review-out')); e.target.value = ''; };
+  r.readAsText(f);
+});
+function reviewLote(raw, out) {
+  let p;
+  try { p = raw.startsWith('SMB5:') ? JSON.parse(fromB64(raw.slice(5).replace(/\s+/g, ''))) : JSON.parse(raw); } catch (e) { p = null; }
+  if (!p || p.v !== 5 || !Array.isArray(p.tasks) || !p.tasks.every(t => t && t.title && t.diagram)) { out.innerHTML = '<p class="msg err">Ese archivo no es una tanda de ejercicios de la app.</p>'; return; }
+  const hay = new Set(bank.tasks.map(t => t.orig).filter(Boolean));
+  const nuevos = p.tasks.filter(t => !t.orig || !hay.has(t.orig)), ya = p.tasks.length - nuevos.length;
+  const L = nuevos.map((t, i) => Object.assign(clone(t), { id: 'lote-' + i, source: 'club', author: p.autor || t.author || '' }));
+  out.innerHTML = `<div class="ses-sec"><h3 class="h-sec">${esc(p.nombre || 'Ejercicios')}</h3>
+    <p class="sub">${nuevos.length} ${nuevos.length === 1 ? 'ejercicio nuevo' : 'ejercicios nuevos'}${ya ? ` · ${ya} ya ${ya === 1 ? 'estaba' : 'estaban'} en el banco` : ''}. ${nuevos.length ? 'Entran sin validar y los tienes en «Revisar».' : 'No hay nada que meter.'}</p>
+    ${L.length ? `<details class="dt-more"><summary>Verlos antes</summary><div class="list">${L.map(t => taskCard(t, 'review')).join('')}</div></details>` : ''}
+    <div class="actions" style="margin-top:12px">${canWriteBank && L.length ? `<button class="btn primary" id="rv-lote" type="button">Meter los ${L.length} en el banco</button>` : ''}</div>
+    <p class="msg" id="rv-msg" aria-live="polite"></p></div>`;
+  const b = document.getElementById('rv-lote');
+  if (b) b.onclick = () => confirmModal(`¿Meter los ${L.length} en el banco?`, `Entran como ejercicios de ${p.autor || 'fuera del club'}, sin validar. Los vas aprobando en «Revisar».`, 'Meter todos', () => {
+    const add = L.map(t => { const c = clone(t); c.id = 'club-' + uid(); c.updated = today(); c.smb = Object.assign({}, c.smb || {}, { validado: false }); return c; });
+    b.disabled = true;
+    saveBank([...bank.tasks, ...add], `${add.length} ejercicios metidos en el banco. Ya puedes revisarlos.`, document.getElementById('rv-msg')).then(ok => { if (ok) { document.getElementById('review-code').value = ''; } else b.disabled = false; });
+  });
+}
 
 // ================= guardar en el banco (solo Dirección Técnica) =================
 async function saveBank(tasks, okText, msgEl, extra) {
