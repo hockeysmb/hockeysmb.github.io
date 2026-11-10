@@ -10,7 +10,7 @@
   const enc = o => ({ j: JSON.stringify(o) });
   const dec = d => { try { return d && typeof d.j === 'string' ? JSON.parse(d.j) : null; } catch (e) { return null; } };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const norm = s => String(s || '').trim().toLowerCase();
+  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
   const LS = { mine: 'smb-banco-mis-versiones', sessions: 'smb-banco-sesiones', autor: 'smb-banco-autor', game: 'smb-banco-personaje', envios: 'smb-banco-envios', plan: 'smb-banco-plan' };
   const readLS = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const DT_UIDS = window.SMB_DT_UIDS || [];
@@ -213,14 +213,14 @@
       const PR = C.profiles || {};
       const byEmail = em => Object.entries(PR).find(([, p]) => norm(p.email) === norm(em)) || null;
       const linked = new Set();
-      const coaches = (st.coaches || []).map(c => { const e = (c.uid && PR[c.uid] && [c.uid, PR[c.uid]]) || (c.email && byEmail(c.email)); if (!e) return c; linked.add(e[0]); const p = e[1], pj = dec(p) || {}; return Object.assign({}, c, { name: (c.nameSet && !((p.nameTs || 0) > c.nameSet)) ? c.name : (p.name || c.name), avatar: pj.avatar || c.avatar, poder: pj.poder || c.poder, pizarra: pj.pizarra || c.pizarra, estilo: pj.estilo || c.estilo, club: pj.club || c.club, lgJoin: pj.lgJoin || c.lgJoin, lgs: pj.lgs || c.lgs, uid: c.uid || e[0], visto: p.ts || 0 }); });
+      const coaches = (st.coaches || []).map(c => { const e = (c.uid && PR[c.uid] && [c.uid, PR[c.uid]]) || (c.email && byEmail(c.email)); if (!e) return c; linked.add(e[0]); const p = e[1], pj = dec(p) || {}; return Object.assign({}, c, { name: (c.nameSet && !((p.nameTs || 0) > c.nameSet)) ? c.name : (p.name || c.name), avatar: pj.avatar || c.avatar, poder: pj.poder || c.poder, pizarra: pj.pizarra || c.pizarra, estilo: pj.estilo || c.estilo, club: pj.club || c.club, arc: pj.arc || c.arc, lgJoin: pj.lgJoin || c.lgJoin, lgs: pj.lgs || c.lgs, uid: c.uid || e[0], visto: p.ts || 0 }); });
       // todo el que tiene acceso está en el vestuario: su personaje y su poder se guardan solos, sin mandar nada a la DT
       const S = C.state, isMem = (u, p) => (S.memberUids || []).includes(u) || (S.dtUids || []).includes(u) || DT_UIDS.includes(u) || (S.memberEmails || []).includes(norm(p.email));
       Object.entries(PR).forEach(([u, p]) => {
         if (linked.has(u) || !isMem(u, p)) return;
         const name = String(p.name || p.nameHint || '').trim(); if (!name) return;
         const pj = dec(p) || {}, ex = coaches.find(c => norm(c.name) === norm(name));
-        if (ex) Object.assign(ex, { avatar: pj.avatar || ex.avatar, poder: pj.poder || ex.poder, pizarra: pj.pizarra || ex.pizarra, estilo: pj.estilo || ex.estilo, club: pj.club || ex.club, lgJoin: pj.lgJoin || ex.lgJoin, lgs: pj.lgs || ex.lgs, uid: ex.uid || u, visto: p.ts || ex.visto || 0 }); else coaches.push({ name, uid: u, avatar: pj.avatar, poder: pj.poder, pizarra: pj.pizarra, estilo: pj.estilo, bonus: [], visto: p.ts || 0 , club: pj.club, lgJoin: pj.lgJoin, lgs: pj.lgs });
+        if (ex) Object.assign(ex, { avatar: pj.avatar || ex.avatar, poder: pj.poder || ex.poder, pizarra: pj.pizarra || ex.pizarra, estilo: pj.estilo || ex.estilo, club: pj.club || ex.club, arc: pj.arc || ex.arc, lgJoin: pj.lgJoin || ex.lgJoin, lgs: pj.lgs || ex.lgs, uid: ex.uid || u, visto: p.ts || ex.visto || 0 }); else coaches.push({ name, uid: u, avatar: pj.avatar, poder: pj.poder, pizarra: pj.pizarra, estilo: pj.estilo, bonus: [], visto: p.ts || 0 , club: pj.club, arc: pj.arc, lgJoin: pj.lgJoin, lgs: pj.lgs });
       });
       bank.coaches = coaches;
       // amistosos: cada uno guarda los suyos en su perfil; aquí se juntan los de todos
@@ -372,6 +372,7 @@
     if (g && Array.isArray(g.amis) && g.amis.length) pj.amis = g.amis.slice(-10);
     if (g && g.pizarra) pj.pizarra = g.pizarra;
     if (g && g.estilo) pj.estilo = g.estilo;
+    if (g && g.arc) pj.arc = g.arc; // récords de la recreativa (10 nov)
     try { const cp = window.SMB && window.SMB.clubPublic && window.SMB.clubPublic(); if (cp) pj.club = cp; } catch (e) {}
     try { const lp = window.SMB && window.SMB.ligaPublic && window.SMB.ligaPublic(); if (lp) { pj.lgJoin = lp.join; pj.lgs = lp.lgs; } } catch (e) {}
     if (Object.keys(pj).length) Object.assign(d, enc(pj));

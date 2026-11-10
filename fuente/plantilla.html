@@ -1515,6 +1515,13 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .al-b { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 6px 8px; border-radius: 14px; background: var(--surface); border: 2px solid var(--g-edge); }
 .al-b .al-face { grid-row: span 2; } .al-b b { font: 800 13px/1.1 var(--font-game); } .al-b small { color: var(--muted); font-size: 11px; }
 .pl-tag.on { background: color-mix(in srgb, var(--g-green) 18%, var(--surface)); color: var(--g-green-2); }
+/* recreativa (10 nov) */
+.arc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.arc-card { display: grid; grid-template-columns: 54px 1fr; gap: 12px; align-items: start; padding: 14px; border-radius: 18px; background: var(--card, #fff); border: 1px solid var(--line, #eadfe1); }
+.arc-ic { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; background: #681825; color: #fff; font-size: 26px; }
+.arc-card h3 { margin: 0 0 2px; font-size: 16px; } .arc-card p { margin: 0 0 8px; font-size: 13px; color: var(--muted, #6f6365); }
+.arc-rec { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted, #6f6365); margin-bottom: 10px; } .arc-rec b { color: var(--ink, #241c1d); font-variant-numeric: tabular-nums; }
+.arc-top { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; } .arc-top li { display: flex; justify-content: space-between; gap: 8px; } .arc-top li b { font-variant-numeric: tabular-nums; }
 </style>
 
 <div class="app" id="app">
@@ -4360,7 +4367,8 @@ const duelLvl = k => Math.floor(k / 2); // en los duelos el nivel suma la mitad 
 // reequilibrado el 8 oct: subir de nivel cuesta el doble y las monedas extra se dan con cuentagotas
 const PTS = { banco: 15, smb: 10, destacado: 25, ejercicio: 5, sesion: 15, pista: 5, copia: 5 };
 const LS_GAME = 'smb-banco-personaje';
-const normName = s => String(s || '').trim().toLowerCase();
+// mismo nombre aunque cambien tildes, mayúsculas o espacios («Jorge Cosín» = «Jorge Cosin»; 10 nov: Jorge se quedó fuera de la liga por la tilde)
+const normName = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const CLUB_COLORS = [['681825', 'Granate'], ['ffffff', 'Blanco'], ['3f4a6e', 'Azul marino'], ['262e33', 'Negro'], ['929598', 'Gris']];
 const ALL_COLORS = ['262e33', '65c9ff', '5199e4', '25557c', 'e6e6e6', '929598', '3c4f5c', 'b1e2ff', 'a7ffc4', 'ffdeb5', 'ffafb9', 'ffffb1', 'ff488e', 'ff5c5c', 'ffffff', '681825', '3f4a6e'];
 const SKINS = ['ffdbb4', 'edb98a', 'f8d25c', 'fd9841', 'd08b5b', 'ae5d29', '614335'];
@@ -5433,7 +5441,7 @@ let lgScroll = false;
 function renderLiga() {
   const box = document.getElementById('v-liga'), N = lgNow();
   const inc = clOffersIn().length, nAm = amNew().length;
-  const tabs = [['hoy', 'Hoy'], ['calendario', 'Calendario'], ['clasificacion', 'Clasificación'], ['equipo', 'Equipo'], ['amistosos', `Amistosos${nAm ? ' · ' + nAm : ''}`], ['votacion', 'Votación']];
+  const tabs = [['hoy', 'Hoy'], ['calendario', 'Calendario'], ['clasificacion', 'Clasificación'], ['equipo', 'Equipo'], ['amistosos', `Amistosos${nAm ? ' · ' + nAm : ''}`], ['votacion', 'Votación'], ...(window.SMB_CLOUD ? [['recreativa', 'Recreativa']] : [])];
   if (!tabs.some(t => t[0] === ligaTab)) ligaTab = 'hoy';
   let body = '';
   if (ligaTab === 'hoy') body = lgHoyHTML(N);
@@ -5441,6 +5449,7 @@ function renderLiga() {
   else if (ligaTab === 'clasificacion') body = lgClasHTML(N);
   else if (ligaTab === 'equipo') body = `${alineacionHTML()}${pizarraHTML()}${myLigaHTML()}`;
   else if (ligaTab === 'amistosos') body = amHTML() || teamHTML();
+  else if (ligaTab === 'recreativa') body = recreativaHTML();
   else body = `${semanaHTML(true)}${palmaresHTML()}`;
   box.innerHTML = `<div class="vhead"><div><h1>Liga ${infoBtn('liga')}</h1><p class="sub">${esc(lgSubTxt(N))}</p></div></div>
     <div class="seg lg-tabs" role="tablist" aria-label="Secciones de la liga">${tabs.map(([k, l]) => `<button type="button" data-lgtab="${k}" aria-pressed="${ligaTab === k}">${l}</button>`).join('')}</div>
@@ -5453,6 +5462,41 @@ document.getElementById('v-liga').addEventListener('click', e => {
   const b = e.target.closest('[data-liga]'); if (!b) return;
   vest.tab = b.dataset.liga === 'poderes' ? 'poderes' : b.dataset.liga === 'coleccion' ? 'coleccion' : 'personalizar'; navigate('vestuario');
 });
+
+// ================= recreativa (10 nov): cinco juegos arcade de hockey (femenino/arcade.js, los mismos que en la app de jugadoras) =================
+// Solo en la web. No dan puntos ni monedas: el récord de cada uno va en su perfil (pj.arc) y todo el cuerpo técnico ve el top 3.
+const ARC = [['muro', 'Rompe la defensa', 'Rebota la bola con el stick, tumba la defensa y marca', '🧱'], ['cruza', 'Cruza la pista', 'Llega a la portería sin chocar con las rivales', '🛼'],
+  ['conduce', 'Conduce y recoge', 'Recoge bolas sueltas sin chocar con las vallas', '🏒'], ['invasion', 'Invasión rival', 'Para la oleada de rivales antes de que lleguen a tu portería', '🥅'], ['tetris', 'Tetris de hockey', 'Encaja las piezas y limpia líneas', '🟥']];
+let arcP = null;
+function arcCarga() {
+  if (window.SMBArcade) return Promise.resolve();
+  if (!arcP) arcP = new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = 'femenino/arcade.js?v=20261110a'; sc.onload = () => ok(); sc.onerror = () => { arcP = null; mal(new Error('arcade')); }; document.head.appendChild(sc); });
+  return arcP;
+}
+const arcDe = n => normName(n) === normName(readAuthor()) ? (game.arc || {}) : ((coachOf(n) || {}).arc || {});
+function arcTop(modo) {
+  const names = (bank.coaches || []).map(c => c.name); if (readAuthor() && !names.some(n => normName(n) === normName(readAuthor()))) names.push(readAuthor());
+  return names.map(n => [n, arcDe(n)[modo] || 0]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3);
+}
+function recreativaHTML() {
+  const me = readAuthor(), fmt = v => Math.round(v).toLocaleString('es-ES');
+  return `<section class="ses-sec"><h2 class="h-sec">Recreativa</h2><p class="sub">Cinco clásicos de recreativa con hockey. Partidas sin límite. No dan puntos ni monedas: solo el récord, y el top 3 lo ve todo el cuerpo técnico. Son los mismos juegos que tienen las jugadoras en su app.</p>
+    <div class="arc-grid">${ARC.map(([k, n, d, ic]) => { const top = arcTop(k), mio = arcDe(me)[k] || 0;
+      return `<article class="arc-card"><span class="arc-ic" aria-hidden="true">${ic}</span><div><h3>${esc(n)}</h3><p>${esc(d)}</p>
+        <div class="arc-rec"><span>Tu récord <b>${mio ? fmt(mio) : '—'}</b></span></div>
+        ${top.length ? `<ol class="arc-top">${top.map(([nm, v], i) => `<li><span>${i + 1}. ${esc(nm)}</span><b>${fmt(v)}</b></li>`).join('')}</ol>` : '<p class="sub">Nadie ha jugado todavía.</p>'}
+        <div class="actions" style="margin-top:10px"><button class="btn primary" type="button" data-arc="${k}">Jugar</button></div></div></article>`; }).join('')}</div></section>`;
+}
+async function arcJugar(modo) {
+  try { await arcCarga(); } catch (e) { toast('No se ha podido cargar el juego. Revisa la conexión.'); return; }
+  const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatarSVG(game.av, myLevel()).replace('<svg viewBox', '<svg width="280" height="280" viewBox'));
+  window.SMBArcade.jugar({ modo, avatarSrc: src, seed: Math.floor(Math.random() * 2e9), titulo: (ARC.find(x => x[0] === modo) || [])[1] || 'Recreativa', cele: '¡GOL!', sonido: 'smb-arcade-sonido', onEnd: r => {
+    const prev = (game.arc || {})[modo] || 0;
+    if (r.puntos > prev) { game.arc = Object.assign({}, game.arc || {}, { [modo]: r.puntos }); saveGame(); }
+    render(); toast(r.puntos > prev && prev ? `¡Récord nuevo! ${r.puntos.toLocaleString('es-ES')} puntos.` : `${r.puntos.toLocaleString('es-ES')} puntos.`);
+  } });
+}
+document.getElementById('v-liga').addEventListener('click', e => { const b = e.target.closest('[data-arc]'); if (b) arcJugar(b.dataset.arc); });
 
 // ================= amistosos: retar cuando quieras y verlo en directo =================
 // No cuentan para la liga. Se juegan al momento con el mismo motor que la jornada (sin forma).
@@ -7225,7 +7269,7 @@ function renameDeep(v, from, to) {
   return walk(v);
 }
 function renameCoach(uid, from, to, okText) {
-  to = String(to || '').trim(); if (!to || !from || normName(from) === normName(to)) return Promise.resolve(false);
+  to = String(to || '').trim(); if (!to || !from || String(from).trim() === to) return Promise.resolve(false); // vale cambiar solo una tilde
   if ((bank.coaches || []).some(c => normName(c.name) === normName(to) && !(uid && c.uid === uid))) { toast(`Ya hay un entrenador que se llama ${to}.`); return Promise.resolve(false); }
   const skip = ['memberUids', 'dtUids', 'memberEmails', 'amistosos', 'sesClub', 'ejClub', 'planClub', 'mkOf', 'mkAc', 'coaches', 'tasks'];
   const extra = {}; Object.keys(bank).forEach(k => { if (!skip.includes(k)) extra[k] = renameDeep(bank[k], from, to); });

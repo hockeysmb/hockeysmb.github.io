@@ -13,7 +13,7 @@ CFG="window.SMB_FIREBASE={apiKey:'x',authDomain:'x',projectId:'demo',appId:'x'};
 DT={'uid':'dtuid000000000000000000000001','email':'dt@smb.es','name':'Carlos Manzano'}
 O=SHOTS+'lav/after/'
 async def main():
-  srv=subprocess.Popen(['python3','-m','http.server','8766','-d',WEB],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+  srv=subprocess.Popen(['python3','-m','http.server','8780','-d',WEB],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
   await asyncio.sleep(1)
   try:
     async with async_playwright() as p:
@@ -25,7 +25,7 @@ async def main():
       await ctx.add_init_script(path=FAKEFB)
       pg=await ctx.new_page(); pg.on('pageerror',lambda e:errs.append(str(e)))
       await pg.clock.set_system_time(__import__('datetime').datetime(2026,10,16,12,0,0))
-      U='http://localhost:8766/'
+      U='http://localhost:8780/'
       await pg.goto(U); await pg.wait_for_timeout(600)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-cl="google"]'); await pg.wait_for_timeout(400)
       await pg.set_input_files('#cl-bankfile', LIVE); await pg.click('[data-cl="import"]'); await pg.wait_for_timeout(800)
@@ -98,6 +98,16 @@ async def main():
       await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1000)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-cl="google"]'); await pg.wait_for_timeout(2500)
       st=await pg.evaluate("(()=>{const j=JSON.parse(window.__fake.db()['club/state'].j); return [j.coaches.map(c=>c.name), j.lg.seasons]})()"); print('club tras cambio propio', st)
+      # 10 nov: la temporada se congeló con el nombre escrito de otra forma (le pasó a Jorge: «Cosín» y luego «Cosin»); sigue jugando
+      await pg.evaluate("(()=>{const j=JSON.parse(window.__fake.db()['club/state'].j); Object.values(j.lg.seasons).forEach(s=>{s.teams=s.teams.map(t=>t==='Lucas P.'?'LÚCAS  P.':t)}); window.__fake.put('club/state',{j:JSON.stringify(j)})})()")
+      await pg.wait_for_timeout(600)
+      await pg.click('#me-btn'); await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1000)
+      await pg.fill('#cl-email','lucas@smb.es'); await pg.fill('#cl-pass','hockey1'); await pg.click('[data-cl="in"]'); await pg.wait_for_timeout(2500)
+      await nav('liga'); await tab('hoy'); await pg.wait_for_timeout(600)
+      fuera='empezó sin ti' in (await pg.text_content('#v-liga'))
+      print('Lucas P. con la temporada a nombre de «LÚCAS  P.»: fuera de la liga =', fuera)
+      if fuera: errs.append('una tilde o una mayúscula le deja fuera de la liga')
+      await pg.screenshot(path=O2+'7_tilde.png', full_page=True)
       print('errs',errs); await b.close()
   finally: srv.terminate()
 asyncio.run(main())

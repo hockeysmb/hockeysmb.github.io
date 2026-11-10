@@ -1261,9 +1261,20 @@
     { m: 'portera', k: 'par10', t: 'Para 10 tiros', p: 20, ok: r => r.paradas >= 10 }, { m: 'portera', k: 'par25', t: 'Para 25 tiros en una partida', p: 40, ok: r => r.paradas >= 25 },
     { m: 'portera', k: 'rpar8', t: 'Para 8 seguidos', p: 30, ok: r => r.racha >= 8 }, { m: 'portera', k: 'seg40', t: 'Aguanta 40 segundos', p: 30, ok: r => r.segundos >= 40 },
     { m: 'portera', k: 'seg75', t: 'Aguanta 75 segundos', p: 50, ok: r => r.segundos >= 75 }, { m: 'portera', k: 'ppor1000', t: 'Llega a 1.000 puntos', p: 40, ok: r => r.puntos >= 1000 },
+    // recreativa (10 nov): rompe la defensa, cruza la pista, conduce y recoge, invasión rival y tetris
+    { m: 'muro', k: 'mgol1', t: 'Marca un gol', p: 20, ok: r => r.goles >= 1 }, { m: 'muro', k: 'mgol3', t: 'Marca 3 goles en una partida', p: 40, ok: r => r.goles >= 3 },
+    { m: 'muro', k: 'mniv2', t: 'Tumba una defensa entera', p: 40, ok: r => r.nivel >= 2 }, { m: 'muro', k: 'mrac8', t: 'Tumba 8 seguidas sin tocar la bola', p: 30, ok: r => r.combo >= 8 },
+    { m: 'cruza', k: 'cgol1', t: 'Llega a una portería', p: 20, ok: r => r.goles >= 1 }, { m: 'cruza', k: 'cgol3', t: 'Llena las tres porterías', p: 50, ok: r => r.goles >= 3 },
+    { m: 'cruza', k: 'cpts800', t: 'Llega a 800 puntos', p: 40, ok: r => r.puntos >= 800 },
+    { m: 'conduce', k: 'cb10', t: 'Recoge 10 bolas', p: 20, ok: r => r.bolas >= 10 }, { m: 'conduce', k: 'cb25', t: 'Recoge 25 bolas en una partida', p: 50, ok: r => r.bolas >= 25 },
+    { m: 'conduce', k: 'cf15', t: 'Haz una fila de 15', p: 40, ok: r => r.combo >= 15 },
+    { m: 'invasion', k: 'ie20', t: 'Para a 20 rivales', p: 20, ok: r => r.eliminadas >= 20 }, { m: 'invasion', k: 'io2', t: 'Supera la primera oleada', p: 40, ok: r => r.nivel >= 2 },
+    { m: 'invasion', k: 'io3', t: 'Llega a la tercera oleada', p: 50, ok: r => r.nivel >= 3 },
+    { m: 'tetris', k: 'tl5', t: 'Limpia 5 líneas', p: 20, ok: r => r.lineas >= 5 }, { m: 'tetris', k: 'tl15', t: 'Limpia 15 líneas en una partida', p: 50, ok: r => r.lineas >= 15 },
+    { m: 'tetris', k: 'tn2', t: 'Llega al nivel 2', p: 40, ok: r => r.nivel >= 2 },
   ];
   // el juego de cada día (26 oct, noche): rota entre «Patina y marca», «Tanda de penaltis» y «La portera»; el mismo para todas
-  const JUEGOS = [['patina', 'Patina y marca', 'Esquiva, regatea y marca leyendo a la portera'], ['penaltis', 'Tanda de penaltis', 'Apunta y elige la altura. ¿Cuántos seguidos?'], ['portera', 'La portera', 'Hoy paras tú. Ojo con los amagos']];
+  const JUEGOS = [['patina', 'Patina y marca', 'Esquiva, regatea y marca leyendo a la portera'], ['penaltis', 'Tanda de penaltis', 'Apunta y elige la altura. ¿Cuántos seguidos?'], ['portera', 'La portera', 'Hoy paras tú. Ojo con los amagos'], ...((window.SMBArcade && window.SMBArcade.JUEGOS) || [])];
   const juegoDe = f => (window.SMBJuego && window.SMBJuego.delDia) ? window.SMBJuego.delDia(f) : JUEGOS[0];
   const modoN = m => (JUEGOS.find(x => x[0] === m) || JUEGOS[0])[1];
   const misionesHoy = f => { const md = juegoDe(f)[0]; let h = 0; for (const c of f) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = MISIONES.filter(m => m.m === '*' || (m.m || 'patina') === md), out = []; while (out.length < 3 && L.length) { h = (h * 1103515245 + 12345) >>> 0; out.push(L.splice(h % L.length, 1)[0]); } return out; };

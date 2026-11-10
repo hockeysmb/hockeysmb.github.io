@@ -432,3 +432,22 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **Cómo entran:** `source: 'club'`, `author` = el `autor` del archivo (p. ej. «Patinkid»), `smb.validado: false` y `alta` de hoy (la pone `saveBank`). Salen en «Revisar» como «Banco · sin validar». El autor no es un entrenador, así que no da puntos a nadie.
 - **Los archivos no van al repositorio:** son material de fuera del club y el repositorio es público. Se preparan aparte y se le pasan a la DT. La prueba `web_lote` usa una tanda inventada sacada del banco de prueba.
 - **Manual Patinkid:** van por tandas. Tanda 1, Pase y control (50 ejercicios, bloque «Pases»). Faltan Conducción (bloque «Control stick-bola»), Disparo y regate («Tiros y remates»), los juegos de patinaje sin gráfico y las fichas de C.P. Alcobendas. Las preguntas, «qué lee» y fácil / difícil las propone Claude y las valida la DT.
+
+## Liga: nombres con o sin tilde (10 nov)
+
+- **Qué pasó:** la temporada 3 se congeló el 9 de noviembre con «Jorge Cosín». Esa noche Jorge entró desde un móvil nuevo (su `lgJoin` es del 9 a las 21:10) y su perfil quedó como «Jorge Cosin». `normName` comparaba letra a letra, así que en su móvil salía «Esta temporada empezó sin ti», no cobraba sus partidos y su equipo jugaba con la foto por defecto (`lgSnap` no le encontraba).
+- **Arreglo:** `normName` (plantilla) y `norm` (`cloud.js`) quitan tildes, pasan a minúsculas y juntan espacios: «Jorge Cosín» = «Jorge Cosin» = «JORGE  COSIN». `renameCoach` deja cambiar solo una tilde (compara el texto exacto) y `renameDeep` cambia también las variantes.
+- **Prueba:** al final de `web_nombres`, la temporada se reescribe con el nombre en otra forma y el entrenador tiene que seguir jugando.
+- `web_cuentas` usa ahora el puerto 8776: con el 8766 fallaba a veces al pasar todas seguidas.
+
+## Recreativa: cinco juegos arcade de hockey (10 nov)
+
+- **`femenino/arcade.js`** (Canvas 2D, sin librerías, sin construcción): `SMBArcade.jugar({modo, avatarSrc, seed, titulo, cele, sonido, onEnd})`, `SMBArcade.JUEGOS`, `SMBArcade.MODOS`. Pone su propia capa (`.ar-ov`, estilos inyectados), pausa al cambiar de app, teclado, toques, deslizamientos y botones (`.ar-pad`). Todo sale de la semilla (`rng`).
+  - `muro` «Rompe la defensa» (Breakout): vallas de un toque y defensoras de dos; detrás, la portería (gol = 100 × nivel); premios stick largo y vida. Resultado {puntos, bolas, goles, nivel, combo}.
+  - `cruza` «Cruza la pista» (Frogger): 13 filas, medio campo para descansar, tres porterías que llenar; tiempo por vida. {puntos, bolas, goles, nivel}.
+  - `conduce` «Conduce y recoge» (Snake): cada bola suelta suma una compañera a la fila; cada 5, un cono; bola de oro. {puntos, bolas, nivel, combo = largo de la fila}.
+  - `invasion` «Invasión rival» (Space Invaders): tiras sola, un tiro cada vez; muros de conos; árbitro que cruza (premio). {puntos, bolas, eliminadas, nivel = oleada}.
+  - `tetris` «Tetris de hockey»: bolsa de 7 con semilla, sombra de caída, giro con empujón, puntos 40/100/300/800 × nivel. {puntos, bolas, lineas, nivel}.
+- **Jugadoras:** `index.html` carga `arcade.js` antes que `juegos.js`; `SMBJuego.jugar` manda estos modos a `SMBArcade` (con el sonido de la app). `SMBJuego.JUEGOS` tiene ahora ocho. `delDia`: hasta el 10 de noviembre, la rotación de tres de siempre; desde el 11, `patina, muro, penaltis, cruza, portera, conduce, tetris, invasion` empezando por `muro` (el 10 tocó `patina`). Misiones nuevas por juego en `MISIONES` (app.js). Las monedas siguen saliendo de `r.bolas`. `sw.js` (versión `smbf-20261110a`) guarda `arcade.js`.
+- **Entrenadores:** Liga → «Recreativa» (solo en la web; carga `femenino/arcade.js` la primera vez). No da puntos ni monedas. El récord se guarda en `game.arc` {modo: puntos}, sube en el perfil como `pj.arc` y `cloud.js` lo copia a `bank.coaches[].arc`; cada ficha enseña tu récord y el top 3 (`arcTop`).
+- **Pruebas:** `fem_arcade` (los cinco en un móvil hasta el final, con capturas en `_capturas/arcade/`) y `web_arcade` (la pestaña, una partida, récord en el perfil y top 3).

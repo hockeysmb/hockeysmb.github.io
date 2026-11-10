@@ -13,7 +13,7 @@ CFG="window.SMB_FIREBASE={apiKey:'x',authDomain:'x',projectId:'demo',appId:'x'};
 DT={'uid':'dtuid000000000000000000000001','email':'dt@smb.es','name':'Carlos Manzano'}
 O=SHOTS+'lav/after/'
 async def main():
-  srv=subprocess.Popen(['python3','-m','http.server','8766','-d',WEB],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+  srv=subprocess.Popen(['python3','-m','http.server','8776','-d',WEB],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
   await asyncio.sleep(1)
   try:
     async with async_playwright() as p:
@@ -25,7 +25,7 @@ async def main():
       await ctx.add_init_script(path=FAKEFB)
       pg=await ctx.new_page(); pg.on('pageerror',lambda e:errs.append(str(e)))
       await pg.clock.set_system_time(__import__('datetime').datetime(2026,10,16,12,0,0))
-      U='http://localhost:8766/'
+      U='http://localhost:8776/'
       await pg.goto(U); await pg.wait_for_timeout(600)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-cl="google"]'); await pg.wait_for_timeout(400)
       await pg.set_input_files('#cl-bankfile', LIVE); await pg.click('[data-cl="import"]'); await pg.wait_for_timeout(800)

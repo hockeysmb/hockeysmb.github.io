@@ -8,7 +8,16 @@
   const ESTELAS = { granate: ['#681825', '#a8394b'], rosa: ['#f59797', '#ffc9c9'], menta: ['#4fbf9f', '#a6ead6'], oro: ['#e0b23c', '#fff1b8'],
     arcoiris: ['#ff5a5a', '#ffb84d', '#ffe44d', '#5ad16b', '#4da6ff', '#a36bff'], fuego: ['#ff3b1f', '#ff9a1f', '#ffd21f'] };
   const JUEGOS = [['patina', 'Patina y marca', 'Esquiva, regatea y marca leyendo a la portera'], ['penaltis', 'Tanda de penaltis', 'Apunta y elige la altura. ¿Cuántos seguidos?'], ['portera', 'La portera', 'Hoy paras tú. Ojo con los amagos']];
-  const delDia = fecha => { const [y, m, d] = fecha.split('-').map(Number), n = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2026, 9, 26)) / 864e5); return JUEGOS[((n % 3) + 3) % 3]; };
+  // 10 nov: se suman los cinco de la recreativa (arcade.js). Hasta el 10 de noviembre, la rotación de antes (no cambia el juego de un día ya empezado);
+  // desde el 11, ocho juegos alternando los de siempre con los nuevos.
+  const ARC = (window.SMBArcade && window.SMBArcade.JUEGOS) || [];
+  JUEGOS.push(...ARC);
+  const ROTA = ['patina', 'muro', 'penaltis', 'cruza', 'portera', 'conduce', 'tetris', 'invasion'].map(k => JUEGOS.find(j => j[0] === k)).filter(Boolean);
+  const delDia = fecha => {
+    const [y, m, d] = fecha.split('-').map(Number), dia = Date.UTC(y, m - 1, d), n = Math.round((dia - Date.UTC(2026, 9, 26)) / 864e5);
+    if (dia < Date.UTC(2026, 10, 11) || ROTA.length < 8) return JUEGOS[((n % 3) + 3) % 3];
+    const k = Math.round((dia - Date.UTC(2026, 10, 11)) / 864e5) + 1; return ROTA[((k % ROTA.length) + ROTA.length) % ROTA.length]; // +1: el 10 tocó «Patina y marca», el 11 empieza la recreativa
+  };
   const hex = c => parseInt(c.replace('#', ''), 16);
   // sonidos sencillos (sin archivos)
   let AC = null;
@@ -390,6 +399,6 @@
     }, '#f3f7fb');
   }
 
-  const jugar = o => o.modo === 'penaltis' ? penaltis(o) : o.modo === 'portera' ? portera(o) : patina(o);
+  const jugar = o => o.modo === 'penaltis' ? penaltis(o) : o.modo === 'portera' ? portera(o) : (window.SMBArcade && window.SMBArcade.MODOS.includes(o.modo)) ? window.SMBArcade.jugar(Object.assign({}, o, { sonido: 'smbf-sonido' })) : patina(o);
   window.SMBJuego = { jugar, start: patina, penaltis, portera, ESTELAS, JUEGOS, delDia, cargarPhaser, _rng: rng, _beep: beep };
 })();
