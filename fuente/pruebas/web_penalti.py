@@ -50,7 +50,7 @@ async def main():
       await setg("g.cofres=Object.assign({n:0,keys:[]},g.cofres||{}); g.cofres.n=0; g.penAt=Date.now()-3600e3*7.5; g.log.push({key:'rich',pts:200,why:'x',date:'2026-10-10'})")
       await nav('inicio'); await pg.wait_for_timeout(400); await pg.screenshot(path=f'{O}{W}_w_home.png', clip={'x':0,'y':0,'width':W,'height':420})
       await nav('liga'); await pg.wait_for_timeout(300); await pg.screenshot(path=f'{O}{W}_w_liga.png', clip={'x':0,'y':0,'width':W,'height':520})
-      await pg.click('[data-lgtab="equipo"]'); await pg.wait_for_timeout(300); await pg.click('#v-liga [data-cofre]'); await pg.wait_for_timeout(700); await shot('w_cofre')
+      await pg.click('[data-lgtab="pizarra"]'); await pg.wait_for_timeout(300); await pg.click('#v-liga [data-cofre]'); await pg.wait_for_timeout(700); await shot('w_cofre')
       bal0=await pg.evaluate("document.querySelector('.cf-hint') && document.querySelector('.cf-hint').textContent")
       print('hint', bal0)
       await pg.click('[data-cf="pagar"]'); await pg.wait_for_timeout(500); await shot('w_pagar')

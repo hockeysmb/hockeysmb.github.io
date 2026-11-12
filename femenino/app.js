@@ -1542,17 +1542,39 @@
     const n = Object.assign(cbDef(), { n: c.n, asc: c.asc + 1 }); draft.cbFx = { asc: n.asc, t: Date.now() }; await cbGuarda(n); };
   actions.cbnombre = async () => { draft.cbNom = !draft.cbNom; render(); };
   actions.cbpon = async b => { const c = cbMio(); c.n = [b.dataset.p != null ? +b.dataset.p : c.n[0], b.dataset.n != null ? +b.dataset.n : c.n[1]]; await cbGuarda(c); };
-  const cbPista = () => `<svg class="cb-rk" viewBox="0 0 64 44" aria-hidden="true"><rect x="1" y="1" width="62" height="42" rx="10" fill="#8e2236" stroke="#f6dfe3" stroke-width="1.5"/><rect x="8" y="10" width="48" height="26" rx="6" fill="#eef3f8"/><line x1="32" y1="10" x2="32" y2="36" stroke="#d93a3a"/><circle cx="32" cy="23" r="5" fill="none" stroke="#d93a3a"/><rect x="8" y="4" width="48" height="4" rx="2" fill="#f6dfe3"/><rect x="8" y="38" width="48" height="3" rx="1.5" fill="#f6dfe3"/></svg>`;
+  // el pabellón del club, dibujado: crece con cada mejora (más grande con la pista, afición con las gradas, quiosco con la cantina,
+  // canteranas con la cantera, bus aparcado y una bandera por categoría)
+  function cbEscena(c, T) {
+    const I = c.i, tier = I.pista < 3 ? 0 : I.pista < 6 ? 1 : 2, W = [120, 170, 230][tier], H = [70, 88, 104][tier], x0 = 170 - W / 2, y0 = 150 - H, cols = ['#681825', '#f6dfe3', '#ffcf33', '#8e2236', '#2f6fd6', '#2e6b46'];
+    const fan = (x, y, k) => `<g transform="translate(${x},${y})"><rect x="-3" y="-2" width="6" height="9" rx="2.6" fill="${cols[k % cols.length]}"/><circle cy="-5" r="3" fill="${['#f2c9a5', '#e9b98f', '#c98f66'][k % 3]}"/><path d="M-3 -1h6" stroke="#fff" stroke-width="1.4"/></g>`;
+    let fans = ''; const nf = Math.min(30, I.gradas * 3); for (let k = 0; k < nf; k++) fans += fan(22 + (k % 15) * 21 + (k >= 15 ? 10 : 0), 176 + (k >= 15 ? 12 : 0), k);
+    let win = ''; const nw = [2, 4, 6][tier]; for (let k = 0; k < nw; k++) win += `<rect x="${x0 + 14 + k * (W - 28 - 16) / Math.max(1, nw - 1)}" y="${y0 + 26}" width="16" height="${tier ? 22 : 16}" rx="3" fill="#bfe0f2" stroke="#fff" stroke-width="1.5"/>`;
+    let flags = ''; for (let k = 0; k <= c.asc; k++) { const fx_ = 170 + (k - c.asc / 2) * 26; flags += `<path d="M${fx_} ${y0 - 34}v22" stroke="#6f6365" stroke-width="1.6"/><path d="M${fx_} ${y0 - 34}l13 4-13 5z" fill="${k === c.asc ? '#ffcf33' : '#f6dfe3'}"/>`; }
+    let kids = ''; for (let k = 0; k < Math.min(4, I.cantera); k++) kids += `<g transform="translate(${32 + k * 16},${148 - (k % 2) * 6}) scale(.8)"><rect x="-3" y="-2" width="6" height="8" rx="2.6" fill="#8e2236"/><circle cy="-5" r="3" fill="#f2c9a5"/><path d="M3 1l5 5" stroke="#7a4a1e" stroke-width="1.3" stroke-linecap="round"/></g>`;
+    return `<svg class="cb-esc" viewBox="0 0 340 200" role="img" aria-label="Tu pabellón: pista de nivel ${I.pista}, gradas de nivel ${I.gradas}">
+      <defs><linearGradient id="cbsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3f2"/><stop offset="1" stop-color="#e9f6fd"/></linearGradient></defs>
+      <rect width="340" height="200" fill="url(#cbsky)"/><circle cx="296" cy="30" r="14" fill="#ffe27a"/><path d="M30 34q10-10 22-2 12-8 20 4 8 2 6 10H26q-4-8 4-12z" fill="#fff" opacity=".85"/>
+      <path d="M0 150q85-16 170-6t170-8v64H0z" fill="#b9dba6"/><rect y="164" width="340" height="36" fill="#d9cfc4"/><path d="M0 164h340" stroke="#fff" stroke-width="2" stroke-dasharray="14 10"/>
+      ${I.cantera ? `<rect x="14" y="128" width="78" height="30" rx="8" fill="#eef3f8" stroke="#fff" stroke-width="2.4"/><path d="M53 128v30" stroke="#d93a3a" stroke-opacity=".5"/>${kids}` : ''}
+      ${flags}
+      <path d="M${x0 - 6} ${y0 + 12}q${W / 2 + 6}-${[26, 34, 46][tier]} ${W + 12} 0v6h-${W + 12}z" fill="#8e2236"/><path d="M${x0 - 6} ${y0 + 12}q${W / 2 + 6}-${[26, 34, 46][tier]} ${W + 12} 0" fill="none" stroke="#ffcf33" stroke-width="2.4"/>
+      <rect x="${x0}" y="${y0 + 16}" width="${W}" height="${H - 16}" fill="#f6eeec" stroke="#681825" stroke-width="2.4"/>${win}
+      <rect x="${170 - Math.min(W - 20, 96) / 2}" y="${y0 + 2}" width="${Math.min(W - 20, 96)}" height="15" rx="4" fill="#1d1418"/><text x="170" y="${y0 + 13}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#ffcf33" font-family="sans-serif">${esc(cbNombre(c).toUpperCase())}</text>
+      <rect x="156" y="${150 - 30}" width="28" height="30" rx="3" fill="#681825"/><path d="M170 ${150 - 30}v30" stroke="#f6dfe3"/><rect x="150" y="${150 - 38}" width="40" height="6" rx="3" fill="#eadfe1"/><rect x="150" y="${150 - 38}" width="${Math.max(3, Math.round(40 * T.h / cbHoras(c)))}" height="6" rx="3" fill="#ffcf33" id="cb-door"/>
+      ${I.cantina ? `<g transform="translate(${Math.min(300, x0 + W + 34)},118)"><rect x="-20" y="8" width="40" height="26" rx="2" fill="#fff" stroke="#681825" stroke-width="2"/><path d="M-24 8l5-12h38l5 12z" fill="#681825"/><path d="M-12 -4l-3 12h7l1-12zM4 -4l-1 12h7l-3-12z" fill="#fff"/><rect x="-12" y="14" width="24" height="10" rx="1.5" fill="#2b2024"/><circle cy="19" r="3" fill="#ffcf33"/></g>` : ''}
+      ${I.bus ? `<g transform="translate(250,160)"><rect x="-44" y="-14" width="88" height="28" rx="7" fill="#681825"/><rect x="-38" y="-9" width="62" height="11" rx="2" fill="#bfe0f2"/><path d="M-22 -9v11M-6 -9v11M10 -9v11" stroke="#681825" stroke-width="2"/><rect x="28" y="-9" width="12" height="14" rx="2" fill="#bfe0f2"/><rect x="-44" y="5" width="88" height="3" fill="#ffcf33"/><circle cx="-24" cy="15" r="6" fill="#1d1418"/><circle cx="24" cy="15" r="6" fill="#1d1418"/><circle cx="-24" cy="15" r="2.2" fill="#c9b8bb"/><circle cx="24" cy="15" r="2.2" fill="#c9b8bb"/></g>` : ''}
+      ${fans}</svg>`;
+  }
   function clubHTML(todos, yo_) {
     if (!cbDe(yoJ()) && !J.cbInit && !J.sinReglas) { J.cbInit = true; setTimeout(() => cbGuarda(cbDef()), 0); } // el club se funda la primera vez que se abre
     const c = cbMio(), T = cbTaq(c), H = cbHoy(), nv = cbNivel(c), meta = CB_META[c.asc], fxc = draft.cbFx && Date.now() - draft.cbFx.t < 6000 ? draft.cbFx : null;
     const inst = CB_INST.map(([k, n, ic, I]) => { const lv = c.i[k], cerr = I.min && nv < I.min, max = I.max && lv >= I.max, p = cbCoste(k, c);
-      const d = k === 'cantina' ? `La taquilla aguanta ${cbHoras(c)} h${max ? '' : ' · +1 h'}` : k === 'bus' ? `+${lv * 10} % de afición${max ? '' : ' · +10 %'}` : `+${fmtInt(I.b * lv)} por hora${cerr ? '' : ' · +' + I.b}`;
-      return `<div class="cb-in${cerr ? ' off' : ''}">${fx(ic)}<span><b>${n}${lv ? ' · nivel ' + lv : ''}</b><small>${cerr ? `Se abre con el club en el nivel ${I.min}` : d}</small></span>
-        ${cerr ? '<span class="cb-lock">Cerrado</span>' : max ? '<span class="cb-lock">Al máximo</span>' : `<button class="btn small${c.af >= p ? ' primary' : ''}" type="button" data-a="cbmejora" data-k="${k}"${c.af >= p ? '' : ' aria-disabled="true"'}>${fmtInt(p)}</button>`}</div>`; }).join('');
+      const d = cerr ? `Club en nivel ${I.min}` : k === 'cantina' ? `Taquilla de ${cbHoras(c)} h` : k === 'bus' ? `+${lv * 10} % de afición` : `+${fmtInt(I.b * lv)} por hora`;
+      return `<div class="cb-in${cerr ? ' off' : ''}">${fx(ic)}<b>${n}</b><span class="cb-lv">${cerr ? 'Cerrado' : 'Nivel ' + lv}</span><small>${d}</small>
+        ${cerr ? '' : max ? '<span class="cb-lock">Al máximo</span>' : `<button class="btn small${c.af >= p ? ' primary' : ''}" type="button" data-a="cbmejora" data-k="${k}"${c.af >= p ? '' : ' aria-disabled="true"'} aria-label="Mejorar ${n} por ${fmtInt(p)} aficionados">▲ ${fmtInt(p)}</button>`}</div>`; }).join('');
     const rank = todos.map(([u, d]) => [u, d, cbDe(d)]).filter(x => x[2]).concat(todos.some(([u, d]) => u === yo_ && cbDe(d)) ? [] : [[yo_, Object.assign({ n: miNombre() }, yoJ()), c]])
       .sort((a, b) => b[2].asc - a[2].asc || cbNivel(b[2]) - cbNivel(a[2]) || b[2].tot - a[2].tot);
-    return `<section class="cb-hero"><div class="cb-id">${cbPista()}<div><h2>${esc(cbNombre(c))}</h2><span>Categoría ${CB_CATS[c.asc]} · nivel ${nv}</span></div><button type="button" class="cb-ed" data-a="cbnombre">${draft.cbNom ? 'Cerrar' : 'Nombre'}</button></div>
+    return `<section class="cb-hero">${cbEscena(c, T)}<div class="cb-id"><div><h2>${esc(cbNombre(c))}</h2><span>Categoría ${CB_CATS[c.asc]} · nivel ${nv}</span></div><button type="button" class="cb-ed" data-a="cbnombre">${draft.cbNom ? 'Cerrar' : 'Nombre'}</button></div>
         ${draft.cbNom ? `<div class="cb-nom"><div class="cb-ops">${CB_PRE.map((p, i) => `<button type="button" data-a="cbpon" data-p="${i}" aria-pressed="${c.n[0] === i}">${p}</button>`).join('')}</div><div class="cb-ops">${CB_NOM.map((p, i) => `<button type="button" data-a="cbpon" data-n="${i}" aria-pressed="${c.n[1] === i}">${p}</button>`).join('')}</div></div>` : ''}
         <div class="cb-af"><b class="num" id="cb-af">${fmtInt(c.af)}</b><span>aficionados · +${fmtInt(cbRate(c))} por hora</span></div>
         ${fxc && fxc.g ? `<span class="cb-fx" role="status">+${fmtInt(fxc.g)} aficionados${fxc.m > 1 ? ` (×${fxc.m} por lo de hoy)` : ''}</span>` : fxc && fxc.asc ? `<span class="cb-fx" role="status">¡Ascenso a ${CB_CATS[fxc.asc]}! Tu club gana un ${fxc.asc * 25} % más para siempre.</span>` : ''}
@@ -1560,17 +1582,16 @@
           <div class="cb-bar"><i id="cb-bar" style="width:${Math.round(T.h / cbHoras(c) * 100)}%"></i></div></div>
         <button class="btn big cb-go" type="button" data-a="cbcobrar"${T.base >= 1 ? '' : ' aria-disabled="true"'}>Cobrar <span id="cb-go">${fmtInt(T.base * H.m)}</span>${H.m > 1 ? ` · ×${H.m}` : ''}</button></section>
       <section class="card cb-hoy"><div class="card-h"><h2>Lo de hoy</h2><b class="cb-m">×${H.m}</b></div>
-        ${H.chips.length ? `<div class="cb-ch">${H.chips.map(([l, ok]) => `<span class="${ok ? 'ok' : ''}">${ok ? '✓' : '+'} ${l}</span>`).join('')}</div>` : ''}<p class="sub">${H.txt}</p>
-        <p class="sub">La primera partida del día al juego de hoy llena la taquilla con 2 horas más.</p></section>
+        ${H.chips.length ? `<div class="cb-ch">${H.chips.map(([l, ok]) => `<span class="${ok ? 'ok' : ''}">${ok ? '✓' : '+'} ${l}</span>`).join('')}</div>` : ''}<p class="sub">${H.txt}</p></section>
       <section class="card"><div class="card-h"><h2>Instalaciones</h2><span class="sub">se mejoran con afición</span></div><div class="cb-ins">${inst}</div></section>
       ${meta ? `<section class="card cb-asc"><div class="card-h"><h2>Ascenso a ${CB_CATS[c.asc + 1]}</h2><span class="sub">${fmtInt(Math.min(c.tot, meta))} / ${fmtInt(meta)}</span></div><div class="cb-bar v"><i style="width:${Math.min(100, Math.round(c.tot / meta * 100))}%"></i></div>
-        ${c.tot >= meta ? `<button class="btn big primary" type="button" data-a="cbascenso">Ascender a ${CB_CATS[c.asc + 1]}</button>` : ''}<p class="sub">Al ascender, el club empieza de cero en la nueva categoría, pero con un 25 % más de afición para siempre.</p></section>` : `<section class="card cb-asc"><h2>Estás en lo más alto</h2><p class="sub">Tu club juega en Europa. No hay más ascensos: a seguir mejorándolo.</p></section>`}
+        ${c.tot >= meta ? `<button class="btn big primary" type="button" data-a="cbascenso">Ascender a ${CB_CATS[c.asc + 1]}</button>` : ''}<p class="sub">Al ascender empiezas de cero, con un 25 % más de afición para siempre.</p></section>` : `<section class="card cb-asc"><h2>Estás en lo más alto</h2><p class="sub">Tu club juega en Europa. No hay más ascensos: a seguir mejorándolo.</p></section>`}
       <section class="card"><div class="card-h"><h2>Los clubes del equipo</h2><span class="sub">categoría y nivel</span></div>
         <ol class="cb-rank">${rank.map(([u, d, k], i) => `<li class="${u === yo_ ? 'me' : ''}"><span class="lg-n">${i + 1}</span><span class="lg-av">${avatarSVG(d.av, d.lv || 0, d.n)}</span><span class="cb-rn"><b>${esc(cbNombre(k))}</b><small>${esc(d.n || '')} · ${CB_CATS[k.asc]}</small></span><span class="pill">Nv ${cbNivel(k)}</span></li>`).join('')}</ol></section>`;
   }
   // la taquilla sube sola en pantalla (sin volver a pintar todo)
   setInterval(() => { const el = document.getElementById('cb-tq'); if (!el || !me) return; const c = cbMio(), T = cbTaq(c), H = cbHoy(), g = document.getElementById('cb-go'), b = document.getElementById('cb-bar');
-    el.textContent = fmtInt(T.base); if (g) g.textContent = fmtInt(T.base * H.m); if (b) b.style.width = Math.round(T.h / cbHoras(c) * 100) + '%';
+    el.textContent = fmtInt(T.base); if (g) g.textContent = fmtInt(T.base * H.m); if (b) b.style.width = Math.round(T.h / cbHoras(c) * 100) + '%'; const dr = document.getElementById('cb-door'); if (dr) dr.setAttribute('width', Math.max(3, Math.round(40 * T.h / cbHoras(c))));
     const bt = document.querySelector('.cb-go'), tt = document.getElementById('cb-tt'); if (bt) { if (T.base >= 1) bt.removeAttribute('aria-disabled'); else bt.setAttribute('aria-disabled', 'true'); }
     if (tt) tt.textContent = cbFalta(c, T); }, 2000);
   function retoView() {

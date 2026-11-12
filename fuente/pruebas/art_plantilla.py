@@ -11,7 +11,7 @@ async def main():
     ctx=await b.new_context(viewport={'width':390,'height':844}, device_scale_factor=2); await ctx.add_init_script('const OWNER=false;'+MOCK+G)
     pg=await ctx.new_page(); pg.on('pageerror',lambda e:errs.append(str(e)))
     await pg.goto(ART_URL); await pg.wait_for_timeout(800)
-    await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(400)
+    await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(400); await pg.click('.pb [data-lgtab="equipo"]'); await pg.wait_for_timeout(300)
     el=await pg.query_selector('.club-t'); await el.screenshot(path=O+'teaser.png')
     await pg.click('.club-t [data-club="plantilla"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=O+'plantilla.png', full_page=True)
     await pg.click('[data-cltab="entrenar"]'); await pg.click('[data-cltrain="tec"]'); await pg.wait_for_timeout(200)

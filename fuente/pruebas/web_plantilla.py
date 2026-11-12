@@ -45,7 +45,7 @@ async def main():
       async def nav(z): await pg.click(f'[data-nav="{z}"]'); await pg.wait_for_timeout(300)
       ks=await pg.evaluate("Object.keys(window.__fake.db()).filter(k=>k.startsWith('profiles/'))"); print('profiles', ks)
       me=await pg.evaluate("window.SMB_CLOUD.mk.me()"); print('me', me)
-      await nav('liga'); await pg.wait_for_timeout(500)
+      await nav('liga'); await pg.wait_for_timeout(500); await pg.click('.pb [data-lgtab="equipo"]'); await pg.wait_for_timeout(300)   # el vestuario
       await pg.click('.club-t [data-club="plantilla"]'); await pg.wait_for_timeout(300)
       # poner a la venta el primero de pista
       await pg.click('.pl-list >> nth=1 >> [data-clsell] >> nth=0'); await pg.wait_for_timeout(200)

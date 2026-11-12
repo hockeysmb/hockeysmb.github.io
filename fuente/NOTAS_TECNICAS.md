@@ -469,3 +469,14 @@ Lo pidió Carlos: un juego incremental que les tenga metidos. Diseño: produce s
   - Producción `cdRate` = 50·grada + 80·tienda por hora; taquilla de 8 h. Al cobrar se multiplica por el trabajo de la semana (`cdSemana`, de lunes a domingo): ejercicio nuevo (`ex:` en `game.log` o ejercicio suyo con `alta` de esta semana en el banco), sesión completa (`ses:`) y entreno en modo pista (`pista:`). De ×1 a ×4.
   - Ventajas, con tope: gimnasio (máx. 2) da un entreno más al día por nivel (`clTrainDay`); fisioterapia (máx. 3), +20 % de recuperación de forma por nivel (`clDays`); cantera (máx. 5), un juvenil cada lunes si hay sitio (`cdJuvenil`, desde `clubSync`; el primero, el lunes siguiente a construirla); ojeadores (máx. 2), un jugador más en el mercado por nivel (`clMarket`, desde el día siguiente). Concentración: 1.500 de presupuesto, toda la plantilla al 100 % de forma, una vez al día.
 - **Pruebas:** `fem_club` y `web_ciudad` (con reloj falso: taquilla, tope, multiplicador, mejoras, ascenso, juvenil del lunes).
+
+## El pabellón: la Liga por salas y «Mi club» dibujado (12 nov, mediodía)
+
+Carlos pidió menos texto y más imagen: un pabellón por el que te mueves.
+
+- **Entrenadores:** la Liga ya no tiene fila de pestañas. `ligaTab` empieza siempre en `'pabellon'` (`pabellonHTML`): un pabellón con salas, cada una un botón con su dibujo (`PB_ART`, SVG propios) y un aviso de estado (`pbEstado`).
+  - Salas (`PB_ROOMS`): Pista → `hoy` (con Hoy, Calendario y Clasificación dentro), Vestuario → `equipo` (alineación y tarjeta de la plantilla), Sala de pizarra → `pizarra` (pizarra, poder y cofres; antes iba dentro de `equipo`), Gimnasio → `openClub('entrenar')`, Despacho → `openClub('mercado')`, Taquilla → `openClub('ciudad')`, Amistosos, Recreativa (solo web) y Sala de trofeos → `votacion`.
+  - Dentro de una sala, `pbCabecera` pone «← Pabellón», el nombre y una tira de miniaturas (`.pb-mini`) para saltar a otra sala. Los botones siguen llevando `data-lgtab` y `data-club`, así que el manejador de clics es el de siempre.
+  - Ojo con CSS: `font: … var(--x, inherit)` no vale dentro de la abreviatura `font`; hay que poner peso, tamaño y familia por separado.
+- **Jugadoras:** «Mi club» abre con el pabellón dibujado (`cbEscena`), que crece con las mejoras: tres tamaños según la pista, afición según las gradas, quiosco con la cantina, canteranas con la cantera, bus aparcado y una bandera por categoría; la puerta lleva la barra de la taquilla. Las instalaciones son fichas con dibujo en vez de filas.
+- **Pruebas:** las que entraban a la Liga por pestañas pasan ahora por la sala (`web_liga`, `web_nombres`, `web_plantilla`, `art_plantilla`, `web_general`, `web_penalti`, `web_arcade`).

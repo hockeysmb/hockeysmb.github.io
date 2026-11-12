@@ -110,7 +110,7 @@ async def main():
       print('5a shared tras copia', [k.split('/')[1][:6] for k in (await pg.evaluate('Object.keys(window.__fake.db())')) if k.startswith('shared/')])
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300)
       # 5b. la DT está en el vestuario sin mandar nada y reta a Lucas
-      await pg.click('[data-lgtab="equipo"]'); await pg.wait_for_timeout(300); print('5b sync DT', await pg.inner_text('.my-liga .ml-line'))
+      await pg.click('[data-lgtab="pizarra"]'); await pg.wait_for_timeout(300); print('5b sync DT', await pg.inner_text('.my-liga .ml-line'))
       await pg.click('[data-lgtab="amistosos"]'); await pg.wait_for_timeout(300); await pg.click('.am-rival[data-name="Lucas"]'); await pg.wait_for_timeout(1500); await pg.click('[data-lv="skip"]'); await pg.click('[data-lv="vspiz"]'); await pg.wait_for_timeout(200)
       for i in range(8): await pg.wait_for_selector('[data-lv-o]:not([disabled])', timeout=10000); await pg.click('[data-lv-o]:not([disabled]) >> nth=0'); await pg.wait_for_timeout(150)
       await pg.wait_for_selector('.lv-res', timeout=10000)
