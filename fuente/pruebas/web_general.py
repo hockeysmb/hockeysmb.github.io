@@ -33,10 +33,12 @@ async def main():
       await pg.set_input_files('#cl-bankfile', LIVE); await pg.click('[data-cl="import"]'); await pg.wait_for_timeout(800)
       print('1 gate hidden', await pg.is_hidden('#cl-gate'), 'dt nav', await pg.is_visible('[data-nav="dt"]'))
       print('1 tasks in db', len([k for k in (await pg.evaluate('Object.keys(window.__fake.db())')) if k.startswith('tasks/')]))
-      # DT propone un candidato
+      # la ficha de un ejercicio del banco, con las acciones de la DT (ya sin «Candidato de la semana»)
       await pg.click('[data-nav="ejercicios"]'); await pg.wait_for_timeout(200)
-      await pg.click('#grid .tcard'); await pg.wait_for_timeout(200); await pg.click('[data-act="cand"]'); await pg.wait_for_timeout(500)
-      print('1 semana', (await pg.evaluate("JSON.parse(window.__fake.db()['club/state'].j).semana.ej")))
+      await pg.click('#grid .tcard'); await pg.wait_for_timeout(300)
+      print('1 acciones DT', (await pg.inner_text('.d-dt')).replace('\n', ' | '))
+      if await pg.locator('[data-act="cand"]').count(): errs.append('sigue el botón de candidato de la semana')
+      await pg.keyboard.press('Escape'); await pg.wait_for_timeout(200)
       await pg.click('#me-btn'); await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1200)
       # 2. Lucas crea su cuenta
       await pg.fill('#cl-email','lucas@smb.es'); await pg.fill('#cl-pass','hockey1'); await pg.click('[data-cl="up"]'); await pg.wait_for_timeout(500)
@@ -62,9 +64,9 @@ async def main():
       await pg.fill('#m-in', code); await pg.click('#m-go'); await pg.wait_for_timeout(300); print('4', await pg.inner_text('#m-msg')); await pg.click('#m-close')
       await pg.wait_for_timeout(1200)
       keys=await pg.evaluate('Object.keys(window.__fake.db())'); print('4 cloud personal', [k for k in keys if k.startswith('users/')])
-      await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300); await pg.click('[data-lgtab="votacion"]'); await pg.wait_for_timeout(300); 
-      await pg.click('[data-wk="vote"]'); await pg.wait_for_timeout(400)
-      print('4 votes', [k for k in (await pg.evaluate('Object.keys(window.__fake.db())')) if k.startswith('votes/')])
+      await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300); await pg.click('.pb [data-lgtab="hoy"]'); await pg.wait_for_timeout(300)
+      await pg.click('[data-lgtab="clasificacion"]'); await pg.wait_for_timeout(300)
+      print('4 palmarés', await pg.locator('.pts-list li').count(), '· queda algo de votación:', await pg.locator('[data-wk="vote"], [data-lgtab="votacion"]').count())
       await pg.click('[data-nav="ejercicios"]'); await pg.click('#tab-mias'); await pg.wait_for_timeout(200)
       await pg.click('#grid .tcard'); await pg.wait_for_timeout(300)
       print('4 ficha mía', (await pg.inner_text('.d-actions')).replace('\n',' | '))

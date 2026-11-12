@@ -2210,7 +2210,7 @@ function drawDetail() {
   };
   let actions = '';
   if (where === 'bank') actions = `<button class="btn primary" type="button" data-act="add-ses">Añadir a una sesión</button><button class="btn" type="button" data-act="edit-copy">Hacer mi versión</button>`
-    + (canWriteBank ? `<div class="d-dt"><span class="d-dt-k">Dirección Técnica</span><div class="actions"><button class="btn small" type="button" data-act="edit-bank">Editar y validar</button><button class="btn small" type="button" data-act="cand">${sem() && (sem().ej || []).includes(t.id) ? 'Quitar de candidatos' : 'Candidato de la semana'}</button><button class="btn small ghost" type="button" data-act="del-bank">Quitar del banco</button></div></div>` : '');
+    + (canWriteBank ? `<div class="d-dt"><span class="d-dt-k">Dirección Técnica</span><div class="actions"><button class="btn small" type="button" data-act="edit-bank">Editar y validar</button><button class="btn small ghost" type="button" data-act="del-bank">Quitar del banco</button></div></div>` : '');
   else if (where === 'club') actions = `<button class="btn primary" type="button" data-act="add-ses">Añadir a una sesión</button><button class="btn" type="button" data-act="edit-copy">Hacer mi versión</button>`
     + (canWriteBank ? `<div class="d-dt"><span class="d-dt-k">Dirección Técnica</span><div class="actions">${inBank(t) ? '<span class="sub">Ya está en el banco.</span>' : `<button class="btn small primary" type="button" data-act="to-bank">Meter en el banco</button>`}</div><p class="msg" id="d-msg" aria-live="polite"></p></div>` : '');
   else if (where === 'mine' && t.borrador) actions = `<button class="btn primary" type="button" data-act="edit-mine">Seguir editando</button><button class="btn ghost" type="button" data-act="del-mine">Borrar</button><p class="sub">Está a medias: cuando lo termines y pulses «Guardar en mis ejercicios», ${window.SMB_CLOUD ? 'lo verá el resto del cuerpo técnico y la Dirección Técnica podrá meterlo en el banco' : 'podrás usarlo en sesiones y mandarlo a la DT'}.</p>`;
@@ -2238,7 +2238,6 @@ detail.addEventListener('click', e => {
   const act = b.dataset.act; if (!act || act === 'view-big') return;
   const { t } = detailState, id = t.id;
   if (act === 'add-ses') addToSession(t);
-  else if (act === 'cand') { closeDetail(); toggleCandEj(t).then(ok => toast(ok ? 'Candidatos de la semana actualizados.' : 'No se ha podido guardar. Inténtalo otra vez.')); }
   else if (act === 'edit-copy') {
     const c = clone(t); delete c._club; delete c._ts; delete c.orig;
     c.id = 'mine-' + uid(); c.source = 'mine'; c.basedOn = t.num ? `Oller nº ${t.num}` : (t.title || 'un ejercicio del banco'); delete c.rulesCa; delete c.page;
@@ -2291,9 +2290,7 @@ function updateChrome() {
   if (k !== meKey) { meKey = k; mb.querySelector('.me-btn-av').innerHTML = avatarSVG(game.av, myLevel()); }
   mb.setAttribute('aria-current', view.zone === 'vestuario' ? 'page' : 'false');
   mb.classList.toggle('alert', !name || pjPending(name));
-  const S = sem(), mv = myVote();
-  const needVote = votesApi.state === 'ok' && S && (((S.ej || []).length && !(mv && mv.ej)) || ((S.ses || []).length && !(mv && mv.ses)));
-  document.querySelector('[data-nav="liga"]').classList.toggle('has-dot', !!needVote || (view.zone !== 'liga' && amNew().length > 0));
+  document.querySelector('[data-nav="liga"]').classList.toggle('has-dot', view.zone !== 'liga' && amNew().length > 0);
   const dtb = document.querySelector('[data-nav="dt"]'), n = canWriteBank ? pendingDT().length + ejNuevos().length : 0;
   let bd = dtb.querySelector('.nbadge'); if (!bd) { bd = document.createElement('i'); bd.className = 'nbadge'; dtb.appendChild(bd); }
   bd.textContent = n > 99 ? '99+' : String(n); bd.hidden = !n;
@@ -2502,7 +2499,7 @@ function dtRow(t) {
     <button class="btn small" type="button" data-dt-edit="${esc(t.id)}">Abrir</button></li>`;
 }
 let dtTab = 'resumen';
-const DT_TABS = [['resumen', 'Resumen'], ['revisar', 'Revisar'], ['banco', 'Banco'], ['equipo', 'Cuerpo técnico'], ['lunes', 'Liga y votación'], ['horario', 'Horario']];
+const DT_TABS = [['resumen', 'Resumen'], ['revisar', 'Revisar'], ['banco', 'Banco'], ['equipo', 'Cuerpo técnico'], ['liga', 'Liga'], ['horario', 'Horario']];
 function dtState() {
   const CL = window.SMB_CLOUD, t = isoToday(), d = dateOf(t); d.setDate(d.getDate() + 6);
   return { CL, pend: pendingDT(), nuevos: ejNuevos(), inbox: CL && CL.inboxCount ? CL.inboxCount() : 0, espera: CL && CL.waitingCount ? CL.waitingCount() : 0,
@@ -2516,9 +2513,6 @@ function dtResumenHTML(X) {
   if (X.nuevos.length) it(X.nuevos.length, 'Ejercicios nuevos del cuerpo técnico', 'De ' + esc([...new Set(X.nuevos.map(t => (t.author || '').split(' ')[0]).filter(Boolean))].join(', ')) + '. Aún no están en el banco', go('revisar', 'Revisar', true));
   if (X.pend.length) { const nt = X.pend.filter(t => !t.tipo).length; it(X.pend.length, 'Fichas por validar', [nt ? `${nt} sin clasificar` : '', X.pend.length - nt ? `${X.pend.length - nt} con «En SMB» sin validar` : ''].filter(Boolean).join(' · '), go('revisar', 'Revisar', true)); }
   if (X.espera) it(X.espera, X.espera === 1 ? 'Entrenador esperando acceso' : 'Entrenadores esperando acceso', 'Han creado su cuenta y no tienen acceso', go('equipo', 'Dar acceso', true));
-  const S = sem(), nc = S ? (S.ej || []).length + (S.ses || []).length : 0;
-  if (!nc) it(0, 'Votación sin candidatos', 'Propón un ejercicio o una sesión para que se vote esta semana', `<button class="btn small" type="button" data-dtdo="cand-ej">Proponer</button>`);
-  else { const nv = votesApi.docs.filter(d => d.semana === S.id).length + Object.values(S.extra || {}).reduce((a, v) => a + (+v || 0), 0); it(nc, (nc === 1 ? 'Candidato' : 'Candidatos') + ' en la votación', `${plural(nv, 'voto', 'votos')} · abierta desde el ${esc(fmtDay(S.desde))}`, go('lunes', 'Ver'), true); }
   // la jornada del lunes ya no la juega la DT: la liga diaria se juega sola (16 oct)
   if (X.sinPrep.length) { const by = {}; X.sinPrep.forEach(e => e.g.ent.forEach(n => { by[n] = (by[n] || 0) + 1; })); it(X.sinPrep.length, 'Entrenos sin preparar en 7 días', Object.entries(by).sort((a, b) => b[1] - a[1]).map(([n, k]) => `${esc(n)} ${k}`).join(' · '), go('equipo', 'Seguimiento'), true); }
   const B = (k, l, prim) => `<button class="btn${prim ? ' primary' : ''}" type="button" data-dtdo="${k}">${l}</button>`;
@@ -2526,7 +2520,7 @@ function dtResumenHTML(X) {
     <section class="ses-sec"><h2 class="h-sec">Qué puedes hacer</h2><div class="dt-acts">
       <div class="dt-grp"><h3>Banco</h3>${B('new', 'Crear un ejercicio')}${X.pend.length + X.nuevos.length ? `<button class="btn small primary" type="button" data-dtgo="revisar">Revisar · ${rvQueue().list.length}</button>` : ''}${B('bank', 'Ver el banco completo')}${B('code', 'Pegar un código')}${B('backup', 'Descargar copia del banco')}</div>
       <div class="dt-grp"><h3>Cuerpo técnico</h3>${B('seg', 'Seguimiento por entrenador')}${B('alta', X.CL ? 'Dar de alta a un entrenador' : 'Añadir entrenador al vestuario')}${B('puntos', 'Dar puntos')}</div>
-      <div class="dt-grp"><h3>Liga y votación</h3>${B('cand-ej', 'Proponer un ejercicio')}${B('cand-ses', 'Proponer una sesión')}${B('jornada', 'Jugar la jornada')}</div>
+      <div class="dt-grp"><h3>Liga</h3>${B('jornada', 'Jugar la jornada')}</div>
       <div class="dt-grp"><h3>Horario</h3>${B('hz-add', 'Añadir un entreno')}${B('hz-sin', 'Añadir días sin entreno')}${B('hz', 'Ver el horario')}</div>
       <div class="dt-grp"><h3>Femenino</h3><a class="btn" id="dt-fem" href="https://hockeysmb.github.io/femenino/" target="_blank" rel="noopener">App de jugadoras</a></div>
     </div></section>`;
@@ -2683,7 +2677,7 @@ function renderDT() {
   if (dtTab === 'resumen') h = dtResumenHTML(X);
   else if (dtTab === 'revisar') h = dtRevisarHTML();
   else if (dtTab === 'banco') h = dtBancoHTML(X);
-  else if (dtTab === 'lunes') h = dtSemanaHTML();
+  else if (dtTab === 'liga') h = dtLigaHTML();
   else if (dtTab === 'equipo') h = dtEquiposHTML() + dtSeguimientoHTML() + (CL ? CL.accessHTML() : '') + dtVestHTML();
   else if (dtTab === 'horario') h = dtHorarioHTML();
   box.innerHTML = h + '<p class="msg" id="dt-msg" aria-live="polite"></p>';
@@ -2691,24 +2685,6 @@ function renderDT() {
 function goDT(tab, sel, open) {
   dtTab = tab; if (view.zone !== 'dt') navigate('dt'); else render();
   requestAnimationFrame(() => { const el = sel && document.querySelector(sel); if (!el) { scrollTo({ top: 0 }); return; } if (open) { if (el.tagName === 'DETAILS') el.open = true; const d = el.closest('details'); if (d) d.open = true; } el.scrollIntoView({ block: 'center' }); const f = el.matches('input,textarea,select') ? el : el.querySelector('input,textarea,select'); if (f) f.focus({ preventScroll: true }); });
-}
-// ---------- elegir candidatos sin salir de la DT ----------
-function pickCandModal(kind) {
-  const S = sem() || {}, on = new Set(kind === 'ej' ? (S.ej || []) : []);
-  const ses = kind === 'ses' ? [...sessions.filter(sesComplete).map(s => ({ s, autor: readAuthor() || s.entrenador || '' })), ...clubSes().filter(x => sesComplete(x.s)).map(x => ({ s: x.s, autor: x.autor }))].sort((a, b) => String(b.s.fecha || '').localeCompare(String(a.s.fecha || ''))) : [];
-  const L = kind === 'ej' ? bank.tasks.map(t => ({ id: t.id, t: taskLabel(t), sub: authorOf(t), q: deacc(taskLabel(t) + ' ' + authorOf(t)) })) : ses.map((x, i) => ({ id: String(i), t: sesTitle(x), sub: 'De ' + x.autor, q: deacc(sesTitle(x) + ' ' + x.autor) }));
-  const list = q => L.filter(x => !q || x.q.includes(deacc(q))).slice(0, 60).map(x => `<li><span><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></span><button class="btn small${on.has(x.id) ? ' ghost' : ' primary'}" type="button" data-pick="${esc(x.id)}">${on.has(x.id) ? 'Quitar' : 'Proponer'}</button></li>`).join('') || '<li><span class="sub">Nada con ese nombre.</span></li>';
-  openModal(`<h2>${kind === 'ej' ? 'Proponer un ejercicio' : 'Proponer una sesión'}</h2><p class="sub">${kind === 'ej' ? 'Ejercicios del banco.' : 'Sesiones completas, tuyas y del cuerpo técnico.'} Sale en la Liga para que se vote.</p>
-    <input type="search" class="pick-q" id="m-q" placeholder="Buscar" aria-label="Buscar"><ul class="pick-list" id="m-list">${list('')}</ul>
-    <div class="row"><button class="btn" id="m-no" type="button">Cerrar</button></div>`);
-  modalCard.querySelector('#m-no').onclick = closeModal;
-  modalCard.querySelector('#m-q').oninput = e => { modalCard.querySelector('#m-list').innerHTML = list(e.target.value); };
-  modalCard.querySelector('#m-list').onclick = e => {
-    const b = e.target.closest('[data-pick]'); if (!b) return; closeModal(); dtTab = 'lunes'; render();
-    const msg = document.getElementById('dt-wk-msg');
-    if (kind === 'ej') { const t = bank.tasks.find(x => x.id === b.dataset.pick); if (t) toggleCandEj(t, msg); }
-    else { const x = ses[+b.dataset.pick]; if (x) addCandSes(x.s, x.autor, msg); }
-  };
 }
 function pickCoachModal() {
   const cs = [...(bank.coaches || [])].sort((a, b) => a.name.localeCompare(b.name, 'es'));
@@ -2738,9 +2714,7 @@ function dtDo(k) {
   else if (k === 'seg') goDT('equipo');
   else if (k === 'alta') { if (CL) goDT('equipo', '#cl-pre-name'); else addCoachModal(); }
   else if (k === 'puntos') pickCoachModal();
-  else if (k === 'cand-ej') pickCandModal('ej');
-  else if (k === 'cand-ses') pickCandModal('ses');
-  else if (k === 'jornada') goDT('lunes', '#dt-play');
+  else if (k === 'jornada') goDT('liga', '#dt-play');
   else if (k === 'hz-add') { goDT('horario'); hzModal(null); }
   else if (k === 'hz-sin') goDT('horario', '#hz-sd', true);
   else if (k === 'hz') goDT('horario');
@@ -2852,12 +2826,11 @@ function sendModal(o) {
   modalCard.querySelector('#m-copy').onclick = () => copyWithFallback(o.code, modalCard.querySelector('#m-code'), modalCard.querySelector('#m-msg'), 'Código copiado. Pégalo en el mensaje a la Dirección Técnica.');
 }
 function envStatus(x) {
-  const me = normName(x.autor || readAuthor()), S = sem(), H = bank.historial || [];
+  const me = normName(x.autor || readAuthor()), H = bank.historial || [];
   if (x.kind === 'ej') {
     const t = bank.tasks.find(b => b.source !== 'oller' && normName(b.author) === me && normName(b.title) === normName(x.title));
     if (!t) return ['Enviado', 'Pendiente de que la DT lo revise'];
-    if (H.some(h => h.ej && h.ej.id === t.id)) return ['Elegido de la semana', 'Lo votó el cuerpo técnico'];
-    if (S && (S.ej || []).includes(t.id)) return ['Candidato', 'Se está votando esta semana'];
+    if (H.some(h => h.ej && h.ej.id === t.id)) return ['Elegido de la semana', 'Lo eligió el cuerpo técnico'];
     if (t.smb && t.smb.validado) return ['Validado', 'En el banco del club, con la parte «En SMB» validada'];
     return ['En el banco', 'Ya lo ve todo el cuerpo técnico'];
   }
@@ -4751,7 +4724,6 @@ function renderVestuario() {
       <section class="ses-sec"><h3 class="h-sub">Puntos del club</h3><ul class="pts-list">
         <li><span>Ejercicio tuyo que entra en el banco del club (suman los ${BANCO_SEMANA} primeros de cada semana)</span><b>+${PTS.banco}</b></li>
         <li><span>…con la parte «En SMB» completa y validada</span><b>+${PTS.smb}</b></li>
-        <li><span>Ejercicio o sesión de la semana, por votación</span><b>+${PTS_SEM.semana}</b></li>
         <li><span>Premios de la Dirección Técnica</span><b>varía</b></li></ul>
         <h3 class="h-sub">Monedas extra (este móvil)</h3><ul class="pts-list">
         <li><span>Crear un ejercicio</span><b>+${PTS.ejercicio}</b></li>
@@ -4895,90 +4867,18 @@ function mondayISO(d) {
   return x.toISOString().slice(0, 10);
 }
 const fmtDay = iso => { if (!iso) return ''; const [y, m, d] = iso.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); };
-const sem = () => bank.semana || null;
 const coachOf = name => (bank.coaches || []).find(x => normName(x.name) === normName(name));
 const liga = () => bank.liga || [];
 const lastJornada = () => liga()[liga().length - 1] || null;
 const thisWeekPlayed = () => liga().some(j => j.week === mondayISO());
 
-// ---------- votos (db) ----------
-const votesApi = { state: 'off', db: null, me: null, docs: [], busy: false };
-// state: off = no hay base de datos en esta vista · ok = puede votar · ro = ve los votos pero no puede votar
-function myVote() { const S = sem(); const v = votesApi.docs.find(d => d._id === votesApi.me); return v && S && v.semana === S.id ? v : null; }
-function votesFor(cand) {
-  const S = sem(); if (!S) return 0;
-  const extra = +((S.extra || {})[cand] || 0);
-  return extra + votesApi.docs.filter(d => d.semana === S.id && (d.ej === cand || d.ses === cand)).length;
-}
-async function initVotes() {
-  if (!(window.claude && typeof window.claude.use === 'function')) return;
-  try {
-    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
-    if (!db) return;
-    votesApi.db = db; votesApi.state = 'ro';
-    let id = null, w = null;
-    try { id = user ? await user.id() : null; } catch (e) {}
-    try { w = user ? await user.can('data.write') : null; } catch (e) {}
-    votesApi.me = id;
-    if (id && w !== false) votesApi.state = 'ok';
-    db.collection('votes').onSnapshot(snap => {
-      votesApi.docs = snap.docs.map(d => Object.assign({ _id: d.id }, d.data()));
-      if (['inicio', 'liga', 'dt'].includes(view.zone)) render();
-    }, () => { votesApi.state = 'off'; votesApi.docs = []; render(); });
-    render();
-  } catch (e) {}
-}
-async function castVote(kind, cand) {
-  const S = sem(); if (!S) return;
-  if (votesApi.state !== 'ok') { voteFallback(kind, cand); return; }
-  if (votesApi.busy) return;
-  const cur = myVote() || {};
-  const next = { semana: S.id, ej: cur.ej || '', ses: cur.ses || '', ts: Date.now() };
-  next[kind] = next[kind] === cand ? '' : cand;
-  votesApi.busy = true;
-  try {
-    await votesApi.db.doc('votes/' + votesApi.me).set(next);
-    toast(next[kind] ? 'Voto guardado. Puedes cambiarlo hasta el lunes.' : 'Voto quitado.');
-  } catch (e) {
-    if (e && (e.code === 'invalid_argument' || e.code === 'not_granted' || e.code === 'revoked')) { votesApi.state = 'ro'; render(); voteFallback(kind, cand); }
-    else toast('No se ha podido guardar el voto. Inténtalo en un momento.');
-  } finally { votesApi.busy = false; }
-}
-function candTitle(kind, cand) {
-  const S = sem(); if (!S) return '';
-  if (kind === 'ej') { const t = bank.tasks.find(x => x.id === cand); return t ? taskLabel(t) : ''; }
-  const c = (S.ses || []).find(x => x.cand === cand); return c ? sesTitle(c) : '';
-}
-function voteFallback(kind, cand) {
-  const S = sem();
-  const text = `Mi voto SMB · semana del ${fmtDay(S.desde)} · ${kind === 'ej' ? 'Ejercicio' : 'Sesión'} de la semana: ${candTitle(kind, cand)}`;
-  openModal(`<h2>Vota en el grupo</h2>
-    <p>Desde esta vista no se puede votar en la plataforma: hace falta entrar con una cuenta de Claude invitada por la Dirección Técnica. Copia tu voto y pégalo en el grupo de entrenadores; la Dirección Técnica lo suma el lunes.</p>
-    <textarea class="code" id="m-code" readonly aria-label="Tu voto">${esc(text)}</textarea><p class="msg" id="m-msg" aria-live="polite"></p>
-    <div class="row"><button class="btn" id="m-close" type="button">Cerrar</button><button class="btn primary" id="m-copy" type="button">Copiar mi voto</button></div>`);
-  modalCard.querySelector('#m-close').onclick = closeModal;
-  modalCard.querySelector('#m-copy').onclick = () => copyWithFallback(text, modalCard.querySelector('#m-code'), modalCard.querySelector('#m-msg'), 'Copiado. Pégalo en el grupo.');
-}
 
 // ---------- candidatos ----------
 const sesTitle = c => `${c.s.equipo || 'Sesión'}${c.s.fecha ? ' · ' + fmtShort(c.s.fecha) : ''}`;
-function newSemana() { return { id: mondayISO() + '-' + uid(), desde: isoToday(), ej: [], ses: [], extra: {} }; }
-function semWith(fn) { const S = clone(sem() || newSemana()); S.ej = S.ej || []; S.ses = S.ses || []; S.extra = S.extra || {}; fn(S); return S; }
-function toggleCandEj(t, msgEl) {
-  const on = (sem() && (sem().ej || []).includes(t.id));
-  const S = semWith(S => { S.ej = on ? S.ej.filter(x => x !== t.id) : [...S.ej, t.id]; if (on) delete S.extra[t.id]; });
-  return saveBank(bank.tasks, on ? 'Quitado de los candidatos de la semana.' : 'Candidato a ejercicio de la semana. Ya se puede votar en Inicio.', msgEl, { semana: S });
-}
-function addCandSes(s, autor, msgEl) {
-  const c = { cand: 'sc-' + uid(), autor: autor || s.entrenador || 'Sin nombre', s: clone(s) };
-  const S = semWith(S => { S.ses = [...S.ses, c]; });
-  return saveBank(bank.tasks, 'Sesión candidata a sesión de la semana. Ya se puede votar en Inicio.', msgEl, { semana: S });
-}
 function proposeSession(s) {
-  if (!sesComplete(s)) { openModal(`<h2>Sesión sin terminar</h2><p>Para proponerla como sesión de la semana tiene que tener un ejercicio en cada bloque.</p><div class="row"><button class="btn primary" id="m-no" type="button">Entendido</button></div>`); modalCard.querySelector('#m-no').onclick = closeModal; return; }
-  if (canWriteBank) { confirmModal('¿Proponer como sesión de la semana?', 'Aparece en la Liga para que la vote el cuerpo técnico.', 'Proponer', () => addCandSes(s, readAuthor() || s.entrenador, document.getElementById('msg-' + s.id))); return; }
-  sendModal({ kind: 'ses', ref: s.id, title: sesTitle({ s }), code: 'SMB4:' + toB64(JSON.stringify({ v: 4, autor: readAuthor() || s.entrenador || '', s })), head: window.SMB_CLOUD ? 'Proponer para la votación' : 'Mandar a la DT',
-    text: `Tu sesión «${sesTitle({ s })}», para la votación de la sesión de la semana. Si la DT la elige, la vota todo el cuerpo técnico; si gana, son ${PTS_SEM.semana} puntos del club.` });
+  if (!sesComplete(s)) { openModal(`<h2>Sesión sin terminar</h2><p>Para mandarla a la Dirección Técnica tiene que tener un ejercicio en cada bloque.</p><div class="row"><button class="btn primary" id="m-no" type="button">Entendido</button></div>`); modalCard.querySelector('#m-no').onclick = closeModal; return; }
+  sendModal({ kind: 'ses', ref: s.id, title: sesTitle({ s }), code: 'SMB4:' + toB64(JSON.stringify({ v: 4, autor: readAuthor() || s.entrenador || '', s })), head: 'Mandar a la DT',
+    text: `Tu sesión «${sesTitle({ s })}», para que la vea la Dirección Técnica.` });
 }
 function sesStrip(s) {
   return `<div class="cand-strip">${s.bloques.slice(0, 4).map(b => `<span>${b.task ? diagramSVG(b.task.diagram, taskLabel(b.task)) : ''}</span>`).join('')}</div>`;
@@ -4989,51 +4889,14 @@ function reviewSession(raw, out) {
   catch (e) { out.innerHTML = '<p class="msg err">Ese código de sesión no es válido. Comprueba que se ha copiado entero.</p>'; return; }
   const s = p.s;
   out.innerHTML = `<div class="cand"><div class="cand-fig">${sesStrip(s)}</div><div class="cand-txt"><b>${esc(sesTitle({ s }))}</b><small>De ${esc(p.autor || 'un entrenador')}${fundamentoText(s) ? ' · ' + esc(fundamentoText(s)) : ''}</small></div></div>
-    <div class="actions"><button class="btn" id="rv-sheet" type="button">Ver ficha</button>${canWriteBank ? '<button class="btn primary" id="rv-cand" type="button">Candidata a sesión de la semana</button>' : ''}<button class="btn" id="rv-ses" type="button">Guardar en mis sesiones</button></div><p class="msg" id="rv-msg" aria-live="polite"></p>`;
+    <div class="actions"><button class="btn" id="rv-sheet" type="button">Ver ficha</button><button class="btn" id="rv-ses" type="button">Guardar en mis sesiones</button></div><p class="msg" id="rv-msg" aria-live="polite"></p>`;
   document.getElementById('rv-sheet').onclick = () => openSheet(s);
-  const c = document.getElementById('rv-cand'); if (c) c.onclick = () => addCandSes(s, p.autor, document.getElementById('rv-msg'));
   document.getElementById('rv-ses').onclick = () => { const m = document.getElementById('rv-msg'); const ok = copySession(s); m.className = ok ? 'msg ok' : 'msg err'; m.textContent = ok ? 'Guardada en tus sesiones.' : 'Este navegador no deja guardar.'; };
 }
 function copySession(s) { const c = clone(s); c.id = 'ses-' + uid(); c.ts = Date.now(); c.fecha = isoToday(); sessions.push(c); const ok = saveSes(); render(); return ok; }
 
-// ---------- Inicio: la semana ----------
-function voteBtn(kind, cand) {
-  const mv = myVote(), on = mv && mv[kind] === cand;
-  return `<button class="btn small${on ? ' primary' : ''}" type="button" data-wk="vote" data-kind="${kind}" data-cand="${esc(cand)}" aria-pressed="${!!on}">${on ? 'Tu voto ✓' : 'Votar'}</button>`;
-}
-const countHTML = cand => votesApi.state === 'off' ? '' : `<span class="votes">${votesFor(cand)} ${votesFor(cand) === 1 ? 'voto' : 'votos'}</span>`;
-function candEjHTML(id) {
-  const t = bank.tasks.find(x => x.id === id); if (!t) return '';
-  return `<div class="cand"><button class="cand-fig" type="button" data-wk="see-ej" data-id="${esc(id)}" aria-label="Ver ${esc(taskLabel(t))}">${diagramSVG(t.diagram || {}, taskLabel(t))}</button>
-    <div class="cand-txt"><b>${esc(taskLabel(t))}</b><small>${esc(authorOf(t))}${t.tipo ? ' · ' + esc(tipoName(t.tipo)) : ''}</small><div class="cand-act">${countHTML(id)}${voteBtn('ej', id)}</div></div></div>`;
-}
-function candSesHTML(c) {
-  return `<div class="cand"><button class="cand-fig" type="button" data-wk="see-ses" data-cand="${esc(c.cand)}" aria-label="Ver la ficha">${sesStrip(c.s)}</button>
-    <div class="cand-txt"><b>${esc(sesTitle(c))}</b><small>De ${esc(c.autor)}${fundamentoText(c.s) ? ' · ' + esc(fundamentoText(c.s)) : ''}</small><div class="cand-act">${countHTML(c.cand)}${voteBtn('ses', c.cand)}</div></div></div>`;
-}
-function winnersHTML() {
-  const h = (bank.historial || [])[(bank.historial || []).length - 1]; if (!h || (!h.ej && !h.ses)) return '';
-  const t = h.ej && bank.tasks.find(x => x.id === h.ej.id);
-  return `<div class="winners">
-    ${h.ej ? `<div class="win"><span class="win-k">Ejercicio de la semana</span>${t ? `<button class="cand-fig" type="button" data-wk="see-ej" data-id="${esc(t.id)}">${diagramSVG(t.diagram || {}, taskLabel(t))}</button>` : ''}<b>${esc(h.ej.title)}</b><small>${esc(h.ej.autor)} · ${h.ej.votos} ${h.ej.votos === 1 ? 'voto' : 'votos'}</small></div>` : ''}
-    ${h.ses ? `<div class="win"><span class="win-k">Sesión de la semana</span><button class="cand-fig" type="button" data-wk="see-win" aria-label="Ver la ficha">${sesStrip(h.ses.s)}</button><b>${esc(h.ses.title)}</b><small>De ${esc(h.ses.autor)} · ${h.ses.votos} ${h.ses.votos === 1 ? 'voto' : 'votos'}</small><div class="cand-act"><button class="btn small" type="button" data-wk="copy-win">Copiar a mis sesiones</button></div></div>` : ''}
-  </div>`;
-}
-function semanaHTML(full) {
-  const S = sem(), nE = S ? (S.ej || []).length : 0, nS = S ? (S.ses || []).length : 0, win = winnersHTML();
-  if (!win && !nE && !nS) return full ? `<section class="ses-sec semana"><h2 class="h-sec">Votación de la semana ${infoBtn('votacion')}</h2><p class="sub">Esta semana todavía no hay candidatos. Si tienes una sesión que te ha funcionado, ${window.SMB_CLOUD ? 'proponla desde Sesiones: «Más…» → «Proponer para la votación»' : 'mándala desde Sesiones: «Más…» → «Mandar a la DT»'}.</p></section>` : '';
-  const how = votesApi.state === 'ok' ? 'Un voto para ejercicio y otro para sesión. Puedes cambiarlo hasta el lunes.'
-    : votesApi.state === 'ro' ? 'Con esta cuenta puedes ver los votos pero no votar aquí: al pulsar «Votar» copias tu voto para el grupo.'
-    : 'Al pulsar «Votar» copias tu voto para pegarlo en el grupo de entrenadores.';
-  return `<section class="ses-sec semana"><h2 class="h-sec">${full ? 'Votación de la semana' : 'La semana en el SMB'}</h2>
-    ${win}
-    ${nE || nS ? `<div class="vote-head"><h3 class="h-sub">Candidatos de esta semana</h3><p class="sub">${how}</p></div>
-      ${nE ? `<h4 class="h-min">Ejercicio de la semana</h4><div class="cands">${S.ej.map(candEjHTML).join('')}</div>` : ''}
-      ${nS ? `<h4 class="h-min">Sesión de la semana</h4><div class="cands">${S.ses.map(candSesHTML).join('')}</div>` : ''}` : ''}
-  </section>`;
-}
-
 // ---------- jornada: duelos ----------
+
 function rng(str) {
   let h = 1779033703 ^ str.length;
   for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
@@ -5300,14 +5163,9 @@ function openDuel(J, d) {
 // ---------- Inicio: clics ----------
 const wkClick = e => {
   const b = e.target.closest('[data-wk]'); if (!b) return;
-  const a = b.dataset.wk, S = sem();
-  if (a === 'vote') castVote(b.dataset.kind, b.dataset.cand);
-  else if (a === 'see-ej') { const t = bank.tasks.find(x => x.id === b.dataset.id); if (t) openDetail(t, 'bank'); }
-  else if (a === 'see-ses') { const c = S && S.ses.find(x => x.cand === b.dataset.cand); if (c) openSheet(c.s); }
-  else if (a === 'see-win' || a === 'copy-win') {
-    const h = bank.historial[bank.historial.length - 1]; if (!h || !h.ses) return;
-    if (a === 'see-win') openSheet(h.ses.s); else { const ok = copySession(h.ses.s); toast(ok ? 'Copiada en tus sesiones. Cámbiale el equipo y la fecha.' : 'Este navegador no deja guardar.'); }
-  }
+  const a = b.dataset.wk;
+  if (a === 'see-ej') { const t = bank.tasks.find(x => x.id === b.dataset.id); if (t) openDetail(t, 'bank'); }
+  else if (a === 'see-pal') { const h = (bank.historial || []).find(x => x.id === b.dataset.h); if (h && h.ses) openSheet(h.ses.s); }
   else if (a === 'duel') { const J = liga().find(x => x.n === +b.dataset.j); if (J) openDuel(J, J.duels[+b.dataset.i]); }
 };
 ['v-inicio', 'v-liga'].forEach(id => document.getElementById(id).addEventListener('click', wkClick));
@@ -5331,7 +5189,7 @@ function poderesHTML(name) {
       <li><span>8 posesiones, 4 cada uno. Con bola juega tu ataque y sin bola tu defensa. Ataque más alto que defensa: gol.</span></li>
       <li><span>Tu plantilla suma o resta hasta 2 en cada jugada: tu ataque contra la defensa del rival.</span></li>
       <li><span>Puede haber tarjeta azul, falta directa o penalti. Empate: penaltis a un dado.</span></li>
-      <li><span>Ganar un partido de liga (monedas)</span><b>+${LG_WIN}</b></li><li><span>Tu ejercicio o tu sesión, elegidos de la semana por votación</span><b>+${PTS_SEM.semana}</b></li></ul>`;
+      <li><span>Ganar un partido de liga (monedas)</span><b>+${LG_WIN}</b></li></ul>`;
 }
 document.getElementById('v-vestuario').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -5339,24 +5197,12 @@ document.getElementById('v-vestuario').addEventListener('click', e => {
   else if (b.dataset.vpwDuel) { const J = lastJornada(); if (J) openDuel(J, J.duels[+b.dataset.vpwDuel]); }
 });
 
-// ---------- Dirección Técnica: el lunes ----------
-const dtWeek = { extra: null, finde: {} };
-function dtSemanaHTML() {
-  const S = sem(), cs = [...(bank.coaches || [])].sort((a, b) => a.name.localeCompare(b.name, 'es'));
-  if (!dtWeek.extra) dtWeek.extra = clone((S && S.extra) || {});
-  const row = (cand, title, sub, fig, kind) => `<li class="dt-row cand-row"><span class="dt-thumb">${fig}</span><span class="dt-txt"><b>${esc(title)}</b><small>${esc(sub)} · ${votesApi.state === 'off' ? 'votos de la app: no visibles aquí' : `${votesFor(cand) - (+((S.extra || {})[cand] || 0))} ${window.SMB_CLOUD ? 'en la app' : 'en la plataforma'}`}</small></span>
-    <label class="mini-in">Del grupo<input type="number" min="0" inputmode="numeric" data-dt-extra="${esc(cand)}" value="${+(dtWeek.extra[cand] || 0)}"></label>
-    <button class="btn small ghost" type="button" data-dt-uncand="${esc(cand)}" data-kind="${kind}">Quitar</button></li>`;
-  const ej = S ? (S.ej || []).map(id => { const t = bank.tasks.find(x => x.id === id); return t ? row(id, taskLabel(t), authorOf(t), diagramSVG(t.diagram || {}, ''), 'ej') : ''; }).join('') : '';
-  const ses = S ? (S.ses || []).map(c => row(c.cand, sesTitle(c), 'De ' + c.autor, sesStrip(c.s), 'ses')).join('') : '';
+// ---------- Dirección Técnica: la jornada de la liga ----------
+const dtWeek = { finde: {} };
+function dtLigaHTML() {
+  const cs = [...(bank.coaches || [])].sort((a, b) => a.name.localeCompare(b.name, 'es'));
   const J = thisWeekPlayed(), n = liga().length + 1;
-  return `<section class="ses-sec lunes"><h2 class="h-sec">Votación de la semana ${infoBtn('votacion')}</h2>
-    <p class="sub">${S ? `Abierta desde el ${esc(fmtDay(S.desde))}. ` : ''}«Del grupo» son los votos que lleguen por WhatsApp.</p>
-    <div class="actions"><button class="btn" type="button" data-dtdo="cand-ej">Proponer un ejercicio</button><button class="btn" type="button" data-dtdo="cand-ses">Proponer una sesión</button></div>
-    ${ej || ses ? `${ej ? `<h4 class="h-min">Ejercicios</h4><ul class="dt-list">${ej}</ul>` : ''}${ses ? `<h4 class="h-min">Sesiones</h4><ul class="dt-list">${ses}</ul>` : ''}
-      <div class="actions"><button class="btn" type="button" id="dt-save-extra">Guardar votos del grupo</button><button class="btn primary" type="button" id="dt-close-vote">Cerrar votación y anunciar</button></div>`
-      : '<p class="sub">No hay candidatos esta semana.</p>'}
-    </section><section class="ses-sec"><h2 class="h-sec">Jornada ${n} de la liga</h2>
+  return `<section class="ses-sec"><h2 class="h-sec">Jornada ${n} de la liga</h2>
     ${cs.length < 2 ? '<p class="sub">Hacen falta al menos dos entrenadores en el vestuario.</p>' : J ? `<p class="sub">La jornada de esta semana ya está jugada. Se ve en Inicio.</p>` : `
       <p class="sub">Apunta los partidos del fin de semana ganados o, en formación, con el objetivo cumplido. Cuenta hasta 2 (+2 de forma cada uno).</p>
       <ul class="dt-list">${cs.map(c => `<li class="dt-row finde-row"><span class="dt-thumb">${avatarSVG(c.avatar)}</span><span class="dt-txt"><b>${esc(c.name)}</b><small>${esc(poderOf(c.poder).n)} · nivel ${levelOf(clubPoints(c.name))}</small></span>
@@ -5365,31 +5211,10 @@ function dtSemanaHTML() {
     <p class="msg" id="dt-wk-msg" aria-live="polite"></p>
   </section>`;
 }
-function closeVote() {
-  const S = sem(); if (!S) return;
-  const best = (list, f) => list.map(f).filter(x => x && x.votos > 0).sort((x, y) => y.votos - x.votos)[0] || null;
-  const tot = cand => votesApi.docs.filter(d => d.semana === S.id && (d.ej === cand || d.ses === cand)).length + (+(dtWeek.extra[cand] || 0));
-  const ej = best(S.ej || [], id => { const t = bank.tasks.find(x => x.id === id); return t && { id, title: taskLabel(t), autor: authorOf(t), oller: t.source === 'oller', votos: tot(id) }; });
-  const ses = best(S.ses || [], c => ({ cand: c.cand, title: sesTitle(c), autor: c.autor, s: c.s, votos: tot(c.cand) }));
-  const txt = [ej ? `Ejercicio: ${ej.title} (${ej.votos} ${ej.votos === 1 ? 'voto' : 'votos'})` : '', ses ? `Sesión: ${ses.title}, de ${ses.autor} (${ses.votos} ${ses.votos === 1 ? 'voto' : 'votos'})` : ''].filter(Boolean).join('. ') || 'Nadie tiene votos: no se elige nada esta semana';
-  confirmModal('¿Cerrar la votación?', `${txt}. Si hay empate gana el primero de la lista. Se anuncia en Inicio y se abre una votación nueva y vacía.`, 'Cerrar y anunciar', () => {
-    const hist = [...(bank.historial || []), { id: S.id, desde: S.desde, cerrada: isoToday(), ej, ses }].slice(-30);
-    dtWeek.extra = null;
-    saveBank(bank.tasks, 'Votación cerrada. Los elegidos ya salen en Inicio.', document.getElementById('dt-wk-msg'), { historial: hist, semana: newSemana() });
-  });
-}
 document.getElementById('v-dt').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const msg = document.getElementById('dt-wk-msg');
   if (b.dataset.dtFinde) { const k = b.dataset.dtFinde; dtWeek.finde[k] = Math.max(0, Math.min(2, (+dtWeek.finde[k] || 0) + (+b.dataset.d))); render(); }
-  else if (b.dataset.dtUncand) {
-    const cand = b.dataset.dtUncand, kind = b.dataset.kind;
-    const S = semWith(S => { if (kind === 'ej') S.ej = S.ej.filter(x => x !== cand); else S.ses = S.ses.filter(x => x.cand !== cand); delete S.extra[cand]; });
-    delete dtWeek.extra[cand];
-    saveBank(bank.tasks, 'Candidato quitado.', msg, { semana: S });
-  }
-  else if (b.id === 'dt-save-extra') { const S = semWith(S => { S.extra = clone(dtWeek.extra); }); saveBank(bank.tasks, 'Votos del grupo guardados.', msg, { semana: S }); }
-  else if (b.id === 'dt-close-vote') closeVote();
   else if (b.id === 'dt-play') {
     const J = playJornada(dtWeek.finde);
     confirmModal(`¿Jugar la jornada ${J.n}?`, `${J.duels.length} ${J.duels.length === 1 ? 'duelo' : 'duelos'}${J.rest.length ? ', descansa ' + J.rest.join(', ') : ''}. El resultado queda fijo y sale en Inicio.`, 'Jugar', () => {
@@ -5398,15 +5223,10 @@ document.getElementById('v-dt').addEventListener('click', e => {
     });
   }
 });
-document.getElementById('v-dt').addEventListener('input', e => {
-  const c = e.target.dataset && e.target.dataset.dtExtra; if (c === undefined) return;
-  dtWeek.extra[c] = Math.max(0, parseInt(e.target.value, 10) || 0);
-});
 
 
 // ================= Liga: la parte lúdica en su propia pestaña =================
 const TROPHY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 6H4.5v1.5A3 3 0 0 0 7.5 10.5M17 6h2.5v1.5a3 3 0 0 1-3 3M12 14v3.5M8.5 20.5h7M9.5 17.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-const BALLOT = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 11V4.5h7V11M10 8l1.5 1.5L14.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function nextJornadaTxt() {
   const n = liga().length + 1;
   if (thisWeekPlayed()) { const d = new Date(mondayISO()); d.setDate(d.getDate() + 7); return `Jornada ${n}: el ${fmtDay(d.toISOString().slice(0, 10))}`; }
@@ -5432,13 +5252,9 @@ function myDuelTxt() {
   return `Jornada ${J.n}: ${won ? 'ganaste' : 'perdiste'} ${scoreTxt(d)} contra ${rival}`;
 }
 function ligaTeaserHTML() {
-  const S = sem(), nC = (S ? (S.ej || []).length + (S.ses || []).length : 0), mv = myVote(), nCo = (bank.coaches || []).length;
-  const voteTxt = nC ? `${nC} ${nC === 1 ? 'candidato' : 'candidatos'}${votesApi.state === 'ok' ? (mv && (mv.ej || mv.ses) ? ' · ya has votado' : ' · te falta votar') : ''}` : 'Todavía sin candidatos esta semana';
-  const jTxt = lgTeaserTxt();
+  const nCo = (bank.coaches || []).length, jTxt = lgTeaserTxt();
   return `<section class="ses-sec liga-teaser"><div class="lt-head"><h2 class="h-sec">Esta semana en el SMB</h2><button class="btn small" type="button" data-go="liga">Ir a la Liga →</button></div>
-    ${winnersHTML()}
     <div class="lt-rows">
-      <button class="lt-row" type="button" data-go="liga">${BALLOT}<span><b>Votación de la semana</b><small>${esc(voteTxt)}</small></span><span aria-hidden="true">→</span></button>
       <button class="lt-row" type="button" data-lgtab="hoy">${TROPHY}<span><b>Liga</b><small>${esc(jTxt)}</small></span><span aria-hidden="true">→</span></button>
       ${nCo >= 2 && readAuthor() ? `<button class="lt-row${amNew().length ? ' hot' : ''}" type="button" data-go="liga">${BALL}<span><b>Amistosos</b><small>${esc(amTeaserTxt())}</small></span><span aria-hidden="true">→</span></button>` : ''}
       ${readAuthor() && game.club ? (() => { const c = game.club, l = clTrainsLeft(c), n = clOffersIn().length; return `<button class="lt-row${n ? ' hot' : ''}" type="button" data-club="${n ? 'ofertas' : l ? 'entrenar' : 'mercado'}">${TROPHY}<span><b>Tu plantilla</b><small>${esc(n ? `${n} ${n === 1 ? 'oferta' : 'ofertas'} por tus jugadores` : l ? 'Entrenamiento disponible hoy' : 'Mira los fichajes libres de hoy')}</small></span><span aria-hidden="true">→</span></button>`; })() : ''}
@@ -5458,8 +5274,10 @@ function oldJornadasHTML() {
     <ul class="duels">${J.duels.map((d, i) => `<li class="duel"><button type="button" data-wk="duel" data-j="${J.n}" data-i="${i}"><span class="duel-side${normName(d.win) === normName(d.a.name) ? ' w' : ''}">${miniAv(d.a.name)}<span>${esc(d.a.name)}</span></span><span class="duel-score">${scoreTxt(d)}<small>Ver</small></span><span class="duel-side r${normName(d.win) === normName(d.b.name) ? ' w' : ''}"><span>${esc(d.b.name)}</span>${miniAv(d.b.name)}</span></button></li>`).join('')}</ul></details>`).join('')}</section>`;
 }
 function palmaresHTML() {
-  const h = (bank.historial || []).filter(x => x.ej || x.ses).slice().reverse(); if (h.length < 2) return '';
-  return `<section class="ses-sec"><h2 class="h-sec">Elegidos de otras semanas</h2><ul class="pts-list">${h.slice(1).map(x => `<li><span>Semana del ${esc(fmtDay(x.desde))}${x.ej ? ` · Ejercicio: ${esc(x.ej.title)}` : ''}${x.ses ? ` · Sesión: ${esc(x.ses.title)} (${esc(x.ses.autor)})` : ''}</span></li>`).join('')}</ul></section>`;
+  const h = (bank.historial || []).filter(x => x.ej || x.ses).slice().reverse(); if (!h.length) return '';
+  return `<section class="ses-sec"><h2 class="h-sec">Elegidos de la semana</h2>
+    <p class="sub">El palmarés del cuerpo técnico. Los puntos que dieron siguen contando.</p>
+    <ul class="pts-list">${h.map(x => `<li><span>Semana del ${esc(fmtDay(x.desde))}${x.ej ? ` · Ejercicio: ${esc(x.ej.title)}` : ''}${x.ses ? ` · Sesión: ${esc(x.ses.title)} (${esc(x.ses.autor)})` : ''}</span>${x.ses && x.ses.s ? `<button class="btn small" type="button" data-wk="see-pal" data-h="${esc(x.id || '')}">Ver la sesión</button>` : ''}</li>`).join('')}</ul></section>`;
 }
 function myLigaHTML() {
   const name = readAuthor(); if (!name) return '';
@@ -5547,8 +5365,8 @@ const PB_ART = {
 // las salas: [pestaña o acción, nombre, dibujo, clase]
 const PB_ROOMS = [['lgtab:hoy', 'Pista', 'pista', 'r-pista'], ['lgtab:equipo', 'Vestuario', 'vestuario', ''], ['lgtab:pizarra', 'Sala de pizarra', 'pizarra', ''],
   ['club:entrenar', 'Gimnasio', 'gimnasio', ''], ['club:mercado', 'Despacho', 'despacho', ''], ['club:ciudad', 'Taquilla', 'taquilla', ''],
-  ['lgtab:amistosos', 'Amistosos', 'amistosos', ''], ['lgtab:recreativa', 'Recreativa', 'recreativa', ''], ['lgtab:votacion', 'Sala de trofeos', 'trofeos', '']];
-const PB_DE = { hoy: 'hoy', calendario: 'hoy', clasificacion: 'hoy', equipo: 'equipo', pizarra: 'pizarra', amistosos: 'amistosos', recreativa: 'recreativa', votacion: 'votacion' };
+  ['lgtab:amistosos', 'Amistosos', 'amistosos', ''], ['lgtab:recreativa', 'Recreativa', 'recreativa', '']];
+const PB_DE = { hoy: 'hoy', calendario: 'hoy', clasificacion: 'hoy', equipo: 'equipo', pizarra: 'pizarra', amistosos: 'amistosos', recreativa: 'recreativa' };
 // en la web, cada sala lleva encima su ilustración (fuente/web/pabellon/*.webp); si no carga, se queda el dibujo de debajo
 const pbImg = art => window.SMB_CLOUD ? `<img class="pb-img" src="pabellon/${art}.webp" alt="" decoding="async" onerror="this.remove()">` : '';
 function pbEstado(N) {
@@ -5590,12 +5408,11 @@ function renderLiga() {
   let body = '';
   if (ligaTab === 'hoy') body = lgHoyHTML(N);
   else if (ligaTab === 'calendario') body = lgCalHTML(N);
-  else if (ligaTab === 'clasificacion') body = lgClasHTML(N);
+  else if (ligaTab === 'clasificacion') body = `${lgClasHTML(N)}${palmaresHTML()}`;
   else if (ligaTab === 'equipo') body = `${alineacionHTML()}${clubTeaserHTML()}`;
   else if (ligaTab === 'pizarra') body = `${pizarraHTML()}${myLigaHTML()}`;
   else if (ligaTab === 'amistosos') body = amHTML() || teamHTML();
   else if (ligaTab === 'recreativa') body = recreativaHTML();
-  else body = `${semanaHTML(true)}${palmaresHTML()}`;
   box.innerHTML = `${pbCabecera(N)}
     ${inc && ligaTab !== 'equipo' ? `<button class="notice" type="button" data-club="ofertas">Tienes ${inc} ${inc === 1 ? 'oferta' : 'ofertas'} por tus jugadores <span aria-hidden="true">→</span></button>` : ''}
     ${body}`;
@@ -6030,8 +5847,6 @@ const INFO = {
     <li><b>Monedas:</b> cada punto es una moneda, y ganas más con misiones, amistosos, entrenos en pista y cofres. Se gastan en la tienda del personaje.</li>
     <li>Lo de <b>«De broma»</b> es carísimo a propósito: hay que ahorrar.</li></ul>`],
   misiones: () => ['Misiones de hoy', `<ul><li>Cada día salen 3 misiones distintas.</li><li>+${PTS_MISION} monedas por cada una y, si haces las tres, +${PTS_MISIONES} y un cofre.</li><li>Se marcan solas al hacerlas.</li></ul>`],
-  votacion: () => ['Votación de la semana', `<ul><li>La DT propone ejercicios del banco y sesiones del cuerpo técnico.</li><li>Cada uno vota un ejercicio y una sesión durante la semana.</li>
-    <li>El lunes se anuncian los elegidos; su autor suma +${PTS_SEM.semana} puntos del club.</li><li>Para proponer una sesión tuya: Sesiones → «Más…» → «Proponer para la votación».</li></ul>`],
   agenda: () => ['Tus entrenos de la semana', `<ul><li>Salen del horario del club, con tus equipos.</li><li><b>Prepararla</b> abre una sesión nueva con el equipo, la fecha y, si lo has planificado, lo que querías trabajar.</li>
     <li>Cuenta como preparada cuando hay una sesión con ese equipo y esa fecha (tuya o de un compañero del mismo grupo).</li></ul>`],
   planificar: () => ['Planificar', `<p>Tu mesociclo: qué quieres trabajar en cada entreno del mes.</p><ul><li>Escribe el foco y marca la fase del juego (y, si quieres, contenidos del modelo de juego).</li>
@@ -7530,6 +7345,5 @@ if (window.claude && typeof window.claude.use === 'function') {
     Promise.all([user.isOwner(), user.canEdit()]).then(([o]) => { canWriteBank = !!o; ownerReady = true; if (canWriteBank && askedZone === 'dt') navigate('dt'); else render(); maybeResume(); }).catch(() => {});
   }).catch(() => {});
 }
-initVotes();
 })();
 </script>

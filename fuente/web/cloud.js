@@ -1,7 +1,7 @@
 /* Banco de situaciones SMB · versión web
    Capa de nube: cuentas (Firebase Authentication) y datos (Cloud Firestore).
    La app es la misma que la del artifact; esta capa le da por debajo lo que allí daba claude.ai:
-   - window.claude.use('artifact' | 'user' | 'db' | 'downloads') con la misma forma,
+   - window.claude.use('artifact' | 'user' | 'downloads') con la misma forma,
    - window.SMB_CLOUD: sincroniza lo de cada entrenador, la bandeja de la DT y el acceso.
    Todo se guarda como texto JSON en el campo «j» porque Firestore no admite listas dentro de listas
    (los trazos de los gráficos lo son). */
@@ -54,8 +54,7 @@
   // ---------- estado ----------
   let me = null, isDT = false, member = false, readyResolve, unsub = [];
   const ready = new Promise(r => { readyResolve = r; });
-  const C = { state: undefined, tasks: null, hist: null, liga: null, profiles: {}, inbox: [], votes: [] };
-  const voteSubs = [];
+  const C = { state: undefined, tasks: null, hist: null, liga: null, profiles: {}, inbox: [] };
   let lastBank = null, assembleT = null, pulled = false, memberStarted = false;
 
   // ---------- pantalla de acceso ----------
@@ -151,7 +150,6 @@
     unsub.push(B.listenCol('historial', d => { C.hist = d; assemble(); }));
     unsub.push(B.listenCol('liga', d => { C.liga = d; assemble(); }));
     unsub.push(B.listenCol('profiles', d => { C.profiles = Object.fromEntries(d.map(x => [x.id, x.data])); assemble(); }));
-    unsub.push(B.listenCol('votes', d => { C.votes = d; voteSubs.forEach(f => f()); }));
     // retos en directo: si alguien me reta y tengo la app abierta, me sale la invitación
     const shownInv = new Set();
     unsub.push(B.listenCol('partidas', d => { d.forEach(x => { const m = Object.assign({ id: x.id }, x.data); if (m.b === me.uid && m.estado === 'invitado' && Date.now() - (m.ts || 0) < 90000 && !shownInv.has(m.id)) { shownInv.add(m.id); if (window.SMB && window.SMB.invite) window.SMB.invite(m); } }); }, () => {}));
@@ -389,15 +387,6 @@
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
         setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
       },
-    },
-    db: {
-      collection: path => ({
-        onSnapshot: (next) => {
-          const f = () => next({ docs: C.votes.map(d => ({ id: d.id, exists: true, data: () => d.data })), size: C.votes.length, empty: !C.votes.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } });
-          voteSubs.push(f); f(); return () => {};
-        },
-      }),
-      doc: path => ({ set: data => B.set(path, data) }),
     },
   };
   window.claude = { use: name => ready.then(() => shims[name] || null) };

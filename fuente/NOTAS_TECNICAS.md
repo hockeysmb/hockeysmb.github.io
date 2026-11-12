@@ -475,7 +475,7 @@ Lo pidió Carlos: un juego incremental que les tenga metidos. Diseño: produce s
 Carlos pidió menos texto y más imagen: un pabellón por el que te mueves.
 
 - **Entrenadores:** la Liga ya no tiene fila de pestañas. `ligaTab` empieza siempre en `'pabellon'` (`pabellonHTML`): un pabellón con salas, cada una un botón con su dibujo (`PB_ART`, SVG propios) y un aviso de estado (`pbEstado`).
-  - Salas (`PB_ROOMS`): Pista → `hoy` (con Hoy, Calendario y Clasificación dentro), Vestuario → `equipo` (alineación y tarjeta de la plantilla), Sala de pizarra → `pizarra` (pizarra, poder y cofres; antes iba dentro de `equipo`), Gimnasio → `openClub('entrenar')`, Despacho → `openClub('mercado')`, Taquilla → `openClub('ciudad')`, Amistosos, Recreativa (solo web) y Sala de trofeos → `votacion`.
+  - Salas (`PB_ROOMS`): Pista → `hoy` (con Hoy, Calendario y Clasificación dentro), Vestuario → `equipo` (alineación y tarjeta de la plantilla), Sala de pizarra → `pizarra` (pizarra, poder y cofres; antes iba dentro de `equipo`), Gimnasio → `openClub('entrenar')`, Despacho → `openClub('mercado')`, Taquilla → `openClub('ciudad')`, Amistosos y Recreativa (solo web). La Sala de trofeos se quitó al eliminar la votación (12 nov).
   - Dentro de una sala, `pbCabecera` pone «← Pabellón», el nombre y una tira de miniaturas (`.pb-mini`) para saltar a otra sala. Los botones siguen llevando `data-lgtab` y `data-club`, así que el manejador de clics es el de siempre.
   - Ojo con CSS: `font: … var(--x, inherit)` no vale dentro de la abreviatura `font`; hay que poner peso, tamaño y familia por separado.
 - **Jugadoras:** «Mi club» abre con el pabellón dibujado (`cbEscena`), que crece con las mejoras: tres tamaños según la pista, afición según las gradas, quiosco con la cantina, canteranas con la cantera, bus aparcado y una bandera por categoría; la puerta lleva la barra de la taquilla. Las instalaciones son fichas con dibujo en vez de filas.
@@ -488,3 +488,14 @@ Carlos pidió menos texto y más imagen: un pabellón por el que te mueves.
 - Vestuario, taquilla y despacho salieron con un granate más rojo: al optimizarlas se oscureció solo el rojo (×0,8) para igualarlas al resto.
 - Para cambiar una sala: sustituir su .webp (mismo nombre) y volver a construir.
 - **Fachada (12 nov):** en la web, la cabecera del pabellón es `pabellon/fachada.webp` (la parte de arriba de la fachada generada por Carlos) y el rótulo «Pabellón …» va dentro de su cartel. Si no carga, se ve la cabecera granate. El personaje salía descolocado porque `.pb-roof svg` también cogía el SVG del personaje: ahora es `.pb-roof > svg`.
+
+## Fuera la votación de la semana (12 nov)
+
+Carlos la quita: ya no se vota el ejercicio ni la sesión de la semana.
+
+- **Qué desaparece:** la pantalla de votación (`semanaHTML`, `candEjHTML`, `candSesHTML`, `winnersHTML`, `voteBtn`), el módulo de votos de la plataforma (`votesApi`, `initVotes`, `castVote`, `voteFallback`, colección `votes`), proponer candidatos (`toggleCandEj`, `addCandSes`, `pickCandModal`, `newSemana`, `semWith`, `sem()`), el cierre de la votación (`closeVote`, «Votos del grupo»), la Sala de trofeos del pabellón, el aviso de votación en «Te toca» y en el teaser de Inicio, el punto rojo de la Liga por votos pendientes y la ayuda `infoBtn('votacion')`.
+- **Qué se queda:** `bank.historial` **no se toca**. Es el histórico real de elegidos y de ahí salen los +25 puntos de club (`PTS_SEM.semana` en `clubLog`), así que los puntos ya ganados siguen contando. Como no se añaden entradas nuevas, no se pueden ganar más. `bank.semana` deja de leerse y escribirse; lo que haya guardado en Firestore se queda ahí sin usarse.
+- **Palmarés:** `palmaresHTML` ahora sale dentro de Pista → Clasificación y lista todas las semanas (antes se saltaba la última, que la enseñaba `winnersHTML`). Si la sesión elegida está guardada, un botón abre su ficha (`data-wk="see-pal"`).
+- **Panel de la DT:** la pestaña «Liga y votación» pasa a ser **«Liga»** (`dtTab === 'liga'`, `dtLigaHTML`) y solo tiene la jornada. `dtWeek` se queda con `finde`.
+- **Sesiones:** «Proponer para la votación» pasa a ser «Mandar a la DT» sin más (`proposeSession`); el código `SMB4:` y `reviewSession` siguen igual, sin el botón de candidata.
+- Si hubiera que recuperarla, es volver atrás el commit: no se ha borrado ningún dato.
