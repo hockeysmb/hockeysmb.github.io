@@ -451,3 +451,21 @@ Elegido por la DT en el lienzo «SMB Femenino · Opciones de diseño»: 1B, 2B, 
 - **Jugadoras:** `index.html` carga `arcade.js` antes que `juegos.js`; `SMBJuego.jugar` manda estos modos a `SMBArcade` (con el sonido de la app). `SMBJuego.JUEGOS` tiene ahora ocho. `delDia`: hasta el 10 de noviembre, la rotación de tres de siempre; desde el 11, `patina, muro, penaltis, cruza, portera, conduce, tetris, invasion` empezando por `muro` (el 10 tocó `patina`). Misiones nuevas por juego en `MISIONES` (app.js). Las monedas siguen saliendo de `r.bolas`. `sw.js` (versión `smbf-20261110a`) guarda `arcade.js`.
 - **Entrenadores:** Liga → «Recreativa» (solo en la web; carga `femenino/arcade.js` la primera vez). No da puntos ni monedas. El récord se guarda en `game.arc` {modo: puntos}, sube en el perfil como `pj.arc` y `cloud.js` lo copia a `bank.coaches[].arc`; cada ficha enseña tu récord y el top 3 (`arcTop`).
 - **Pruebas:** `fem_arcade` (los cinco en un móvil hasta el final, con capturas en `_capturas/arcade/`) y `web_arcade` (la pestaña, una partida, récord en el perfil y top 3).
+
+## Mi club y Ciudad deportiva: el incremental de las dos apps (12 nov)
+
+Lo pidió Carlos: un juego incremental que les tenga metidos. Diseño: produce solo pero con tope (con entrar una vez al día basta), y lo que más lo hace crecer es lo que queremos que hagan. Sin avisos, sin ofertas que caducan, sin dinero real.
+
+- **Jugadoras · «Mi club»** (pestaña nueva del reto, entre Liga y Duelos; `clubHTML` en `femenino/app.js`):
+  - `juego/{uid}.club` = {n: [prefijo, nombre] (índices de `CB_PRE` y `CB_NOM`: el nombre se elige de una lista, sin texto libre), af (afición), tot (ganada en esta categoría), ts (último cobro), asc (ascensos), i: {pista, gradas, cantera, cantina, bus}}. Se crea la primera vez que abre la pestaña. No hacen falta reglas nuevas de Firebase.
+  - Producción por hora `cbRate` = (40·pista + 90·gradas + 200·cantera) × (1 + 0,1·bus) × (1 + 0,25·ascensos). La taquilla (`cbTaq`) se llena en 8 h (+1 h por nivel de cantina, hasta 12).
+  - Al cobrar (`actions.cbcobrar`) lo de la taquilla se multiplica por lo de HOY (`cbHoy`): día con hockey, ×1 más uno por el antes, el después y el diario (hasta ×4); día sin hockey, ×2, y ×4 si escribe la línea del día; la DT, siempre ×4.
+  - La primera partida del día al juego de hoy adelanta la taquilla 2 horas (`terminar`).
+  - Mejoras (`cbCoste`, `CB_INST`): cantera se abre con el club en nivel 5 y el bus en nivel 10. Al mejorar se cobra antes la taquilla sin multiplicar, para no perder nada.
+  - Ascenso (`CB_META` = 150.000, 1,2 M, 8 M, 40 M de afición ganada en la categoría): Escuela → Regional → Nacional → OK Liga → Europa. Reinicia el club con +25 % para siempre. Simulado: quien contesta todo llega arriba hacia el día 130; quien contesta poco se queda en Nacional.
+  - «Los clubes del equipo»: nombre del club, nombre de pila, categoría y nivel. Nada de bienestar. La afición no se mezcla con las monedas.
+- **Entrenadores · «Ciudad deportiva»** (pestaña nueva en la plantilla, `openClub('ciudad')`, y tarjeta en Liga → Hoy; `ciudadHTML`, `cdClick` en la plantilla):
+  - `game.club.cd` = {p (presupuesto), ts, i: {grada, tienda, gim, fisio, cantera, ojeo}, juv (lunes del último juvenil), conc (día de la última concentración)}. Va con el juego de cada uno; no sube al perfil.
+  - Producción `cdRate` = 50·grada + 80·tienda por hora; taquilla de 8 h. Al cobrar se multiplica por el trabajo de la semana (`cdSemana`, de lunes a domingo): ejercicio nuevo (`ex:` en `game.log` o ejercicio suyo con `alta` de esta semana en el banco), sesión completa (`ses:`) y entreno en modo pista (`pista:`). De ×1 a ×4.
+  - Ventajas, con tope: gimnasio (máx. 2) da un entreno más al día por nivel (`clTrainDay`); fisioterapia (máx. 3), +20 % de recuperación de forma por nivel (`clDays`); cantera (máx. 5), un juvenil cada lunes si hay sitio (`cdJuvenil`, desde `clubSync`; el primero, el lunes siguiente a construirla); ojeadores (máx. 2), un jugador más en el mercado por nivel (`clMarket`, desde el día siguiente). Concentración: 1.500 de presupuesto, toda la plantilla al 100 % de forma, una vez al día.
+- **Pruebas:** `fem_club` y `web_ciudad` (con reloj falso: taquilla, tope, multiplicador, mejoras, ascenso, juvenil del lunes).

@@ -554,6 +554,30 @@ button.tkt, button.cromo, .mrc, .bal-c { cursor: pointer; -webkit-tap-highlight-
 .rt-badge { font-size: 13px; font-weight: 800; color: #2a1a00; background: #ffd21f; padding: 4px 10px; border-radius: 10px; }
 .rt-vs { margin: 0; font-weight: 700; } .rt-vs.g { color: var(--good); } .rt-vs.p { color: var(--bad); } .rt-vs.e { color: var(--warn); }
 .rt-tabs { justify-self: start; }
+/* Mi club (12 nov) */
+.cb-hero { display: grid; gap: 12px; padding: 16px; border-radius: 22px; background: #681825; color: #fff; }
+.cb-id { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; } .cb-rk { width: 64px; height: 44px; display: block; }
+.cb-id h2 { margin: 0; color: #fff; font: 700 21px var(--font-display); } .cb-id span { font-size: 12.5px; color: #f6dfe3; }
+.cb-ed { border: 0; border-radius: 12px; min-height: 40px; padding: 8px 12px; background: rgba(255, 255, 255, .14); color: #fff; font: 600 13px var(--font); cursor: pointer; }
+.cb-nom { display: grid; gap: 8px; } .cb-ops { display: flex; flex-wrap: wrap; gap: 6px; }
+.cb-ops button { border: 0; border-radius: 999px; min-height: 36px; padding: 6px 12px; background: rgba(255, 255, 255, .14); color: #fff; font: 600 13px var(--font); cursor: pointer; } .cb-ops button[aria-pressed="true"] { background: #fff; color: #681825; }
+.cb-af { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .cb-af b { font: 700 36px var(--font-display); font-variant-numeric: tabular-nums; } .cb-af span { font-size: 13px; color: #f6dfe3; }
+.cb-fx { justify-self: start; background: #ffcf33; color: #3a2a00; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 999px; animation: cbpop .5s ease-out; }
+@keyframes cbpop { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cb-fx { animation: none; } }
+.cb-tq { display: grid; gap: 6px; } .cb-tql { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: #f6dfe3; } .cb-tql b { color: #fff; font-variant-numeric: tabular-nums; }
+.cb-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .2); overflow: hidden; } .cb-bar i { display: block; height: 100%; background: #ffcf33; border-radius: 4px; transition: width .6s; }
+.cb-bar.v { background: color-mix(in srgb, var(--good) 18%, transparent); } .cb-bar.v i { background: var(--good); }
+.cb-go { background: #fff; color: #681825; border: 0; font-weight: 800; } .cb-go[aria-disabled="true"] { opacity: .55; }
+.cb-m { font: 700 24px var(--font-display); color: var(--accent); }
+.cb-ch { display: flex; flex-wrap: wrap; gap: 6px; } .cb-ch span { flex: 1 1 0; min-width: max-content; text-align: center; border-radius: 12px; padding: 8px 10px; font-size: 13px; font-weight: 700; background: var(--fill); color: var(--muted); border: 1px dashed var(--line); }
+.cb-ch span.ok { background: var(--sage); color: var(--good); border-style: solid; border-color: transparent; }
+.cb-ins { display: grid; gap: 8px; } .cb-in { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 14px; background: var(--fill); }
+.cb-in .fx { width: 36px; height: 36px; } .cb-in span { display: grid; min-width: 0; } .cb-in small { font-size: 12px; color: var(--muted); } .cb-in.off { opacity: .6; }
+.cb-in .btn { min-height: 44px; font-variant-numeric: tabular-nums; } .cb-in .btn[aria-disabled="true"] { opacity: .6; } .cb-lock { font-size: 12px; font-weight: 700; color: var(--muted); }
+.cb-asc { display: grid; gap: 8px; }
+.cb-rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; } .cb-rank li { display: grid; grid-template-columns: 22px 36px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 14px; }
+.cb-rank li.me { background: var(--blush); } .cb-rn { display: grid; min-width: 0; } .cb-rn small { font-size: 12px; color: var(--muted); }
 .podio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; padding-top: 8px; }
 .pd { display: grid; justify-items: center; gap: 2px; min-width: 0; } .pd b { font-size: 13.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pd small { font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .pd-av .av { width: 56px; height: 56px; border-radius: 50%; display: block; } .pd.p1 .pd-av .av { width: 74px; height: 74px; box-shadow: 0 0 0 3px #e0b23c; }
@@ -936,12 +960,12 @@ button.tkt.cent { cursor: pointer; text-align: left; }
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="lib/avatar.js?v=20261110a"></script>
-<script src="firebase-config.js?v=20261110a"></script>
-<script src="mascotas.js?v=20261110a"></script>
-<script src="arcade.js?v=20261110a"></script>
-<script src="juegos.js?v=20261110a"></script>
-<script src="app.js?v=20261110a"></script>
+<script src="lib/avatar.js?v=20261112a"></script>
+<script src="firebase-config.js?v=20261112a"></script>
+<script src="mascotas.js?v=20261112a"></script>
+<script src="arcade.js?v=20261112a"></script>
+<script src="juegos.js?v=20261112a"></script>
+<script src="app.js?v=20261112a"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));</script>
 </body>
 </html>

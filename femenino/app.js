@@ -1383,6 +1383,7 @@
     const mis = (y.mis && y.mis.f === t) ? { f: t, h: [...(y.mis.h || [])] } : { f: t, h: [] }, nuevas = misionesHoy(t).filter(m => !mis.h.includes(m.k) && (m.m === '*' || (m.m || 'patina') === md) && m.ok(r, duelo));
     nuevas.forEach(m => mis.h.push(m.k)); const pm = nuevas.reduce((a, m) => a + m.p, 0);
     const doc = Object.assign({}, y, perfilJ(), { bolas: (y.bolas || 0) + r.bolas, premios: (y.premios || 0) + pd + pm, mis, dias, rec: md === 'patina' ? Math.max(y.rec || 0, r.puntos) : (y.rec || 0), recs: Object.assign({}, y.recs || {}, { [md]: Math.max(recDe(y, md), r.puntos) }), partidas: (y.partidas || 0) + 1, ts: Date.now() });
+    if (prim && cbDe(y)) { const c = cbDe(y); c.ts = Math.min(c.ts, Date.now()) - 2 * 36e5; doc.club = c; }
     draft.res = Object.assign({}, r, { duelo, nuevoRec: r.puntos > recDe(y, md) && recDe(y, md) > 0, mejorHoy: delDia && r.puntos > prev && prev > 0, pd, rch, nuevas });
     J.todos[meU()] = doc; view = 'reto'; draft.rtab = duelo ? 'duelos' : draft.rtab; render(); scrollTo({ top: 0 });
     try {
@@ -1500,8 +1501,80 @@
         : `<div class="shop">${TIENDA.filter(([c]) => tt === 'personaje' ? !['estela', 'cele'].includes(c) : tt === 'estelas' ? c === 'estela' : c === 'cele').map(itemCard).join('')}</div>
           <div class="row">${tt === 'estelas' && (yoJ().estela || 'granate') !== 'granate' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="estela" data-v="granate">Volver a la estela granate</button>' : ''}${tt === 'goles' && (yoJ().cele || '¡GOL!') !== '¡GOL!' ? '<button class="btn ghost small" type="button" data-a="ponerj" data-c="cele" data-v="¡GOL!">Volver a «¡GOL!»</button>' : ''}</div>`}</section>`;
   }
+  // ================= Mi club (12 nov): el incremental del reto =================
+  // El club produce afición sola, pero la taquilla se llena en unas horas (8, hasta 12 con la cantina): basta con entrar una vez al día.
+  // Al cobrar, lo acumulado se multiplica por lo contestado HOY (antes, después y diario: ×1 a ×4; día sin hockey: ×2, y ×4 con la línea del día).
+  // La afición solo sirve para mejorar el club. Va en juego/{uid}.club = {n: [prefijo, nombre], af, tot, ts, asc, i: {pista, gradas, cantera, cantina, bus}}.
+  // Las compañeras ven el nombre del club, la categoría y el nivel. El nombre se elige de una lista (sin texto libre).
+  const CB_INST = [
+    ['pista', 'Pista', 'patin', { b: 40, c: 200, g: 1.75 }], ['gradas', 'Gradas', 'bandera', { b: 90, c: 800, g: 1.8 }],
+    ['cantera', 'Cantera', 'stick', { b: 200, c: 4000, g: 1.85, min: 5 }], ['cantina', 'Cantina', 'tienda', { c: 2500, g: 3, max: 4 }],
+    ['bus', 'Bus del club', 'cohete', { c: 15000, g: 2.4, min: 10, max: 10 }]];
+  const CB_CATS = ['Escuela', 'Regional', 'Nacional', 'OK Liga', 'Europa'], CB_META = [150000, 1200000, 8000000, 40000000];
+  const CB_PRE = ['Club', 'HC', 'CP', 'Patín', 'Hockey'], CB_NOM = ['Lobas', 'Gatas', 'Rayos', 'Tormenta', 'Aurora', 'Cometas', 'Panteras', 'Águilas', 'Centellas', 'Leonas', 'Estrellas', 'Halcones', 'Tigresas', 'Dragonas', 'Orcas', 'Linces'];
+  const cbDef = () => ({ n: [0, (miNombre() || 'a').charCodeAt(0) % CB_NOM.length], af: 0, tot: 0, ts: Date.now(), asc: 0, i: { pista: 1, gradas: 0, cantera: 0, cantina: 0, bus: 0 } });
+  const cbDe = d => { const c = (d || {}).club; return c && c.i ? Object.assign(cbDef(), c, { i: Object.assign(cbDef().i, c.i) }) : null; };
+  const cbNombre = c => `${CB_PRE[c.n[0]] || CB_PRE[0]} ${CB_NOM[c.n[1]] || CB_NOM[0]}`;
+  const cbNivel = c => Object.values(c.i).reduce((a, b) => a + b, 0);
+  const cbRate = c => (40 * c.i.pista + 90 * c.i.gradas + 200 * c.i.cantera) * (1 + 0.1 * c.i.bus) * (1 + 0.25 * c.asc);
+  const cbHoras = c => 8 + c.i.cantina;
+  const cbCoste = (k, c) => { const I = CB_INST.find(x => x[0] === k)[3]; return Math.round(I.c * Math.pow(I.g, c.i[k] - (k === 'pista' ? 1 : 0)) / 10) * 10; };
+  const cbTaq = c => { const h = Math.max(0, Math.min(cbHoras(c), (Date.now() - (c.ts || Date.now())) / 36e5)); return { h, base: Math.floor(cbRate(c) * h), cap: Math.floor(cbRate(c) * cbHoras(c)) }; };
+  // lo contestado hoy
+  function cbHoy() {
+    if (isAdmin()) return { m: 4, chips: [], txt: 'Como Dirección Técnica, tu club produce siempre al máximo.' };
+    const t = today(), d = diaHoy(), ps = partDe(calJ(), t).map(x => pdOf(x) || {});
+    if (!diaHockey(t)) { const ok = !!d.diario; return { m: ok ? 4 : 2, chips: [['Día sin hockey', true], ['¿Qué tal el día?', ok]], txt: ok ? 'Hoy está todo: tu club produce al máximo.' : 'Hoy no hay hockey: ×2. Si cuentas qué tal el día, ×4.' }; }
+    const an = !!d.antes || ps.some(p => p.pre), de = despHecho(d) || ps.some(p => p.juega), di = !!d.diario, n = [an, de, di].filter(Boolean).length;
+    const falta = !an ? 'el antes' : !de ? 'el después' : 'el diario';
+    return { m: 1 + n, chips: [['Antes', an], ['Después', de], ['Diario', di]], txt: n === 3 ? 'Hoy está todo contestado: tu club produce al máximo.' : `Contesta ${falta} y cobras ×${2 + n}.` };
+  }
+  const cbFalta = (c, T) => { const m = Math.ceil((cbHoras(c) - T.h) * 60); return m <= 0 ? 'Llena: cobra para que siga' : `Llena en ${m >= 60 ? Math.floor(m / 60) + ' h ' : ''}${m % 60} min`; };
+  const cbGuarda = async c => { const doc = Object.assign({}, perfilJ(), { club: c }); J.todos[meU()] = Object.assign({}, yoJ(), doc); render(); try { await B.merge('juego/' + meU(), doc); } catch (e) { toast('No se ha podido guardar. Revisa la conexión.'); } };
+  const cbMio = () => cbDe(yoJ()) || cbDef();
+  actions.cbcobrar = async () => { const c = cbMio(), T = cbTaq(c), H = cbHoy(), g = T.base * H.m; if (g < 1) { toast('La taquilla está vacía. Vuelve en un rato.'); return; }
+    c.af += g; c.tot += g; c.ts = Date.now(); draft.cbFx = { g, m: H.m, t: Date.now() }; await cbGuarda(c); };
+  actions.cbmejora = async b => { const c = cbMio(), k = b.dataset.k, I = (CB_INST.find(x => x[0] === k) || [])[3]; if (!I) return;
+    if ((I.min && cbNivel(c) < I.min) || (I.max && c.i[k] >= I.max)) return; const p = cbCoste(k, c); if (c.af < p) { toast(`Te faltan ${fmtInt(p - c.af)} aficionados.`); return; }
+    // al mejorar se cobra antes lo de la taquilla al ritmo viejo (sin multiplicar), para que mejorar nunca haga perder nada
+    const T = cbTaq(c); c.af += T.base - p; c.tot += T.base; c.ts = Date.now(); c.i[k]++; await cbGuarda(c); toast('¡Mejorado!'); };
+  actions.cbascenso = async () => { const c = cbMio(); if (c.asc >= CB_META.length || c.tot < CB_META[c.asc]) return;
+    const n = Object.assign(cbDef(), { n: c.n, asc: c.asc + 1 }); draft.cbFx = { asc: n.asc, t: Date.now() }; await cbGuarda(n); };
+  actions.cbnombre = async () => { draft.cbNom = !draft.cbNom; render(); };
+  actions.cbpon = async b => { const c = cbMio(); c.n = [b.dataset.p != null ? +b.dataset.p : c.n[0], b.dataset.n != null ? +b.dataset.n : c.n[1]]; await cbGuarda(c); };
+  const cbPista = () => `<svg class="cb-rk" viewBox="0 0 64 44" aria-hidden="true"><rect x="1" y="1" width="62" height="42" rx="10" fill="#8e2236" stroke="#f6dfe3" stroke-width="1.5"/><rect x="8" y="10" width="48" height="26" rx="6" fill="#eef3f8"/><line x1="32" y1="10" x2="32" y2="36" stroke="#d93a3a"/><circle cx="32" cy="23" r="5" fill="none" stroke="#d93a3a"/><rect x="8" y="4" width="48" height="4" rx="2" fill="#f6dfe3"/><rect x="8" y="38" width="48" height="3" rx="1.5" fill="#f6dfe3"/></svg>`;
+  function clubHTML(todos, yo_) {
+    if (!cbDe(yoJ()) && !J.cbInit && !J.sinReglas) { J.cbInit = true; setTimeout(() => cbGuarda(cbDef()), 0); } // el club se funda la primera vez que se abre
+    const c = cbMio(), T = cbTaq(c), H = cbHoy(), nv = cbNivel(c), meta = CB_META[c.asc], fxc = draft.cbFx && Date.now() - draft.cbFx.t < 6000 ? draft.cbFx : null;
+    const inst = CB_INST.map(([k, n, ic, I]) => { const lv = c.i[k], cerr = I.min && nv < I.min, max = I.max && lv >= I.max, p = cbCoste(k, c);
+      const d = k === 'cantina' ? `La taquilla aguanta ${cbHoras(c)} h${max ? '' : ' · +1 h'}` : k === 'bus' ? `+${lv * 10} % de afición${max ? '' : ' · +10 %'}` : `+${fmtInt(I.b * lv)} por hora${cerr ? '' : ' · +' + I.b}`;
+      return `<div class="cb-in${cerr ? ' off' : ''}">${fx(ic)}<span><b>${n}${lv ? ' · nivel ' + lv : ''}</b><small>${cerr ? `Se abre con el club en el nivel ${I.min}` : d}</small></span>
+        ${cerr ? '<span class="cb-lock">Cerrado</span>' : max ? '<span class="cb-lock">Al máximo</span>' : `<button class="btn small${c.af >= p ? ' primary' : ''}" type="button" data-a="cbmejora" data-k="${k}"${c.af >= p ? '' : ' aria-disabled="true"'}>${fmtInt(p)}</button>`}</div>`; }).join('');
+    const rank = todos.map(([u, d]) => [u, d, cbDe(d)]).filter(x => x[2]).concat(todos.some(([u, d]) => u === yo_ && cbDe(d)) ? [] : [[yo_, Object.assign({ n: miNombre() }, yoJ()), c]])
+      .sort((a, b) => b[2].asc - a[2].asc || cbNivel(b[2]) - cbNivel(a[2]) || b[2].tot - a[2].tot);
+    return `<section class="cb-hero"><div class="cb-id">${cbPista()}<div><h2>${esc(cbNombre(c))}</h2><span>Categoría ${CB_CATS[c.asc]} · nivel ${nv}</span></div><button type="button" class="cb-ed" data-a="cbnombre">${draft.cbNom ? 'Cerrar' : 'Nombre'}</button></div>
+        ${draft.cbNom ? `<div class="cb-nom"><div class="cb-ops">${CB_PRE.map((p, i) => `<button type="button" data-a="cbpon" data-p="${i}" aria-pressed="${c.n[0] === i}">${p}</button>`).join('')}</div><div class="cb-ops">${CB_NOM.map((p, i) => `<button type="button" data-a="cbpon" data-n="${i}" aria-pressed="${c.n[1] === i}">${p}</button>`).join('')}</div></div>` : ''}
+        <div class="cb-af"><b class="num" id="cb-af">${fmtInt(c.af)}</b><span>aficionados · +${fmtInt(cbRate(c))} por hora</span></div>
+        ${fxc && fxc.g ? `<span class="cb-fx" role="status">+${fmtInt(fxc.g)} aficionados${fxc.m > 1 ? ` (×${fxc.m} por lo de hoy)` : ''}</span>` : fxc && fxc.asc ? `<span class="cb-fx" role="status">¡Ascenso a ${CB_CATS[fxc.asc]}! Tu club gana un ${fxc.asc * 25} % más para siempre.</span>` : ''}
+        <div class="cb-tq"><div class="cb-tql"><span>Taquilla <b id="cb-tq">${fmtInt(T.base)}</b> / ${fmtInt(T.cap)}</span><span id="cb-tt">${cbFalta(c, T)}</span></div>
+          <div class="cb-bar"><i id="cb-bar" style="width:${Math.round(T.h / cbHoras(c) * 100)}%"></i></div></div>
+        <button class="btn big cb-go" type="button" data-a="cbcobrar"${T.base >= 1 ? '' : ' aria-disabled="true"'}>Cobrar <span id="cb-go">${fmtInt(T.base * H.m)}</span>${H.m > 1 ? ` · ×${H.m}` : ''}</button></section>
+      <section class="card cb-hoy"><div class="card-h"><h2>Lo de hoy</h2><b class="cb-m">×${H.m}</b></div>
+        ${H.chips.length ? `<div class="cb-ch">${H.chips.map(([l, ok]) => `<span class="${ok ? 'ok' : ''}">${ok ? '✓' : '+'} ${l}</span>`).join('')}</div>` : ''}<p class="sub">${H.txt}</p>
+        <p class="sub">La primera partida del día al juego de hoy llena la taquilla con 2 horas más.</p></section>
+      <section class="card"><div class="card-h"><h2>Instalaciones</h2><span class="sub">se mejoran con afición</span></div><div class="cb-ins">${inst}</div></section>
+      ${meta ? `<section class="card cb-asc"><div class="card-h"><h2>Ascenso a ${CB_CATS[c.asc + 1]}</h2><span class="sub">${fmtInt(Math.min(c.tot, meta))} / ${fmtInt(meta)}</span></div><div class="cb-bar v"><i style="width:${Math.min(100, Math.round(c.tot / meta * 100))}%"></i></div>
+        ${c.tot >= meta ? `<button class="btn big primary" type="button" data-a="cbascenso">Ascender a ${CB_CATS[c.asc + 1]}</button>` : ''}<p class="sub">Al ascender, el club empieza de cero en la nueva categoría, pero con un 25 % más de afición para siempre.</p></section>` : `<section class="card cb-asc"><h2>Estás en lo más alto</h2><p class="sub">Tu club juega en Europa. No hay más ascensos: a seguir mejorándolo.</p></section>`}
+      <section class="card"><div class="card-h"><h2>Los clubes del equipo</h2><span class="sub">categoría y nivel</span></div>
+        <ol class="cb-rank">${rank.map(([u, d, k], i) => `<li class="${u === yo_ ? 'me' : ''}"><span class="lg-n">${i + 1}</span><span class="lg-av">${avatarSVG(d.av, d.lv || 0, d.n)}</span><span class="cb-rn"><b>${esc(cbNombre(k))}</b><small>${esc(d.n || '')} · ${CB_CATS[k.asc]}</small></span><span class="pill">Nv ${cbNivel(k)}</span></li>`).join('')}</ol></section>`;
+  }
+  // la taquilla sube sola en pantalla (sin volver a pintar todo)
+  setInterval(() => { const el = document.getElementById('cb-tq'); if (!el || !me) return; const c = cbMio(), T = cbTaq(c), H = cbHoy(), g = document.getElementById('cb-go'), b = document.getElementById('cb-bar');
+    el.textContent = fmtInt(T.base); if (g) g.textContent = fmtInt(T.base * H.m); if (b) b.style.width = Math.round(T.h / cbHoras(c) * 100) + '%';
+    const bt = document.querySelector('.cb-go'), tt = document.getElementById('cb-tt'); if (bt) { if (T.base >= 1) bt.removeAttribute('aria-disabled'); else bt.setAttribute('aria-disabled', 'true'); }
+    if (tt) tt.textContent = cbFalta(c, T); }, 2000);
   function retoView() {
-    const y = yoJ(), t = today(), lunes = mondayOf(t), yo_ = meU(), tab = draft.rtab === 'duelos' ? 'duelos' : 'liga', res = draft.res;
+    const y = yoJ(), t = today(), lunes = mondayOf(t), yo_ = meU(), tab = ['duelos', 'club'].includes(draft.rtab) ? draft.rtab : 'liga', res = draft.res;
     const todos = Object.entries(J.todos).filter(([, d]) => d && d.n && !d.oculta);
     const avJ = d => avatarSVG(d.av, d.lv || 0, d.n), ch = campeona(), cw = u => ch && ch.u === u ? CORONA : '', pet = d => mscH(d.mascota, 'msc chico');
     const liga = todos.map(([u, d]) => ({ u, d, p: semPts(d, lunes, u) })).filter(r => r.p > 0).sort((a, b) => b.p - a.p);
@@ -1547,10 +1620,10 @@
           <ul>${L.map(m => `<li class="${mh.includes(m.k) ? 'ok' : ''}"><i>${mh.includes(m.k) ? '✓' : ''}</i><span>${esc(m.t)}</span><b>+${m.p}</b></li>`).join('')}</ul>
           ${pr ? `<p class="sub">Tu primera partida de hoy da <b>${premioDia(rachaJ(y) + 1)} monedas</b> de premio por entrar a diario.</p>` : ''}</section>`; })()}
       ${retosPend().map(d => `<section class="card rt-reto"><span class="rt-ra">${avJ(J.todos[d.a] || {})}</span><div><b>${esc((J.todos[d.a] || {}).n || 'Alguien')} te ha retado</b><span class="sub">Ha hecho ${fmtInt(d.pa)} puntos. ¿Le ganas?</span></div><button class="btn primary" type="button" data-a="jugarduelo" data-id="${d.id}">Jugar el duelo</button></section>`).join('')}
-      <div class="seg etab rt-tabs" role="tablist">${[['liga', 'Liga'], ['duelos', 'Duelos']].map(([k, l]) => `<button type="button" role="tab" data-a="rtab" data-k="${k}" aria-pressed="${tab === k}">${l}${k === 'duelos' && retosPend().length ? ` · ${retosPend().length}` : ''}</button>`).join('')}</div>
+      <div class="seg etab rt-tabs" role="tablist">${[['liga', 'Liga'], ['club', 'Mi club'], ['duelos', 'Duelos']].map(([k, l]) => `<button type="button" role="tab" data-a="rtab" data-k="${k}" aria-pressed="${tab === k}">${l}${k === 'duelos' && retosPend().length ? ` · ${retosPend().length}` : ''}</button>`).join('')}</div>
       ${tab === 'liga' ? (() => { const F = Object.entries(J.todos).filter(([, d]) => d && d.ultima && !d.oculta && Date.now() - d.ultima.ts < 4 * 864e5).sort((a, b) => b[1].ultima.ts - a[1].ultima.ts).slice(0, 4);
           return F.length ? `<section class="card hall"><h2>Lo último que ha salido</h2>${F.map(([u, d]) => { const m = MSC().LISTA.find(x => x[0] === d.ultima.id) || [], R = MSC().RAREZA[m[2]] || ['', '#999']; return `<div class="hl">${mscH(d.ultima.id, 'msc hl-p')}<span><b>${esc(d.n)}</b> ha sacado ${/a$/.test(m[1] || '') ? 'una' : 'un'} <b style="color:${R[1]}">${esc(m[1] || '')}</b> <small>${R[0].toLowerCase()}</small></span></div>`; }).join('')}</section>` : ''; })() : ''}
-      ${tab === 'liga' ? `<section class="card"><div class="card-h"><h2>Liga de la semana</h2><span class="sub">tu mejor partida de cada día · se reinicia el lunes</span></div>${ligaH}</section>` : duelosH}
+      ${tab === 'liga' ? `<section class="card"><div class="card-h"><h2>Liga de la semana</h2><span class="sub">tu mejor partida de cada día · se reinicia el lunes</span></div>${ligaH}</section>` : tab === 'club' ? clubHTML(todos, yo_) : duelosH}
       ${y.oculta ? '<p class="sub">No sales en la liga ni te pueden retar. Lo cambias en «Mis datos».</p>' : ''}`, { nav: isAdmin() ? navA() : navJ(), });
   }
 

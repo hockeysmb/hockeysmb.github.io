@@ -1515,6 +1515,18 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .al-b { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 6px 8px; border-radius: 14px; background: var(--surface); border: 2px solid var(--g-edge); }
 .al-b .al-face { grid-row: span 2; } .al-b b { font: 800 13px/1.1 var(--font-game); } .al-b small { color: var(--muted); font-size: 11px; }
 .pl-tag.on { background: color-mix(in srgb, var(--g-green) 18%, var(--surface)); color: var(--g-green-2); }
+/* ciudad deportiva (12 nov) */
+.cd-hero { display: grid; gap: 10px; padding: 16px; border-radius: 18px; background: #1d1418; color: #fff; }
+.cd-h b { font: 800 20px/1.1 var(--font-game, inherit); } .cd-p { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .cd-p b { font: 900 34px/1 var(--font-game, inherit); font-variant-numeric: tabular-nums; } .cd-p span { font-size: 13px; color: #d9cfd1; }
+.cd-tq { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: #d9cfd1; } .cd-tq b { color: #fff; font-variant-numeric: tabular-nums; }
+.cd-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .18); overflow: hidden; } .cd-bar i { display: block; height: 100%; background: #ffcf33; transition: width .6s; }
+.cd-go { background: #ffcf33; color: #1d1418; border: 0; font-weight: 800; min-height: 48px; } .cd-go:disabled { opacity: .5; }
+.cd-sem { display: grid; gap: 8px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface, #fff); border: 1px solid var(--line, #eadfe1); }
+.cd-sh { display: flex; justify-content: space-between; align-items: baseline; } .cd-m { font: 900 24px/1 var(--font-game, inherit); color: #681825; }
+.cd-ch { display: flex; flex-wrap: wrap; gap: 6px; } .cd-ch span { flex: 1 1 0; min-width: max-content; text-align: center; border-radius: 10px; padding: 8px; font-size: 12.5px; font-weight: 700; background: var(--fill, #f4f1f1); color: var(--muted, #6f6365); border: 1px dashed var(--line, #c9b8bb); }
+.cd-ch span.ok { background: #e4f0e7; color: #2e6b46; border-color: transparent; }
+.cd-ins { display: grid; gap: 6px; } .cd-in { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--surface, #fff); border: 1px solid var(--line, #eadfe1); }
+.cd-in span { display: grid; min-width: 0; } .cd-in small { font-size: 12px; font-weight: 400; color: var(--muted, #6f6365); } .cd-in b small { display: inline; } .cd-in .btn { min-height: 44px; font-variant-numeric: tabular-nums; }
 /* recreativa (10 nov) */
 .arc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .arc-card { display: grid; grid-template-columns: 54px 1fr; gap: 12px; align-items: start; padding: 14px; border-radius: 18px; background: var(--card, #fff); border: 1px solid var(--line, #eadfe1); }
@@ -5470,7 +5482,7 @@ const ARC = [['muro', 'Rompe la defensa', 'Rebota la bola con el stick, tumba la
 let arcP = null;
 function arcCarga() {
   if (window.SMBArcade) return Promise.resolve();
-  if (!arcP) arcP = new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = 'femenino/arcade.js?v=20261110a'; sc.onload = () => ok(); sc.onerror = () => { arcP = null; mal(new Error('arcade')); }; document.head.appendChild(sc); });
+  if (!arcP) arcP = new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = 'femenino/arcade.js?v=20261112a'; sc.onload = () => ok(); sc.onerror = () => { arcP = null; mal(new Error('arcade')); }; document.head.appendChild(sc); });
   return arcP;
 }
 const arcDe = n => normName(n) === normName(readAuthor()) ? (game.arc || {}) : ((coachOf(n) || {}).arc || {});
@@ -6037,7 +6049,7 @@ const sqOf = name => normName(name) === normName(readAuthor()) ? (game.club ? cl
 function clDays(c) {
   const t = isoToday(); if (c.dia === t) return;
   const n = c.dia ? Math.min(7, Math.round((dateOf(t) - dateOf(c.dia)) / 864e5)) : 0;
-  if (n > 0) c.squad.forEach(p => { p.forma = clamp(clForma(p) + CL_FORMA_DIA * n, 40, 100); });
+  if (n > 0) c.squad.forEach(p => { p.forma = clamp(clForma(p) + Math.round(CL_FORMA_DIA * (1 + 0.2 * cdLv('fisio', c))) * n, 40, 100); });
   c.dia = t;
 }
 function clFatigue(k = CL_FORMA_PARTIDO) {
@@ -6049,7 +6061,7 @@ function clMarket(c) {
   const t = isoToday();
   if (c.mk && c.mk.day === t) return c.mk.list;
   const R = rng('mk|' + t + '|' + normName(readAuthor())), base = 40 + 3 * myLevel();
-  const list = [clMake(R, 'gk', base + (R() - 0.5) * 12), ...[0, 1, 2, 3, 4].map(() => clMake(R, 'jug', base + (R() - 0.5) * 18))];
+  const list = [clMake(R, 'gk', base + (R() - 0.5) * 12), ...Array.from({ length: 5 + cdLv('ojeo', c) }, () => clMake(R, 'jug', base + (R() - 0.5) * 18))];
   const me = normName(readAuthor()), cs = (bank.coaches || []).filter(x => x.avatar && normName(x.name) !== me && !c.squad.some(p => normName(p.coach) === normName(x.name)));
   if (cs.length && R() < 0.4) {
     const k = cs[Math.floor(R() * cs.length)], lv = levelOf(clubPoints(k.name));
@@ -6060,7 +6072,7 @@ function clMarket(c) {
 }
 function clubSync() {
   if (!readAuthor() || !game.club) return;
-  const c = game.club; clDays(c);
+  const c = game.club; clDays(c); if (cdJuvenil(c)) saveGame();
   const CLD = window.SMB_CLOUD && window.SMB_CLOUD.mk, me = CLD && CLD.me();
   if (!CLD || !me) return;
   let ch = false;
@@ -6077,7 +6089,8 @@ function clubSync() {
   if (ch) saveGame();
 }
 const clOffersIn = () => { const CLD = window.SMB_CLOUD && window.SMB_CLOUD.mk, me = CLD && CLD.me(); return me ? (bank.mkOf || []).filter(o => o.d && o.d.to === me && !(bank.mkAc || []).some(a => a.mine && a.d.of === o.id)) : []; };
-function clTrainsLeft(c) { const t = isoToday(); if (c.tr.day !== t) { c.tr.day = t; c.tr.n = 0; } return Math.max(0, CL_TRAIN_DAY - c.tr.n) + (c.tr.extra || 0); }
+function clTrainsLeft(c) { const t = isoToday(); if (c.tr.day !== t) { c.tr.day = t; c.tr.n = 0; } return Math.max(0, clTrainDay(c) - c.tr.n) + (c.tr.extra || 0); }
+const clTrainDay = c => CL_TRAIN_DAY + cdLv('gim', c);   // el gimnasio de la ciudad deportiva da entrenos de más
 // entreno real en modo pista: entrenamiento extra y doble (una vez al día)
 function clPistaBonus() {
   if (!readAuthor()) return false;
@@ -6088,7 +6101,7 @@ function clPistaBonus() {
 }
 function clTrain(foco) {
   const c = clubOf(); if (!clTrainsLeft(c)) return null;
-  const doble = c.tr.n >= CL_TRAIN_DAY && c.tr.extra > 0;
+  const doble = c.tr.n >= clTrainDay(c) && c.tr.extra > 0;
   if (doble) c.tr.extra--; else c.tr.n++;
   const R = rng('tr|' + Date.now()), ups = [];
   c.squad.forEach(p => {
@@ -6159,6 +6172,77 @@ function clubTeaserHTML() {
     <div class="club-stats"><span><b>${s ? s.atk : '–'}</b><small>ataque</small></span><span><b>${s ? s.def : '–'}</b><small>defensa</small></span><span><b>${c.squad.length}</b><small>jugadores</small></span></div>
     <div class="club-acts"><button class="btn${left ? ' primary' : ''}" type="button" data-club="entrenar">${left ? `Entrenar · ${left} ${left === 1 ? 'disponible' : 'disponibles'}` : 'Entrenado hoy'}</button><button class="btn" type="button" data-club="mercado">Mercado</button>${inc ? `<button class="btn primary" type="button" data-club="ofertas">Ofertas · ${inc}</button>` : ''}</div></section>`;
 }
+// ================= ciudad deportiva (12 nov): el incremental de la plantilla =================
+// La ciudad deportiva produce presupuesto sola; la taquilla se llena en 8 horas. Al cobrar se multiplica por el trabajo real
+// de la semana (ejercicio nuevo, sesión completa, entreno en modo pista: ×1 a ×4). El presupuesto solo sirve aquí.
+// Las instalaciones dan ventajas pequeñas y con tope en la plantilla. game.club.cd = {p, ts, i: {grada, tienda, gim, fisio, cantera, ojeo}, juv, conc}.
+const CD_INST = [
+  ['grada', 'Gradas', { c: 300, g: 1.6 }, lv => `+${50 * lv} de presupuesto por hora`],
+  ['tienda', 'Tienda del club', { c: 1000, g: 1.65 }, lv => lv ? `+${80 * lv} de presupuesto por hora` : '+80 de presupuesto por hora por nivel'],
+  ['gim', 'Gimnasio', { c: 3000, g: 4, max: 2 }, lv => lv ? `${1 + lv} entrenos al día en vez de 1` : 'Un entreno más al día por nivel'],
+  ['fisio', 'Fisioterapia', { c: 2000, g: 2.5, max: 3 }, lv => lv ? `La forma se recupera un ${20 * lv} % antes` : 'La forma se recupera un 20 % antes por nivel'],
+  ['cantera', 'Cantera', { c: 4000, g: 2.2, max: 5 }, lv => lv ? `Un juvenil cada lunes (nivel ${lv})` : 'Un juvenil nuevo cada lunes, si hay sitio'],
+  ['ojeo', 'Ojeadores', { c: 2500, g: 3.2, max: 2 }, lv => lv ? `${lv} ${lv === 1 ? 'jugador' : 'jugadores'} más en el mercado` : 'Un jugador más en el mercado por nivel']];
+const CD_HORAS = 8, CD_CONC = 1500;
+const cdMonday = () => { const d = dateOf(isoToday()); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return lgIso(d.getTime()); };
+function cdOf(c) { c = c || clubOf(); if (!c.cd || !c.cd.i) c.cd = { p: 0, ts: Date.now(), i: {} }; const d = c.cd; d.i = Object.assign({ grada: 1, tienda: 0, gim: 0, fisio: 0, cantera: 0, ojeo: 0 }, d.i); if (!(d.ts <= Date.now())) d.ts = Date.now(); return d; }
+const cdLv = (k, c) => (c && c.cd && c.cd.i && c.cd.i[k]) || 0;   // nivel de una instalación sin crear nada (para las ventajas)
+const cdRate = d => 50 * d.i.grada + 80 * d.i.tienda;
+const cdNivel = d => Object.values(d.i).reduce((a, b) => a + b, 0);
+const cdCoste = (k, d) => { const I = CD_INST.find(x => x[0] === k)[2]; return Math.round(I.c * Math.pow(I.g, d.i[k] - (k === 'grada' ? 1 : 0)) / 10) * 10; };
+const cdTaq = d => { const h = clamp((Date.now() - d.ts) / 36e5, 0, CD_HORAS); return { h, base: Math.floor(cdRate(d) * h), cap: cdRate(d) * CD_HORAS }; };
+// el trabajo de esta semana (de lunes a domingo)
+function cdSemana() {
+  const L = cdMonday(), me = normName(readAuthor()), has = p => game.log.some(x => String(x.key).startsWith(p) && (x.date || '') >= L);
+  const ej = has('ex:') || (bank.tasks || []).some(t => t.source !== 'oller' && normName(t.author) === me && (t.alta || '') >= L);
+  const chips = [['Ejercicio nuevo', ej], ['Sesión completa', has('ses:')], ['Entreno en modo pista', has('pista:')]];
+  return { m: 1 + chips.filter(x => x[1]).length, chips };
+}
+// la cantera: un juvenil cada lunes, si hay sitio
+function cdJuvenil(c) {
+  const lv = cdLv('cantera', c); if (!lv) return false;
+  const d = c.cd, L = cdMonday(); if (d.juv === L) return false;
+  if (!d.juv) { d.juv = L; return true; }                         // recién construida: el primero llega el lunes que viene
+  d.juv = L;
+  if (c.squad.length >= CL_MAX) { c.log.push({ t: Date.now(), txt: 'La cantera tenía un juvenil, pero la plantilla está llena' }); return true; }
+  const R = rng('juv|' + L + '|' + normName(readAuthor())), p = clMake(R, R() < 0.18 ? 'gk' : 'jug', 34 + 4 * lv, { forma: 95 });
+  p.pot = clamp(p.pot + 4 + 2 * lv, clOvr(p) + 6, 96);
+  c.squad.push(p); clDorsal(c, p); c.log.push({ t: Date.now(), txt: `Sube de la cantera: ${p.n}` }); toast(`Sube de la cantera: ${p.n}.`);
+  return true;
+}
+function ciudadHTML(c) {
+  const d = cdOf(c), T = cdTaq(d), S = cdSemana(), min = Math.ceil((CD_HORAS - T.h) * 60), hoyC = d.conc === isoToday();
+  return `<div class="cd-hero"><div class="cd-h"><b>Ciudad deportiva · nivel ${cdNivel(d)}</b></div>
+      <div class="cd-p"><b id="cd-p">${d.p.toLocaleString('es-ES')}</b><span>de presupuesto · +${cdRate(d)} por hora</span></div>
+      <div class="cd-tq"><span>Taquilla <b id="cd-tq">${T.base.toLocaleString('es-ES')}</b> / ${T.cap.toLocaleString('es-ES')}</span><span>${min <= 0 ? 'Llena: cobra para que siga' : `Llena en ${min >= 60 ? Math.floor(min / 60) + ' h ' : ''}${min % 60} min`}</span></div>
+      <div class="cd-bar"><i id="cd-bar" style="width:${Math.round(T.h / CD_HORAS * 100)}%"></i></div>
+      <button class="btn cd-go" type="button" data-cd="cobrar"${T.base >= 1 ? '' : ' disabled'}>Cobrar ${(T.base * S.m).toLocaleString('es-ES')}${S.m > 1 ? ' · ×' + S.m : ''}</button></div>
+    <div class="cd-sem"><div class="cd-sh"><b>Tu trabajo de esta semana</b><b class="cd-m">×${S.m}</b></div>
+      <div class="cd-ch">${S.chips.map(([l, ok]) => `<span class="${ok ? 'ok' : ''}">${ok ? '✓' : '+1'} ${l}</span>`).join('')}</div>
+      <p class="sub">${S.m >= 4 ? 'Semana completa: la ciudad deportiva produce al máximo hasta el lunes.' : 'Cada cosa que haces esta semana suma ×1 a lo que cobras, hasta el lunes.'}</p></div>
+    <h3 class="h-sub">Instalaciones</h3><p class="sub">Se mejoran con presupuesto. Las ventajas de la plantilla tienen tope.</p>
+    <div class="cd-ins">${CD_INST.map(([k, n, I, txt]) => { const lv = d.i[k], max = I.max && lv >= I.max, p = cdCoste(k, d);
+      return `<div class="cd-in"><span><b>${n}${lv ? ' · nivel ' + lv : ''}${I.max ? ` <small>de ${I.max}</small>` : ''}</b><small>${txt(lv)}</small></span>${max ? '<span class="pl-tag on">Al máximo</span>' : `<button class="btn small${d.p >= p ? ' primary' : ''}" type="button" data-cd="up" data-k="${k}"${d.p >= p ? '' : ' disabled'}>${p.toLocaleString('es-ES')}</button>`}</div>`; }).join('')}</div>
+    <h3 class="h-sub">Concentración</h3><div class="cd-in"><span><b>Fin de semana de concentración</b><small>Toda la plantilla recupera la forma. Una vez al día.</small></span><button class="btn small${d.p >= CD_CONC && !hoyC ? ' primary' : ''}" type="button" data-cd="conc"${d.p >= CD_CONC && !hoyC ? '' : ' disabled'}>${hoyC ? 'Hecha hoy' : CD_CONC.toLocaleString('es-ES')}</button></div>`;
+}
+function cdClick(b, c, done) {
+  const d = cdOf(c), a = b.dataset.cd;
+  if (a === 'cobrar') { const T = cdTaq(d), S = cdSemana(), g = T.base * S.m; if (g < 1) return; d.p += g; d.ts = Date.now(); done(`+${g.toLocaleString('es-ES')} de presupuesto${S.m > 1 ? ` (×${S.m} por tu semana)` : ''}.`); }
+  else if (a === 'up') { const k = b.dataset.k, I = (CD_INST.find(x => x[0] === k) || [])[2]; if (!I || (I.max && d.i[k] >= I.max)) return; const p = cdCoste(k, d); if (d.p < p) return;
+    const T = cdTaq(d); d.p += T.base - p; d.ts = Date.now(); d.i[k]++;   // antes de mejorar se cobra la taquilla al ritmo viejo, sin multiplicar
+    if (k === 'cantera') cdJuvenil(c);
+    c.log.push({ t: Date.now(), txt: `Ciudad deportiva: ${CD_INST.find(x => x[0] === k)[1]} a nivel ${d.i[k]}` });
+    done(k === 'ojeo' ? 'Mejorado. Los jugadores de más salen en el mercado desde mañana.' : k === 'cantera' && d.i[k] === 1 ? 'Cantera abierta. El primer juvenil sube el lunes.' : 'Mejorado.'); }
+  else if (a === 'conc') { if (d.p < CD_CONC || d.conc === isoToday()) return; d.p -= CD_CONC; d.conc = isoToday(); c.squad.forEach(p => { p.forma = 100; }); done('Concentración hecha: toda la plantilla al 100 % de forma.'); }
+}
+setInterval(() => { const el = document.getElementById('cd-tq'); if (!el || !game.club) return; const d = cdOf(game.club), T = cdTaq(d), b = document.getElementById('cd-bar'), go = document.querySelector('.cd-go');
+  el.textContent = T.base.toLocaleString('es-ES'); if (b) b.style.width = Math.round(T.h / CD_HORAS * 100) + '%'; if (go && T.base >= 1 && go.disabled) drawClub(); }, 2000);
+function ciudadTeaserHTML() {
+  if (!readAuthor()) return '';
+  const d = cdOf(), T = cdTaq(d), S = cdSemana(), llena = T.h >= CD_HORAS;
+  return `<section class="ses-sec club-t"><div class="lt-head"><h2 class="h-sec">Ciudad deportiva</h2><button class="btn small${llena ? ' primary' : ''}" type="button" data-club="ciudad">${llena ? 'Cobrar' : 'Entrar'}</button></div>
+    <div class="club-stats"><span><b>${cdNivel(d)}</b><small>nivel</small></span><span><b>${Math.round(T.h / CD_HORAS * 100)} %</b><small>taquilla</small></span><span><b>×${S.m}</b><small>tu semana</small></span></div></section>`;
+}
 let clTab = 'plantilla', clMsg = '';
 function openClub(tab) {
   clTab = tab || 'plantilla'; clMsg = '';
@@ -6171,9 +6255,10 @@ function closeClub() { const el = document.getElementById('club-ov'); if (el) el
 function drawClub() {
   const el = document.getElementById('club-ov'); if (!el) return;
   const c = clubOf(), s = clSummary(c), web = !!(window.SMB_CLOUD && window.SMB_CLOUD.mk), inc = clOffersIn();
-  const tabs = [['plantilla', 'Plantilla'], ['entrenar', 'Entrenar'], ['mercado', 'Mercado'], ...(web ? [['ofertas', `Ofertas${inc.length ? ' · ' + inc.length : ''}`]] : [])];
+  const tabs = [['plantilla', 'Plantilla'], ['entrenar', 'Entrenar'], ['mercado', 'Mercado'], ['ciudad', 'Ciudad deportiva'], ...(web ? [['ofertas', `Ofertas${inc.length ? ' · ' + inc.length : ''}`]] : [])];
   let body = '';
-  if (clTab === 'plantilla') {
+  if (clTab === 'ciudad') body = ciudadHTML(c);
+  else if (clTab === 'plantilla') {
     const X = clXI(c), xi = new Map(X.slots.map((p, i) => p ? [p.id, X.roles[i]] : null).filter(Boolean));
     const row = p => clCard(p, { xi: xi.has(p.id), foot: `<div class="pl-foot"><span class="pl-tag${xi.has(p.id) ? ' on' : ''}">${xi.has(p.id) ? 'Titular · ' + CL_ROLES[xi.get(p.id)].n : 'Suplente'}</span>
       ${(c.venta || []).some(v => v.pid === p.id) ? `<span class="pl-tag">En venta por ${c.venta.find(v => v.pid === p.id).price}</span><button class="btn small" type="button" data-clunsell="${p.id}">Quitar de la venta</button>` : `<button class="btn small" type="button" data-clsell="${p.id}">Vender</button>`}</div>` });
@@ -6182,8 +6267,8 @@ function drawClub() {
       <h3 class="h-sub">Portería</h3><div class="pl-list">${c.squad.filter(p => p.pos === 'gk').map(row).join('') || '<p class="sub">No tienes portero: ficha uno en el mercado.</p>'}</div>
       <h3 class="h-sub">Pista</h3><div class="pl-list">${c.squad.filter(p => p.pos !== 'gk').map(row).join('')}</div>`;
   } else if (clTab === 'entrenar') {
-    const left = clTrainsLeft(c), doble = c.tr.n >= CL_TRAIN_DAY && c.tr.extra > 0;
-    body = `<p class="sub">Un entrenamiento al día. Si das tu entreno de verdad en el <b>modo pista</b>, ganas uno extra y doble. Cada jugador sube hasta su potencial, y todos recuperan forma.</p>
+    const left = clTrainsLeft(c), doble = c.tr.n >= clTrainDay(c) && c.tr.extra > 0;
+    body = `<p class="sub">${clTrainDay(c) > 1 ? clTrainDay(c) + ' entrenamientos al día (gimnasio)' : 'Un entrenamiento al día'}. Si das tu entreno de verdad en el <b>modo pista</b>, ganas uno extra y doble. Cada jugador sube hasta su potencial, y todos recuperan forma.</p>
       <p class="club-left">${left ? `Te ${left === 1 ? 'queda' : 'quedan'} <b>${left}</b> ${left === 1 ? 'entrenamiento' : 'entrenamientos'} hoy${doble ? ' · <b>el siguiente es doble</b>' : (c.tr.extra ? ` · ${c.tr.extra} extra y doble por el modo pista` : '')}.` : 'Hoy ya has entrenado. Mañana más, o da tu entreno en el modo pista para uno extra.'}</p>
       <div class="cl-focos">${CL_FOCOS.map(([k, n, d]) => `<button class="cl-foco" type="button" data-cltrain="${k}"${left ? '' : ' disabled'}><b>${n}</b><small>${d}</small></button>`).join('')}</div>`;
   } else if (clTab === 'mercado') {
@@ -6199,7 +6284,7 @@ function drawClub() {
       <h3 class="h-sub">Tus ofertas</h3>${mine.length ? `<div class="pl-list">${mine.map(o => clCard(o.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${o.price} a ${esc(o.seller)}</span><span class="pl-tag">Esperando respuesta</span><button class="btn small" type="button" data-clcancel="${esc(o.id)}">Retirar</button></div>` })).join('')}</div>` : '<p class="sub">No has hecho ofertas. Las monedas de una oferta quedan reservadas hasta que te contesten.</p>'}`;
   }
   el.innerHTML = `<div class="club-in"><div class="cf-top"><b>Tu plantilla</b><span>${s ? `Ataque ${s.atk} · defensa ${s.def}` : ''}</span><button class="lv-x" type="button" data-club="x" aria-label="Cerrar">×</button></div>
-    <div class="seg" role="tablist">${tabs.map(([k, l]) => `<button type="button" data-cltab="${k}" aria-pressed="${clTab === k}">${l}</button>`).join('')}</div>
+    <div class="seg wrap" role="tablist">${tabs.map(([k, l]) => `<button type="button" data-cltab="${k}" aria-pressed="${clTab === k}">${l}</button>`).join('')}</div>
     ${clMsg ? `<p class="msg ok">${clMsg}</p>` : ''}${body}</div>`;
 }
 function onClubClick(e) {
@@ -6209,6 +6294,7 @@ function onClubClick(e) {
   if (b.dataset.club === 'x') { closeClub(); return; }
   if (b.dataset.lgtab) { closeClub(); return; }
   if (b.dataset.cltab) { clTab = b.dataset.cltab; clMsg = ''; drawClub(); return; }
+  if (b.dataset.cd) { cdClick(b, c, done); return; }
   if (b.dataset.clxi) {
     const p = c.squad.find(x => x.id === b.dataset.clxi); if (!p) return;
     const { gk, f } = clXI(c), cur = [gk, ...f].filter(Boolean).map(x => x.id);
@@ -6450,7 +6536,7 @@ function lgHoyHTML(N) {
     const U = N.upcoming;
     return `<section class="ses-sec lg-hero"><span class="lg-k">${U ? `Temporada ${U.s}` : 'Liga'}</span><h2>${U ? `Empieza el ${esc(fmtDay(U.nextStart || U.start))}` : 'Muy pronto'}</h2>
       <p class="sub">Un partido cada día a las ${LG_HOUR}:00 contra cada entrenador, a ida y vuelta. ${U && U.teams.length ? `Apuntados: ${U.teams.map(esc).join(', ')}.` : ''} Mientras, prepara tu plantilla y tu pizarra.</p>
-      <div class="row"><button class="btn" type="button" data-lgtab="equipo">Pizarra y poder</button><button class="btn" type="button" data-lgtab="amistosos">Jugar un amistoso</button></div></section>${clubTeaserHTML()}`;
+      <div class="row"><button class="btn" type="button" data-lgtab="equipo">Pizarra y poder</button><button class="btn" type="button" data-lgtab="amistosos">Jugar un amistoso</button></div></section>${clubTeaserHTML()}${ciudadTeaserHTML()}`;
   }
   const inS = N.cur.teams.some(t => normName(t) === normName(me));
   const mdNext = N.next, g = mdNext && mdNext.games.find(([a, b]) => normName(a) === normName(me) || normName(b) === normName(me));
