@@ -1524,7 +1524,7 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .pb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 6px; background: #681825; }
 .pb-room { position: relative; display: block; padding: 0; border: 0; border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 11; cursor: pointer; background: #2a1218; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .25); transition: transform .12s; }
 .pb-room.r-pista { grid-column: 1 / -1; aspect-ratio: 2 / 1; } .pb-room:active { transform: scale(.98); } .pb-room:focus-visible { outline: 3px solid #ffcf33; outline-offset: 2px; }
-.pb-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pb-art, .pb-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; } .pb-img { max-width: none; object-fit: cover; } .r-pista .pb-img { object-position: 50% 62%; }
 .pb-n { position: absolute; left: 8px; bottom: 8px; padding: 5px 11px; border-radius: 999px; background: rgba(29, 20, 24, .88); color: #fff; font-weight: 800; font-size: 13px; line-height: 1.2; font-family: var(--font-game); }
 .pb-room.r-pista .pb-n { font-size: 16px; padding: 7px 14px; }
 .pb-st { position: absolute; right: 8px; top: 8px; padding: 4px 9px; border-radius: 999px; background: rgba(255, 255, 255, .92); color: #1d1418; font-weight: 700; font-size: 11.5px; line-height: 1.2; } .pb-st.on { background: #ffcf33; }
@@ -5545,6 +5545,8 @@ const PB_ROOMS = [['lgtab:hoy', 'Pista', 'pista', 'r-pista'], ['lgtab:equipo', '
   ['club:entrenar', 'Gimnasio', 'gimnasio', ''], ['club:mercado', 'Despacho', 'despacho', ''], ['club:ciudad', 'Taquilla', 'taquilla', ''],
   ['lgtab:amistosos', 'Amistosos', 'amistosos', ''], ['lgtab:recreativa', 'Recreativa', 'recreativa', ''], ['lgtab:votacion', 'Sala de trofeos', 'trofeos', '']];
 const PB_DE = { hoy: 'hoy', calendario: 'hoy', clasificacion: 'hoy', equipo: 'equipo', pizarra: 'pizarra', amistosos: 'amistosos', recreativa: 'recreativa', votacion: 'votacion' };
+// en la web, cada sala lleva encima su ilustración (fuente/web/pabellon/*.webp); si no carga, se queda el dibujo de debajo
+const pbImg = art => window.SMB_CLOUD ? `<img class="pb-img" src="pabellon/${art}.webp" alt="" decoding="async" onerror="this.remove()">` : '';
 function pbEstado(N) {
   const me = readAuthor(), out = {}; if (!me) return out;
   const c = clubOf(), d = cdOf(c), T = cdTaq(d), left = clTrainsLeft(c), inc = clOffersIn().length, nAm = amNew().length;
@@ -5561,7 +5563,7 @@ function pbEstado(N) {
 function pabellonHTML(N) {
   const me = readAuthor(), E = pbEstado(N), web = !!window.SMB_CLOUD;
   const rooms = PB_ROOMS.filter(r => r[2] !== 'recreativa' || web).map(([to, n, art, cls]) => { const [k, v] = to.split(':'), st = E[art];
-    return `<button class="pb-room ${cls}" type="button" data-${k}="${v}">${PB_ART[art](E._taq || 0)}${st ? `<span class="pb-st${st[1] ? ' on' : ''}">${esc(st[0])}</span>` : ''}<span class="pb-n">${n}</span></button>`; }).join('');
+    return `<button class="pb-room ${cls}" type="button" data-${k}="${v}">${PB_ART[art](E._taq || 0)}${pbImg(art)}${st ? `<span class="pb-st${st[1] ? ' on' : ''}">${esc(st[0])}</span>` : ''}<span class="pb-n">${n}</span></button>`; }).join('');
   return `<div class="pb"><div class="pb-roof"><svg viewBox="0 0 360 74" preserveAspectRatio="none" aria-hidden="true"><path d="M0 74V46Q180 -26 360 46v28z" fill="#681825"/><path d="M0 50Q180 -22 360 50" fill="none" stroke="#ffcf33" stroke-width="3"/><path d="M0 60Q180 -8 360 60" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.4"/></svg>
       <div class="pb-sign vhead"><span class="pb-av">${me ? avatarSVG(game.av, myLevel()) : ''}</span><span><b>Pabellón ${esc(me ? me.split(' ')[0] : 'SMB')}</b><small class="sub">${esc(lgSubTxt(N))}</small></span></div></div>
     <div class="pb-grid">${rooms}</div><div class="pb-base"><span></span><span></span><span></span></div></div>`;
@@ -5570,7 +5572,7 @@ function pbCabecera(N) {
   const cur = PB_DE[ligaTab], room = PB_ROOMS.find(r => r[0] === 'lgtab:' + cur) || PB_ROOMS[0], E = pbEstado(N), web = !!window.SMB_CLOUD;
   const sub = cur === 'hoy' ? `<div class="seg lg-tabs" role="tablist" aria-label="En la pista">${[['hoy', 'Hoy'], ['calendario', 'Calendario'], ['clasificacion', 'Clasificación']].map(([k, l]) => `<button type="button" data-lgtab="${k}" aria-pressed="${ligaTab === k}">${l}</button>`).join('')}</div>` : '';
   return `<div class="pb-top"><button class="pb-back" type="button" data-lgtab="pabellon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Pabellón</button><div class="vhead"><div><h1>${room[1]} ${cur === 'hoy' ? infoBtn('liga') : ''}</h1>${cur === 'hoy' ? `<p class="sub">${esc(lgSubTxt(N))}</p>` : ''}</div></div></div>
-    <div class="pb-mini" role="group" aria-label="Ir a otra sala">${PB_ROOMS.filter(r => r[2] !== 'recreativa' || web).map(([to, n, art]) => { const [k, v] = to.split(':'), st = E[art]; return `<button type="button" data-${k}="${v}" aria-label="${n}" aria-pressed="${k === 'lgtab' && v === cur}" title="${n}">${PB_ART[art](E._taq || 0)}${st && st[1] ? '<i></i>' : ''}</button>`; }).join('')}</div>${sub}`;
+    <div class="pb-mini" role="group" aria-label="Ir a otra sala">${PB_ROOMS.filter(r => r[2] !== 'recreativa' || web).map(([to, n, art]) => { const [k, v] = to.split(':'), st = E[art]; return `<button type="button" data-${k}="${v}" aria-label="${n}" aria-pressed="${k === 'lgtab' && v === cur}" title="${n}">${PB_ART[art](E._taq || 0)}${pbImg(art)}${st && st[1] ? '<i></i>' : ''}</button>`; }).join('')}</div>${sub}`;
 }
 function renderLiga() {
   const box = document.getElementById('v-liga'), N = lgNow();

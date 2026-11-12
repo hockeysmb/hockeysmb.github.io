@@ -480,3 +480,10 @@ Carlos pidió menos texto y más imagen: un pabellón por el que te mueves.
   - Ojo con CSS: `font: … var(--x, inherit)` no vale dentro de la abreviatura `font`; hay que poner peso, tamaño y familia por separado.
 - **Jugadoras:** «Mi club» abre con el pabellón dibujado (`cbEscena`), que crece con las mejoras: tres tamaños según la pista, afición según las gradas, quiosco con la cantina, canteranas con la cantera, bus aparcado y una bandera por categoría; la puerta lleva la barra de la taquilla. Las instalaciones son fichas con dibujo en vez de filas.
 - **Pruebas:** las que entraban a la Liga por pestañas pasan ahora por la sala (`web_liga`, `web_nombres`, `web_plantilla`, `art_plantilla`, `web_general`, `web_penalti`, `web_arcade`).
+
+## Ilustraciones del pabellón (12 nov, tarde)
+
+- Las nueve salas llevan una ilustración encima del dibujo a código: `fuente/web/pabellon/{pista,vestuario,pizarra,gimnasio,despacho,taquilla,amistosos,recreativa,trofeos}.webp` (960 × 640, unos 330 KB entre todas). Las generó Carlos con ChatGPT siguiendo el encargo que está en el proyecto (`claude/Encargo_libreria_imagenes_apps.md`); son suyas y no llevan texto ni personas reconocibles.
+- `pbImg(art)` pone el `<img>` solo en la web (en el artifact se queda el SVG de `PB_ART`); si la imagen no carga, se quita sola y se ve el dibujo. `construir_web.py` copia la carpeta y `sw.js` las guarda para usarlas sin conexión.
+- Vestuario, taquilla y despacho salieron con un granate más rojo: al optimizarlas se oscureció solo el rojo (×0,8) para igualarlas al resto.
+- Para cambiar una sala: sustituir su .webp (mismo nombre) y volver a construir.

@@ -36,5 +36,6 @@ for f in ('firestore.rules', 'firebase-config.js'):
         shutil.copy(ROOT + f, OUT + f)
 open(OUT + 'sw.js', 'w').write(open(W + 'sw.js').read().replace('__VERSION__', V))
 shutil.copytree(W + 'icons', OUT + 'icons', dirs_exist_ok=True)
+shutil.copytree(W + 'pabellon', OUT + 'pabellon', dirs_exist_ok=True)   # ilustraciones de las salas del pabellón
 open(OUT + '.nojekyll', 'w').write('')
 print('web en', OUT, round(len(html) / 1024), 'KB')
