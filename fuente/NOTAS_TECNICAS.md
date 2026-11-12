@@ -487,3 +487,4 @@ Carlos pidió menos texto y más imagen: un pabellón por el que te mueves.
 - `pbImg(art)` pone el `<img>` solo en la web (en el artifact se queda el SVG de `PB_ART`); si la imagen no carga, se quita sola y se ve el dibujo. `construir_web.py` copia la carpeta y `sw.js` las guarda para usarlas sin conexión.
 - Vestuario, taquilla y despacho salieron con un granate más rojo: al optimizarlas se oscureció solo el rojo (×0,8) para igualarlas al resto.
 - Para cambiar una sala: sustituir su .webp (mismo nombre) y volver a construir.
+- **Fachada (12 nov):** en la web, la cabecera del pabellón es `pabellon/fachada.webp` (la parte de arriba de la fachada generada por Carlos) y el rótulo «Pabellón …» va dentro de su cartel. Si no carga, se ve la cabecera granate. El personaje salía descolocado porque `.pb-roof svg` también cogía el SVG del personaje: ahora es `.pb-roof > svg`.
