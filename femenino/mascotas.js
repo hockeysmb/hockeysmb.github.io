@@ -127,13 +127,16 @@
     reycalabaza: () => calabazaBase() + Pth('M34 34 L36 18 L43 26 L50 14 L57 26 L64 18 L66 34 Z', '#ffd21f', 'stroke="#c99a00" stroke-width="1.5"') + C(50, 20, 2.4, '#ff3b6b') + C(36, 22, 1.8, '#3bd1ff') + C(64, 22, 1.8, '#3bd1ff')
       + Pth('M36 56 L42 50 L48 56 Z M52 56 L58 50 L64 56 Z', '#5a2a00') + Pth('M38 66 Q50 76 62 66 L58 66 L55 70 L52 66 L48 66 L45 70 L42 66 Z', '#5a2a00') + E(32, 64, 4, 2.4, '#ff6f61', 'opacity=".7"') + E(68, 64, 4, 2.4, '#ff6f61', 'opacity=".7"'),
   });
+  // 12 nov: encima del dibujo va la ilustración de img/mascotas/<id>.webp. Cuando carga, se quita el
+  // dibujo de debajo; si no está o falla, el dibujo se queda. El tamaño y las clases no cambian.
   function svg(id, cls, mood) {
     const f = D[id]; if (!f) return '';
     MOOD = mood || ''; let cuerpoSVG = ''; try { cuerpoSVG = f(); } finally { MOOD = ''; }
     const zz = mood === 'dormido' ? '<g fill="#7a8cff" font-family="Arial,sans-serif" font-weight="900"><text x="70" y="26" font-size="11">z</text><text x="78" y="16" font-size="14">z</text><text x="88" y="8" font-size="10">z</text></g>' : '';
     const it = LISTA.find(x => x[0] === id), r = it ? it[2] : 'comun', k = 'msc' + (++n);
     const brillo = r === 'legendaria' ? `<defs><radialGradient id="${k}"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="55" r="48" fill="url(#${k})"/>` : '';
-    return `<svg class="${cls || 'msc'}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${it ? it[1] : id}">${brillo}<ellipse cx="50" cy="95" rx="24" ry="4" fill="rgba(0,0,0,.12)"/>${cuerpoSVG}${zz}</svg>`;
+    const foto = `<image class="msc-foto" href="img/mascotas/${id}.webp" x="1" y="1" width="98" height="98" preserveAspectRatio="xMidYMid meet" onload="var g=this.parentNode.querySelector('.msc-dib'); if (g) g.remove();"/>`;
+    return `<svg class="${cls || 'msc'} m-${mood || 'normal'}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${it ? it[1] : id}">${brillo}<g class="msc-dib"><ellipse cx="50" cy="95" rx="24" ry="4" fill="rgba(0,0,0,.12)"/>${cuerpoSVG}</g>${foto}${zz}</svg>`;
   }
   window.SMBMascotas = { LISTA, RAREZA, EVENTOS, svg };
 })();

@@ -24,7 +24,8 @@ async def main():
       await pg.evaluate("""()=>{const st=window.__fake.db()['club/state']; window.__fake.put('club/state',{memberUids:[...(st.memberUids||[]),'ulucas']}); window.__fake.put('profiles/ulucas',{name:'Lucas',email:'l@x.es',ts:Date.now(),j:JSON.stringify({poder:'garra',pizarra:{o:['C','C','C'],charla:0}})});}""")
       await pg.wait_for_timeout(500)
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300)
-      await pg.click('[data-lgtab="amistosos"]'); await pg.wait_for_timeout(300); await pg.click('.am-rival[data-name="Lucas"]'); await pg.wait_for_timeout(1500)
+      await pg.locator('[data-lgtab="hoy"]:visible').first.click() if not await pg.locator('.lg-tabs [data-lgtab="amistosos"]:visible').count() else None
+      await pg.locator('[data-lgtab="amistosos"]:visible').first.click(); await pg.wait_for_timeout(300); await pg.click('.am-rival[data-name="Lucas"]'); await pg.wait_for_timeout(1500)
       ids=[k for k in (await pg.evaluate('Object.keys(window.__fake.db())')) if k.startswith('partidas/')]; print('A: partida', ids, (await pg.inner_text('#lv-act'))[:80])
       pid=ids[0]
       await pg.evaluate("p=>window.__fake.put(p,{estado:'jugando'})", pid); await pg.wait_for_timeout(400)

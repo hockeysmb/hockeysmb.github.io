@@ -27,7 +27,7 @@ async def main():
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(400)
       if not await pg.locator('[data-club="ciudad"]').count(): errs.append('no sale la ciudad deportiva en la Liga')
       await pg.screenshot(path=O + '0_liga.png', full_page=True)
-      await pg.click('[data-club="ciudad"]'); await pg.wait_for_timeout(400)
+      await pg.locator('[data-club="ciudad"]:visible').first.click(); await pg.wait_for_timeout(400)
       print('pestañas del club:', await pg.evaluate("[...document.querySelectorAll('#club-ov [data-cltab]')].map(b => b.textContent)"))
       # 3 horas: 50 por hora → 150; sin trabajo esta semana, ×1
       await pg.clock.fast_forward(3 * 3600 * 1000); await pg.wait_for_timeout(2500)
@@ -37,7 +37,7 @@ async def main():
       if abs(cd['p'] - 150) > 3: errs.append('no cobra 150')
       # trabajo de la semana: una sesión completa y un entreno en pista → ×3
       await pg.evaluate("() => { const g = " + G + "; g.log.push({ key: 'ses:x1', pts: 1, why: 'x', date: '2026-11-10' }, { key: 'pista:x1:2026-11-11', pts: 1, why: 'x', date: '2026-11-11' }, { key: 'ses:vieja', pts: 1, why: 'x', date: '2026-11-03' }); g.club.cd.p = 60000; localStorage.setItem('smb-banco-personaje', JSON.stringify(g)); window.SMB.reloadLocal(); }")
-      await pg.wait_for_timeout(300); await pg.click('[data-club="ciudad"]') if not await pg.locator('#club-ov').count() else None
+      await pg.wait_for_timeout(300); await pg.locator('[data-club="ciudad"]:visible').first.click() if not await pg.locator('#club-ov').count() else None
       await pg.click('#club-ov [data-cltab="ciudad"]'); await pg.wait_for_timeout(300)
       m = await pg.text_content('.cd-m'); print('multiplicador con sesión y pista esta semana:', m)
       if m != '×3': errs.append('el multiplicador de la semana no es ×3')
@@ -54,17 +54,17 @@ async def main():
       left = await pg.evaluate("document.querySelectorAll('#club-ov [data-cltrain]:not([disabled])').length"); print('botones de entreno activos:', left)
       # concentración
       await pg.evaluate("() => { const g = " + G + "; g.club.squad.forEach(p => p.forma = 60); localStorage.setItem('smb-banco-personaje', JSON.stringify(g)); window.SMB.reloadLocal(); }"); await pg.wait_for_timeout(300)
-      await pg.click('[data-club="ciudad"]') if not await pg.locator('#club-ov').count() else None
+      await pg.locator('[data-club="ciudad"]:visible').first.click() if not await pg.locator('#club-ov').count() else None
       await pg.click('#club-ov [data-cltab="ciudad"]'); await pg.wait_for_timeout(300); await pg.click('[data-cd="conc"]'); await pg.wait_for_timeout(300)
       g = await pg.evaluate(G); print('forma tras la concentración:', sorted(set(p['forma'] for p in g['club']['squad'])), '· otra vez hoy:', await pg.is_disabled('[data-cd="conc"]'))
       if any(p['forma'] != 100 for p in g['club']['squad']): errs.append('la concentración no recupera la forma')
       await pg.screenshot(path=O + '2_mejorada.png', full_page=True)
       # el lunes sube un juvenil y el mercado trae uno más
-      await pg.click('[data-club="x"]'); await pg.clock.fast_forward(5 * 24 * 3600 * 1000 + 3600 * 1000); await pg.wait_for_timeout(500)
+      await pg.locator('[data-club="x"]:visible').first.click(); await pg.clock.fast_forward(5 * 24 * 3600 * 1000 + 3600 * 1000); await pg.wait_for_timeout(500)
       await pg.click('[data-nav="inicio"]'); await pg.wait_for_timeout(300); await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(600)
       g = await pg.evaluate(G); print('plantilla el lunes:', n0, '→', len(g['club']['squad']), '|', [l['txt'] for l in g['club']['log'] if 'cantera' in l['txt']])
       if len(g['club']['squad']) != n0 + 1: errs.append('no sube el juvenil el lunes')
-      await pg.click('[data-club="mercado"]'); await pg.wait_for_timeout(400)
+      await pg.locator('[data-club="mercado"]:visible').first.click(); await pg.wait_for_timeout(400)
       mk = await pg.locator('#club-ov [data-clbuy]').count(); print('jugadores en el mercado:', mk)
       if mk < 7: errs.append('los ojeadores no añaden jugadores al mercado')
       print('errs', errs)

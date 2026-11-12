@@ -499,3 +499,21 @@ Carlos la quita: ya no se vota el ejercicio ni la sesión de la semana.
 - **Panel de la DT:** la pestaña «Liga y votación» pasa a ser **«Liga»** (`dtTab === 'liga'`, `dtLigaHTML`) y solo tiene la jornada. `dtWeek` se queda con `finde`.
 - **Sesiones:** «Proponer para la votación» pasa a ser «Mandar a la DT» sin más (`proposeSession`); el código `SMB4:` y `reviewSession` siguen igual, sin el botón de candidata.
 - Si hubiera que recuperarla, es volver atrás el commit: no se ha borrado ningún dato.
+
+## El vestíbulo: una sola ilustración (12 nov, noche)
+
+Carlos no quería un edificio por plantas sino un vestíbulo en el que entras y decides a dónde vas. Pidió la ilustración a ChatGPT con el encargo del proyecto y salió a la primera.
+
+- **La imagen:** `fuente/web/pabellon/vestibulo.webp` (768 × 1043, 47 KB). El original es 1024 × 1536; aquí va recortado por arriba y por abajo (40 px y 106 px de suelo vacío), de ahí la proporción `1024 / 1390` de `.vb-esc`. **Si se cambia la imagen hay que volver a medir `VB_Z`.**
+- **Las zonas** (`VB_Z`): `[destino, nombre, estado, izquierda %, arriba %, ancho %, alto %, enElSuelo]`, medidas sobre esa imagen. Siete: las cuatro puertas (Vestuario, Pizarra, Gimnasio, Despacho), el arco (Pista), el mostrador (Taquilla) y la máquina recreativa. La vitrina de trofeos es decorado.
+- **Accesible a propósito:** ninguna zona baja de 56 px de lado en un móvil de 390; todas en la mitad de abajo, donde llega el pulgar; son `<button>` de verdad con `aria-label` que incluye el aviso; el rótulo va en una pastilla opaca encima de la ilustración (no dibujado en ella) y **debajo hay una rejilla de pastillas (`.vb-chips`) con el nombre entero y el aviso**, que es la vuelta atrás si la imagen no carga (`onerror` pone `.vb.sin`, que esconde la escena) y la salida para quien tenga la letra grande. El tamaño del rótulo va en `clamp(... vw ...)`: escala con la escena, no con la letra del sistema; el texto de las pastillas sí escala.
+- **Amistosos ya no es sala:** está dentro de Pista, como cuarta pestaña (`PB_DE.amistosos = 'hoy'`). Si hay amistosos nuevos, el aviso sale en Pista.
+- En el artifact (sin `SMB_CLOUD`) sigue la rejilla de salas de siempre (`PB_ROOMS`, `PB_ART`).
+- **Pruebas:** cada zona sale dos veces (escena y pastilla), así que los clics por `[data-lgtab=...]` y `[data-club=...]` van con `.first`. Para Amistosos hay que entrar antes por Pista.
+
+## Las 41 mascotas, ilustradas (12 nov, noche)
+
+- `femenino/img/mascotas/<id>.webp` (256 × 256, unos 9 KB cada una, 364 KB en total): las 41 mascotas de `LISTA`, generadas por Carlos con ChatGPT, recortadas al contenido, a la misma escala y apoyadas abajo (script `mascotas.py` del cuaderno de trabajo: limpia el borde semitransparente, recorta, escala a 92 % de alto y centra).
+- **Cómo se usan:** `SMBMascotas.svg()` sigue devolviendo el mismo `<svg>` con las mismas clases, pero ahora lleva dentro `<image class="msc-foto" href="img/mascotas/<id>.webp">` encima del dibujo de siempre, que va en un `<g class="msc-dib">`. Cuando la foto carga, su `onload` quita el dibujo; si falta o falla, el dibujo se queda. **No cambia ni el tamaño ni la maquetación.**
+- **Estados:** solo hay `normal`. Los demás se hacen con CSS sobre la foto (`.msc.m-triste`, `.m-sucio`, `.m-dormido`); las «z» de dormir se siguen dibujando en el SVG, fuera del grupo que se quita. Cuando lleguen `feliz`, `triste`, `dormida` y `sucia`, basta con cambiar el `href` a `<id>_<estado>.webp`.
+- El service worker las guarda al verlas (`/img/` es primero lo guardado), así que no hace falta meterlas en `SHELL`; sí hay que subir `VERSION` a mano al tocar la app de jugadoras.

@@ -46,7 +46,7 @@ async def main():
       O2=SHOTS+'lg/shots/'
       async def nav(z): await pg.click(f'[data-nav="{z}"]'); await pg.wait_for_timeout(400)
       async def tab(k):
-        if not await pg.locator(f'[data-lgtab="{k}"]').count(): await pg.click('[data-lgtab="hoy"]'); await pg.wait_for_timeout(300)   # desde el pabellón se entra por la pista
+        if not await pg.locator(f'[data-lgtab="{k}"]').count(): await pg.locator('[data-lgtab="hoy"]:visible').first.click(); await pg.wait_for_timeout(300)   # desde el pabellón se entra por la pista
         await pg.click(f'[data-lgtab="{k}"]'); await pg.wait_for_timeout(400)
       await nav('liga'); await pg.wait_for_timeout(600)
       await pg.screenshot(path=O2+'0_pre.png', full_page=True)

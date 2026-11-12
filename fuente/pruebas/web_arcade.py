@@ -27,7 +27,7 @@ async def main():
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(400)
       tabs = await pg.evaluate("[...document.querySelectorAll('[data-lgtab]')].map(b => b.dataset.lgtab)"); print('pestañas:', tabs)
       if 'recreativa' not in tabs: errs.append('no sale la pestaña Recreativa')
-      await pg.click('.pb [data-lgtab="recreativa"]'); await pg.wait_for_timeout(300)
+      await pg.click('.vb [data-lgtab="recreativa"]'); await pg.wait_for_timeout(300)
       print('juegos:', await pg.evaluate("[...document.querySelectorAll('.arc-card h3')].map(h => h.textContent)"))
       await pg.screenshot(path=O + 'web_recreativa.png', full_page=True)
       await pg.click('[data-arc="muro"]'); await pg.wait_for_selector('.ar-ov canvas', timeout=5000); await pg.wait_for_timeout(500)

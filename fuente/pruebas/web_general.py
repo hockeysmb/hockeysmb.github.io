@@ -64,8 +64,8 @@ async def main():
       await pg.fill('#m-in', code); await pg.click('#m-go'); await pg.wait_for_timeout(300); print('4', await pg.inner_text('#m-msg')); await pg.click('#m-close')
       await pg.wait_for_timeout(1200)
       keys=await pg.evaluate('Object.keys(window.__fake.db())'); print('4 cloud personal', [k for k in keys if k.startswith('users/')])
-      await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300); await pg.click('.pb [data-lgtab="hoy"]'); await pg.wait_for_timeout(300)
-      await pg.click('[data-lgtab="clasificacion"]'); await pg.wait_for_timeout(300)
+      await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300); await pg.click('.vb [data-lgtab="hoy"]'); await pg.wait_for_timeout(300)
+      await pg.locator('[data-lgtab="clasificacion"]:visible').first.click(); await pg.wait_for_timeout(300)
       print('4 palmarés', await pg.locator('.pts-list li').count(), '· queda algo de votación:', await pg.locator('[data-wk="vote"], [data-lgtab="votacion"]').count())
       await pg.click('[data-nav="ejercicios"]'); await pg.click('#tab-mias'); await pg.wait_for_timeout(200)
       await pg.click('#grid .tcard'); await pg.wait_for_timeout(300)
@@ -86,7 +86,8 @@ async def main():
       print('5 tasks', len([k for k in (await pg.evaluate('Object.keys(window.__fake.db())')) if k.startswith('tasks/')]))
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=f'liga{W}.png', full_page=True)
-      await pg.click('[data-lgtab="amistosos"]'); await pg.wait_for_timeout(300); 
+      await pg.locator('[data-lgtab="hoy"]:visible').first.click() if not await pg.locator('.lg-tabs [data-lgtab="amistosos"]:visible').count() else None
+      await pg.locator('[data-lgtab="amistosos"]:visible').first.click(); await pg.wait_for_timeout(300); 
       print('5 team', await pg.inner_text('.team') if await pg.query_selector('.team') else 'none')
       # 5-ej. ejercicios del cuerpo técnico
       print('5ej shared ej', [k for k,v in (await pg.evaluate('window.__fake.db()')).items() if k.startswith('shared/') and v.get('k')=='ej'])
@@ -112,8 +113,9 @@ async def main():
       print('5a shared tras copia', [k.split('/')[1][:6] for k in (await pg.evaluate('Object.keys(window.__fake.db())')) if k.startswith('shared/')])
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300)
       # 5b. la DT está en el vestuario sin mandar nada y reta a Lucas
-      await pg.click('[data-lgtab="pizarra"]'); await pg.wait_for_timeout(300); print('5b sync DT', await pg.inner_text('.my-liga .ml-line'))
-      await pg.click('[data-lgtab="amistosos"]'); await pg.wait_for_timeout(300); await pg.click('.am-rival[data-name="Lucas"]'); await pg.wait_for_timeout(1500); await pg.click('[data-lv="skip"]'); await pg.click('[data-lv="vspiz"]'); await pg.wait_for_timeout(200)
+      await pg.locator('[data-lgtab="pizarra"]:visible').first.click(); await pg.wait_for_timeout(300); print('5b sync DT', await pg.inner_text('.my-liga .ml-line'))
+      await pg.locator('[data-lgtab="hoy"]:visible').first.click() if not await pg.locator('.lg-tabs [data-lgtab="amistosos"]:visible').count() else None
+      await pg.locator('[data-lgtab="amistosos"]:visible').first.click(); await pg.wait_for_timeout(300); await pg.click('.am-rival[data-name="Lucas"]'); await pg.wait_for_timeout(1500); await pg.click('[data-lv="skip"]'); await pg.click('[data-lv="vspiz"]'); await pg.wait_for_timeout(200)
       for i in range(8): await pg.wait_for_selector('[data-lv-o]:not([disabled])', timeout=10000); await pg.click('[data-lv-o]:not([disabled]) >> nth=0'); await pg.wait_for_timeout(150)
       await pg.wait_for_selector('.lv-res', timeout=10000)
       print('5b res', await pg.inner_text('.lv-res')); await pg.click('.lv-act [data-lv="close"]'); await pg.wait_for_timeout(1500)
@@ -123,7 +125,8 @@ async def main():
       await pg.fill('#cl-email','lucas@smb.es'); await pg.fill('#cl-pass','hockey1'); await pg.click('[data-cl="in"]'); await pg.wait_for_timeout(1200)
       print('5c liga dot', await pg.evaluate("document.querySelector('[data-nav=liga]').classList.contains('has-dot')"), '| teaser', await pg.inner_text('.lt-row.hot') if await pg.query_selector('.lt-row.hot') else 'none')
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300)
-      await pg.click('[data-lgtab="amistosos"]'); await pg.wait_for_timeout(300); 
+      await pg.locator('[data-lgtab="hoy"]:visible').first.click() if not await pg.locator('.lg-tabs [data-lgtab="amistosos"]:visible').count() else None
+      await pg.locator('[data-lgtab="amistosos"]:visible').first.click(); await pg.wait_for_timeout(300); 
       print('5c lista', (await pg.inner_text('.amis .duels')).replace('\n',' '))
       await pg.locator('.amis').scroll_into_view_if_needed(); await pg.screenshot(path=f'amis_lucas{W}.png')
       # 6. un intruso sin acceso no ve nada
