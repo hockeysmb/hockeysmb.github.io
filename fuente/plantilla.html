@@ -2604,7 +2604,7 @@ function dtResumenHTML(X) {
   // 13 nov: fuera las doce pastillas de «Qué puedes hacer». Repetían las pestañas de arriba y obligaban
   // a leer doce etiquetas iguales. Quedan los tres atajos del lunes y el resto está en su pestaña.
   return `<section class="ses-sec"><h2 class="h-sec">Te toca ${infoBtn('resumen')}</h2>${items.length ? `<ul class="dt-todo">${items.join('')}</ul>` : '<p class="dt-ok">Todo al día.</p>'}
-      <div class="actions">${B('new', 'Crear un ejercicio', true)}${B('seg', 'Seguimiento')}${B('jornada', 'Jugar la jornada')}</div>
+      <div class="actions">${B('new', 'Crear un ejercicio', true)}${B('jornada', 'Jugar la jornada')}</div>
     </section>
     <section class="ses-sec"><h2 class="h-sec">Lo de siempre</h2><div class="actions">${B('code', 'Pegar un código')}${B('backup', 'Descargar copia del banco')}${B('puntos', 'Dar puntos')}${B('alta', X.CL ? 'Dar de alta a un entrenador' : 'Añadir entrenador al vestuario')}${B('hz-add', 'Añadir un entreno')}
       <a class="btn" id="dt-fem" href="https://hockeysmb.github.io/femenino/" target="_blank" rel="noopener">App de jugadoras</a></div></section>`;
