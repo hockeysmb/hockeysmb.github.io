@@ -36,6 +36,7 @@ async def main():
       await pg.click('#cl-gate [data-cl="out"]'); await pg.wait_for_timeout(1000)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-cl="google"]'); await pg.wait_for_timeout(900)
       await pg.click('[data-nav="dt"]'); await pg.click('[data-dttab="equipo"]'); await pg.wait_for_timeout(300)
+      await pg.locator('[data-dtsub="acceso"]:visible').first.click(); await pg.wait_for_timeout(300)
       await pg.click('[data-cl="grant"]'); await pg.wait_for_timeout(600)
       # segunda cuenta de la misma persona
       await pg.click('#me-btn'); await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1000)
@@ -45,6 +46,7 @@ async def main():
       await pg.click('#cl-gate [data-cl="out"]'); await pg.wait_for_timeout(1000)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-cl="google"]'); await pg.wait_for_timeout(1200)
       await pg.click('[data-nav="dt"]'); await pg.click('[data-dttab="equipo"]'); await pg.wait_for_timeout(400)
+      await pg.locator('[data-dtsub="acceso"]:visible').first.click(); await pg.wait_for_timeout(300)
       tw=await pg.query_selector('.cl-twin'); print('aviso de cuenta repetida:', (await tw.text_content())[:90] if tw else None)
       if not tw: errs.append('sin aviso de repetida')
       await pg.click('[data-cl="hide"]'); await pg.wait_for_timeout(800)

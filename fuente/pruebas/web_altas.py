@@ -27,6 +27,7 @@ async def main():
       await google(DT)
       await pg.set_input_files('#cl-bankfile', LIVE); await pg.click('[data-cl="import"]'); await pg.wait_for_timeout(900)
       await pg.click('[data-nav="dt"]'); await pg.click('[data-dttab="equipo"]'); await pg.wait_for_timeout(300)
+      await pg.locator('[data-dtsub="acceso"]:visible').first.click(); await pg.wait_for_timeout(300)
       for n,e in [('Ana Prueba','ana.prueba@example.com'),('Marta','marta@smb.es')]:
         await pg.fill('#cl-pre-name',n); await pg.fill('#cl-pre-email',e); await pg.click('[data-cl="prereg"]'); await pg.wait_for_timeout(600)
       st=await pg.evaluate("window.__fake.db()['club/state']"); print('emails', st.get('memberEmails'), [ (c['name'],c.get('email')) for c in json.loads(st['j'])['coaches']])

@@ -528,3 +528,16 @@ Primer bloque de la revisión de diseño (`claude/Critica_diseno_apps_nov2026.md
 - **Pendiente de decidir:** los diagramas de los ejercicios siguen en blanco en modo oscuro porque `--g-paper` no se redefine. Cambiarlo obliga a forzar el modo claro al generar el PDF.
 - `tcard` ya no pinta la etiqueta «Pendiente»: solo tenía sentido para la DT y salía en las 27 tarjetas del banco. Sigue en Revisar.
 - **Cuadrante de carga del femenino** (`cuadranteHTML`): los rótulos de las cuatro zonas se han sacado del SVG a una leyenda (`.quad-leyenda`) y los puntos que caen a menos de 28 px se separan con un relajamiento de hasta 80 pasadas. Es un empujón a propósito: el cuadrante dice en qué zona está cada una, no su valor exacto.
+
+## Revisión de diseño: segundo bloque (13 nov)
+
+De `claude/Soluciones_diseno_apps_nov2026.md`. Tres cosas de la crítica se retiraron al mirar el código: el autorrelleno de la sesión ya existía (`prefill`), las mayúsculas de los botones del juego son una regla a propósito (`#v-liga .btn.primary`) y el fondo blanco de los diagramas también («colores del libro, iguales en los dos temas»).
+
+- **Inicio** (`renderHome`): orden nuevo — saludo, **un solo aviso**, próximo entreno, la semana, las tres acciones, primeros pasos y por último el juego. Los avisos se juntan en un array por urgencia (DT, notas, borradores, cofre) y los que no salen van detrás de un `<details class="avisos-mas">`. Los tres contadores de juego (`.hchips`) se van del saludo: ya están en el cartel del pabellón y en el perfil.
+- **Editor de sesión:** los seis campos de cada bloque van dentro de un `<details class="ses-det">` (`detallesHTML`), con el resumen diciendo cuántos están puestos y la primera línea. `sesEd.det` recuerda cuáles has abierto mientras editas. Encima del carrusel de pasos, «Paso N de M» (`.paso-de`).
+- **Panel de la DT:** «Cuerpo técnico» se parte en cuatro subpestañas (`dtSub`: equipos, seg, acceso, vest). **Cuidado:** lo que antes estaba todo en la misma página ahora hay que ir a su subpestaña; `goDT(tab, sel, open, sub)` acepta la subpestaña, y los botones `data-dtgo` la llevan detrás de dos puntos («equipo:acceso»). Las pruebas que daban acceso pulsan `[data-dtsub="acceso"]` antes.
+- **«Qué puedes hacer»** desaparece: eran doce pastillas iguales que repetían las pestañas. Quedan tres atajos en «Te toca» y una fila «Lo de siempre».
+- **Ejercicios:** la fila de tipos de tarea (`#f-tipo`) se desliza en horizontal en vez de envolver en tres filas; la tarjeta pierde la etiqueta de categoría (en «Del club» la categoría ya la filtras arriba) y junta material y fases en una línea. `diagramSVG(dg, label, {mini:true})` pone la clase `.dg-mini`, que engorda los trazos por valor de `stroke-width`: **si cambia un grosor en `ringSVG`, `arrowSVG` o `itemSVG`, hay que cambiarlo también en ese bloque de CSS.** Pantalla de 4.359 a 3.631 px.
+- **Vestuario:** `clubTeaserHTML()` solo sale si no hay alineación (sin nombre puesto). Antes salían las dos y repetían ataque, defensa, Entrenar y Mercado.
+- **Tira de salas** (`.pb-mini`): cada miniatura lleva su nombre debajo (`.pm-fig` + `.pm-n`).
+- **Queda sin hacer:** la ficha del ejercicio a pantalla completa, la pista de la alineación con las esquinas de los diagramas y el párrafo de instrucciones de la alineación.

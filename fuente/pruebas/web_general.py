@@ -52,6 +52,7 @@ async def main():
       await pg.click('[data-nav="dt"]'); await pg.wait_for_timeout(300)
       print('3 te toca', (await pg.inner_text('.dt-todo')).replace('\n',' | ')[:160], '| tab', await pg.inner_text('[data-dttab="equipo"]'))
       await pg.click('[data-dttab="equipo"]'); await pg.wait_for_timeout(300)
+      await pg.locator('[data-dtsub="acceso"]:visible').first.click(); await pg.wait_for_timeout(300)
       await pg.screenshot(path=f'acceso{W}.png', full_page=True)
       await pg.click('[data-cl="grant"]:not([data-uid="dtuid000000000000000000000001"])'); await pg.wait_for_timeout(600)
       st=await pg.evaluate("window.__fake.db()['club/state']"); print('3 members', st['memberUids'], [c['name'] for c in json.loads(st['j'])['coaches']])

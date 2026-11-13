@@ -35,6 +35,7 @@ async def main():
       await pg.click('#cl-gate [data-cl="out"]'); await pg.wait_for_timeout(1000)
       await pg.evaluate('d=>{window.__nextGoogle=d}', DT); await pg.click('[data-cl="google"]'); await pg.wait_for_timeout(900)
       await pg.click('[data-nav="dt"]'); await pg.click('[data-dttab="equipo"]'); await pg.wait_for_timeout(300)
+      await pg.locator('[data-dtsub="acceso"]:visible').first.click(); await pg.wait_for_timeout(300)
       await pg.click('[data-cl="grant"]'); await pg.wait_for_timeout(600)
       await pg.click('#me-btn'); await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1000)
       await pg.fill('#cl-email','lucas@smb.es'); await pg.fill('#cl-pass','hockey1'); await pg.click('[data-cl="in"]'); await pg.wait_for_timeout(900)
@@ -46,7 +47,7 @@ async def main():
       ks=await pg.evaluate("Object.keys(window.__fake.db()).filter(k=>k.startsWith('profiles/'))"); print('profiles', ks)
       me=await pg.evaluate("window.SMB_CLOUD.mk.me()"); print('me', me)
       await nav('liga'); await pg.wait_for_timeout(500); await pg.click('.vb [data-lgtab="equipo"]'); await pg.wait_for_timeout(300)   # el vestuario
-      await pg.click('.club-t [data-club="plantilla"]'); await pg.wait_for_timeout(300)
+      await pg.locator('[data-club="plantilla"]:visible').first.click(); await pg.wait_for_timeout(300)
       # poner a la venta el primero de pista
       await pg.click('.pl-list >> nth=1 >> [data-clsell] >> nth=0'); await pg.wait_for_timeout(200)
       await pg.fill('#m-price','77'); await pg.click('#m-list'); await pg.wait_for_timeout(1200)
