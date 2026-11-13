@@ -1743,19 +1743,38 @@
     if (!P.length) return `<section class="card"><h2>Cómo llegan y cuánto cargan</h2><p class="sub">Saldrá cuando haya unas semanas de respuestas: necesita lo normal de cada una y su carga del mes.</p></section>`;
     const X = x => 34 + (x + 3) / 6 * 320, Y = y => 8 + (1.8 - y) / 1.2 * 322, xm = X(0), ym = Y(1.3);
     const col = { bad: 'var(--bad)', warn: 'var(--warn)', ok: 'var(--accent)', none: 'var(--muted)' };
-    const dots = P.map(p => { const n = (A.jug[p.u].nombre || '?').trim(), ini = n.slice(0, 2); return `<g data-jug="${p.u}" tabindex="0" role="button" aria-label="${esc(n)}"><circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="13" style="fill:${col[p.lvl]};stroke:var(--surface);stroke-width:2"/><text x="${X(p.x).toFixed(1)}" y="${(Y(p.y) + 4).toFixed(1)}" text-anchor="middle" style="fill:var(--accent-ink);font-size:10.5px;font-weight:700">${esc(ini)}</text></g>`; }).join('');
+    // 13 nov: los puntos que caen juntos se separan lo justo para que se lean las iniciales.
+    // Es un empujón pequeño (el cuadrante dice en qué zona está cada una, no su valor exacto).
+    const R = 13, SEP = 2 * R + 2;
+    const pos = P.map(p => ({ p, x: X(p.x), y: Y(p.y) }));
+    for (let it = 0; it < 80; it++) {
+      let movido = false;
+      for (let i = 0; i < pos.length; i++) for (let j = i + 1; j < pos.length; j++) {
+        const a = pos[i], b = pos[j];
+        let dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 0.01) { dx = (i % 2 ? 1 : -1) * 0.6; dy = 0.6; d = 0.85; }
+        if (d < SEP) { const k = (SEP - d) / d / 2; a.x -= dx * k; a.y -= dy * k; b.x += dx * k; b.y += dy * k; movido = true; }
+      }
+      if (!movido) break;
+    }
+    pos.forEach(q => { q.x = Math.max(34 + R, Math.min(354 - R, q.x)); q.y = Math.max(8 + R, Math.min(330 - R, q.y)); });
+    const dots = pos.map(({ p, x, y }) => { const n = (A.jug[p.u].nombre || '?').trim(), ini = n.slice(0, 2); return `<g data-jug="${p.u}" tabindex="0" role="button" aria-label="${esc(n)}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${R}" style="fill:${col[p.lvl]};stroke:var(--surface);stroke-width:2"/><text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" style="fill:var(--accent-ink);font-size:10.5px;font-weight:700">${esc(ini)}</text></g>`; }).join('');
     return `<section class="card"><h2>Cómo llegan y cuánto cargan</h2>
       <svg class="quad" viewBox="0 0 360 372" role="img" aria-label="Cuadrante de cómo llegan y cuánto cargan">
         <rect x="34" y="8" width="${(xm - 35).toFixed(1)}" height="${(ym - 9).toFixed(1)}" rx="10" style="fill:var(--bad-soft)"/>
         <rect x="${(xm + 1).toFixed(1)}" y="8" width="${(354 - xm - 1).toFixed(1)}" height="${(ym - 9).toFixed(1)}" rx="10" style="fill:var(--warn-soft)"/>
         <rect x="34" y="${(ym + 1).toFixed(1)}" width="${(xm - 35).toFixed(1)}" height="${(330 - ym - 1).toFixed(1)}" rx="10" style="fill:var(--lilac)"/>
         <rect x="${(xm + 1).toFixed(1)}" y="${(ym + 1).toFixed(1)}" width="${(354 - xm - 1).toFixed(1)}" height="${(330 - ym - 1).toFixed(1)}" rx="10" style="fill:var(--sage)"/>
-        <text class="q-l" x="42" y="26" style="fill:var(--bad)">Cargada y peor</text><text class="q-l" x="${(xm + 9).toFixed(1)}" y="26" style="fill:var(--warn)">Cargada, pero bien</text>
-        <text class="q-l" x="42" y="320" style="fill:var(--fg)">Peor sin cargar: ¿algo fuera?</text><text class="q-l" x="${(xm + 9).toFixed(1)}" y="320" style="fill:var(--good)">Fresca</text>
         <text class="ax" x="28" y="18" text-anchor="end">×1,8</text><text class="ax" x="28" y="${(ym + 4).toFixed(1)}" text-anchor="end">×1,3</text><text class="ax" x="28" y="330" text-anchor="end">×0,6</text>
         ${dots}
         <text class="ax" x="194" y="350" text-anchor="middle">← Llega peor que lo normal en ella · Mejor →</text>
         <text class="ax" x="194" y="366" text-anchor="middle">Arriba: más carga que su media del mes</text></svg>
+      <ul class="quad-leyenda">
+        <li><i style="background:var(--bad-soft)"></i>Arriba izquierda: <b>cargada y peor</b></li>
+        <li><i style="background:var(--warn-soft)"></i>Arriba derecha: <b>cargada, pero bien</b></li>
+        <li><i style="background:var(--lilac)"></i>Abajo izquierda: <b>peor sin cargar</b></li>
+        <li><i style="background:var(--sage)"></i>Abajo derecha: <b>fresca</b></li>
+      </ul>
       ${sin.length ? `<p class="sub">${sin.length} sin datos suficientes todavía.</p>` : ''}</section>`;
   }
   // ================= lo importante (26 oct): orden de prioridad, respuestas pendientes y paso de una ficha a otra =================
