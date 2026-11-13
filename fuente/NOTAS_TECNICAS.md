@@ -517,3 +517,14 @@ Carlos no quería un edificio por plantas sino un vestíbulo en el que entras y 
 - **Cómo se usan:** `SMBMascotas.svg()` sigue devolviendo el mismo `<svg>` con las mismas clases, pero ahora lleva dentro `<image class="msc-foto" href="img/mascotas/<id>.webp">` encima del dibujo de siempre, que va en un `<g class="msc-dib">`. Cuando la foto carga, su `onload` quita el dibujo; si falta o falla, el dibujo se queda. **No cambia ni el tamaño ni la maquetación.**
 - **Estados:** solo hay `normal`. Los demás se hacen con CSS sobre la foto (`.msc.m-triste`, `.m-sucio`, `.m-dormido`); las «z» de dormir se siguen dibujando en el SVG, fuera del grupo que se quita. Cuando lleguen `feliz`, `triste`, `dormida` y `sucia`, basta con cambiar el `href` a `<id>_<estado>.webp`.
 - El service worker las guarda al verlas (`/img/` es primero lo guardado), así que no hace falta meterlas en `SHELL`; sí hay que subir `VERSION` a mano al tocar la app de jugadoras.
+
+## Accesibilidad y contraste (13 nov)
+
+Primer bloque de la revisión de diseño (`claude/Critica_diseno_apps_nov2026.md` y `claude/Soluciones_diseno_apps_nov2026.md`, en el proyecto).
+
+- **Objetivos táctiles:** `.btn` a `min-height: 44px`, `.btn.small` y `.chip` a 40, y `.info-b` se ve de 24 px con una zona táctil de 44 por un `::after` invisible. Las listas de la DT crecen unos 60 px; es lo que cuesta.
+- **Contraste:** `--muted` pasa de `#776d70` a `#635a5d` (5,9:1 sobre el fondo gris; antes 4,4:1, por debajo del mínimo). **Ojo:** los colores se declaran dos veces, en la línea ~11 y en el bloque del «lavado» de octubre (~1014). **Manda el segundo.** Hay que tocar ese.
+- **Modo oscuro:** el acento (`--accent`) sigue siendo rosa para el texto, que es lo correcto (el granate puro sobre negro da 1,6:1), pero los botones rellenos usan ahora `--fill-accent`, que en claro es el granate de siempre y en oscuro `#a12c3e` con un filo claro para que se vea la forma. Así el botón principal vuelve a ser del club.
+- **Pendiente de decidir:** los diagramas de los ejercicios siguen en blanco en modo oscuro porque `--g-paper` no se redefine. Cambiarlo obliga a forzar el modo claro al generar el PDF.
+- `tcard` ya no pinta la etiqueta «Pendiente»: solo tenía sentido para la DT y salía en las 27 tarjetas del banco. Sigue en Revisar.
+- **Cuadrante de carga del femenino** (`cuadranteHTML`): los rótulos de las cuatro zonas se han sacado del SVG a una leyenda (`.quad-leyenda`) y los puntos que caen a menos de 28 px se separan con un relajamiento de hasta 80 pasadas. Es un empujón a propósito: el cuadrante dice en qué zona está cada una, no su valor exacto.
