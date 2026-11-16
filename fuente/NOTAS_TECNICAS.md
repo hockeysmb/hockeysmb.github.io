@@ -629,3 +629,7 @@ Las dos vías devuelven lo mismo y `nuestros()` reparte por equipo.
 
 - `femenino/partidos.json`: solo Sub-15, Sub-17 y 1ª Autonómica, con **los mismos campos y los mismos identificadores de siempre** (`s15-3`, `af-2`…). Las jugadoras tienen guardado lo que contaron de cada partido con esa clave: si cambia el identificador, se quedan huérfanos. No tocar.
 - `partidos.json` (raíz): todos los equipos, con `eq` y `pista`, para la app de entrenadores.
+
+**Lo que no sabemos distinguir.** La federación pone `0-0` en el calendario tanto en un empate a cero de verdad como en un partido que no se ha jugado (el Infantil A del 14 de noviembre, aplazado, sale 0-0). Ese endpoint **no trae el estado** del partido (lo comprobé: el robot imprime «Estados que trae la federación» y sale «(sin estado)»), así que no hay forma de separarlos desde ahí. En el portal nuevo sí se ve (FINAL / PREVIA), pero habría que abrir el navegador para cada competición y no compensa por un partido de 216. Si algún día molesta, la pista probable es el enlace `fichapartido_NNN`, que seguramente solo está en los jugados.
+
+**Comprobación que merece la pena repetir.** Para validar el reparto por equipos, abre la portada de la federación un lunes y contrasta los partidos del finde con `partidos.json`: el 16 de noviembre cuadraron los 16, con local/visitante y el orden de los goles correcto.

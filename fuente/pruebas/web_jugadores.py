@@ -73,9 +73,11 @@ async def main():
       # 4. los partidos
       await pg.locator('[data-eqsub="part"]').first.click(); await pg.wait_for_timeout(300)
       txt = await pg.text_content('#espacio')
-      aviso = 'no tiene partidos en el calendario' in txt or 'no se han podido leer' in txt.lower()
-      print('partidos de Benjamín D:', 'avisa de que no hay' if aviso else txt[:80])
-      if not aviso: errs.append('Benjamín D debería avisar de que no tiene calendario')
+      bd_part = await pg.evaluate("[...document.querySelectorAll('.pt-row')].map(r=>r.innerText.replace(/\\n/g,' · '))")
+      vacio = 'no tiene partidos en el calendario' in txt or 'no se han podido leer' in txt.lower()
+      print('partidos de Benjamín D:', len(bd_part), bd_part[:2] if bd_part else '(avisa de que no hay)' if vacio else txt[:70])
+      # o trae sus partidos de la federación o avisa de que no los hay: lo que no vale es salir en blanco
+      if not bd_part and not vacio: errs.append('Benjamín D no enseña partidos ni avisa de que no tiene')
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
       await pg.locator('[data-equipo="Sub15"]:visible').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-eqsub="part"]').first.click(); await pg.wait_for_timeout(400)
