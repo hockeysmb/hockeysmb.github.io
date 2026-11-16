@@ -560,3 +560,13 @@ Al ir a tocarlos resultó que estaban bien, y queda apuntado para no volver a in
 - **La ficha del ejercicio ya es una capa a pantalla completa:** `.detail` es `position: fixed; inset: 0` con `role="dialog" aria-modal="true"` y bloqueo del scroll del cuerpo. En una captura de página entera parece que la lista sigue debajo, pero no es lo que se ve en el móvil.
 - **La pista de la alineación es azul fuerte (`#3f86c8`) a propósito:** las fichas de los jugadores son blancas y necesitan ese contraste. Es la pista del juego, no el diagrama de un ejercicio.
 - **Las mayúsculas de los botones principales de la Liga** las pone `#v-liga .btn.primary`, junto con el relieve y el color vivo. Es la frontera entre el trabajo y el juego.
+
+## Formularios (16 nov)
+
+Pasada sobre los campos de las dos apps, encima del sistema de diseño.
+
+- **Las etiquetas dejan de gritar.** `.ses-f` iba en mayúsculas, con letra espaciada, peso 700 y en granate: pesaba más que el propio campo. Ahora va en minúscula, peso 600, en `--muted`.
+- **Ningún campo por debajo de 40 px.** Los `input` y `textarea` del editor pasan de 40 a 44; los `select`, que se quedaban en 39, al mínimo de fila. Sale de `--smb-tocar-fila`.
+- **El foco se ve.** Antes el foco quitaba el `outline` y dejaba un borde de 1 px. Ahora hay un aro de 3 px en `:focus-visible` (solo para quien va con teclado) además del borde.
+- **El teclado del móvil:** `autocapitalize`, `autocomplete` y `enterkeyhint` en los campos del editor de sesión. En la app de jugadoras lo pone `tecladoMovil()` al final de `render()`, sobre los `textarea` e `input[type=text]` que no lo traigan: son muchos y campo a campo se habría quedado a medias.
+- Los cinco objetivos de la sesión dicen que son opcionales, en vez de dejar cinco cajas vacías con pinta de obligatorias.

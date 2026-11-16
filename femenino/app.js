@@ -2374,7 +2374,15 @@
   });
   // el botón de volver de la cabecera retrocede de verdad si se puede; si no (se ha entrado directo), va a donde dice
   root.addEventListener('click', e => { const b = e.target.closest('.hback'); if (!b || navD <= 0) return; e.stopImmediatePropagation(); e.preventDefault(); history.back(); }, true);
-  function render() { pintar(); navSync(); }
+  function render() { pintar(); navSync(); tecladoMovil(); }
+  // 16 nov: en el móvil, que la primera letra de lo que escriben salga en mayúscula sin tener que
+  // pensarlo, y que el corrector funcione. Se pone aquí y no campo a campo porque son muchos.
+  function tecladoMovil() {
+    root.querySelectorAll('textarea:not([autocapitalize]), input[type="text"]:not([autocapitalize])').forEach(e => {
+      e.setAttribute('autocapitalize', 'sentences');
+      if (!e.hasAttribute('spellcheck')) e.setAttribute('spellcheck', 'true');
+    });
+  }
   function pintar() {
     // no repintar mientras se escribe en un campo de texto (se perdería el foco)
     const ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName) && root.contains(ae) && ae.type !== 'checkbox') { renderSoon(); return; }

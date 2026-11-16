@@ -203,8 +203,8 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .ses-sec h3 { font-size: 19px; color: var(--accent); margin: 0; }
 .ses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 10px; }
 .ses-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 10px; }
-.ses-f { display: grid; gap: 4px; align-content: start; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: 12.5px; color: var(--accent); min-width: 0; }
-.ses-f input, .ses-f textarea, .ses-f output { font: 15px/1.45 var(--font-body); text-transform: none; letter-spacing: 0; color: var(--fg); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); width: 100%; min-width: 0; }
+.ses-f { display: grid; gap: var(--smb-aire-1); align-content: start; font-family: var(--font-body); font-weight: 600; font-size: 13.5px; color: var(--muted); min-width: 0; }
+.ses-f input, .ses-f textarea, .ses-f output { font: 15px/1.45 var(--font-body); text-transform: none; letter-spacing: 0; color: var(--fg); padding: 10px 12px; min-height: var(--smb-tocar-fila); border: 1px solid var(--line); border-radius: 6px; background: var(--bg); width: 100%; min-width: 0; }
 .ses-f output { border-style: dashed; }
 .ses-f textarea { resize: vertical; field-sizing: content; min-height: 3.4em; max-height: 22em; }
 .ses-b-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: end; }
@@ -1110,7 +1110,11 @@ h1 { color: var(--fg); font-weight: 800; }
 .search, .fsel select, .ses-f input, .ses-f textarea, .ses-f select, .ed-side input, .ed-side textarea, .modal-card input, .modal-card textarea, .row-in input, .pick-q, .pz-note {
   border: 1px solid transparent; background: var(--fill); border-radius: var(--r-ctl);
 }
-.search:focus, .fsel select:focus, .ses-f input:focus, .ses-f textarea:focus, .ed-side input:focus, .ed-side textarea:focus, .modal-card input:focus, .modal-card textarea:focus, .row-in input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.search:focus, .fsel select:focus, .ses-f input:focus, .ses-f textarea:focus, .ses-f select:focus, .ed-side input:focus, .ed-side textarea:focus, .modal-card input:focus, .modal-card textarea:focus, .row-in input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+/* 16 nov: el aro del foco, visible de verdad y solo para quien va con teclado */
+.search:focus-visible, .fsel select:focus-visible, .ses-f input:focus-visible, .ses-f textarea:focus-visible, .ses-f select:focus-visible, .ed-side input:focus-visible, .ed-side textarea:focus-visible, .modal-card input:focus-visible, .modal-card textarea:focus-visible, .row-in input:focus-visible, .pick-q:focus-visible, .pz-note:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* y los campos nunca por debajo del mínimo para el dedo */
+.search, .fsel select, .ses-f select, .ed-side input, .modal-card input, .row-in input, .pick-q { min-height: var(--smb-tocar-fila); }
 .seg { border: 0; background: var(--fill); padding: 3px; border-radius: 12px; }
 .seg button { border-radius: 9px; }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
@@ -3892,7 +3896,7 @@ document.getElementById('btn-new-tec').addEventListener('click', () => openSes(n
 
 // --- editor de sesión ---
 const sesWrap = document.getElementById('ses-wrap'), sesBox = document.getElementById('ses-ed');
-const fieldHTML = (path, label, val, rows) => `<label class="ses-f">${esc(label)}<textarea data-f="${path}" rows="${rows || 2}">${esc(val || '')}</textarea></label>`;
+const fieldHTML = (path, label, val, rows) => `<label class="ses-f">${esc(label)}<textarea data-f="${path}" rows="${rows || 2}" autocapitalize="sentences" spellcheck="true">${esc(val || '')}</textarea></label>`;
 function bloqueHTML(i) {
   const s = sesEd.s, b = s.bloques[i], B = blk(s, i);
   return `<section class="ses-sec ses-b" id="ses-b-${i}">
@@ -3938,10 +3942,10 @@ function renderSesStep(msgHtml, msgCls) {
     const avail = TEC_NAMES.map(f => { const it = tecList(f, sc ? [sc] : null).filter(c => !s.fundamentos.includes(c)); return it.length ? `<optgroup label="Técnica · ${esc(f)}${sc ? ' (' + esc(catName(sc)) + ')' : ''}">${it.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` : ''; }).join('')
       + FASE_NAMES.map(f => { const it = FASES[f].filter(c => !s.fundamentos.includes(c)); return it.length ? `<optgroup label="Táctica · ${esc(f)}">${it.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` : ''; }).join('');
     body = `<section class="ses-sec"><h3>Datos</h3><div class="ses-grid">
-      <label class="ses-f">Equipo / categoría<input type="text" data-f="equipo" value="${esc(s.equipo)}" placeholder="Por ejemplo: Alevín B"></label>
+      <label class="ses-f">Equipo / categoría<input type="text" data-f="equipo" value="${esc(s.equipo)}" placeholder="Por ejemplo: Alevín B" autocapitalize="words" autocomplete="off" enterkeyhint="next"></label>
       <label class="ses-f">Fecha<input type="date" data-f="fecha" value="${esc(s.fecha)}"></label>
-      <label class="ses-f">Microciclo<input type="text" data-f="micro" value="${esc(s.micro)}"></label>
-      <label class="ses-f">Entrenador<input type="text" data-f="entrenador" value="${esc(s.entrenador)}"></label>
+      <label class="ses-f">Microciclo<input type="text" data-f="micro" value="${esc(s.micro)}" autocapitalize="sentences" autocomplete="off" enterkeyhint="next"></label>
+      <label class="ses-f">Entrenador<input type="text" data-f="entrenador" value="${esc(s.entrenador)}" autocapitalize="words" autocomplete="name" enterkeyhint="done"></label>
       ${isTec(s) ? `<label class="ses-f">Duración (min)<input type="number" inputmode="numeric" min="0" data-f="dur" value="${esc(s.dur || '')}"></label>` : ''}
     </div></section>
     <section class="ses-sec"><h3>Objetivos de la sesión</h3><p class="sub">Una sesión completa trabaja las cuatro dimensiones. Mínimo: un objetivo técnico y uno táctico. Si atacas, define qué defensa va enlazada (y viceversa).</p>
@@ -3949,9 +3953,10 @@ function renderSesStep(msgHtml, msgCls) {
         <span class="sub">Uno técnico (de los objetivos de tu categoría) y uno táctico (del modelo de juego). Al elegir ejercicios salen primero los que los trabajan.</span>
         ${s.fundamentos.length ? `<div class="opts">${s.fundamentos.map(f => `<button class="chip sm" type="button" aria-pressed="true" data-unfund="${esc(f)}" aria-label="Quitar ${esc(f)}">${esc(f)} <span aria-hidden="true">×</span></button>`).join('')}</div>` : ''}
         <select id="ses-fund-add" aria-label="Añadir un fundamento del modelo"><option value="">+ Añadir un fundamento técnico o táctico…</option>${avail}</select>
-        <input type="text" data-f="fundamento" value="${esc(s.fundamento)}" placeholder="Otro (escríbelo si no está en la lista)" aria-label="Otro fundamento">
+        <input type="text" data-f="fundamento" value="${esc(s.fundamento)}" placeholder="Otro (escríbelo si no está en la lista)" aria-label="Otro fundamento" autocapitalize="sentences" autocomplete="off" enterkeyhint="done">
       </div>
       <div class="ses-f">Fase de juego priorizada<div class="opts"><button class="chip" type="button" data-fase-s="ataque" aria-pressed="${s.fase === 'ataque'}">Ataque</button><button class="chip" type="button" data-fase-s="defensa" aria-pressed="${s.fase === 'defensa'}">Defensa</button></div></div>
+      <p class="sub">Los cinco son opcionales: rellena los que te sirvan.</p>
       <div class="ses-fields">${SES_OBJ.map(([k, l]) => fieldHTML('obj.' + k, l, O[k], 2)).join('')}</div>
     </section>`;
   } else if (step <= nB(s)) body = bloqueHTML(step - 1) + (isTec(s) && step === nB(s) ? '<div class="actions"><button class="btn" type="button" data-addb>+ Añadir otro ejercicio</button></div>' : '');
