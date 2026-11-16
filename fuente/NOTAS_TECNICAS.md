@@ -606,5 +606,26 @@ Carlos dijo que el espacio del entrenador estaba demasiado escondido, así que e
 **Partidos.** La app de entrenadores lee `femenino/partidos.json`, el mismo que llena `fuente/partidos_fmp.py` para la app de jugadoras. `PART_EQ` traduce la categoría de la federación al equipo del horario: Sub-15 → Sub15, Sub-17 → Sub17, 1ª Autonómica → Senior Fem.
 
 - De los otros quince equipos **no tenemos el calendario**: falta el enlace de su competición en la federación. La pestaña lo dice en vez de salir vacía.
-- `construir_web.py` copia `femenino/partidos.json` a la carpeta de salida cuando no es la raíz, para que las pruebas lo encuentren.
-- **La actualización automática está rota desde el 28 de octubre:** la federación contesta 403 también a GitHub Actions. El workflow sale en verde porque el script, si no puede leer, deja los partidos de antes. Hay que mirar con el navegador qué pide de verdad el portal.
+- `construir_web.py` copia los dos `partidos.json` a la carpeta de salida cuando no es la raíz, para que las pruebas los encuentren.
+
+## El robot de los partidos, después del cambio de portal (16 nov)
+
+La federación cambió el portal el **28 de octubre** y el robot llevaba desde entonces sin traer nada: salía en verde cada día porque el script, si no puede leer, deja los partidos de antes. El archivo se quedó con fecha del 28 y nadie se enteró. **Un workflow en verde no quiere decir que haya hecho su trabajo**; si vuelve a pasar algo así, lo que hay que mirar es `actualizado` dentro del json.
+
+Lo que había cambiado: el portal es ahora una aplicación de JavaScript (`new_portal`) que pide los datos a `api.sidgad.com` con un token suyo. Pedirle algo a esa API sin el token contesta `INVALID TOKEN`. **No usamos ese token: es una credencial del portal, no nuestra, y acabaría publicada en un repositorio público.**
+
+Pero el endpoint de siempre (`fmp/fmp_cal_idc_{idc}_1.php`) **sigue vivo**: lo único que le faltaba era la cookie de sesión. Así que el script hace dos cosas, por este orden:
+
+1. **Camino corto:** abre la portada para coger la cookie y pide el calendario a ese endpoint. Es lo que funciona hoy y tarda segundos.
+2. **Reserva:** si el corto no contesta, abre con Chromium la misma página pública que ve cualquiera (`?liga=NNNN&vista=calendar`) y lee la tabla `tr.sidgad-calendario-partido`. Ojo: hay que esperar a que las filas **existan**, no a que sean visibles — `wait_for_selector` las quiere visibles y en frío van dentro de un contenedor oculto; por ahí se perdió un intento entero.
+
+Las dos vías devuelven lo mismo y `nuestros()` reparte por equipo.
+
+**Los identificadores de las 17 competiciones de 2026/27** están en `LIGAS` (los saqué del portal uno a uno). De ellas, 14 tienen equipo nuestro; Micro XS, Juvenil y 2ª Autonómica masculina no.
+
+**El reparto por equipos.** En la federación somos «STA Mª LA BLANCA A», «B», «C»… y la letra depende de la competición: la A de Benjamín 1ª es nuestro Benjamín A, pero la C de Benjamín 2ª es el Benjamín C. Esa tabla está a mano dentro de `LIGAS` y **es lo más probable que esté mal**; el script avisa en el log de cualquier equipo del SMB que no sepa colocar («no sé de qué equipo nuestro es»).
+
+**Dos ficheros de una sola lectura:**
+
+- `femenino/partidos.json`: solo Sub-15, Sub-17 y 1ª Autonómica, con **los mismos campos y los mismos identificadores de siempre** (`s15-3`, `af-2`…). Las jugadoras tienen guardado lo que contaron de cada partido con esa clave: si cambia el identificador, se quedan huérfanos. No tocar.
+- `partidos.json` (raíz): todos los equipos, con `eq` y `pista`, para la app de entrenadores.
