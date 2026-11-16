@@ -83,11 +83,38 @@ LEER_TABLA = """() => {
   return out;
 }"""
 
+HAY_FILAS = "() => document.querySelectorAll('tr.sidgad-calendario-partido').length"
+CLIC_CALENDARIO = """() => {
+  const b = [...document.querySelectorAll('button,a,[role=tab],li')]
+    .find(x => /CALENDARIO/i.test((x.textContent || '').trim()) && (x.textContent || '').trim().length < 40);
+  if (b) { b.click(); return true; } return false;
+}"""
+DIAGNOSTICO = """() => ({
+  titulo: document.title, url: location.href,
+  cuenta: Object.fromEntries(['tr.sidgad-calendario-partido','.sidgad-calendario-jornada','table','tr',
+    '.sidgad-partido-fila','[class*=calendario]','button'].map(s => [s, document.querySelectorAll(s).length])),
+  texto: (document.body.innerText || '').replace(/\\s+/g, ' ').slice(0, 300)
+})"""
+
+def esperar_filas(pg, segundos=40):
+    """La web es una aplicación de JavaScript: las filas tardan en aparecer. Esperamos a que las haya,
+    sin pedir que sean «visibles» (al cargar en frío van dentro de un contenedor todavía oculto)."""
+    for _ in range(int(segundos * 2)):
+        if pg.evaluate(HAY_FILAS): return True
+        pg.wait_for_timeout(500)
+    return False
+
 def abrir(pg, idc, ver=False):
     """Abre la página de una competición y devuelve sus filas."""
     pg.goto(PORTAL.format(idc), wait_until='domcontentloaded', timeout=60000)
-    pg.wait_for_selector('tr.sidgad-calendario-partido', timeout=45000)
-    pg.wait_for_timeout(600)
+    if not esperar_filas(pg, 25):
+        # en frío puede abrirse en la portada de la competición: hay que entrar en «Calendario y resultados»
+        pg.evaluate(CLIC_CALENDARIO)
+        if not esperar_filas(pg, 25):
+            print(f'  {idc}: no aparece la tabla. Lo que ve el navegador:')
+            print('   ', json.dumps(pg.evaluate(DIAGNOSTICO), ensure_ascii=False)[:900])
+            raise RuntimeError('no aparece la tabla del calendario')
+    pg.wait_for_timeout(500)
     filas = pg.evaluate(LEER_TABLA)
     if ver: print(f'  {idc}: {len(filas)} filas en la tabla')
     return filas
