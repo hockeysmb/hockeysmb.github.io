@@ -189,6 +189,14 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .paso-de { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .dt-sub { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 12px; }
 .dt-sub button { flex: 1 1 auto; min-height: 40px; padding: 8px 12px; border: 0; background: transparent; color: var(--fg); font: 600 14px/1 var(--font-body); cursor: pointer; }
+.hicons { display: flex; gap: var(--smb-aire-2); align-items: center; margin-left: auto; align-self: center; }
+.hi { position: relative; width: var(--smb-tocar); height: var(--smb-tocar); display: grid; place-items: center; padding: 0; border: 0;
+      border-radius: 50%; background: var(--fill); color: var(--muted); cursor: pointer; }
+.hi svg { width: 22px; height: 22px; }
+.hi.hot { background: var(--accent-soft); color: var(--accent); }
+.hi:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.hi-n { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px;
+        background: var(--fill-accent); color: #fff; font: 700 11px/18px var(--font-body); font-style: normal; text-align: center; }
 .avisos-mas { margin-top: -4px; }
 .avisos-mas > summary { display: inline-flex; align-items: center; min-height: 40px; padding: 0 4px; font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer; list-style: none; }
 .avisos-mas > summary::-webkit-details-marker { display: none; }
@@ -2423,6 +2431,9 @@ function firstSteps() {
   ];
 }
 const fl3 = e => FLU3D[e] ? `<img src="${FLU3D[e]}" alt="" aria-hidden="true">` : '';
+// 16 nov: los dos avisos de Inicio que son iconos (cofre y borrador a medias)
+const ICO_COFRE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 9h19M12 9v11" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 9C10 5 8 4 6.6 4.8 5.3 5.6 5.6 8 8 9M12 9c2-4 4-5 5.4-4.2 1.3.8 1 3.2-1.4 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+const ICO_BORRADOR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10a2.1 2.1 0 0 0-3-3L5 17v3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 const HC_IC = { get lv() { return fl3('⭐'); }, get pt() { return fl3('🏆'); }, get mo() { return fl3('🪙'); }, get cf() { return fl3('🎁'); } };
 function renderHome() {
   const name = readAuthor(), nx = nextSession(), pend = canWriteBank ? pendingDT().length + ejNuevos().length : 0, steps = firstSteps();
@@ -2440,17 +2451,23 @@ function renderHome() {
       ${!name ? `<div class="row-in"><input id="home-name" type="text" placeholder="Tu nombre" aria-label="Tu nombre" autocomplete="given-name"><button class="btn primary" type="button" data-home="name">Guardar</button></div>` : ''}
     </section>` : '';
   // 13 nov: un solo aviso a la vista, el más urgente. Los demás, detrás de «y N más».
+  // 16 nov: en la banda solo va el trabajo. El cofre y el borrador son dos iconos al lado del
+  // saludo: el del cofre está siempre (aunque sea para decir cuánto falta) y así no se come
+  // una pantalla entera por un penalti gratis.
   const avisos = [
     pend ? `<button class="notice" type="button" data-go="dt">Tienes ${pend} ${pend === 1 ? 'cosa pendiente' : 'cosas pendientes'} en Dirección Técnica${ejNuevos().length ? ` (${ejNuevos().length} ${ejNuevos().length === 1 ? 'ejercicio nuevo' : 'ejercicios nuevos'} del cuerpo técnico)` : ''} <span aria-hidden="true">→</span></button>` : '',
     name ? notasHomeHTML() : '',
-    drafts.length ? `<button class="notice" type="button" data-home="draft" data-id="${esc(drafts[drafts.length - 1].id)}">${drafts.length === 1 ? `Tienes un ejercicio a medias${drafts[0].title ? ': «' + esc(drafts[0].title) + '»' : ''}` : `Tienes ${drafts.length} ejercicios a medias`}. Seguir <span aria-hidden="true">→</span></button>` : '',
-    name ? penNoticeHTML() : '',
   ].filter(x => x && x.trim());
+  const nCof = typeof cofresN === 'function' ? cofresN() : 0;
+  const iconos = !name ? '' : `<div class="hicons">
+    <button class="hi${nCof || penFree() ? ' hot' : ''}" type="button" data-cofre aria-label="${nCof ? `Tienes ${nCof} ${nCof === 1 ? 'cofre' : 'cofres'}: tira el penalti` : penFree() ? 'Penalti gratis listo' : `Próximo penalti gratis en ${esc(penCd(penFreeIn()))}`}">${ICO_COFRE}${nCof ? `<i class="hi-n">${nCof}</i>` : ''}</button>
+    ${drafts.length ? `<button class="hi hot" type="button" data-home="draft" data-id="${esc(drafts[drafts.length - 1].id)}" aria-label="${drafts.length === 1 ? `Tienes un ejercicio a medias${drafts[0].title ? ': ' + esc(drafts[0].title) : ''}. Seguir` : `Tienes ${drafts.length} ejercicios a medias. Seguir`}">${ICO_BORRADOR}${drafts.length > 1 ? `<i class="hi-n">${drafts.length}</i>` : ''}</button>` : ''}
+  </div>`;
   const avisoHTML = !avisos.length ? '' : avisos[0] + (avisos.length > 1
     ? `<details class="avisos-mas"><summary>y ${avisos.length - 1} ${avisos.length === 2 ? 'aviso más' : 'avisos más'}</summary>${avisos.slice(1).join('')}</details>` : '');
   // El orden: primero el trabajo (el entreno que viene, la semana, las tres acciones) y después el juego.
   document.getElementById('v-inicio').innerHTML = `
-    ${name ? `<div class="hello"><div><p class="h-date">${esc(new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }))}</p><h1>Hola, ${esc(name)}</h1></div></div>`
+    ${name ? `<div class="hello"><div><p class="h-date">${esc(new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }))}</p><h1>Hola, ${esc(name)}</h1></div>${iconos}</div>`
       : `<div class="hello"><div><h1>Banco de situaciones SMB</h1><p class="sub">Ejercicios del club, sesiones con la plantilla del club y la liga del cuerpo técnico.</p></div></div>`}
     ${avisoHTML}
     ${hero}
