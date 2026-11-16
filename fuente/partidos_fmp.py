@@ -96,6 +96,45 @@ DIAGNOSTICO = """() => ({
   texto: (document.body.innerText || '').replace(/\\s+/g, ' ').slice(0, 300)
 })"""
 
+# --- camino rápido: el endpoint de siempre ---------------------------------
+# Sigue vivo; lo que le faltaba era la cookie de sesión. Es mil veces más barato que abrir un navegador,
+# así que se prueba primero y solo si no contesta se tira del navegador.
+import html as _H, urllib.request, urllib.parse, http.cookiejar
+SG = 'https://www.server2.sidgad.es/fmp/'
+UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+CABE = {'User-Agent': UA, 'Referer': 'https://www.hockeypatines.fmp.es/', 'Origin': 'https://www.hockeypatines.fmp.es',
+        'Accept': 'text/html, */*; q=0.01', 'Accept-Language': 'es-ES,es;q=0.9',
+        'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'}
+_ab = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+_portal_abierto = []
+
+def _abrir_portal():
+    if _portal_abierto: return
+    _portal_abierto.append(True)
+    try: _ab.open(urllib.request.Request('https://www.hockeypatines.fmp.es/', headers={'User-Agent': UA}), timeout=40).read()
+    except Exception as e: print(f'aviso: no se ha podido abrir la portada ({e!r})')
+
+def por_http(idc):
+    """Pide el calendario al endpoint de siempre y lo devuelve con la misma forma que la tabla."""
+    _abrir_portal()
+    datos = urllib.parse.urlencode({'idc': idc, 'tipo_stats': '', 'site_lang': 'es'}).encode()
+    with _ab.open(urllib.request.Request(SG + f'fmp_cal_idc_{idc}_1.php', data=datos, headers=CABE), timeout=40) as r:
+        h = r.read().decode('utf-8', 'replace')
+    filas = []
+    for g, cuerpo in re.findall(r'<tr[^>]*gamedate="(\d{8})"[^>]*>(.*?)</tr>', h, re.S):
+        eq = [_H.unescape(x).strip() for x in re.findall(r'nombre_junto_logo">\s*([^<]+?)\s*</div>', cuerpo)]
+        cl = re.findall(r'logos_clubes/(\d+)[._]', cuerpo)
+        if len(eq) < 2 or g == '00000000' or any('DESCANSO' in e.upper() for e in eq): continue
+        hora = re.search(r'<td[^>]*>\s*(\d{1,2}:\d{2})\s*</td>', cuerpo)
+        jor = re.search(r'JORNADA\s+(\d+)', cuerpo)
+        res = re.search(r'web_link_td"[^>]*>\s*(\d+)\s*-\s*(\d+)\s*</td>', cuerpo)
+        filas.append({'j': int(jor.group(1)) if jor else None,
+                      'dia': f'{g[6:]}/{g[4:6]}/{g[:4]}', 'hora': hora.group(1) if hora else '', 'pista': '',
+                      'local': eq[0], 'visitante': eq[1],
+                      'cLocal': cl[0] if len(cl) > 0 else '', 'cVisit': cl[1] if len(cl) > 1 else '',
+                      'res': f'{res.group(1)}:{res.group(2)}' if res else ''})
+    return filas
+
 def esperar_filas(pg, segundos=40):
     """La web es una aplicación de JavaScript: las filas tardan en aparecer. Esperamos a que las haya,
     sin pedir que sean «visibles» (al cargar en frío van dentro de un contenedor todavía oculto)."""
@@ -151,20 +190,38 @@ def main():
     fem_viejo = json.load(open(JSON, encoding='utf-8'))
     viejo = json.load(open(JSON_TODOS, encoding='utf-8')) if os.path.exists(JSON_TODOS) else {'partidos': []}
     antes = {x['id']: x for x in viejo['partidos']}
-    from playwright.sync_api import sync_playwright
+
+    # El navegador solo se abre si hace falta: casi siempre basta con el camino corto.
+    nav = {'p': None, 'pg': None}
+    def pagina():
+        if nav['pg'] is None:
+            from playwright.sync_api import sync_playwright
+            nav['p'] = sync_playwright().start()
+            b = nav['p'].chromium.launch()
+            nav['pg'] = b.new_context(locale='es-ES', viewport={'width': 1400, 'height': 1000}).new_page()
+            print('  (abriendo el navegador)')
+        return nav['pg']
 
     nuevos, log = [], []
-    with sync_playwright() as p:
-        nav = p.chromium.launch()
-        ctx = nav.new_context(locale='es-ES', viewport={'width': 1400, 'height': 1000})
-        pg = ctx.new_page()
+    try:
         for idc, cat, pre, equipos in LIGAS:
             if solo and idc != solo: continue
             previos = [x for x in viejo['partidos'] if x['id'].startswith(pre + '-')]
+            filas, como = [], ''
             try:
-                L = nuestros(abrir(pg, idc, ver), equipos, cat, log)
+                filas = por_http(idc); como = 'http'
             except Exception as e:
-                L = []; log.append(f'{cat}: no se ha podido leer ({e!r})')
+                log.append(f'{cat}: el camino corto no va ({e!r}); se abre el navegador')
+            if not filas:
+                try:
+                    filas = abrir(pagina(), idc, ver); como = 'navegador'
+                except Exception as e:
+                    log.append(f'{cat}: tampoco con el navegador ({e!r})')
+            try:
+                L = nuestros(filas, equipos, cat, log) if filas else []
+                if ver and filas: print(f'  {idc} ({como}): {len(filas)} filas, {len(L)} del SMB')
+            except Exception as e:
+                L = []; log.append(f'{cat}: no se ha podido entender la tabla ({e!r})')
             if not L or (previos and len(L) < len(previos) / 2):
                 log.append(f'{cat}: {len(L)} partidos leídos (había {len(previos)}): se dejan los de antes')
                 nuevos += previos; continue
@@ -180,7 +237,10 @@ def main():
                 nuevos.append({'id': pid, 'eq': x['eq'], 'cat': cat, 'j': x['j'], 'fecha': x['fecha'],
                                'hora': x['hora'], 'pista': x['pista'], 'rival': rival, 'casa': x['casa'], 'res': x['res']})
             log.append(f'{cat}: {len(L)} partidos')
-        nav.close()
+    finally:
+        if nav['p']:
+            try: nav['p'].stop()
+            except Exception: pass
 
     if solo:
         print('\n'.join(log)); print(json.dumps(nuevos, ensure_ascii=False, indent=1)); return
