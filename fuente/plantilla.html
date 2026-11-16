@@ -189,6 +189,16 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .paso-de { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .dt-sub { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 12px; }
 .dt-sub button { flex: 1 1 auto; min-height: 40px; padding: 8px 12px; border: 0; background: transparent; color: var(--fg); font: 600 14px/1 var(--font-body); cursor: pointer; }
+.esp-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.esp-link:hover span, .esp-link:focus-visible span { text-decoration: underline; }
+.esp-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.eq-by .esp-link { font-weight: 700; }
+.esp-top { margin-bottom: 10px; }
+.esp-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.esp-head h1 { margin: 0; font-size: clamp(26px, 6vw, 36px); }
+.esp-av { width: 64px; height: 64px; flex: none; border-radius: 50%; overflow: hidden; background: var(--surface); box-shadow: inset 0 0 0 2px var(--line); }
+.esp-av svg { width: 100% !important; height: 100% !important; max-width: none; display: block; }
+.esp-yo { font-size: 14px; font-weight: 600; color: var(--muted); }
 .hicons { display: flex; gap: var(--smb-aire-2); align-items: center; margin-left: auto; align-self: center; }
 .hi { position: relative; width: var(--smb-tocar); height: var(--smb-tocar); display: grid; place-items: center; padding: 0; border: 0;
       border-radius: 50%; background: var(--fill); color: var(--muted); cursor: pointer; }
@@ -1712,6 +1722,7 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
   </main>
 </div>
 <div class="detail" id="detail" hidden role="dialog" aria-modal="true" aria-label="Ficha del ejercicio"></div>
+<div class="detail" id="espacio" hidden role="dialog" aria-modal="true" aria-label="Espacio del entrenador"></div>
 
 <button class="to-top" id="to-top" type="button" hidden aria-label="Subir a los filtros"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3 L13 9 H9.5 V13 H6.5 V9 H3 Z" fill="currentColor"/></svg>Filtros</button>
 <div class="editor" id="editor" hidden>
@@ -2740,6 +2751,54 @@ function planFor(it, name) {
   return o ? o.plan[it.key] : null;
 }
 const haceTxt = ts => { if (!ts) return ''; const d = Math.floor((Date.now() - ts) / 864e5); return d <= 0 ? 'hoy' : d === 1 ? 'ayer' : `hace ${d} días`; };
+// ================= el espacio de cada entrenador (16 nov) =================
+// Lo que hace cada uno, junto y en un sitio. Las sesiones y los ejercicios ya los veía todo el
+// cuerpo técnico; aquí se juntan por persona y se les añaden sus equipos y cómo va en la liga.
+const espBox = document.getElementById('espacio');
+let espName = null;
+function openCoach(name) {
+  if (!name) return;
+  espName = name; drawCoach(); espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
+  const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
+}
+function closeCoach() { espBox.hidden = true; espName = null; if (detail.hidden && editor.hidden && sesBox.hidden) document.body.style.overflow = ''; }
+function drawCoach() {
+  const n = espName; if (!n) return;
+  const c = coachOf(n) || (bank.coaches || []).find(x => isMe(n, x.name));
+  const equipos = equiposMap(horario()).filter(x => x.coaches.some(e => isMe(e, n))).map(x => x.t);
+  const ses = (bank.sesClub || []).filter(x => isMe(x.autor || '', n)).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const ejs = bank.tasks.filter(x => x.source !== 'oller' && x.author && isMe(n, x.author));
+  const rows = (typeof standings === 'function' ? standings() : []);
+  const pos = rows.findIndex(r => normName(r.name) === normName(n));
+  const pts = clubPoints(c ? c.name : n), lvl = levelOf(pts);
+  const yo = isMe(n, readAuthor() || '');
+  espBox.innerHTML = `<div class="esp-top">
+      <button class="pb-back" type="button" data-espclose><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Volver</button>
+    </div>
+    <div class="esp-head"><span class="esp-av">${avatarSVG(c ? c.avatar : null, lvl)}</span>
+      <div><h1>${esc(c ? c.name : n)}${yo ? ' <small class="esp-yo">tú</small>' : ''}</h1>
+        <p class="sub">${equipos.length ? esc(equipos.join(' · ')) : 'Sin equipos en el horario'}</p></div></div>
+    <section class="ses-sec"><h2 class="h-sec">En la liga</h2>
+      <div class="club-stats big"><span><b>${pos >= 0 ? pos + 1 + 'º' : '—'}</b><small>${rows.length ? 'de ' + rows.length : 'sin jornadas'}</small></span>
+        <span><b>${lvl}</b><small>nivel · ${pts} puntos</small></span>
+        <span><b>${ejs.length}</b><small>${ejs.length === 1 ? 'ejercicio suyo' : 'ejercicios suyos'} en el banco</small></span></div>
+      <p class="sub">${esc(record(c ? c.name : n) || 'Todavía sin duelos')}</p></section>
+    <section class="ses-sec"><h2 class="h-sec">Sus sesiones</h2>
+      ${ses.length ? `<div class="ses-rows mini">${ses.slice(0, 12).map(x => `<button class="ses-row" type="button" data-espses="${esc(x.id)}"><span class="ses-thumb">${(x.s.bloques || []).some(b => b && b.task) ? diagramSVG(((x.s.bloques || []).find(b => b && b.task) || {}).task.diagram, '') : '<span class="ses-empty">Sin ejercicio</span>'}</span><span class="ses-bn">${esc(x.s.equipo || 'Sesión')}</span><span>${esc(x.s.fecha ? fmtShort(x.s.fecha) : '')}</span></button>`).join('')}</div>${ses.length > 12 ? `<p class="sub">Y ${ses.length - 12} más.</p>` : ''}`
+        : '<p class="sub">Todavía no ha compartido ninguna sesión.</p>'}</section>
+    <section class="ses-sec"><h2 class="h-sec">Sus ejercicios</h2>
+      ${ejs.length ? `<div class="grid">${ejs.slice(0, 8).map(t => tcard(t, 'bank')).join('')}</div>${ejs.length > 8 ? `<p class="sub">Y ${ejs.length - 8} más en el banco.</p>` : ''}`
+        : '<p class="sub">Todavía no tiene ejercicios en el banco.</p>'}</section>`;
+}
+espBox.addEventListener('click', e => {
+  if (e.target.closest('[data-espclose]')) { closeCoach(); return; }
+  const s = e.target.closest('[data-espses]');
+  if (s) { const x = (bank.sesClub || []).find(y => y.id === s.dataset.espses); if (x) { closeCoach(); openSheet(x.s); } return; }
+  const t = e.target.closest('[data-open]');
+  if (t) { const ta = bank.tasks.find(y => y.id === t.dataset.open); if (ta) { closeCoach(); openDetail(ta, 'bank'); } }
+});
+document.addEventListener('click', e => { const b = e.target.closest('[data-coach]'); if (b) openCoach(b.dataset.coach); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !espBox.hidden) closeCoach(); });
 function dtSeguimientoHTML() {
   const H = horario(), names = [];
   (H.g || []).forEach(g => g.ent.forEach(n => { if (!names.some(x => deacc(x) === deacc(n))) names.push(n); }));
@@ -6636,7 +6695,7 @@ function lgTableHTML(S, mini) {
   const me = normName(readAuthor()), tb = lgTable(S); let rows = tb.map((r, i) => ({ r, i }));
   if (mini) { const pos = tb.findIndex(r => normName(r.name) === me); rows = rows.filter(({ i }) => i < 3 || i === pos); }
   return `<div class="lg-tbl-w"><table class="lg-tbl"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>P</th>${mini ? '' : '<th>GF</th><th>GC</th>'}<th>DG</th><th>Pts</th>${mini ? '' : '<th>Racha</th>'}</tr></thead><tbody>
-    ${rows.map(({ r, i }) => `<tr class="${normName(r.name) === me ? 'me' : ''}${i === 0 && r.pj ? ' first' : ''}"><td>${i + 1}</td><td class="lg-tn">${miniAv(r.name)}<span>${esc(r.name)}</span></td><td>${r.pj}</td><td>${r.g}</td><td>${r.p}</td>${mini ? '' : `<td>${r.gf}</td><td>${r.gc}</td>`}<td>${r.gf - r.gc > 0 ? '+' : ''}${r.gf - r.gc}</td><td><b>${r.pts}</b></td>${mini ? '' : `<td class="lg-racha">${r.racha.slice(-5).map(x => `<i class="${x}">${x}</i>`).join('')}</td>`}</tr>`).join('')}</tbody></table></div>`;
+    ${rows.map(({ r, i }) => `<tr class="${normName(r.name) === me ? 'me' : ''}${i === 0 && r.pj ? ' first' : ''}"><td>${i + 1}</td><td class="lg-tn"><button class="esp-link" type="button" data-coach="${esc(r.name)}">${miniAv(r.name)}<span>${esc(r.name)}</span></button></td><td>${r.pj}</td><td>${r.g}</td><td>${r.p}</td>${mini ? '' : `<td>${r.gf}</td><td>${r.gc}</td>`}<td>${r.gf - r.gc > 0 ? '+' : ''}${r.gf - r.gc}</td><td><b>${r.pts}</b></td>${mini ? '' : `<td class="lg-racha">${r.racha.slice(-5).map(x => `<i class="${x}">${x}</i>`).join('')}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 function lgHoyHTML(N) {
   const me = readAuthor(); if (!me) return '<section class="ses-sec"><p>Pon tu nombre en Mi perfil para entrar en la liga.</p></section>';
@@ -7261,7 +7320,7 @@ function dtEquiposHTML() {
   const fr = g => `${DIA_C[g.dia]} ${g.ini}`;
   return `<section class="ses-sec eq-sec" id="eq-sec"><h2 class="h-sec">Equipos y entrenadores</h2>
     <p class="sub">Quién lleva cada equipo. Al cambiarlo se cambia en el horario, en la agenda de cada entrenador y en el seguimiento.</p>
-    <ul class="eq-by">${[...by.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, T]) => `<li><b>${esc(c)}</b><span>${T.map(esc).join(' · ')}</span></li>`).join('')}</ul>
+    <ul class="eq-by">${[...by.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, T]) => `<li><button class="esp-link" type="button" data-coach="${esc(c)}">${esc(c)}</button><span>${T.map(esc).join(' · ')}</span></li>`).join('')}</ul>
     <details class="dt-more"${L.some(x => x.raros.length) ? ' open' : ''}><summary>Por equipo · ${L.length}${L.some(x => x.raros.length) ? ` · ${L.filter(x => x.raros.length).length} con algún día distinto` : ''}</summary>
     <ul class="dt-list">${L.map(x => `<li class="dt-row eq-row"><span class="dt-txt"><b>${esc(x.t)}</b><small>${x.franjas.map(fr).join(' · ')}</small>${x.franjas.filter(g => g.ent.length > 1).map(g => `<button class="linkb eq-prep" type="button" data-hz="edit" data-id="${esc(g.id)}">${esc(fr(g))} · ${esc(gLabel(g))}: ${prepTxt(g) ? esc(prepTxt(g)) : '<b>¿quién la prepara?</b>'}</button>`).join('')}${x.raros.length ? `<small class="eq-raro">No coincide: ${x.raros.map(g => `${esc(fr(g))} lo lleva ${esc(g.ent.join(' y ') || 'nadie')}`).join('; ')}</small>` : ''}</span><span class="eq-ents">${x.coaches.length ? x.coaches.map(c => `<span class="chip sm">${esc(c)}</span>`).join('') : '<span class="sub">Sin entrenador</span>'}</span><button class="btn small" type="button" data-eq="edit" data-team="${esc(x.t)}">Cambiar</button></li>`).join('')}</ul></details></section>`;
 }

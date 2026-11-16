@@ -570,3 +570,12 @@ Pasada sobre los campos de las dos apps, encima del sistema de diseño.
 - **El foco se ve.** Antes el foco quitaba el `outline` y dejaba un borde de 1 px. Ahora hay un aro de 3 px en `:focus-visible` (solo para quien va con teclado) además del borde.
 - **El teclado del móvil:** `autocapitalize`, `autocomplete` y `enterkeyhint` en los campos del editor de sesión. En la app de jugadoras lo pone `tecladoMovil()` al final de `render()`, sobre los `textarea` e `input[type=text]` que no lo traigan: son muchos y campo a campo se habría quedado a medias.
 - Los cinco objetivos de la sesión dicen que son opcionales, en vez de dejar cinco cajas vacías con pinta de obligatorias.
+
+## El espacio de cada entrenador (16 nov)
+
+`openCoach(nombre)` abre una capa (`#espacio`, igual que `#detail`) con lo de esa persona junto: sus equipos (del horario), cómo va en la liga, sus sesiones compartidas y sus ejercicios del banco.
+
+- **No comparte nada nuevo:** `bank.sesClub` y los ejercicios del banco ya los veía todo el cuerpo técnico. Aquí solo se juntan por persona.
+- Se entra desde cualquier sitio donde salga un nombre con `data-coach="Nombre"`: hoy, la lista de Cuerpo técnico de la DT y la clasificación de la liga.
+- `espName` guarda de quién es el espacio abierto; `closeCoach()` solo suelta el scroll del cuerpo si no hay otra capa abierta.
+- **Lo que NO entra aquí:** los entrenos sin preparar. Que la DT vea quién va retrasado es seguimiento; que lo vean los compañeros entre ellos es otra cosa, y no se ha decidido.
