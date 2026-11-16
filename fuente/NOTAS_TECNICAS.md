@@ -576,6 +576,15 @@ Pasada sobre los campos de las dos apps, encima del sistema de diseño.
 `openCoach(nombre)` abre una capa (`#espacio`, igual que `#detail`) con lo de esa persona junto: sus equipos (del horario), cómo va en la liga, sus sesiones compartidas y sus ejercicios del banco.
 
 - **No comparte nada nuevo:** `bank.sesClub` y los ejercicios del banco ya los veía todo el cuerpo técnico. Aquí solo se juntan por persona.
-- Se entra desde cualquier sitio donde salga un nombre con `data-coach="Nombre"`: hoy, la lista de Cuerpo técnico de la DT y la clasificación de la liga.
+- Se entra desde cualquier sitio donde salga un nombre con `data-coach="Nombre"`: la zona **Equipos**, la lista de Cuerpo técnico de la DT y la clasificación de la liga.
 - `espName` guarda de quién es el espacio abierto; `closeCoach()` solo suelta el scroll del cuerpo si no hay otra capa abierta.
 - **Lo que NO entra aquí:** los entrenos sin preparar. Que la DT vea quién va retrasado es seguimiento; que lo vean los compañeros entre ellos es otra cosa, y no se ha decidido.
+
+## Zona «Equipos» (16 nov)
+
+Carlos dijo que el espacio del entrenador estaba demasiado escondido, así que es una zona de la barra de abajo, la cuarta: `ZONES` pasa a seis y `renderEquipos()` la pinta.
+
+- Dos pestañas (`eqTab`): **Equipos** (los del horario, sin los de porteros) y **Entrenadores** (quien sale en alguna franja).
+- `openEquipo(t)` reutiliza la capa `#espacio`: cuándo entrena, quién lo lleva y las sesiones compartidas de ese equipo. `espName` se pone a `null` para que `drawCoach()` no lo repinte encima.
+- `eqSigla(t)` saca las iniciales para el escudete: «Prebenjamín A» → PA, «Senior Fem» → SF. Antes cogía las dos primeras letras y todos los prebenjamines salían «PR».
+- **La barra tiene seis botones.** En pantallas de 320 px los rótulos se cortaban: por debajo de 370 px la letra baja a 10 px y el relleno lateral a 4. Si algún día entra un séptimo, no cabe: habría que agrupar.

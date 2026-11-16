@@ -189,6 +189,18 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .paso-de { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .dt-sub { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 12px; }
 .dt-sub button { flex: 1 1 auto; min-height: 40px; padding: 8px 12px; border: 0; background: transparent; color: var(--fg); font: 600 14px/1 var(--font-body); cursor: pointer; }
+.eq-cards { display: grid; gap: var(--smb-aire-2); margin: var(--smb-aire-3) 0 0; padding: 0; list-style: none; }
+.eq-card { width: 100%; display: flex; align-items: center; gap: var(--smb-aire-3); min-height: 64px; padding: 10px 14px; border: 0;
+           border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow); color: inherit; text-align: left; cursor: pointer; }
+.eq-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.eq-av { width: 42px; height: 42px; flex: none; border-radius: 50%; overflow: hidden; background: var(--fill); }
+.eq-av svg { width: 100% !important; height: 100% !important; max-width: none; display: block; }
+.eq-esc { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--accent-soft);
+          color: var(--accent); font: 800 15px/1 var(--font-game); }
+.eq-esc.grande { width: 64px; height: 64px; border-radius: 16px; font-size: 22px; }
+.eq-txt { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.eq-txt b { font-weight: 800; font-size: 15px; }
+.eq-txt small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .esp-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .esp-link:hover span, .esp-link:focus-visible span { text-decoration: underline; }
 .esp-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
@@ -308,6 +320,8 @@ footer.foot p { margin: 0; }
   .nav button { flex: 1; flex-direction: column; gap: 3px; font-size: 11.5px; padding: 6px 2px; min-width: 0; }
   .nav .nl { display: none; } .nav .ns { display: inline; }
   .nav button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  /* 16 nov: con «Equipos» son seis. En pantallas de 320 px los rótulos se cortaban. */
+  @media (max-width: 370px) { .nav button { padding-left: 4px; padding-right: 4px; } .nav button span { font-size: 10px; letter-spacing: -.01em; } }
   .wrap { padding-block: 14px 100px; }
   .to-top { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
 }
@@ -1665,6 +1679,7 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
       <button type="button" data-nav="inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h12V9.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span>Inicio</span></button>
       <button type="button" data-nav="ejercicios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 5v14" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Ejercicios</span></button>
       <button type="button" data-nav="sesiones"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 2.5v3M16 2.5v3M7.5 10h9M7.5 14h9M7.5 18h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Sesiones</span></button>
+      <button type="button" data-nav="equipos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="9.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.2 19c0-3.2 2.6-5.2 5.8-5.2s5.8 2 5.8 5.2M16 13.9c2.6.2 4.8 2 4.8 5.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Equipos</span></button>
       <button type="button" data-nav="liga"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 6H4.5v1.5A3 3 0 0 0 7.5 10.5M17 6h2.5v1.5a3 3 0 0 1-3 3M12 14v3.5M8.5 20.5h7M9.5 17.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Liga</span></button>
       <button type="button" data-nav="dt" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.4 3.1 8.2 7.5 9.5 4.4-1.3 7.5-5.1 7.5-9.5V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nl">Dirección Técnica</span><span class="ns">DT</span></button>
     </nav>
@@ -1703,6 +1718,7 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
       <div class="list" id="ses-list"></div>
     </section>
 
+    <section class="view" id="v-equipos" aria-label="Equipos" hidden></section>
     <section class="view" id="v-liga" aria-label="Liga" hidden></section>
     <section class="view" id="v-vestuario" aria-label="Vestuario" hidden></section>
 
@@ -2359,7 +2375,7 @@ detail.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && detailState && modal.hidden && editor.hidden && !document.querySelector('.viewer')) closeDetail(); });
 
 // ================= navegación =================
-const ZONES = ['inicio', 'ejercicios', 'sesiones', 'liga', 'vestuario', 'dt'];
+const ZONES = ['inicio', 'ejercicios', 'sesiones', 'equipos', 'liga', 'vestuario', 'dt'];
 view.zone = 'inicio';
 function navigate(z) {
   if (z === 'perfil') z = 'vestuario';
@@ -2379,6 +2395,7 @@ function render() {
   if (view.zone === 'inicio') renderHome();
   else if (view.zone === 'ejercicios') renderGrid();
   else if (view.zone === 'sesiones') renderSessions();
+  else if (view.zone === 'equipos') renderEquipos();
   else if (view.zone === 'liga') renderLiga();
   else if (view.zone === 'vestuario') renderVestuario();
   else if (view.zone === 'dt') renderDT();
@@ -2751,6 +2768,52 @@ function planFor(it, name) {
   return o ? o.plan[it.key] : null;
 }
 const haceTxt = ts => { if (!ts) return ''; const d = Math.floor((Date.now() - ts) / 864e5); return d <= 0 ? 'hoy' : d === 1 ? 'ayer' : `hace ${d} días`; };
+// ================= Equipos: los equipos del club y quién los lleva (16 nov) =================
+// Lo pidió Carlos: que el espacio de cada entrenador no esté escondido. Es una zona de la barra
+// de abajo, con dos pestañas: los equipos y las personas.
+let eqTab = 'equipos';
+const eqSigla = t => { const w = String(t || '').trim().split(/\s+/).filter(Boolean);
+  return (w.length > 1 ? w.map(x => x[0]).join('') : (w[0] || '??').slice(0, 2)).toUpperCase().slice(0, 3); };
+function renderEquipos() {
+  const H = horario(), L = equiposMap(H).filter(x => !/^porter/.test(deacc(x.t)));
+  const box = document.getElementById('v-equipos');
+  const porEnt = new Map();
+  L.forEach(x => x.coaches.forEach(c => { if (!porEnt.has(c)) porEnt.set(c, []); porEnt.get(c).push(x.t); }));
+  const tabs = `<div class="seg" role="tablist" aria-label="Qué ver">${[['equipos', `Equipos · ${L.length}`], ['gente', `Entrenadores · ${porEnt.size}`]].map(([k, l]) => `<button type="button" data-eqtab="${k}" aria-pressed="${eqTab === k}">${l}</button>`).join('')}</div>`;
+  const fr = g => `${DIA_C[g.dia]} ${g.ini}`;
+  const cuerpo = eqTab === 'gente'
+    ? `<ul class="eq-cards">${[...porEnt.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, T]) => {
+        const co = coachOf(c) || (bank.coaches || []).find(x => isMe(c, x.name));
+        return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, co ? levelOf(clubPoints(co.name)) : 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b><small>${esc(T.join(' · '))}</small></span><span aria-hidden="true">→</span></button></li>`;
+      }).join('')}</ul>`
+    : `<ul class="eq-cards">${L.map(x => `<li><button class="eq-card" type="button" data-equipo="${esc(x.t)}"><span class="eq-esc" aria-hidden="true">${esc(eqSigla(x.t))}</span><span class="eq-txt"><b>${esc(x.t)}</b><small>${x.coaches.length ? esc(x.coaches.join(' · ')) : 'Sin entrenador en el horario'}</small><small>${esc(x.franjas.map(fr).join(' · '))}</small></span><span aria-hidden="true">→</span></button></li>`).join('')}</ul>`;
+  box.innerHTML = `<div class="vhead"><div><h1>Equipos ${infoBtn('equipos')}</h1><p class="sub">Los equipos del club y quién lleva cada uno. Toca para ver lo suyo.</p></div></div>
+    ${tabs}${cuerpo}`;
+}
+document.getElementById('v-equipos').addEventListener('click', e => {
+  const t = e.target.closest('[data-eqtab]'); if (t) { eqTab = t.dataset.eqtab; render(); return; }
+  const q = e.target.closest('[data-equipo]'); if (q) openEquipo(q.dataset.equipo);
+});
+function openEquipo(t) {
+  const L = equiposMap(horario()), x = L.find(y => y.t === t); if (!x) return;
+  const ses = (bank.sesClub || []).filter(y => normName(y.s.equipo || '') === normName(t)).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const fr = g => `${DIA_C[g.dia]} ${g.ini}–${g.fin || ''}`;
+  espName = null;
+  espBox.innerHTML = `<div class="esp-top"><button class="pb-back" type="button" data-espclose><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Volver</button></div>
+    <div class="esp-head"><span class="eq-esc grande" aria-hidden="true">${esc(eqSigla(t))}</span>
+      <div><h1>${esc(t)}</h1><p class="sub">${x.coaches.length ? esc(x.coaches.join(' · ')) : 'Sin entrenador en el horario'}</p></div></div>
+    <section class="ses-sec"><h2 class="h-sec">Cuándo entrena</h2>
+      <ul class="pts-list">${x.franjas.map(g => `<li><span>${esc(fr(g))}</span><span>${esc(hzTeams(g).join(' + '))}</span></li>`).join('') || '<li><span>No está en el horario.</span></li>'}</ul></section>
+    <section class="ses-sec"><h2 class="h-sec">Entrenadores</h2>
+      <ul class="eq-cards">${x.coaches.map(c => { const co = coachOf(c) || (bank.coaches || []).find(y => isMe(c, y.name));
+        return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b></span><span aria-hidden="true">→</span></button></li>`; }).join('') || '<li><p class="sub">Nadie asignado todavía.</p></li>'}</ul></section>
+    <section class="ses-sec"><h2 class="h-sec">Sus sesiones</h2>
+      ${ses.length ? `<div class="ses-rows mini">${ses.slice(0, 12).map(y => `<button class="ses-row" type="button" data-espses="${esc(y.id)}"><span class="ses-thumb">${(y.s.bloques || []).some(b => b && b.task) ? diagramSVG(((y.s.bloques || []).find(b => b && b.task) || {}).task.diagram, '') : '<span class="ses-empty">Sin ejercicio</span>'}</span><span class="ses-bn">${esc(y.autor || '')}</span><span>${esc(y.s.fecha ? fmtShort(y.s.fecha) : '')}</span></button>`).join('')}</div>`
+        : '<p class="sub">Todavía no hay sesiones compartidas de este equipo.</p>'}</section>`;
+  espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
+  const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
+}
+
 // ================= el espacio de cada entrenador (16 nov) =================
 // Lo que hace cada uno, junto y en un sitio. Las sesiones y los ejercicios ya los veía todo el
 // cuerpo técnico; aquí se juntan por persona y se les añaden sus equipos y cómo va en la liga.
@@ -6066,6 +6129,9 @@ const INFO = {
   monedas: () => ['Puntos y monedas', `<ul><li><b>Puntos del club:</b> los da lo que aportas (ejercicios en el banco, «En SMB» validado, elegidos de la semana, jornada). Marcan tu nivel y los ve todo el cuerpo técnico.</li>
     <li><b>Monedas:</b> cada punto es una moneda, y ganas más con misiones, amistosos, entrenos en pista y cofres. Se gastan en la tienda del personaje.</li>
     <li>Lo de <b>«De broma»</b> es carísimo a propósito: hay que ahorrar.</li></ul>`],
+  equipos: () => ['Equipos', `<ul><li>Los equipos salen del <b>horario</b>: quien aparece en una franja es su entrenador.</li>
+    <li>Toca un equipo para ver cuándo entrena, quién lo lleva y las sesiones que se han compartido de ese equipo.</li>
+    <li>Toca una persona para ver lo suyo: sus equipos, cómo va en la liga, sus sesiones y sus ejercicios.</li></ul>`],
   misiones: () => ['Misiones de hoy', `<ul><li>Cada día salen 3 misiones distintas.</li><li>+${PTS_MISION} monedas por cada una y, si haces las tres, +${PTS_MISIONES} y un cofre.</li><li>Se marcan solas al hacerlas.</li></ul>`],
   agenda: () => ['Tus entrenos de la semana', `<ul><li>Salen del horario del club, con tus equipos.</li><li><b>Prepararla</b> abre una sesión nueva con el equipo, la fecha y, si lo has planificado, lo que querías trabajar.</li>
     <li>Cuenta como preparada cuando hay una sesión con ese equipo y esa fecha (tuya o de un compañero del mismo grupo).</li></ul>`],
