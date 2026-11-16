@@ -1,0 +1,80 @@
+/* ============================================================================
+   Sistema de diseño del CHP Santa María la Blanca
+   ----------------------------------------------------------------------------
+   Un solo sitio para los colores, la tipografía y la forma de las dos apps:
+   la de entrenadores (banco de situaciones) y la de jugadoras.
+
+   Cómo llega a cada una:
+   - App de entrenadores: `construir_web.py` y `construir_artifact.py` pegan este
+     archivo dentro de `fuente/plantilla.html`, donde pone la marca @sistema.
+   - App de jugadoras: el build copia este archivo a `femenino/sistema.css`, que
+     `femenino/index.html` carga con un <link>. La app sigue funcionando sin
+     construir nada: el archivo está publicado en el repositorio.
+
+   Las dos apps conservan sus propios nombres de variables (--bg, --accent…) y
+   los apuntan aquí. Así hay una sola paleta sin tener que tocar cientos de
+   reglas de CSS.
+
+   Si cambias un color aquí, cambia en las dos apps. Esa es la idea.
+   ========================================================================== */
+
+:root {
+  /* ---- Marca ----------------------------------------------------------- */
+  /* El granate del escudo. Es el mismo de las ilustraciones y del logo.
+     Durante un tiempo la app de entrenadores usó #7a1f2e y la de jugadoras
+     #681825: este es el bueno. */
+  --smb-granate: #681825;
+  --smb-granate-osc: #4f111c;        /* al pulsar, y bordes del granate */
+  --smb-granate-vivo: #a12c3e;       /* rellenos sobre fondo oscuro */
+  --smb-dorado: #ffcf33;             /* el aviso, la corona, el filo del cartel */
+  --smb-dorado-osc: #8a5a00;         /* texto dorado sobre fondo claro */
+  --smb-crema: #fbe3bd;              /* la madera clara de las ilustraciones */
+  --smb-hielo: #cfe3f2;              /* el azul del suelo de la pista */
+  --smb-rosa: #ec8e9c;               /* el granate en oscuro, SOLO para texto */
+
+  /* ---- Estados --------------------------------------------------------- */
+  /* Tres niveles, siempre en este orden: bien, atención, mal. Cada uno con su
+     color de texto y su fondo suave. */
+  --smb-bien: #2e6b46;      --smb-bien-suave: #e3f1e8;
+  --smb-ojo: #8a5a00;       --smb-ojo-suave: #fbefd6;
+  --smb-mal: #a3261d;       --smb-mal-suave: #f9e2df;
+
+  /* ---- La pista dibujada ------------------------------------------------ */
+  /* Los colores del libro de Oller. Son iguales en claro y en oscuro a
+     propósito: el dibujo de un ejercicio es un documento y tiene que verse
+     igual en la pantalla, en el PDF y en el libro. No los pongas en oscuro. */
+  --smb-papel: #ffffff;
+  --smb-tinta: #1b1b1b;
+  --smb-area: #e8eff8;
+  --smb-atacante: #3f4a6e;
+  --smb-defensor: #ec7a2a;
+  --smb-portero: #111111;
+  --smb-entrenador: #e01b1b;
+
+  /* ---- Tipografía ------------------------------------------------------ */
+  /* Cada app tiene su voz: la de entrenadores, condensada y seca; la de
+     jugadoras, una serif con más carácter. El cuerpo del texto es el mismo. */
+  --smb-texto: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --smb-titulo-ent: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --smb-titulo-fem: "Fraunces", Georgia, "Times New Roman", serif;
+  --smb-juego: "Nunito", "Arial Rounded MT Bold", system-ui, Arial, sans-serif;
+
+  /* ---- Forma ----------------------------------------------------------- */
+  --smb-r-tarjeta: 20px;    /* tarjetas y secciones */
+  --smb-r-control: 12px;    /* botones, campos, pestañas */
+  --smb-r-pastilla: 999px;  /* chips y avisos redondos */
+
+  /* ---- Lo que se puede pulsar ------------------------------------------- */
+  /* Medido en un móvil de 390 px: por debajo de esto se falla el dedo.
+     44 para un botón suelto; 40 cuando van varios en fila con hueco entre
+     ellos. Nada baja de 40. */
+  --smb-tocar: 44px;
+  --smb-tocar-fila: 40px;
+
+  /* ---- Aire ------------------------------------------------------------- */
+  --smb-aire-1: 4px;
+  --smb-aire-2: 8px;
+  --smb-aire-3: 12px;
+  --smb-aire-4: 16px;
+  --smb-aire-5: 24px;
+}

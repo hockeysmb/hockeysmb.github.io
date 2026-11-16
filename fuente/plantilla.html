@@ -3,6 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap">
 <style>
+/* @sistema */
 /* Layout: cabecera con filtros; tarjetas de tarea (gráfico + normas); editor a pantalla completa con herramientas, pista y texto. Cromo de la página en granate del club; el gráfico copia la simbología del libro de Oller. */
 :root {
   --bg: #f5f2f2;
@@ -10,27 +11,27 @@
   --fg: #221c1d;
   --muted: #6b6163;
   --line: #e2d8d9;
-  --accent: #681825;
+  --accent: var(--smb-granate);
   --accent-soft: #f2e5e7;
-  --ok: #2e6b46;
+  --ok: var(--smb-bien);
   --rink: #e6edf4;
   --rink-line: #93a3b5;
   --team-b: #33416b;
   --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
   /* gráfico: colores del libro, iguales en los dos temas (la pista es papel) */
-  --g-paper: #ffffff;
+  --g-paper: var(--smb-papel);
   --g-line: #2b2b2b;
-  --g-area: #e8eff8;
-  --g-atk: #3f4a6e;
-  --g-def: #ec7a2a;
-  --g-gk: #111111;
-  --g-coach: #e01b1b;
+  --g-area: var(--smb-area);
+  --g-atk: var(--smb-atacante);
+  --g-def: var(--smb-defensor);
+  --g-gk: var(--smb-portero);
+  --g-coach: var(--smb-entrenador);
   --g-cone: #1f3cff;
   --g-bidon: #5b8def;
   --g-bidon-rim: #1f3cff;
   --g-goal: #f26a1b;
-  --g-ink: #1b1b1b;
+  --g-ink: var(--smb-tinta);
   --g-sel: #2a8cff;
 }
 @media (prefers-color-scheme: dark) {
@@ -1042,30 +1043,30 @@ button:focus-visible, a:focus-visible, summary:focus-visible, select:focus-visib
    B: trabajo (inicio, ejercicios, sesiones, DT) con aire de app de iOS: fondo gris claro, tarjetas blancas sin borde y con sombra suave, títulos grandes en minúscula, listas agrupadas.
    C: juego (liga, vestuario, cofres, misiones) con botones gordos con relieve, colores vivos y tipografía redonda. */
 :root {
-  --bg: #f3f1f3; --surface: #ffffff; --fill: #f4f2f4; --line: #e9e4e6; --muted: #635a5d;   /* 13 nov: 5,9:1 sobre el fondo; antes #776d70 daba 4,4:1 */
-  --accent: #7a1f2e; --accent-2: #4f111c; --accent-soft: #f6e9eb;
-  --fill-accent: #7a1f2e; --fill-accent-2: #4f111c; --fill-edge: transparent;   /* 13 nov: en oscuro el texto pasa a rosa pero el botón sigue granate */
+  /* 16 nov: los valores vienen del sistema (fuente/sistema.css). Aquí solo se les
+     pone el nombre que ya usaba esta app, para no tocar cientos de reglas. */
+  --bg: #f3f1f3; --surface: #ffffff; --fill: #f4f2f4; --line: #e9e4e6; --muted: #635a5d;
+  --accent: var(--smb-granate); --accent-2: var(--smb-granate-osc); --accent-soft: #f6e9eb;
+  --fill-accent: var(--smb-granate); --fill-accent-2: var(--smb-granate-osc); --fill-edge: transparent;
   --shadow: 0 1px 2px rgba(60, 20, 30, .05), 0 6px 22px rgba(60, 20, 30, .06);
   --shadow-up: 0 2px 4px rgba(60, 20, 30, .06), 0 12px 30px rgba(60, 20, 30, .10);
-  --r-card: 20px; --r-ctl: 12px;
-  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-game: "Nunito", "Arial Rounded MT Bold", system-ui, Arial, sans-serif;
+  --r-card: var(--smb-r-tarjeta); --r-ctl: var(--smb-r-control);
+  --font-display: var(--smb-texto); --font-body: var(--smb-texto); --font-game: var(--smb-juego);
   --g-green: #58cc02; --g-green-2: #46a302; --g-gold: #ffc800; --g-gold-2: #e0a800; --g-purple: #ce82ff; --g-blue: #1cb0f6; --g-red: #ff4b4b; --g-edge: #e5e2e4;
   --ic-1: #ff9500; --ic-2: #34c759; --ic-3: #0a84ff; --ic-4: #af52de;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f0d0e; --surface: #1d1a1b; --fill: #2a2628; --line: #342f31; --muted: #aaa0a2;
-    --fill-accent: #a12c3e; --fill-accent-2: #8e2435; --fill-edge: rgba(255, 255, 255, .16);
-    --accent: #ec8e9c; --accent-2: #b25a68; --accent-soft: #3a2328; --shadow: none; --shadow-up: 0 0 0 1px #3a3436; --g-edge: #3a3436;
+    --fill-accent: var(--smb-granate-vivo); --fill-accent-2: #8e2435; --fill-edge: rgba(255, 255, 255, .16);
+    --accent: var(--smb-rosa); --accent-2: #b25a68; --accent-soft: #3a2328; --shadow: none; --shadow-up: 0 0 0 1px #3a3436; --g-edge: #3a3436;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f0d0e; --surface: #1d1a1b; --fill: #2a2628; --line: #342f31; --muted: #aaa0a2;
-  --fill-accent: #a12c3e; --fill-accent-2: #8e2435; --fill-edge: rgba(255, 255, 255, .16);
-  --accent: #ec8e9c; --accent-2: #b25a68; --accent-soft: #3a2328; --shadow: none; --shadow-up: 0 0 0 1px #3a3436; --g-edge: #3a3436;
+  --fill-accent: var(--smb-granate-vivo); --fill-accent-2: #8e2435; --fill-edge: rgba(255, 255, 255, .16);
+  --accent: var(--smb-rosa); --accent-2: #b25a68; --accent-soft: #3a2328; --shadow: none; --shadow-up: 0 0 0 1px #3a3436; --g-edge: #3a3436;
   color-scheme: dark;
 }
 body { font-size: 15.5px; -webkit-font-smoothing: antialiased; letter-spacing: -.005em; }
@@ -1125,11 +1126,11 @@ h1 { color: var(--fg); font-weight: 800; }
 .btn.primary, .btn.primary:hover { box-shadow: inset 0 0 0 1px var(--fill-edge); }
 /* 13 nov · claude/Soluciones_diseno_apps_nov2026.md: el dedo necesita sitio. Los botones sueltos, 44 px;
    los pequeños y los chips, 40, que es lo que cabe en una fila de filtros sin que crezca de más. */
-.btn { min-height: 44px; }
-.btn.small { min-height: 40px; }
-.chip, .chip.sm { min-height: 40px; }
+.btn { min-height: var(--smb-tocar); }
+.btn.small { min-height: var(--smb-tocar-fila); }
+.chip, .chip.sm { min-height: var(--smb-tocar-fila); }
 .info-b { position: relative; width: 24px; height: 24px; }
-.info-b::after { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 50%; }
+.info-b::after { content: ""; position: absolute; left: 50%; top: 50%; width: var(--smb-tocar); height: var(--smb-tocar); transform: translate(-50%, -50%); border-radius: 50%; }
 .seg { background: color-mix(in srgb, var(--line) 75%, var(--bg)); }
 /* barra superior y barra de navegación translúcidas */
 .appbar { background: transparent; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
@@ -5973,7 +5974,7 @@ const INFO = {
     <li>Juega tu pizarra con tu nivel, tu poder y tu <b>forma</b>: +2 por cada partido del fin de semana ganado o, en formación, con el objetivo cumplido (máximo +4). La apunta la DT.</li>
     <li>Ganar: +${PTS_SEM.duelo} puntos del club y un cofre.</li></ul>`],
   poderes: () => ['Poderes', `<p>Un poder actúa solo en tus partidos y sale en la pista cuando se activa. Se desbloquean con el nivel.</p><ul>${PODERES.map(p => `<li><b>${esc(p.n)}</b> (desde «${esc(LEVELS[p.lv].n)}»): ${esc(p.d)}</li>`).join('')}</ul>`],
-  alineacion: () => ['Alineación', `<p>Como en Online Soccer Manager: eliges formación y quién juega en cada puesto.</p><ul><li><b>Puestos:</b> el <b>cierre</b> defiende (pesa su defensa), el <b>ala</b> hace de todo y el <b>pivote</b> ataca (pesan su disparo y su técnica). El portero, sus reflejos.</li><li><b>Formaciones:</b> Rombo (equilibrada), Cuadrado (+1 defensa), Ofensiva (+3 ataque, −3 defensa) y Defensiva (+3 defensa, −3 ataque).</li><li>El número de cada jugador es su media <b>en ese puesto</b>. Si sale en naranja, no es su mejor puesto.</li><li>Los huecos que dejes se rellenan solos con el mejor para el puesto. «Automática» lo pone todo así.</li><li>Lo que tengas a las ${LG_HOUR}:00 es lo que juega en la liga.</li></ul>`],
+  alineacion: () => ['Alineación', `<p>Como en Online Soccer Manager: eliges formación y quién juega en cada puesto. Toca un jugador de la pista para cambiarlo.</p><p>En cada jugador, el <b>número</b> es su media en ese puesto (en naranja si juega fuera de su mejor puesto) y la <b>barra</b> es su forma.</p><ul><li><b>Puestos:</b> el <b>cierre</b> defiende (pesa su defensa), el <b>ala</b> hace de todo y el <b>pivote</b> ataca (pesan su disparo y su técnica). El portero, sus reflejos.</li><li><b>Formaciones:</b> Rombo (equilibrada), Cuadrado (+1 defensa), Ofensiva (+3 ataque, −3 defensa) y Defensiva (+3 defensa, −3 ataque).</li><li>El número de cada jugador es su media <b>en ese puesto</b>. Si sale en naranja, no es su mejor puesto.</li><li>Los huecos que dejes se rellenan solos con el mejor para el puesto. «Automática» lo pone todo así.</li><li>Lo que tengas a las ${LG_HOUR}:00 es lo que juega en la liga.</li></ul>`],
   plantilla: () => ['Tu plantilla', `<p>Eres el míster de una plantilla de jugadores inventados. Juegan 4 de pista y el portero.</p><ul><li><b>Medias:</b> patinaje, técnica, disparo y defensa (el portero, reflejos). Cada jugador sube hasta su <b>potencial</b>.</li><li><b>En los partidos:</b> el ataque de tus titulares contra la defensa del rival suma o resta hasta 2 al dado. El dado sigue mandando.</li><li><b>Entrenar:</b> uno al día. Si das tu entreno de verdad en el <b>modo pista</b>, ganas uno extra y doble.</li><li><b>Forma:</b> baja al jugar y sube al entrenar y con los días.</li><li><b>Fichajes:</b> cada día salen jugadores libres y, a veces, la carta de un entrenador del club. Puedes vender al club al momento o, en la web, poner jugadores a la venta y recibir ofertas del cuerpo técnico.</li></ul>`],
   cofres: () => ['Cofres', `<p>Cada cofre es un <b>penalti</b>: eliges esquina y el portero, que es otro entrenador del club elegido al azar, se tira a un lado también al azar.</p><p>Además, cada 12 horas tienes un <b>penalti gratis</b>, y si no quieres esperar puedes tirarlo por 50 monedas.</p>
     <ul><li><b>Si marcas</b>, premio al azar: ${RAREZAS.map(([, n, w]) => `${n.toLowerCase()} ${w} %`).join(' · ')}. Si ya tienes todo lo de esa rareza, monedas.</li>
@@ -6221,7 +6222,7 @@ function alineacionHTML() {
       ${X.slots.map((p, i) => chip(p, i)).join('')}<span class="al-dir" aria-hidden="true">▲ ataque</span></div>
     ${alSel >= 0 ? `<div class="al-pick"><div class="lt-head"><h3 class="h-sub">${esc(CL_ROLES[r].n)}: elige quién juega</h3><button class="btn small" type="button" data-al="x">Cerrar</button></div>
       <ul class="al-list">${pick.map(p => { const sl = X.slots.findIndex(q => q && q.id === p.id); return `<li><button type="button" data-alp="${p.id}" class="${sl === alSel ? 'on' : ''}"><span class="al-face num${p.pos === 'gk' ? ' gk' : ''}">${esc(p.d)}</span><span class="al-lt"><b>${esc(p.n)}</b><small>${sl >= 0 ? (sl === alSel ? 'Juega aquí' : 'Juega de ' + CL_ROLES[X.roles[sl]].n.toLowerCase()) : 'Suplente'} · mejor de ${CL_ROLES[clBestRole(p)].n.toLowerCase()} · forma ${clForma(p)}</small></span><span class="al-rr">${clRoleRating(p, r)}</span></button></li>`; }).join('')}</ul></div>`
-      : `<p class="sub">Toca un jugador de la pista para cambiarlo. El número es su media en ese puesto; en naranja, si juega fuera de su mejor puesto. La barra es su forma.</p>`}
+      : `<p class="sub">Toca un jugador para cambiarlo.</p>`}
     <h3 class="h-sub">Suplentes</h3>${bench.length ? `<div class="al-bench">${bench.map(p => `<span class="al-b"><span class="al-face num${p.pos === 'gk' ? ' gk' : ''}">${esc(p.d)}</span><b>${esc(p.n.split(' ')[0])}</b><small>${p.pos === 'gk' ? 'Portero' : CL_ROLES[clBestRole(p)].n} · ${clOvr(p)} · forma ${clForma(p)}</small></span>`).join('')}</div>` : '<p class="sub">No tienes suplentes. Ficha en el mercado.</p>'}
     <div class="club-acts"><button class="btn" type="button" data-club="entrenar">Entrenar</button><button class="btn" type="button" data-club="mercado">Mercado</button><button class="btn" type="button" data-club="plantilla">Toda la plantilla</button></div>
   </section>`;

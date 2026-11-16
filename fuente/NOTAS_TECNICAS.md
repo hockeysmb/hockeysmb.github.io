@@ -541,3 +541,22 @@ De `claude/Soluciones_diseno_apps_nov2026.md`. Tres cosas de la crítica se reti
 - **Vestuario:** `clubTeaserHTML()` solo sale si no hay alineación (sin nombre puesto). Antes salían las dos y repetían ataque, defensa, Entrenar y Mercado.
 - **Tira de salas** (`.pb-mini`): cada miniatura lleva su nombre debajo (`.pm-fig` + `.pm-n`).
 - **Queda sin hacer:** la ficha del ejercicio a pantalla completa, la pista de la alineación con las esquinas de los diagramas y el párrafo de instrucciones de la alineación.
+
+## Sistema de diseño (16 nov)
+
+Las dos apps comparten paleta, tipografía y forma. El archivo es **`fuente/sistema.css`** y es el único sitio donde se tocan los colores.
+
+- **App de entrenadores:** `construir_web.py` y `construir_artifact.py` pegan el archivo dentro de `plantilla.html`, donde pone la marca `@sistema` (un comentario de CSS al principio del `<style>`).
+- **App de jugadoras:** el build lo copia a `femenino/sistema.css`, que `index.html` carga con un `<link>`. La app sigue sin paso de construcción: el archivo está publicado en el repositorio, y si alguien lo cambia a mano funciona igual.
+- **Cada app conserva sus nombres de variables** (`--bg`, `--accent`, `--good`…) y los apunta a los del sistema (`--smb-granate`, `--smb-bien`…). Así hay una sola paleta sin reescribir cientos de reglas.
+- **Cuidado con los comentarios:** los de CSS no se anidan. Escribir `/* @sistema */` dentro del comentario de cabecera de `sistema.css` cortaba el comentario en seco y rompía todo el bloque de tokens. La marca se nombra sin los delimitadores.
+- **El granate del club es `#681825`.** La app de entrenadores había derivado a `#7a1f2e` en el «lavado» de octubre; ahora las dos usan el del escudo, el de las ilustraciones y el de la app de jugadoras.
+- Los mínimos para el dedo (`--smb-tocar` 44 px, `--smb-tocar-fila` 40 px) y los colores del dibujo de Oller también salen de ahí.
+
+## Ficha del ejercicio, pista de la alineación y mayúsculas: nada que hacer (16 nov)
+
+Al ir a tocarlos resultó que estaban bien, y queda apuntado para no volver a intentarlo:
+
+- **La ficha del ejercicio ya es una capa a pantalla completa:** `.detail` es `position: fixed; inset: 0` con `role="dialog" aria-modal="true"` y bloqueo del scroll del cuerpo. En una captura de página entera parece que la lista sigue debajo, pero no es lo que se ve en el móvil.
+- **La pista de la alineación es azul fuerte (`#3f86c8`) a propósito:** las fichas de los jugadores son blancas y necesitan ese contraste. Es la pista del juego, no el diagrama de un ejercicio.
+- **Las mayúsculas de los botones principales de la Liga** las pone `#v-liga .btn.primary`, junto con el relieve y el color vivo. Es la frontera entre el trabajo y el juego.

@@ -7,6 +7,8 @@ bank = sys.argv[1] if len(sys.argv) > 1 else F + 'pruebas/banco_prueba.json'
 out = sys.argv[2] if len(sys.argv) > 2 else F + '_artifact/index.html'
 os.makedirs(os.path.dirname(out), exist_ok=True)
 s = open(F + 'plantilla.html').read()
+# el sistema de diseño vive en fuente/sistema.css y se pega aquí (ver ese archivo)
+s = s.replace('/* @sistema */', open(F + 'sistema.css').read(), 1)
 logo = 'data:image/jpeg;base64,' + base64.b64encode(open(F + 'lib/logo_s.jpg', 'rb').read()).decode()
 lib = open(F + 'lib/avatar.bundle.js').read()
 d = json.load(open(bank))

@@ -11,16 +11,19 @@
 <title>SMB Femenino</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="sistema.css">
 <style>
+/* 16 nov: los valores vienen de sistema.css, que comparten las dos apps.
+   Aquí solo se les pone el nombre que ya usaba esta app. */
 :root {
   --bg: #faf5f2; --surface: #ffffff; --fill: #f6eeec; --fg: #241c1d; --muted: #6f6365; --line: #eee2e0;
-  --accent: #681825; --accent-ink: #ffffff; --accent-soft: #f7e6e8;
+  --accent: var(--smb-granate); --accent-ink: #ffffff; --accent-soft: #f7e6e8;
   --blush: #f6dfe3; --peach: #fbe8dc; --sage: #e4f0e7; --lilac: #eee8f6; --ivory: #fffaf5;
   --c15: #e1efe5; --c15-ink: #2e6b46; --c17: #ece5f6; --c17-ink: #5a3a7a; --caf: #fbe6da; --caf-ink: #8a3a1c;
-  --shadow: 0 1px 2px rgba(104, 24, 37, .05), 0 8px 24px rgba(104, 24, 37, .07); --shadow-lg: 0 2px 6px rgba(104, 24, 37, .08), 0 18px 40px rgba(104, 24, 37, .12); --r: 20px;
-  --good: #2e6b46; --good-soft: #e3f1e8; --warn: #8a5a00; --warn-soft: #fbefd6; --bad: #a3261d; --bad-soft: #f9e2df;
-  --chart: #681825; --chart-2: #b9a3a7; --grid: #ece4e5;
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --shadow: 0 1px 2px rgba(104, 24, 37, .05), 0 8px 24px rgba(104, 24, 37, .07); --shadow-lg: 0 2px 6px rgba(104, 24, 37, .08), 0 18px 40px rgba(104, 24, 37, .12); --r: var(--smb-r-tarjeta);
+  --good: var(--smb-bien); --good-soft: var(--smb-bien-suave); --warn: var(--smb-ojo); --warn-soft: var(--smb-ojo-suave); --bad: var(--smb-mal); --bad-soft: var(--smb-mal-suave);
+  --chart: var(--smb-granate); --chart-2: #b9a3a7; --grid: #ece4e5;
+  --font: var(--smb-texto); --font-display: var(--smb-titulo-fem);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {

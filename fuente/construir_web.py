@@ -9,6 +9,8 @@ OUT = (sys.argv[1].rstrip('/') + '/') if len(sys.argv) > 1 else ROOT
 FB = '12.19.0'
 os.makedirs(OUT, exist_ok=True)
 s = open(F + 'plantilla.html').read()
+# el sistema de diseño vive en fuente/sistema.css y se pega aquí (ver ese archivo)
+s = s.replace('/* @sistema */', open(F + 'sistema.css').read(), 1)
 logo = 'data:image/jpeg;base64,' + base64.b64encode(open(F + 'lib/logo_s.jpg', 'rb').read()).decode()
 lib = open(F + 'lib/avatar.bundle.js').read()
 empty = json.dumps({'updated': '', 'tasks': []})   # el banco nunca va en el código público: vive en Firestore
@@ -36,6 +38,8 @@ for f in ('firestore.rules', 'firebase-config.js'):
         shutil.copy(ROOT + f, OUT + f)
 open(OUT + 'sw.js', 'w').write(open(W + 'sw.js').read().replace('__VERSION__', V))
 shutil.copytree(W + 'icons', OUT + 'icons', dirs_exist_ok=True)
-shutil.copytree(W + 'pabellon', OUT + 'pabellon', dirs_exist_ok=True)   # ilustraciones de las salas del pabellón
+shutil.copytree(W + 'pabellon', OUT + 'pabellon', dirs_exist_ok=True)
+# el sistema de diseño también para la app de jugadoras, que no tiene build: queda publicado en el repositorio
+shutil.copyfile(F + 'sistema.css', ROOT + 'femenino/sistema.css')   # ilustraciones de las salas del pabellón
 open(OUT + '.nojekyll', 'w').write('')
 print('web en', OUT, round(len(html) / 1024), 'KB')
