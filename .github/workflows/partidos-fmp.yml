@@ -1,6 +1,10 @@
 name: Partidos de la federación
-# Dos veces al día lee el calendario de la Federación Madrileña (Sub-15, Sub-17 y 1ª Autonómica femenina)
-# y, si ha cambiado algo (horas, fechas, resultados), actualiza femenino/partidos.json. La app lo coge sola.
+# Dos veces al día lee el calendario de la Federación Madrileña (los 14 equipos del SMB que compiten)
+# y, si ha cambiado algo (horas, fechas, resultados), actualiza femenino/partidos.json. Lo cogen solas
+# la app de jugadoras y la de entrenadores.
+#
+# Desde que la federación cambió el portal (28 de octubre de 2026) no vale con pedir el HTML: la web es
+# una aplicación de JavaScript. Por eso abrimos la página pública con Chromium, igual que una persona.
 on:
   schedule:
     # Dos veces al día. GitHub retrasa lo programado cuando hay cola: con '17 5' las últimas
@@ -20,10 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 fuente/partidos_fmp.py
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Preparar el navegador
+        run: |
+          pip install --quiet playwright
+          python3 -m playwright install --with-deps chromium
+      - name: Leer los partidos
+        run: python3 fuente/partidos_fmp.py --ver
+        timeout-minutes: 15
       - name: Guardar si ha cambiado
         run: |
           git config user.name "partidos-fmp"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add femenino/partidos.json
+          git add femenino/partidos.json partidos.json
           if git diff --cached --quiet; then echo "Sin cambios"; else git commit -m "Partidos: actualizados desde la federación" && git push; fi

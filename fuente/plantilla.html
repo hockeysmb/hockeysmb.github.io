@@ -2808,13 +2808,17 @@ const iniciales = n => (String(n).trim().split(/\s+/).slice(0, 2).map(x => x[0] 
 // ---------- partidos de la federación (16 nov) ----------
 // Los lee femenino/partidos.json, que actualiza fuente/partidos_fmp.py cada mañana.
 let partidos = null, partidosAct = '';
+// partidos.json lo escribe fuente/partidos_fmp.py con todos los equipos. Si todavía no está (o se lee
+// una copia vieja), se tira del de las jugadoras, que solo trae las tres competiciones femeninas.
 const PART_EQ = { 'Sub-15': 'Sub15', 'Sub-17': 'Sub17', '1ª Autonómica': 'Senior Fem' };
-fetch('femenino/partidos.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
-  if (!j || !Array.isArray(j.partidos)) return;
+const cargarPartidos = ruta => fetch(ruta, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
+  if (!j || !Array.isArray(j.partidos) || !j.partidos.length) return false;
   partidosAct = j.actualizado || '';
-  partidos = j.partidos.map(p => Object.assign({}, p, { eq: PART_EQ[p.cat] || p.cat }));
+  partidos = j.partidos.map(p => Object.assign({}, p, { eq: p.eq || PART_EQ[p.cat] || p.cat }));
   if (!espBox.hidden && espEquipo) openEquipo(espEquipo);
-}).catch(() => {});
+  return true;
+}).catch(() => false);
+cargarPartidos('partidos.json').then(ok => { if (!ok) cargarPartidos('femenino/partidos.json'); });
 const partidosDe = t => (partidos || []).filter(p => normName(p.eq) === normName(t))
   .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
 
@@ -2862,7 +2866,7 @@ function openEquipo(t, sub) {
     : `<p class="sub">Todavía no hay plantilla de este equipo.${canWriteBank ? ' Se importa en el panel de la Dirección Técnica, en Equipos.' : ' La importa la Dirección Técnica.'}</p>`;
 
   else if (eqSub === 'part') {
-    if (!PT.length) cuerpo = `<p class="sub">Todavía no tenemos el calendario de este equipo. Solo están Sub15, Sub17 y Senior Fem: de los demás nos falta el enlace de la competición en la federación.</p>`;
+    if (!PT.length) cuerpo = `<p class="sub">${partidos ? 'Este equipo no tiene partidos en el calendario de la federación.' : 'Todavía no se han podido leer los partidos de la federación.'}</p>`;
     else {
       const hoy = isoToday(), pas = PT.filter(p => p.fecha < hoy), fut = PT.filter(p => p.fecha >= hoy);
       const fila = p => `<li class="pt-row${p.fecha >= hoy ? '' : ' hecho'}"><span class="pt-cuando"><b>${esc(fmtShort(p.fecha))}</b><small>${p.hora ? esc(p.hora) : 'sin hora'}</small></span><span class="pt-rival"><b>${esc(p.rival)}</b><small>${p.casa ? 'En casa' : 'Fuera'} · jornada ${p.j}</small></span><span class="pt-res">${p.res ? esc(p.res) : ''}</span></li>`;
@@ -6595,8 +6599,8 @@ function drawClub() {
       ${(c.venta || []).some(v => v.pid === p.id) ? `<span class="pl-tag">En venta por ${c.venta.find(v => v.pid === p.id).price}</span><button class="btn small" type="button" data-clunsell="${p.id}">Quitar de la venta</button>` : `<button class="btn small" type="button" data-clsell="${p.id}">Vender</button>`}</div>` });
     body = `<p class="sub">Juegan 4 de pista y el portero. La alineación y la formación se cambian en la pista: <button class="linkb" type="button" data-lgtab="equipo">Liga → Equipo</button>.</p>
       <div class="club-stats big"><span><b>${s ? s.atk : '–'}</b><small>ataque de los titulares</small></span><span><b>${s ? s.def : '–'}</b><small>defensa (pista y portero)</small></span></div>
-      <h3 class="h-sub">Portería</h3><div class="jg-list">${c.squad.filter(p => p.pos === 'gk').map(row).join('') || '<p class="sub">No tienes portero: ficha uno en el mercado.</p>'}</div>
-      <h3 class="h-sub">Pista</h3><div class="jg-list">${c.squad.filter(p => p.pos !== 'gk').map(row).join('')}</div>`;
+      <h3 class="h-sub">Portería</h3><div class="pl-list">${c.squad.filter(p => p.pos === 'gk').map(row).join('') || '<p class="sub">No tienes portero: ficha uno en el mercado.</p>'}</div>
+      <h3 class="h-sub">Pista</h3><div class="pl-list">${c.squad.filter(p => p.pos !== 'gk').map(row).join('')}</div>`;
   } else if (clTab === 'entrenar') {
     const left = clTrainsLeft(c), doble = c.tr.n >= clTrainDay(c) && c.tr.extra > 0;
     body = `<p class="sub">${clTrainDay(c) > 1 ? clTrainDay(c) + ' entrenamientos al día (gimnasio)' : 'Un entrenamiento al día'}. Si das tu entreno de verdad en el <b>modo pista</b>, ganas uno extra y doble. Cada jugador sube hasta su potencial, y todos recuperan forma.</p>
@@ -6607,12 +6611,12 @@ function drawClub() {
     const others = web ? (bank.coaches || []).filter(x => x.club && (x.club.venta || []).length && normName(x.name) !== normName(readAuthor())) : [];
     const mineOf = new Set(Object.values(c.of).map(o => o.sid));
     body = `<p class="sub">Tienes <b>${bal}</b> monedas y ${c.squad.length} de ${CL_MAX} jugadores. Los libres cambian cada día.</p>
-      <h3 class="h-sub">Jugadores libres de hoy</h3><div class="jg-list">${list.map(p => clCard(p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${clVal(p)} monedas</span>${bought.has(p.id) ? '<span class="pl-tag">Fichado</span>' : `<button class="btn small primary" type="button" data-clbuy="${p.id}"${bal < clVal(p) || full ? ' disabled' : ''}>Fichar</button>`}</div>` })).join('')}</div>
-      ${web ? `<h3 class="h-sub">En venta en el cuerpo técnico</h3>${others.length ? `<div class="jg-list">${others.flatMap(x => x.club.venta.map(v => clCard(v.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(x.name.split(' ')[0])} pide ${v.price}</span>${mineOf.has(x.uid + '|' + v.pid) ? '<span class="pl-tag">Oferta hecha</span>' : `<button class="btn small primary" type="button" data-cloffer="${esc(x.uid)}|${esc(v.pid)}"${full ? ' disabled' : ''}>Hacer oferta</button>`}</div>` }))).join('')}</div>` : '<p class="sub">Nadie tiene jugadores en venta ahora mismo.</p>'}` : ''}`;
+      <h3 class="h-sub">Jugadores libres de hoy</h3><div class="pl-list">${list.map(p => clCard(p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${clVal(p)} monedas</span>${bought.has(p.id) ? '<span class="pl-tag">Fichado</span>' : `<button class="btn small primary" type="button" data-clbuy="${p.id}"${bal < clVal(p) || full ? ' disabled' : ''}>Fichar</button>`}</div>` })).join('')}</div>
+      ${web ? `<h3 class="h-sub">En venta en el cuerpo técnico</h3>${others.length ? `<div class="pl-list">${others.flatMap(x => x.club.venta.map(v => clCard(v.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(x.name.split(' ')[0])} pide ${v.price}</span>${mineOf.has(x.uid + '|' + v.pid) ? '<span class="pl-tag">Oferta hecha</span>' : `<button class="btn small primary" type="button" data-cloffer="${esc(x.uid)}|${esc(v.pid)}"${full ? ' disabled' : ''}>Hacer oferta</button>`}</div>` }))).join('')}</div>` : '<p class="sub">Nadie tiene jugadores en venta ahora mismo.</p>'}` : ''}`;
   } else if (clTab === 'ofertas') {
     const mine = Object.values(c.of);
-    body = `<h3 class="h-sub">Te ofrecen</h3>${inc.length ? `<div class="jg-list">${inc.map(o => { const p = c.squad.find(x => x.id === o.d.pid); return clCard(o.d.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(o.autor || 'Alguien')} ofrece ${o.d.price}</span>${p ? `<button class="btn small primary" type="button" data-clacc="${esc(o.id)}">Aceptar</button>` : '<span class="pl-tag">Ya no lo tienes</span>'}<button class="btn small" type="button" data-clrej="${esc(o.id)}">Rechazar</button></div>` }); }).join('')}</div>` : '<p class="sub">No tienes ofertas. Pon jugadores en venta desde Plantilla → «Vender».</p>'}
-      <h3 class="h-sub">Tus ofertas</h3>${mine.length ? `<div class="jg-list">${mine.map(o => clCard(o.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${o.price} a ${esc(o.seller)}</span><span class="pl-tag">Esperando respuesta</span><button class="btn small" type="button" data-clcancel="${esc(o.id)}">Retirar</button></div>` })).join('')}</div>` : '<p class="sub">No has hecho ofertas. Las monedas de una oferta quedan reservadas hasta que te contesten.</p>'}`;
+    body = `<h3 class="h-sub">Te ofrecen</h3>${inc.length ? `<div class="pl-list">${inc.map(o => { const p = c.squad.find(x => x.id === o.d.pid); return clCard(o.d.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(o.autor || 'Alguien')} ofrece ${o.d.price}</span>${p ? `<button class="btn small primary" type="button" data-clacc="${esc(o.id)}">Aceptar</button>` : '<span class="pl-tag">Ya no lo tienes</span>'}<button class="btn small" type="button" data-clrej="${esc(o.id)}">Rechazar</button></div>` }); }).join('')}</div>` : '<p class="sub">No tienes ofertas. Pon jugadores en venta desde Plantilla → «Vender».</p>'}
+      <h3 class="h-sub">Tus ofertas</h3>${mine.length ? `<div class="pl-list">${mine.map(o => clCard(o.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${o.price} a ${esc(o.seller)}</span><span class="pl-tag">Esperando respuesta</span><button class="btn small" type="button" data-clcancel="${esc(o.id)}">Retirar</button></div>` })).join('')}</div>` : '<p class="sub">No has hecho ofertas. Las monedas de una oferta quedan reservadas hasta que te contesten.</p>'}`;
   }
   el.innerHTML = `<div class="club-in"><div class="cf-top"><b>Tu plantilla</b><span>${s ? `Ataque ${s.atk} · defensa ${s.def}` : ''}</span><button class="lv-x" type="button" data-club="x" aria-label="Cerrar">×</button></div>
     <div class="seg wrap" role="tablist">${tabs.map(([k, l]) => `<button type="button" data-cltab="${k}" aria-pressed="${clTab === k}">${l}</button>`).join('')}</div>
@@ -7649,7 +7653,7 @@ function planHTML() {
     ${teams.length > 1 ? `<div class="fgroup ses-teams" role="group" aria-label="Equipo"><button class="chip" type="button" data-pteam="" aria-pressed="${!planTeam}">Todos</button>${teams.map(x => `<button class="chip team-chip tc${teamIdx(x)}" type="button" data-pteam="${esc(x)}" aria-pressed="${planTeam === x}">${esc(x)}</button>`).join('')}</div>` : ''}
     ${!readAuthor() ? '<p>Pon tu nombre en Mi perfil para ver tus entrenos.</p>' : !L.length ? `<p class="sub">${all.length ? 'No hay entrenos de este equipo este mes.' : 'Este mes no tienes entrenos en el horario del club. Si debería haberlos, avisa a la Dirección Técnica para que te ponga en el horario.'}</p>` : ''}
     ${(() => { const t = isoToday(), ks = Object.keys(weeks).sort(), past = ks.filter(wk => weeks[wk].every(it => it.fecha < t)), wkHTML = wk => `<div class="pl-week"><div class="lt-head"><h3 class="h-sub">Semana del ${esc(fmtShort(wk))}</h3><button class="btn small ghost" type="button" data-pcopy="${esc(wk)}">Copiar la semana anterior</button></div>
-      <ul class="jg-list">${weeks[wk].map(planRowHTML).join('')}</ul></div>`;
+      <ul class="pl-list">${weeks[wk].map(planRowHTML).join('')}</ul></div>`;
       return (past.length ? `<details class="pl-past"><summary>Semanas pasadas (${past.length})</summary>${past.map(wkHTML).join('')}</details>` : '') + ks.filter(wk => !past.includes(wk)).map(wkHTML).join(''); })()}
   </section>`;
 }
