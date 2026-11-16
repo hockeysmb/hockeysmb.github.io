@@ -633,3 +633,20 @@ Las dos vías devuelven lo mismo y `nuestros()` reparte por equipo.
 **Lo que no sabemos distinguir.** La federación pone `0-0` en el calendario tanto en un empate a cero de verdad como en un partido que no se ha jugado (el Infantil A del 14 de noviembre, aplazado, sale 0-0). Ese endpoint **no trae el estado** del partido (lo comprobé: el robot imprime «Estados que trae la federación» y sale «(sin estado)»), así que no hay forma de separarlos desde ahí. En el portal nuevo sí se ve (FINAL / PREVIA), pero habría que abrir el navegador para cada competición y no compensa por un partido de 216. Si algún día molesta, la pista probable es el enlace `fichapartido_NNN`, que seguramente solo está en los jugados.
 
 **Comprobación que merece la pena repetir.** Para validar el reparto por equipos, abre la portada de la federación un lunes y contrasta los partidos del finde con `partidos.json`: el 16 de noviembre cuadraron los 16, con local/visitante y el orden de los goles correcto.
+
+## Altas, bajas y cambios de plantilla (16 nov)
+
+Desde la pestaña **Plantilla** de cada equipo, sin salir de ahí:
+
+- **Añadir jugador** (botón al pie de la lista) y **Cambiar** (dentro de la ficha) abren el mismo formulario, `jugadorEditar(equipo, i)`, con `i = -1` para un alta.
+- Campos: nombre, año (vale «2016» o «Senior»), **equipo** (un desplegable con todos), portero y una nota corta.
+- **Cambiar de equipo es mover**, no copiar: si eliges otro equipo en el desplegable, sale del de origen y entra en el nuevo. Para que esté en dos equipos a la vez (el caso de las Sub13/15/17) hay que añadirlo en cada uno.
+- **Dar de baja** quita al jugador de ese equipo y avisa en el texto de si sigue en algún otro.
+- No deja dos veces el mismo nombre en un equipo (compara con `normName`, así que no se cuela por una tilde).
+- Un equipo que se queda sin nadie desaparece del mapa: `plantGuardar` quita las listas vacías.
+
+**Solo la DT.** La plantilla vive en `club/state`, donde las reglas de Firestore dejan escribir únicamente a la DT, así que todo esto va detrás de `canWriteBank`. Un entrenador ve la plantilla de cualquier equipo pero no la toca. **Si algún día se quiere que cada entrenador dé de alta en su equipo, hacen falta reglas nuevas** y una colección aparte: no basta con enseñar el botón.
+
+**Cuidado al repintar.** La capa `#espacio` está fuera de `render()` y no se refresca sola al guardar, por eso `plantGuardar` llama a `openEquipo(espEquipo)` cuando termina.
+
+**Un tropiezo de CSS que vale recordar:** `.modal-card input { width: 100% }` está más abajo en la hoja y tiene el mismo peso que `.pj-check input`, así que ganaba y el «Es portero» salía como una casilla enorme. Se arregló subiendo el peso a `.pj-check input[type="checkbox"]`.

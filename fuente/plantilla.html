@@ -212,6 +212,12 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .jg-txt { display: grid; gap: 1px; min-width: 0; flex: 1; }
 .jg-txt b { font-weight: 700; font-size: 15px; }
 .jg-txt small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pj-fila { display: flex; gap: var(--smb-aire-2); }
+.pj-fila > * { flex: 1; min-width: 0; }
+.pj-check { display: flex; align-items: center; gap: var(--smb-aire-2); min-height: var(--smb-tocar);
+            font: 600 14px/1.3 var(--font-body); color: var(--fg); cursor: pointer; }
+/* .modal-card input va después y pone width:100%: hace falta más peso */
+.pj-check input[type="checkbox"] { width: 20px; height: 20px; flex: none; margin: 0; min-height: 0; padding: 0; accent-color: var(--accent); }
 /* los partidos de un equipo */
 .pt-row { display: flex; align-items: center; gap: var(--smb-aire-3); min-height: var(--smb-tocar-fila); padding: 6px 12px;
           border-radius: var(--smb-r-control); background: var(--fill); }
@@ -2862,8 +2868,9 @@ function openEquipo(t, sub) {
     ? `<ul class="jg-list">${P.map((p, i) => { const otros = tambienEn(p.n, t);
         return `<li><button class="jg-row" type="button" data-pjug="${i}"><span class="jg-ini" aria-hidden="true">${esc(iniciales(p.n))}</span><span class="jg-txt"><b>${esc(p.n)}</b><small>${[p.a ? (p.a === 'Senior' ? 'Senior' : p.a) : '', p.p ? 'Portero' : '', otros.length ? 'También en ' + otros.join(' y ') : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small></span><span aria-hidden="true">→</span></button></li>`;
       }).join('')}</ul>
-      <p class="sub">${P.filter(p => p.p).length ? P.filter(p => p.p).length + ' portero. ' : ''}Toca un nombre para ver su ficha.</p>`
-    : `<p class="sub">Todavía no hay plantilla de este equipo.${canWriteBank ? ' Se importa en el panel de la Dirección Técnica, en Equipos.' : ' La importa la Dirección Técnica.'}</p>`;
+      ${canWriteBank ? '<div class="actions"><button class="btn" type="button" data-palta>Añadir jugador</button></div>' : ''}
+      <p class="sub">${P.filter(p => p.p).length ? P.filter(p => p.p).length + ' portero. ' : ''}Toca un nombre para ver su ficha${canWriteBank ? ' o cambiarlo' : ''}.</p>`
+    : `<p class="sub">Todavía no hay plantilla de este equipo.</p>${canWriteBank ? '<div class="actions"><button class="btn primary" type="button" data-palta>Añadir el primer jugador</button></div><p class="sub">O impórtala entera desde el panel de la Dirección Técnica, en Equipos.</p>' : '<p class="sub">La pone la Dirección Técnica.</p>'}`;
 
   else if (eqSub === 'part') {
     if (!PT.length) cuerpo = `<p class="sub">${partidos ? 'Este equipo no tiene partidos en el calendario de la federación.' : 'Todavía no se han podido leer los partidos de la federación.'}</p>`;
@@ -2894,7 +2901,7 @@ function openEquipo(t, sub) {
   const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
 }
 
-// La ficha de un jugador: de momento lo que sabemos de él y en qué equipos está.
+// La ficha de un jugador: lo que sabemos de él y en qué equipos está.
 function jugadorModal(t, i) {
   const p = plantillaDe(t)[i]; if (!p) return;
   const otros = tambienEn(p.n, t), datos = [['Año', p.a || 'sin año'], ['Puesto', p.p ? 'Portero' : 'Jugador de pista']];
@@ -2903,8 +2910,66 @@ function jugadorModal(t, i) {
   openModal(`<div class="esp-head"><span class="jg-ini grande" aria-hidden="true">${esc(iniciales(p.n))}</span><div><h1>${esc(p.n)}</h1><p class="sub">${esc(t)}</p></div></div>
     <ul class="pts-list">${datos.map(([k, v]) => `<li><span>${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>
     <p class="sub">Las anotaciones de cada jugador (lo deportivo, la asistencia y la actitud) todavía no están hechas.</p>
-    <div class="row"><button class="btn" id="m-no" type="button">Cerrar</button></div>`);
+    <div class="row">${canWriteBank ? '<button class="btn primary" id="m-ed" type="button">Cambiar</button>' : ''}<button class="btn" id="m-no" type="button">Cerrar</button></div>`);
   modalCard.querySelector('#m-no').onclick = closeModal;
+  const ed = modalCard.querySelector('#m-ed'); if (ed) ed.onclick = () => jugadorEditar(t, i);
+}
+
+// ---------- altas, bajas y cambios (16 nov) ----------
+// La plantilla vive en club/state, donde solo escribe la DT: por eso esto solo sale si canWriteBank.
+function plantGuardar(mapa, texto) {
+  const limpio = {};
+  Object.entries(mapa).forEach(([k, L]) => { if (L && L.length) limpio[k] = L; });
+  // la capa del equipo no se repinta sola al guardar: está fuera de render()
+  return Promise.resolve(saveBank(bank.tasks, texto, null, { plant: limpio }))
+    .then(r => { if (!espBox.hidden && espEquipo) openEquipo(espEquipo); return r; });
+}
+const equiposParaPlantilla = () => [...new Set([...equiposMap(horario()).map(x => x.t).filter(t => !/^porter/.test(deacc(t))),
+  ...Object.keys(bank.plant || {})])].sort((a, b) => eqRank(a) - eqRank(b) || a.localeCompare(b, 'es'));
+
+function jugadorEditar(t, i) {
+  const nuevo = i < 0, p = nuevo ? { n: '', a: '', p: 0 } : plantillaDe(t)[i];
+  if (!p) return;
+  const eqs = equiposParaPlantilla();
+  openModal(`<h2>${nuevo ? 'Añadir jugador' : 'Cambiar jugador'}</h2><p class="sub">${esc(t)}</p>
+    <label class="ses-f">Nombre<input type="text" id="pj-n" value="${esc(p.n)}" autocomplete="off" placeholder="Nombre y apellido"></label>
+    <div class="pj-fila">
+      <label class="ses-f">Año de nacimiento<input type="text" id="pj-a" value="${esc(p.a || '')}" inputmode="numeric" placeholder="2016 o Senior"></label>
+      <label class="ses-f">Equipo<select id="pj-eq">${eqs.map(e => `<option value="${esc(e)}"${e === t ? ' selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
+    </div>
+    <label class="pj-check"><input type="checkbox" id="pj-p"${p.p ? ' checked' : ''}> Es portero</label>
+    <label class="ses-f">Nota corta (opcional)<input type="text" id="pj-nt" value="${esc(p.nt || '')}" maxlength="60" placeholder="Lo que haga falta recordar"></label>
+    <p class="sub" id="pj-msg" role="status"></p>
+    <div class="row">${nuevo ? '' : '<button class="btn ghost" id="m-baja" type="button">Dar de baja</button>'}<button class="btn" id="m-no" type="button">Cancelar</button><button class="btn primary" id="m-ok" type="button">Guardar</button></div>`);
+  const v = id => (modalCard.querySelector(id).value || '').trim();
+  modalCard.querySelector('#m-no').onclick = closeModal;
+  modalCard.querySelector('#pj-n').focus();
+  modalCard.querySelector('#m-ok').onclick = () => {
+    const nombre = v('#pj-n'), msg = modalCard.querySelector('#pj-msg');
+    if (!nombre) { msg.textContent = 'Le falta el nombre.'; modalCard.querySelector('#pj-n').focus(); return; }
+    const destino = v('#pj-eq') || t;
+    const ficha = { n: nombre };
+    const anio = v('#pj-a'); if (anio) ficha.a = anio;
+    if (modalCard.querySelector('#pj-p').checked) ficha.p = 1;
+    const nota = v('#pj-nt'); if (nota) ficha.nt = nota;
+    const repe = (plantillaDe(destino) || []).some((y, j) => normName(y.n) === normName(nombre) && !(destino === t && j === i));
+    if (repe) { msg.textContent = `${nombre} ya está en ${destino}.`; return; }
+    const mapa = clone(bank.plant || {});
+    if (!nuevo) mapa[t] = (mapa[t] || []).filter((_, j) => j !== i);
+    mapa[destino] = (mapa[destino] || []).concat([ficha]);
+    closeModal();
+    plantGuardar(mapa, nuevo ? `${nombre}, añadido a ${destino}.`
+      : destino === t ? `${nombre}, cambiado.` : `${nombre} pasa a ${destino}.`);
+  };
+  const baja = modalCard.querySelector('#m-baja');
+  if (baja) baja.onclick = () => {
+    closeModal();
+    confirmModal(`¿Dar de baja a ${p.n}?`, `Sale de ${t}. ${tambienEn(p.n, t).length ? 'Sigue en ' + tambienEn(p.n, t).join(' y ') + '.' : 'No está en ningún otro equipo.'}`, 'Dar de baja', () => {
+      const mapa = clone(bank.plant || {});
+      mapa[t] = (mapa[t] || []).filter((_, j) => j !== i);
+      plantGuardar(mapa, `${p.n}, de baja en ${t}.`);
+    });
+  };
 }
 
 // ================= el espacio de cada entrenador (16 nov) =================
@@ -2952,6 +3017,7 @@ espBox.addEventListener('click', e => {
   if (st && espEquipo) { eqSub = st.dataset.eqsub; openEquipo(espEquipo); return; }
   const pj = e.target.closest('[data-pjug]');
   if (pj && espEquipo) { jugadorModal(espEquipo, +pj.dataset.pjug); return; }
+  if (e.target.closest('[data-palta]') && espEquipo) { jugadorEditar(espEquipo, -1); return; }
   const s = e.target.closest('[data-espses]');
   if (s) { const x = (bank.sesClub || []).find(y => y.id === s.dataset.espses); if (x) { closeCoach(); openSheet(x.s); } return; }
   const t = e.target.closest('[data-open]');
