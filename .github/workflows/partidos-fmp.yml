@@ -38,4 +38,11 @@ jobs:
           git config user.name "partidos-fmp"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for f in femenino/partidos.json partidos.json; do [ -f "$f" ] && git add "$f" || true; done
-          if git diff --cached --quiet; then echo "Sin cambios"; else git commit -m "Partidos: actualizados desde la federación" && git push; fi
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "Partidos: actualizados desde la federación"
+          # si alguien ha subido algo mientras leíamos, nos ponemos encima en vez de fallar
+          for i in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main || exit 1
+          done
+          echo "No se ha podido subir"; exit 1
