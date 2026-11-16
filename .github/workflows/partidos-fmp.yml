@@ -1,9 +1,13 @@
 name: Partidos de la federación
-# Cada mañana lee el calendario de la Federación Madrileña (Sub-15, Sub-17 y 1ª Autonómica femenina)
+# Dos veces al día lee el calendario de la Federación Madrileña (Sub-15, Sub-17 y 1ª Autonómica femenina)
 # y, si ha cambiado algo (horas, fechas, resultados), actualiza femenino/partidos.json. La app lo coge sola.
 on:
   schedule:
-    - cron: '17 5 * * *'   # 6:17 en invierno, 7:17 en verano (hora de Madrid)
+    # Dos veces al día. GitHub retrasa lo programado cuando hay cola: con '17 5' las últimas
+    # semanas estaba corriendo sobre las 13:45 de Madrid, demasiado tarde para un cambio de hora
+    # de un partido del día siguiente. Con la de medianoche, una lectura cae siempre por la mañana.
+    - cron: '17 0 * * *'
+    - cron: '17 11 * * *'
   workflow_dispatch:
   push:
     branches: [main]
