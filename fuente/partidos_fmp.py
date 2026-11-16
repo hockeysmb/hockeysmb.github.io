@@ -11,12 +11,27 @@ PORTAL = 'https://www.hockeypatines.fmp.es'
 SG = 'https://www.server2.sidgad.es/fmp/'
 LIGAS = [('4853', 'Sub-15', 's15'), ('4836', 'Sub-17', 's17'), ('4864', '1ª Autonómica', 'af')]
 CLUB_SMB = '428'
-CABE = {'User-Agent': 'Mozilla/5.0 (compatible; SMB-femenino/1.0; +https://hockeysmb.github.io)', 'Referer': PORTAL + '/', 'Origin': PORTAL,
-        'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'}
+UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+CABE = {'User-Agent': UA, 'Referer': PORTAL + '/', 'Origin': PORTAL, 'Accept': 'text/html, */*; q=0.01',
+        'Accept-Language': 'es-ES,es;q=0.9', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'}
+# Desde el 28 de octubre el portal contesta 403 a las peticiones sueltas: primero se abre la portada
+# para que nos dé la cookie de sesión y después ya se piden los calendarios con esa cookie.
+import http.cookiejar
+_ab = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+_abierto = [False]
+
+def abrir_portal():
+    if _abierto[0]: return
+    try:
+        _ab.open(urllib.request.Request(PORTAL + '/', headers={'User-Agent': UA, 'Accept-Language': 'es-ES,es;q=0.9'}), timeout=40).read()
+    except Exception as e:
+        print(f'aviso: no se ha podido abrir la portada ({e!r}); se sigue igual')
+    _abierto[0] = True
 
 def descargar(idc):
+    abrir_portal()
     datos = urllib.parse.urlencode({'idc': idc, 'tipo_stats': '', 'site_lang': 'es'}).encode()
-    with urllib.request.urlopen(urllib.request.Request(SG + f'fmp_cal_idc_{idc}_1.php', data=datos, headers=CABE), timeout=40) as r:
+    with _ab.open(urllib.request.Request(SG + f'fmp_cal_idc_{idc}_1.php', data=datos, headers=CABE), timeout=40) as r:
         return r.read().decode('utf-8', 'replace')
 
 MINUS = {'DE', 'DEL', 'LA', 'LAS', 'LOS', 'EL', 'Y'}

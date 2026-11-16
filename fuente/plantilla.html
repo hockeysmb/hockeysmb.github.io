@@ -201,6 +201,27 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .eq-txt { display: grid; gap: 1px; min-width: 0; flex: 1; }
 .eq-txt b { font-weight: 800; font-size: 15px; }
 .eq-txt small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* la plantilla de un equipo */
+.jg-list, .pt-list { list-style: none; margin: 0 0 var(--smb-aire-3); padding: 0; display: grid; gap: 6px; }
+.jg-row { width: 100%; display: flex; align-items: center; gap: var(--smb-aire-3); min-height: var(--smb-tocar); padding: 6px 12px;
+          border: 0; border-radius: var(--smb-r-control); background: var(--fill); color: inherit; text-align: left; cursor: pointer; }
+.jg-row:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.jg-ini { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--surface);
+          color: var(--accent); font: 800 13px/1 var(--font-game); }
+.jg-ini.grande { width: 56px; height: 56px; font-size: 20px; background: var(--accent-soft); }
+.jg-txt { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.jg-txt b { font-weight: 700; font-size: 15px; }
+.jg-txt small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* los partidos de un equipo */
+.pt-row { display: flex; align-items: center; gap: var(--smb-aire-3); min-height: var(--smb-tocar-fila); padding: 6px 12px;
+          border-radius: var(--smb-r-control); background: var(--fill); }
+.pt-row.hecho { background: none; border: 1px solid var(--line); }
+.pt-cuando { flex: none; width: 92px; display: grid; gap: 1px; }
+.pt-cuando b { font-weight: 700; font-size: 13.5px; }
+.pt-cuando small, .pt-rival small { font-size: 12px; color: var(--muted); }
+.pt-rival { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pt-rival b { font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-res { flex: none; font: 800 15px/1 var(--font-game); font-variant-numeric: tabular-nums; color: var(--accent); }
 .esp-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .esp-link:hover span, .esp-link:focus-visible span { text-decoration: underline; }
 .esp-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
@@ -2772,10 +2793,36 @@ const haceTxt = ts => { if (!ts) return ''; const d = Math.floor((Date.now() - t
 // Lo pidió Carlos: que el espacio de cada entrenador no esté escondido. Es una zona de la barra
 // de abajo, con dos pestañas: los equipos y las personas.
 let eqTab = 'equipos';
-const eqSigla = t => { const w = String(t || '').trim().split(/\s+/).filter(Boolean);
+const eqSigla = t => { const s = String(t || '').trim(), w = s.split(/\s+/).filter(Boolean);
+  const sub = s.match(/^sub\s*-?(\d+)/i); if (sub) return sub[1];   // Sub15 → 15, no «SU»
   return (w.length > 1 ? w.map(x => x[0]).join('') : (w[0] || '??').slice(0, 2)).toUpperCase().slice(0, 3); };
+// ---------- plantillas: quién está en cada equipo (16 nov) ----------
+// Los nombres viven en Firestore (club/state.plant), nunca en el repositorio: son menores.
+const plantillaDe = t => ((bank.plant || {})[t] || []);
+const plantTotal = () => Object.values(bank.plant || {}).reduce((n, L) => n + L.length, 0);
+// En qué otros equipos está el mismo jugador (los Sub13/15/17 salen de Alevín, Infantil y Juvenil).
+const tambienEn = (nombre, salvo) => Object.entries(bank.plant || {})
+  .filter(([t, L]) => t !== salvo && L.some(p => normName(p.n) === normName(nombre))).map(([t]) => t);
+const iniciales = n => (String(n).trim().split(/\s+/).slice(0, 2).map(x => x[0] || '').join('') || '?').toUpperCase();
+
+// ---------- partidos de la federación (16 nov) ----------
+// Los lee femenino/partidos.json, que actualiza fuente/partidos_fmp.py cada mañana.
+let partidos = null, partidosAct = '';
+const PART_EQ = { 'Sub-15': 'Sub15', 'Sub-17': 'Sub17', '1ª Autonómica': 'Senior Fem' };
+fetch('femenino/partidos.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
+  if (!j || !Array.isArray(j.partidos)) return;
+  partidosAct = j.actualizado || '';
+  partidos = j.partidos.map(p => Object.assign({}, p, { eq: PART_EQ[p.cat] || p.cat }));
+  if (!espBox.hidden && espEquipo) openEquipo(espEquipo);
+}).catch(() => {});
+const partidosDe = t => (partidos || []).filter(p => normName(p.eq) === normName(t))
+  .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+
 function renderEquipos() {
   const H = horario(), L = equiposMap(H).filter(x => !/^porter/.test(deacc(x.t)));
+  // Equipos que solo salen de la plantilla (Sub13, Sub15): no tienen franja propia en el horario.
+  Object.keys(bank.plant || {}).forEach(t => { if (!L.some(x => x.t === t)) L.push({ t, franjas: [], coaches: [], todos: [], solo: [], raros: [] }); });
+  L.sort((a, b) => eqRank(a.t) - eqRank(b.t) || a.t.localeCompare(b.t, 'es'));
   const box = document.getElementById('v-equipos');
   const porEnt = new Map();
   L.forEach(x => x.coaches.forEach(c => { if (!porEnt.has(c)) porEnt.set(c, []); porEnt.get(c).push(x.t); }));
@@ -2786,7 +2833,7 @@ function renderEquipos() {
         const co = coachOf(c) || (bank.coaches || []).find(x => isMe(c, x.name));
         return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, co ? levelOf(clubPoints(co.name)) : 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b><small>${esc(T.join(' · '))}</small></span><span aria-hidden="true">→</span></button></li>`;
       }).join('')}</ul>`
-    : `<ul class="eq-cards">${L.map(x => `<li><button class="eq-card" type="button" data-equipo="${esc(x.t)}"><span class="eq-esc" aria-hidden="true">${esc(eqSigla(x.t))}</span><span class="eq-txt"><b>${esc(x.t)}</b><small>${x.coaches.length ? esc(x.coaches.join(' · ')) : 'Sin entrenador en el horario'}</small><small>${esc(x.franjas.map(fr).join(' · '))}</small></span><span aria-hidden="true">→</span></button></li>`).join('')}</ul>`;
+    : `<ul class="eq-cards">${L.map(x => `<li><button class="eq-card" type="button" data-equipo="${esc(x.t)}"><span class="eq-esc" aria-hidden="true">${esc(eqSigla(x.t))}</span><span class="eq-txt"><b>${esc(x.t)}</b><small>${x.coaches.length ? esc(x.coaches.join(' · ')) : (x.franjas.length ? 'Sin entrenador en el horario' : 'Sin franja propia: sale de otros equipos')}</small><small>${esc(x.franjas.map(fr).join(' · ')) || (plantillaDe(x.t).length ? plantillaDe(x.t).length + ' fichas' : '')}</small></span><span aria-hidden="true">→</span></button></li>`).join('')}</ul>`;
   box.innerHTML = `<div class="vhead"><div><h1>Equipos ${infoBtn('equipos')}</h1><p class="sub">Los equipos del club y quién lleva cada uno. Toca para ver lo suyo.</p></div></div>
     ${tabs}${cuerpo}`;
 }
@@ -2794,24 +2841,66 @@ document.getElementById('v-equipos').addEventListener('click', e => {
   const t = e.target.closest('[data-eqtab]'); if (t) { eqTab = t.dataset.eqtab; render(); return; }
   const q = e.target.closest('[data-equipo]'); if (q) openEquipo(q.dataset.equipo);
 });
-function openEquipo(t) {
-  const L = equiposMap(horario()), x = L.find(y => y.t === t); if (!x) return;
+let espEquipo = null, eqSub = 'plant';
+function openEquipo(t, sub) {
+  const L = equiposMap(horario());
+  // Sub13 y Sub15 no tienen franja propia en el horario: salen de Alevín e Infantil.
+  const x = L.find(y => y.t === t) || ((plantillaDe(t).length || partidosDe(t).length) ? { t, franjas: [], coaches: [] } : null);
+  if (!x) return;
+  espName = null; espEquipo = t; if (sub) eqSub = sub;
+  const P = plantillaDe(t), PT = partidosDe(t);
   const ses = (bank.sesClub || []).filter(y => normName(y.s.equipo || '') === normName(t)).sort((a, b) => (b.ts || 0) - (a.ts || 0));
   const fr = g => `${DIA_C[g.dia]} ${g.ini}–${g.fin || ''}`;
-  espName = null;
+  const tabs = [['plant', `Plantilla${P.length ? ' · ' + P.length : ''}`], ['part', `Partidos${PT.length ? ' · ' + PT.length : ''}`], ['entr', `Entrenos${ses.length ? ' · ' + ses.length : ''}`]];
+
+  let cuerpo = '';
+  if (eqSub === 'plant') cuerpo = P.length
+    ? `<ul class="jg-list">${P.map((p, i) => { const otros = tambienEn(p.n, t);
+        return `<li><button class="jg-row" type="button" data-pjug="${i}"><span class="jg-ini" aria-hidden="true">${esc(iniciales(p.n))}</span><span class="jg-txt"><b>${esc(p.n)}</b><small>${[p.a ? (p.a === 'Senior' ? 'Senior' : p.a) : '', p.p ? 'Portero' : '', otros.length ? 'También en ' + otros.join(' y ') : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small></span><span aria-hidden="true">→</span></button></li>`;
+      }).join('')}</ul>
+      <p class="sub">${P.filter(p => p.p).length ? P.filter(p => p.p).length + ' portero. ' : ''}Toca un nombre para ver su ficha.</p>`
+    : `<p class="sub">Todavía no hay plantilla de este equipo.${canWriteBank ? ' Se importa en el panel de la Dirección Técnica, en Equipos.' : ' La importa la Dirección Técnica.'}</p>`;
+
+  else if (eqSub === 'part') {
+    if (!PT.length) cuerpo = `<p class="sub">Todavía no tenemos el calendario de este equipo. Solo están Sub15, Sub17 y Senior Fem: de los demás nos falta el enlace de la competición en la federación.</p>`;
+    else {
+      const hoy = isoToday(), pas = PT.filter(p => p.fecha < hoy), fut = PT.filter(p => p.fecha >= hoy);
+      const fila = p => `<li class="pt-row${p.fecha >= hoy ? '' : ' hecho'}"><span class="pt-cuando"><b>${esc(fmtShort(p.fecha))}</b><small>${p.hora ? esc(p.hora) : 'sin hora'}</small></span><span class="pt-rival"><b>${esc(p.rival)}</b><small>${p.casa ? 'En casa' : 'Fuera'} · jornada ${p.j}</small></span><span class="pt-res">${p.res ? esc(p.res) : ''}</span></li>`;
+      cuerpo = `${fut.length ? `<h2 class="h-sec">Lo que viene</h2><ul class="pt-list">${fut.map(fila).join('')}</ul>` : ''}
+        ${pas.length ? `<details class="dt-more"${fut.length ? '' : ' open'}><summary>Jugados · ${pas.length}</summary><ul class="pt-list">${pas.reverse().map(fila).join('')}</ul></details>` : ''}
+        <p class="sub">De la federación${partidosAct ? ', al ' + esc(fmtShort(partidosAct)) : ''}. Los horarios los cambia la federación sin avisar: antes de un partido, confírmalo.</p>`;
+    }
+  }
+
+  else cuerpo = `<h2 class="h-sec">Cuándo entrena</h2>
+    <ul class="pts-list">${x.franjas.map(g => `<li><span>${esc(fr(g))}</span><span>${esc(hzTeams(g).join(' + '))}</span></li>`).join('') || '<li><span>No está en el horario.</span></li>'}</ul>
+    <h2 class="h-sec">Entrenadores</h2>
+    <ul class="eq-cards">${x.coaches.map(c => { const co = coachOf(c) || (bank.coaches || []).find(y => isMe(c, y.name));
+      return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b></span><span aria-hidden="true">→</span></button></li>`; }).join('') || '<li><p class="sub">Nadie asignado todavía.</p></li>'}</ul>
+    <h2 class="h-sec">Sus sesiones</h2>
+    ${ses.length ? `<div class="ses-rows mini">${ses.slice(0, 12).map(y => `<button class="ses-row" type="button" data-espses="${esc(y.id)}"><span class="ses-thumb">${(y.s.bloques || []).some(b => b && b.task) ? diagramSVG(((y.s.bloques || []).find(b => b && b.task) || {}).task.diagram, '') : '<span class="ses-empty">Sin ejercicio</span>'}</span><span class="ses-bn">${esc(y.autor || '')}</span><span>${esc(y.s.fecha ? fmtShort(y.s.fecha) : '')}</span></button>`).join('')}</div>`
+      : '<p class="sub">Todavía no hay sesiones compartidas de este equipo.</p>'}`;
+
   espBox.innerHTML = `<div class="esp-top"><button class="pb-back" type="button" data-espclose><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Volver</button></div>
     <div class="esp-head"><span class="eq-esc grande" aria-hidden="true">${esc(eqSigla(t))}</span>
-      <div><h1>${esc(t)}</h1><p class="sub">${x.coaches.length ? esc(x.coaches.join(' · ')) : 'Sin entrenador en el horario'}</p></div></div>
-    <section class="ses-sec"><h2 class="h-sec">Cuándo entrena</h2>
-      <ul class="pts-list">${x.franjas.map(g => `<li><span>${esc(fr(g))}</span><span>${esc(hzTeams(g).join(' + '))}</span></li>`).join('') || '<li><span>No está en el horario.</span></li>'}</ul></section>
-    <section class="ses-sec"><h2 class="h-sec">Entrenadores</h2>
-      <ul class="eq-cards">${x.coaches.map(c => { const co = coachOf(c) || (bank.coaches || []).find(y => isMe(c, y.name));
-        return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b></span><span aria-hidden="true">→</span></button></li>`; }).join('') || '<li><p class="sub">Nadie asignado todavía.</p></li>'}</ul></section>
-    <section class="ses-sec"><h2 class="h-sec">Sus sesiones</h2>
-      ${ses.length ? `<div class="ses-rows mini">${ses.slice(0, 12).map(y => `<button class="ses-row" type="button" data-espses="${esc(y.id)}"><span class="ses-thumb">${(y.s.bloques || []).some(b => b && b.task) ? diagramSVG(((y.s.bloques || []).find(b => b && b.task) || {}).task.diagram, '') : '<span class="ses-empty">Sin ejercicio</span>'}</span><span class="ses-bn">${esc(y.autor || '')}</span><span>${esc(y.s.fecha ? fmtShort(y.s.fecha) : '')}</span></button>`).join('')}</div>`
-        : '<p class="sub">Todavía no hay sesiones compartidas de este equipo.</p>'}</section>`;
+      <div><h1>${esc(t)}</h1><p class="sub">${x.coaches.length ? esc(x.coaches.join(' · ')) : (x.franjas.length ? 'Sin entrenador en el horario' : 'Sin franja propia: sale de otros equipos')}</p></div></div>
+    <div class="seg" role="tablist" aria-label="Qué ver del equipo">${tabs.map(([k, l]) => `<button type="button" data-eqsub="${k}" aria-pressed="${eqSub === k}">${l}</button>`).join('')}</div>
+    <section class="ses-sec">${cuerpo}</section>`;
   espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
   const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
+}
+
+// La ficha de un jugador: de momento lo que sabemos de él y en qué equipos está.
+function jugadorModal(t, i) {
+  const p = plantillaDe(t)[i]; if (!p) return;
+  const otros = tambienEn(p.n, t), datos = [['Año', p.a || 'sin año'], ['Puesto', p.p ? 'Portero' : 'Jugador de pista']];
+  if (otros.length) datos.push(['También en', otros.join(' · ')]);
+  if (p.nt) datos.push(['Nota del listado', p.nt]);
+  openModal(`<div class="esp-head"><span class="jg-ini grande" aria-hidden="true">${esc(iniciales(p.n))}</span><div><h1>${esc(p.n)}</h1><p class="sub">${esc(t)}</p></div></div>
+    <ul class="pts-list">${datos.map(([k, v]) => `<li><span>${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>
+    <p class="sub">Las anotaciones de cada jugador (lo deportivo, la asistencia y la actitud) todavía no están hechas.</p>
+    <div class="row"><button class="btn" id="m-no" type="button">Cerrar</button></div>`);
+  modalCard.querySelector('#m-no').onclick = closeModal;
 }
 
 // ================= el espacio de cada entrenador (16 nov) =================
@@ -2821,10 +2910,10 @@ const espBox = document.getElementById('espacio');
 let espName = null;
 function openCoach(name) {
   if (!name) return;
-  espName = name; drawCoach(); espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
+  espName = name; espEquipo = null; drawCoach(); espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
   const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
 }
-function closeCoach() { espBox.hidden = true; espName = null; if (detail.hidden && editor.hidden && sesBox.hidden) document.body.style.overflow = ''; }
+function closeCoach() { espBox.hidden = true; espName = null; espEquipo = null; if (detail.hidden && editor.hidden && sesBox.hidden) document.body.style.overflow = ''; }
 function drawCoach() {
   const n = espName; if (!n) return;
   const c = coachOf(n) || (bank.coaches || []).find(x => isMe(n, x.name));
@@ -2855,6 +2944,10 @@ function drawCoach() {
 }
 espBox.addEventListener('click', e => {
   if (e.target.closest('[data-espclose]')) { closeCoach(); return; }
+  const st = e.target.closest('[data-eqsub]');
+  if (st && espEquipo) { eqSub = st.dataset.eqsub; openEquipo(espEquipo); return; }
+  const pj = e.target.closest('[data-pjug]');
+  if (pj && espEquipo) { jugadorModal(espEquipo, +pj.dataset.pjug); return; }
   const s = e.target.closest('[data-espses]');
   if (s) { const x = (bank.sesClub || []).find(y => y.id === s.dataset.espses); if (x) { closeCoach(); openSheet(x.s); } return; }
   const t = e.target.closest('[data-open]');
@@ -2931,6 +3024,11 @@ function setAlias(n, to) {
   saveBank(bank.tasks, to ? `«${n}» del horario es ahora ${to}.` : `«${n}» desvinculado.`, document.getElementById('dt-msg'), { alias: A });
 }
 document.getElementById('v-dt').addEventListener('change', e => { const n = e.target.dataset && e.target.dataset.dtAliasSel; if (n !== undefined && e.target.value) setAlias(n, e.target.value); });
+document.getElementById('v-dt').addEventListener('change', e => {
+  if (e.target.id !== 'pl-file') return;
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { const ta = document.getElementById('pl-code'); if (ta) ta.value = String(r.result || ''); plantImportar(String(r.result || '')); }; r.readAsText(f);
+});
 async function dtBackup() {
   const msg = document.getElementById('dt-msg');
   if (!downloadsApi) { msg.className = 'msg err'; msg.textContent = 'Desde esta vista no se puede descargar.'; return; }
@@ -6497,8 +6595,8 @@ function drawClub() {
       ${(c.venta || []).some(v => v.pid === p.id) ? `<span class="pl-tag">En venta por ${c.venta.find(v => v.pid === p.id).price}</span><button class="btn small" type="button" data-clunsell="${p.id}">Quitar de la venta</button>` : `<button class="btn small" type="button" data-clsell="${p.id}">Vender</button>`}</div>` });
     body = `<p class="sub">Juegan 4 de pista y el portero. La alineación y la formación se cambian en la pista: <button class="linkb" type="button" data-lgtab="equipo">Liga → Equipo</button>.</p>
       <div class="club-stats big"><span><b>${s ? s.atk : '–'}</b><small>ataque de los titulares</small></span><span><b>${s ? s.def : '–'}</b><small>defensa (pista y portero)</small></span></div>
-      <h3 class="h-sub">Portería</h3><div class="pl-list">${c.squad.filter(p => p.pos === 'gk').map(row).join('') || '<p class="sub">No tienes portero: ficha uno en el mercado.</p>'}</div>
-      <h3 class="h-sub">Pista</h3><div class="pl-list">${c.squad.filter(p => p.pos !== 'gk').map(row).join('')}</div>`;
+      <h3 class="h-sub">Portería</h3><div class="jg-list">${c.squad.filter(p => p.pos === 'gk').map(row).join('') || '<p class="sub">No tienes portero: ficha uno en el mercado.</p>'}</div>
+      <h3 class="h-sub">Pista</h3><div class="jg-list">${c.squad.filter(p => p.pos !== 'gk').map(row).join('')}</div>`;
   } else if (clTab === 'entrenar') {
     const left = clTrainsLeft(c), doble = c.tr.n >= clTrainDay(c) && c.tr.extra > 0;
     body = `<p class="sub">${clTrainDay(c) > 1 ? clTrainDay(c) + ' entrenamientos al día (gimnasio)' : 'Un entrenamiento al día'}. Si das tu entreno de verdad en el <b>modo pista</b>, ganas uno extra y doble. Cada jugador sube hasta su potencial, y todos recuperan forma.</p>
@@ -6509,12 +6607,12 @@ function drawClub() {
     const others = web ? (bank.coaches || []).filter(x => x.club && (x.club.venta || []).length && normName(x.name) !== normName(readAuthor())) : [];
     const mineOf = new Set(Object.values(c.of).map(o => o.sid));
     body = `<p class="sub">Tienes <b>${bal}</b> monedas y ${c.squad.length} de ${CL_MAX} jugadores. Los libres cambian cada día.</p>
-      <h3 class="h-sub">Jugadores libres de hoy</h3><div class="pl-list">${list.map(p => clCard(p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${clVal(p)} monedas</span>${bought.has(p.id) ? '<span class="pl-tag">Fichado</span>' : `<button class="btn small primary" type="button" data-clbuy="${p.id}"${bal < clVal(p) || full ? ' disabled' : ''}>Fichar</button>`}</div>` })).join('')}</div>
-      ${web ? `<h3 class="h-sub">En venta en el cuerpo técnico</h3>${others.length ? `<div class="pl-list">${others.flatMap(x => x.club.venta.map(v => clCard(v.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(x.name.split(' ')[0])} pide ${v.price}</span>${mineOf.has(x.uid + '|' + v.pid) ? '<span class="pl-tag">Oferta hecha</span>' : `<button class="btn small primary" type="button" data-cloffer="${esc(x.uid)}|${esc(v.pid)}"${full ? ' disabled' : ''}>Hacer oferta</button>`}</div>` }))).join('')}</div>` : '<p class="sub">Nadie tiene jugadores en venta ahora mismo.</p>'}` : ''}`;
+      <h3 class="h-sub">Jugadores libres de hoy</h3><div class="jg-list">${list.map(p => clCard(p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${clVal(p)} monedas</span>${bought.has(p.id) ? '<span class="pl-tag">Fichado</span>' : `<button class="btn small primary" type="button" data-clbuy="${p.id}"${bal < clVal(p) || full ? ' disabled' : ''}>Fichar</button>`}</div>` })).join('')}</div>
+      ${web ? `<h3 class="h-sub">En venta en el cuerpo técnico</h3>${others.length ? `<div class="jg-list">${others.flatMap(x => x.club.venta.map(v => clCard(v.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(x.name.split(' ')[0])} pide ${v.price}</span>${mineOf.has(x.uid + '|' + v.pid) ? '<span class="pl-tag">Oferta hecha</span>' : `<button class="btn small primary" type="button" data-cloffer="${esc(x.uid)}|${esc(v.pid)}"${full ? ' disabled' : ''}>Hacer oferta</button>`}</div>` }))).join('')}</div>` : '<p class="sub">Nadie tiene jugadores en venta ahora mismo.</p>'}` : ''}`;
   } else if (clTab === 'ofertas') {
     const mine = Object.values(c.of);
-    body = `<h3 class="h-sub">Te ofrecen</h3>${inc.length ? `<div class="pl-list">${inc.map(o => { const p = c.squad.find(x => x.id === o.d.pid); return clCard(o.d.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(o.autor || 'Alguien')} ofrece ${o.d.price}</span>${p ? `<button class="btn small primary" type="button" data-clacc="${esc(o.id)}">Aceptar</button>` : '<span class="pl-tag">Ya no lo tienes</span>'}<button class="btn small" type="button" data-clrej="${esc(o.id)}">Rechazar</button></div>` }); }).join('')}</div>` : '<p class="sub">No tienes ofertas. Pon jugadores en venta desde Plantilla → «Vender».</p>'}
-      <h3 class="h-sub">Tus ofertas</h3>${mine.length ? `<div class="pl-list">${mine.map(o => clCard(o.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${o.price} a ${esc(o.seller)}</span><span class="pl-tag">Esperando respuesta</span><button class="btn small" type="button" data-clcancel="${esc(o.id)}">Retirar</button></div>` })).join('')}</div>` : '<p class="sub">No has hecho ofertas. Las monedas de una oferta quedan reservadas hasta que te contesten.</p>'}`;
+    body = `<h3 class="h-sub">Te ofrecen</h3>${inc.length ? `<div class="jg-list">${inc.map(o => { const p = c.squad.find(x => x.id === o.d.pid); return clCard(o.d.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${esc(o.autor || 'Alguien')} ofrece ${o.d.price}</span>${p ? `<button class="btn small primary" type="button" data-clacc="${esc(o.id)}">Aceptar</button>` : '<span class="pl-tag">Ya no lo tienes</span>'}<button class="btn small" type="button" data-clrej="${esc(o.id)}">Rechazar</button></div>` }); }).join('')}</div>` : '<p class="sub">No tienes ofertas. Pon jugadores en venta desde Plantilla → «Vender».</p>'}
+      <h3 class="h-sub">Tus ofertas</h3>${mine.length ? `<div class="jg-list">${mine.map(o => clCard(o.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${o.price} a ${esc(o.seller)}</span><span class="pl-tag">Esperando respuesta</span><button class="btn small" type="button" data-clcancel="${esc(o.id)}">Retirar</button></div>` })).join('')}</div>` : '<p class="sub">No has hecho ofertas. Las monedas de una oferta quedan reservadas hasta que te contesten.</p>'}`;
   }
   el.innerHTML = `<div class="club-in"><div class="cf-top"><b>Tu plantilla</b><span>${s ? `Ataque ${s.atk} · defensa ${s.def}` : ''}</span><button class="lv-x" type="button" data-club="x" aria-label="Cerrar">×</button></div>
     <div class="seg wrap" role="tablist">${tabs.map(([k, l]) => `<button type="button" data-cltab="${k}" aria-pressed="${clTab === k}">${l}</button>`).join('')}</div>
@@ -7388,7 +7486,45 @@ function dtEquiposHTML() {
     <p class="sub">Quién lleva cada equipo. Al cambiarlo se cambia en el horario, en la agenda de cada entrenador y en el seguimiento.</p>
     <ul class="eq-by">${[...by.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, T]) => `<li><button class="esp-link" type="button" data-coach="${esc(c)}">${esc(c)}</button><span>${T.map(esc).join(' · ')}</span></li>`).join('')}</ul>
     <details class="dt-more"${L.some(x => x.raros.length) ? ' open' : ''}><summary>Por equipo · ${L.length}${L.some(x => x.raros.length) ? ` · ${L.filter(x => x.raros.length).length} con algún día distinto` : ''}</summary>
-    <ul class="dt-list">${L.map(x => `<li class="dt-row eq-row"><span class="dt-txt"><b>${esc(x.t)}</b><small>${x.franjas.map(fr).join(' · ')}</small>${x.franjas.filter(g => g.ent.length > 1).map(g => `<button class="linkb eq-prep" type="button" data-hz="edit" data-id="${esc(g.id)}">${esc(fr(g))} · ${esc(gLabel(g))}: ${prepTxt(g) ? esc(prepTxt(g)) : '<b>¿quién la prepara?</b>'}</button>`).join('')}${x.raros.length ? `<small class="eq-raro">No coincide: ${x.raros.map(g => `${esc(fr(g))} lo lleva ${esc(g.ent.join(' y ') || 'nadie')}`).join('; ')}</small>` : ''}</span><span class="eq-ents">${x.coaches.length ? x.coaches.map(c => `<span class="chip sm">${esc(c)}</span>`).join('') : '<span class="sub">Sin entrenador</span>'}</span><button class="btn small" type="button" data-eq="edit" data-team="${esc(x.t)}">Cambiar</button></li>`).join('')}</ul></details></section>`;
+    <ul class="dt-list">${L.map(x => `<li class="dt-row eq-row"><span class="dt-txt"><b>${esc(x.t)}</b><small>${x.franjas.map(fr).join(' · ')}</small>${x.franjas.filter(g => g.ent.length > 1).map(g => `<button class="linkb eq-prep" type="button" data-hz="edit" data-id="${esc(g.id)}">${esc(fr(g))} · ${esc(gLabel(g))}: ${prepTxt(g) ? esc(prepTxt(g)) : '<b>¿quién la prepara?</b>'}</button>`).join('')}${x.raros.length ? `<small class="eq-raro">No coincide: ${x.raros.map(g => `${esc(fr(g))} lo lleva ${esc(g.ent.join(' y ') || 'nadie')}`).join('; ')}</small>` : ''}</span><span class="eq-ents">${x.coaches.length ? x.coaches.map(c => `<span class="chip sm">${esc(c)}</span>`).join('') : '<span class="sub">Sin entrenador</span>'}</span><button class="btn small" type="button" data-eq="edit" data-team="${esc(x.t)}">Cambiar</button></li>`).join('')}</ul></details></section>
+    ${dtPlantillasHTML()}`;
+}
+// Las plantillas: se importan aquí y se guardan en Firestore, nunca en el repositorio.
+function dtPlantillasHTML() {
+  const P = bank.plant || {}, T = Object.keys(P), n = plantTotal();
+  return `<section class="ses-sec" id="pl-sec"><h2 class="h-sec">Plantillas</h2>
+    <p class="sub">Quién está en cada equipo. Los nombres se guardan solo en la nube del club, nunca en el repositorio, porque son menores.</p>
+    ${n ? `<ul class="dt-list">${T.sort((a, b) => eqRank(a) - eqRank(b)).map(t => `<li class="dt-row"><span class="dt-txt"><b>${esc(t)}</b><small>${P[t].length} ${P[t].length === 1 ? 'ficha' : 'fichas'}${P[t].some(p => p.p) ? ' · ' + P[t].filter(p => p.p).length + ' portero' : ''}</small></span><button class="btn small ghost" type="button" data-pl="ver" data-team="${esc(t)}">Ver</button></li>`).join('')}</ul>
+      <p class="sub">${n} fichas en ${T.length} ${T.length === 1 ? 'equipo' : 'equipos'}.</p>` : '<p class="sub">Todavía no hay ninguna plantilla.</p>'}
+    <details class="dt-more"><summary>Importar las plantillas</summary>
+      <p class="sub">Pega el código de las plantillas (o elige el archivo). Sustituye las que haya.</p>
+      <label class="ses-f">Archivo (.json)<input type="file" id="pl-file" accept=".json,application/json"></label>
+      <label class="ses-f">Código<textarea id="pl-code" rows="4" placeholder="{&quot;Benjamín A&quot;: [{&quot;n&quot;: &quot;Nombre&quot;, &quot;a&quot;: &quot;2016&quot;}]}"></textarea></label>
+      <div class="actions"><button class="btn primary" type="button" data-pl="import">Importar</button>${n ? '<button class="btn ghost" type="button" data-pl="borrar">Borrar todas</button>' : ''}</div>
+      <p class="sub" id="pl-msg" role="status"></p></details></section>`;
+}
+function plantImportar(txt) {
+  const msg = document.getElementById('pl-msg');
+  let j; try { j = JSON.parse(txt); } catch (e) { if (msg) msg.textContent = 'Ese código no se entiende: tiene que ser el .json de las plantillas.'; return; }
+  if (!j || typeof j !== 'object' || Array.isArray(j)) { if (msg) msg.textContent = 'Ese archivo no son plantillas.'; return; }
+  const limpio = {}; let n = 0;
+  Object.entries(j).forEach(([t, L]) => {
+    if (!Array.isArray(L)) return;
+    const F = L.map(p => {
+      const nombre = String((p && (p.n || p.nombre)) || '').trim(); if (!nombre) return null;
+      const f = { n: nombre }, a = String((p && (p.a || p.anio || p.año)) || '').trim();
+      if (a) f.a = a; if (p && (p.p || /^porter/i.test(String(p.puesto || '')))) f.p = 1;
+      if (p && p.nt) f.nt = String(p.nt).slice(0, 60);
+      return f;
+    }).filter(Boolean);
+    if (F.length) { limpio[String(t).trim()] = F; n += F.length; }
+  });
+  if (!n) { if (msg) msg.textContent = 'No he encontrado ninguna ficha dentro.'; return; }
+  const eqs = Object.keys(limpio), conocidos = new Set(equiposMap(horario()).map(x => x.t));
+  const raros = eqs.filter(t => !conocidos.has(t));
+  confirmModal('¿Importar las plantillas?',
+    `${n} fichas en ${eqs.length} ${eqs.length === 1 ? 'equipo' : 'equipos'}. Sustituye las plantillas que haya ahora.${raros.length ? ` Ojo: ${raros.join(', ')} no ${raros.length === 1 ? 'está' : 'están'} en el horario, así que ${raros.length === 1 ? 'solo se verá' : 'solo se verán'} aquí.` : ''}`,
+    'Importar', () => saveBankExtra_({ plant: limpio }, `${n} fichas importadas.`));
 }
 function eqModal(team) {
   const H = horario(), L = equiposMap(H), x = L.find(y => y.t === team); if (!x) return;
@@ -7445,6 +7581,13 @@ function hzModal(g) {
 function saveHorario(H, okText) { return saveBankExtra_({ horario: H }, okText); }
 const saveBankExtra_ = (extra, okText) => saveBank(bank.tasks, okText, document.getElementById('dt-msg'), extra);
 document.getElementById('v-dt').addEventListener('click', e => {
+  const p = e.target.closest('[data-pl]');
+  if (p) {
+    if (p.dataset.pl === 'ver') openEquipo(p.dataset.team, 'plant');
+    else if (p.dataset.pl === 'import') plantImportar((document.getElementById('pl-code').value || '').trim());
+    else if (p.dataset.pl === 'borrar') confirmModal('¿Borrar todas las plantillas?', 'Se van los nombres de todos los equipos. Habría que volver a importarlos.', 'Borrar', () => saveBankExtra_({ plant: {} }, 'Plantillas borradas.'));
+    return;
+  }
   const q = e.target.closest('[data-eq]'); if (q && q.dataset.eq === 'edit') { eqModal(q.dataset.team); return; }
   const b = e.target.closest('[data-hz]'); if (!b) return;
   const H = clone(horario()), v = id => (document.getElementById(id) || {}).value || '';
@@ -7506,7 +7649,7 @@ function planHTML() {
     ${teams.length > 1 ? `<div class="fgroup ses-teams" role="group" aria-label="Equipo"><button class="chip" type="button" data-pteam="" aria-pressed="${!planTeam}">Todos</button>${teams.map(x => `<button class="chip team-chip tc${teamIdx(x)}" type="button" data-pteam="${esc(x)}" aria-pressed="${planTeam === x}">${esc(x)}</button>`).join('')}</div>` : ''}
     ${!readAuthor() ? '<p>Pon tu nombre en Mi perfil para ver tus entrenos.</p>' : !L.length ? `<p class="sub">${all.length ? 'No hay entrenos de este equipo este mes.' : 'Este mes no tienes entrenos en el horario del club. Si debería haberlos, avisa a la Dirección Técnica para que te ponga en el horario.'}</p>` : ''}
     ${(() => { const t = isoToday(), ks = Object.keys(weeks).sort(), past = ks.filter(wk => weeks[wk].every(it => it.fecha < t)), wkHTML = wk => `<div class="pl-week"><div class="lt-head"><h3 class="h-sub">Semana del ${esc(fmtShort(wk))}</h3><button class="btn small ghost" type="button" data-pcopy="${esc(wk)}">Copiar la semana anterior</button></div>
-      <ul class="pl-list">${weeks[wk].map(planRowHTML).join('')}</ul></div>`;
+      <ul class="jg-list">${weeks[wk].map(planRowHTML).join('')}</ul></div>`;
       return (past.length ? `<details class="pl-past"><summary>Semanas pasadas (${past.length})</summary>${past.map(wkHTML).join('')}</details>` : '') + ks.filter(wk => !past.includes(wk)).map(wkHTML).join(''); })()}
   </section>`;
 }

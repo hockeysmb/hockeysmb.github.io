@@ -588,3 +588,23 @@ Carlos dijo que el espacio del entrenador estaba demasiado escondido, así que e
 - `openEquipo(t)` reutiliza la capa `#espacio`: cuándo entrena, quién lo lleva y las sesiones compartidas de ese equipo. `espName` se pone a `null` para que `drawCoach()` no lo repinte encima.
 - `eqSigla(t)` saca las iniciales para el escudete: «Prebenjamín A» → PA, «Senior Fem» → SF. Antes cogía las dos primeras letras y todos los prebenjamines salían «PR».
 - **La barra tiene seis botones.** En pantallas de 320 px los rótulos se cortaban: por debajo de 370 px la letra baja a 10 px y el relleno lateral a 4. Si algún día entra un séptimo, no cabe: habría que agrupar.
+
+## Plantillas y partidos dentro del equipo (16 nov)
+
+`openEquipo(t)` pasa a tener tres pestañas (`eqSub`): **Plantilla**, **Partidos** y **Entrenos** (lo que había antes: horario, entrenadores y sesiones compartidas).
+
+**Plantilla.** Quién está en cada equipo, en `bank.plant` = `{ "Benjamín A": [{n, a, p, nt}, …] }`: `n` nombre, `a` año, `p` 1 si es portero, `nt` una nota corta del listado. Va dentro de `club/state` como cualquier otro campo del banco, así que lo escribe solo la DT y lo lee cualquier miembro; no hizo falta tocar las reglas de Firestore.
+
+- **Los nombres nunca van al repositorio.** Son menores y el repositorio es público: viven solo en Firestore. Se importan desde el panel de la DT (Equipos → Plantillas), pegando el `.json` o eligiendo el archivo. El archivo con los nombres de verdad se le pasa a Carlos por el chat, no por aquí; las pruebas usan nombres inventados.
+- `plantImportar()` limpia lo que entra (acepta `n`/`nombre`, `a`/`año`, `puesto: "portero"`), avisa de los equipos que no están en el horario y pide confirmación antes de sustituir.
+- `tambienEn(nombre, salvo)` cruza las plantillas por nombre: así la ficha de una jugadora de Infantil A dice que también está en Sub15.
+- **Sub13 y Sub15 no tienen franja propia** en el horario (salen de Alevín e Infantil), así que `renderEquipos()` y `openEquipo()` admiten equipos que solo existen en la plantilla, con el rótulo «Sin franja propia: sale de otros equipos».
+- `eqSigla('Sub15')` → «15», no «SU».
+- Las clases son `jg-row`/`jg-list`/`jg-ini`/`jg-txt`: `pl-row` y `pl-list` ya eran de la planificación y se pisaban.
+- La ficha del jugador (`jugadorModal`) enseña de momento el año, el puesto y en qué otros equipos está. **Las anotaciones (deportivo, asistencia y actitud) no están hechas**; necesitan una colección aparte y reglas nuevas de Firestore, porque en `club/state` solo escribe la DT.
+
+**Partidos.** La app de entrenadores lee `femenino/partidos.json`, el mismo que llena `fuente/partidos_fmp.py` para la app de jugadoras. `PART_EQ` traduce la categoría de la federación al equipo del horario: Sub-15 → Sub15, Sub-17 → Sub17, 1ª Autonómica → Senior Fem.
+
+- De los otros quince equipos **no tenemos el calendario**: falta el enlace de su competición en la federación. La pestaña lo dice en vez de salir vacía.
+- `construir_web.py` copia `femenino/partidos.json` a la carpeta de salida cuando no es la raíz, para que las pruebas lo encuentren.
+- **La actualización automática está rota desde el 28 de octubre:** la federación contesta 403 también a GitHub Actions. El workflow sale en verde porque el script, si no puede leer, deja los partidos de antes. Hay que mirar con el navegador qué pide de verdad el portal.

@@ -41,5 +41,9 @@ shutil.copytree(W + 'icons', OUT + 'icons', dirs_exist_ok=True)
 shutil.copytree(W + 'pabellon', OUT + 'pabellon', dirs_exist_ok=True)
 # el sistema de diseño también para la app de jugadoras, que no tiene build: queda publicado en el repositorio
 shutil.copyfile(F + 'sistema.css', ROOT + 'femenino/sistema.css')   # ilustraciones de las salas del pabellón
+# los partidos de la federación los lee la app de entrenadores de femenino/partidos.json (ya está en la raíz)
+if os.path.abspath(OUT) != os.path.abspath(ROOT) and os.path.exists(ROOT + 'femenino/partidos.json'):
+    os.makedirs(OUT + 'femenino', exist_ok=True)
+    shutil.copyfile(ROOT + 'femenino/partidos.json', OUT + 'femenino/partidos.json')
 open(OUT + '.nojekyll', 'w').write('')
 print('web en', OUT, round(len(html) / 1024), 'KB')
