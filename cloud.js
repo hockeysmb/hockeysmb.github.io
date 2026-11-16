@@ -155,6 +155,8 @@
     unsub.push(B.listenCol('partidas', d => { d.forEach(x => { const m = Object.assign({ id: x.id }, x.data); if (m.b === me.uid && m.estado === 'invitado' && Date.now() - (m.ts || 0) < 90000 && !shownInv.has(m.id)) { shownInv.add(m.id); if (window.SMB && window.SMB.invite) window.SMB.invite(m); } }); }, () => {}));
     // directorio de sesiones del cuerpo técnico (si la regla no está publicada, la app sigue sin él)
     unsub.push(B.listenCol('shared', d => { const first = !C.sharedReady; C.shared = d; C.sharedReady = true; assemble(); if (first) pushShared(); }, () => { C.shared = []; assemble(); }));
+    // fichas de partido: el antes, el descanso y el después (igual, si falta la regla la app sigue)
+    unsub.push(B.listenCol('fichas', d => { C.fichas = d; assemble(); }, () => { C.fichas = []; C.fichasNo = true; assemble(); }));
     if (isDT) unsub.push(B.listenCol('inbox', d => { C.inbox = d.map(x => Object.assign({ id: x.id }, x.data)).filter(x => x.estado !== 'hecho').sort((a, b) => b.ts - a.ts); if (window.SMB) window.SMB.render(); }));
     await pullPersonal();
     gate('');
@@ -207,6 +209,8 @@
         historial: C.hist.map(x => ({ o: x.data.o || 0, t: dec(x.data) })).filter(x => x.t).sort((a, b) => a.o - b.o).map(x => x.t),
         liga: C.liga.map(x => dec(x.data)).filter(Boolean).sort((a, b) => a.n - b.n),
         memberUids: C.state.memberUids || [], dtUids: C.state.dtUids || [], memberEmails: C.state.memberEmails || [],
+        fichas: (C.fichas || []).map(x => Object.assign({ id: x.id }, x.data, dec(x.data) || {})),
+        fichasNo: !!C.fichasNo,
       });
       const PR = C.profiles || {};
       const byEmail = em => Object.entries(PR).find(([, p]) => norm(p.email) === norm(em)) || null;
@@ -399,6 +403,13 @@
       me: () => me && me.uid,
       put: async (k, localId, obj) => { const id = me.uid + '_' + k + '_' + String(localId).replace(/[^\w.-]/g, '_'); await B.set('shared/' + id, { uid: me.uid, k, autor: localStorage.getItem(LS.autor) || '', ts: Date.now(), j: JSON.stringify(obj) }); return id; },
       del: id => B.del('shared/' + id),
+    },
+    // fichas de partido
+    ficha: {
+      me: () => me && me.uid,
+      save: (id, obj) => B.set('fichas/' + String(id).replace(/[^\w.-]/g, '_'),
+        Object.assign({ uid: me.uid, autor: localStorage.getItem(LS.autor) || '', ts: Date.now() }, enc(obj))),
+      del: id => B.del('fichas/' + String(id).replace(/[^\w.-]/g, '_')),
     },
     match: {
       me: () => me && me.uid,
