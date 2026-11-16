@@ -43,6 +43,17 @@ service cloud.firestore {
       allow delete: if isDT() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    // Fichas de partido: el antes, el descanso y el después de cada partido.
+    // Las escribe el entrenador del equipo, no solo la DT, así que van aquí y no en club/state.
+    // Las ve todo el cuerpo técnico (un entrenador puede cubrir a otro) y las puede corregir
+    // cualquiera de ellos; borrar, solo quien la hizo o la DT.
+    match /fichas/{id} {
+      allow read: if isMember();
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid;
+      allow update: if isMember();
+      allow delete: if isDT() || (isMember() && resource.data.uid == request.auth.uid);
+    }
+
     // Amistosos a la vez: los ve el cuerpo técnico; los cambian los dos que juegan
     match /partidas/{id} {
       allow read: if isMember();

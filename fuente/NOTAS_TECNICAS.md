@@ -650,3 +650,35 @@ Desde la pestaña **Plantilla** de cada equipo, sin salir de ahí:
 **Cuidado al repintar.** La capa `#espacio` está fuera de `render()` y no se refresca sola al guardar, por eso `plantGuardar` llama a `openEquipo(espEquipo)` cuando termina.
 
 **Un tropiezo de CSS que vale recordar:** `.modal-card input { width: 100% }` está más abajo en la hoja y tiene el mismo peso que `.pj-check input`, así que ganaba y el «Es portero» salía como una casilla enorme. Se arregló subiendo el peso a `.pj-check input[type="checkbox"]`.
+
+## La ficha de partido (16 nov)
+
+Se entra desde la pestaña **Partidos** de un equipo o desde **Tu semana** en Inicio. Tiene cuatro partes: convocatoria, antes, descanso y después.
+
+**La estructura no me la inventé: está en los modelos de juego.** «Antes: dos ideas, una ofensiva y una defensiva, ni una más. Descanso: dos correcciones, se dicen, no se explican. Después: tres preguntas, no un discurso.» Por eso la pantalla enseña **exactamente** esos huecos y no un campo de texto libre: la regla se cumple sola porque no cabe una tercera idea.
+
+Los modelos distinguen competición (2/2/3) y formación (1/1/2), y lo monté así al principio. **Carlos lo quitó:** hoy solo uno o dos equipos se pueden considerar de competición y el resto no admite esa distinción todavía. Queda una sola estructura, la de competición, en `FICHA`. Si algún día vuelve la distinción, es cambiar esa constante por equipo.
+
+**Lo que importa es que apetezca rellenarla**, que fue el encargo:
+
+- **No hay botón de guardar.** `fichaGuardar()` se dispara al escribir, con 900 ms de espera, y escribe «Guardado» abajo. Un botón de guardar es lo que hace que no se rellene.
+- **«Convocar a todos»** y quitar al que falte, en vez de marcar doce nombres.
+- **Sugerencias que se tocan:** las cinco reglas del banquillo para ideas y correcciones, y las preguntas del modelo para el después. `fichaSugerir()` las mete en el primer hueco libre del grupo. Van en `.fh-sug`, una fila que se desliza: con `vb-chips` (que envuelve) la pantalla se hacía larguísima.
+- Lo del **marcador a 10** va plegado.
+- En Inicio, **un partido nunca se esconde** detrás del «ver más» aunque caiga el domingo (`ver` en `myWeekHTML`).
+
+**Dónde se guardan: colección `fichas`, no `club/state`.** Las escribe el entrenador del equipo, y en `club/state` solo escribe la DT. **Hacen falta reglas nuevas en la consola de Firebase** (están en `firestore.rules`): leer y corregir, cualquiera del cuerpo técnico; borrar, quien la hizo o la DT. Mientras no estén publicadas, `cloud.js` pone `bank.fichasNo = true`, la app sigue funcionando y la ficha avisa de que no se guarda — el mismo patrón que `shared`.
+
+**Prueba:** `web_ficha` (abrir desde el equipo, las cuatro secciones, 2/2/3 huecos, convocar a todos, sugerencias en huecos distintos, guardado solo, que vuelva tras recargar y que el partido salga en la semana de Inicio). `fakefb.js` conoce la colección con las mismas reglas.
+
+**Ojo con las pruebas:** `[data-fpart]` sale también en Inicio (oculto), así que en las pruebas hay que buscar dentro de `#espacio`. Y la suite entera, con carga, tumba a veces `web_general`, `web_nombres` y `web_revisar` por tiempo de espera en el login; sueltas pasan.
+
+**Control de convocatorias (16 nov, idea de Carlos).** `convHist(equipo, salvoPid)` cruza las fichas ya guardadas de ese equipo y saca, por jugador, cuántas de las **últimas 5** convocatorias jugó y cuántas lleva seguidas sin ir. Se enseña en dos sitios:
+
+- **Dentro de la convocatoria**, debajo de cada nombre, mientras se decide. Dos o más seguidas sin ir se marcan en `--smb-ojo`.
+- En la pestaña **Plantilla**, un plegable ordenado de menos a más convocado, abierto de entrada si hay alguien con dos o más fuera.
+
+Dos decisiones que conviene no deshacer sin pensarlo:
+
+1. **Sale solo de lo que guarden los entrenadores.** La federación no publica convocatorias; si nadie marca la convocatoria en la ficha, no hay dato. Por eso el texto dice «de los últimos N partidos **con convocatoria hecha**» y no «de los últimos N partidos».
+2. **No hay automatismo de «a este le toca».** El documento de Funcionamiento (7.6) dice que el reparto lo decide el entrenador y que un reparto exactamente igualitario no siempre es el más justo ni el más formativo. La app enseña el dato y no propone a nadie; convertir esto en una sugerencia automática iría contra ese criterio.

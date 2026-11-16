@@ -18,6 +18,7 @@
     if (s[0] === 'users') return u && u.uid === s[1];
     if (s[0] === 'votes') return isMember(u);
     if (s[0] === 'shared') return isMember(u);
+    if (s[0] === 'fichas') return isMember(u);
     if (s[0] === 'partidas') return isMember(u);
     if (s[0] === 'inbox') return isDT(u) || (isMember(u) && s.length === 2 && db[p] && db[p].uid === u.uid);
     return false;
@@ -29,6 +30,8 @@
     if (s[0] === 'votes') return isMember(u) && u.uid === s[1];
     if (s[0] === 'partidas') return db[p] ? (!!u && isMember(u) && (db[p].a === u.uid || db[p].b === u.uid)) : (isMember(u) && !!data && data.a === u.uid);
     if (s[0] === 'shared') return db[p] ? (!!u && (db[p].uid === u.uid || isDT(u)) && (!data || data.uid === db[p].uid)) : (isMember(u) && !!data && data.uid === u.uid);
+    // fichas de partido: las lee y las corrige cualquiera del cuerpo técnico; borrar, quien la hizo o la DT
+    if (s[0] === 'fichas') return db[p] ? isMember(u) : (isMember(u) && !!data && data.uid === u.uid);
     if (s[0] === 'inbox') return db[p] ? (isDT(u) || (isMember(u) && db[p].uid === u.uid)) : (isMember(u) && data && data.uid === u.uid);
     return false;
   }
