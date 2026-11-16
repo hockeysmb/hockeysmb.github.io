@@ -107,6 +107,7 @@ CABE = {'User-Agent': UA, 'Referer': 'https://www.hockeypatines.fmp.es/', 'Origi
         'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'}
 _ab = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 _portal_abierto = []
+_estados = set()   # qué estados trae la federación; se imprime al final para poder afinar
 
 def _abrir_portal():
     if _portal_abierto: return
@@ -128,11 +129,18 @@ def por_http(idc):
         hora = re.search(r'<td[^>]*>\s*(\d{1,2}:\d{2})\s*</td>', cuerpo)
         jor = re.search(r'JORNADA\s+(\d+)', cuerpo)
         res = re.search(r'web_link_td"[^>]*>\s*(\d+)\s*-\s*(\d+)\s*</td>', cuerpo)
+        # La federación pone 0-0 en los partidos que todavía no se han jugado, igual que en un 0-0 de
+        # verdad. Si la fila dice en qué estado está, un 0-0 que no sea FINAL no es un resultado.
+        est = re.search(r'>\s*(FINAL|PREVIA|APLAZADO|SUSPENDIDO|EN JUEGO|DESCANSO)\s*<', cuerpo, re.I)
+        estado = est.group(1).upper() if est else ''
+        _estados.add(estado or '(sin estado)')
+        marcador = f'{res.group(1)}:{res.group(2)}' if res else ''
+        if marcador == '0:0' and estado and estado != 'FINAL': marcador = ''
         filas.append({'j': int(jor.group(1)) if jor else None,
                       'dia': f'{g[6:]}/{g[4:6]}/{g[:4]}', 'hora': hora.group(1) if hora else '', 'pista': '',
                       'local': eq[0], 'visitante': eq[1],
                       'cLocal': cl[0] if len(cl) > 0 else '', 'cVisit': cl[1] if len(cl) > 1 else '',
-                      'res': f'{res.group(1)}:{res.group(2)}' if res else ''})
+                      'res': marcador})
     return filas
 
 def esperar_filas(pg, segundos=40):
@@ -256,6 +264,7 @@ def main():
             if d: cambios.append(f'{x["id"]} ' + ', '.join(d))
     for k in antes:
         if k not in {x['id'] for x in nuevos}: cambios.append(f'quitado {k}')
+    print('Estados que trae la federación:', ', '.join(sorted(_estados)) or 'ninguno')
     print('\n'.join(log)); print('\n'.join(cambios[:60]) or 'Sin cambios')
     if len(cambios) > 60: print(f'... y {len(cambios) - 60} cambios más')
 
