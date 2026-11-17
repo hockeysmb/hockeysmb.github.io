@@ -157,6 +157,8 @@
     unsub.push(B.listenCol('shared', d => { const first = !C.sharedReady; C.shared = d; C.sharedReady = true; assemble(); if (first) pushShared(); }, () => { C.shared = []; assemble(); }));
     // fichas de partido: el antes, el descanso y el después (igual, si falta la regla la app sigue)
     unsub.push(B.listenCol('fichas', d => { C.fichas = d; assemble(); }, () => { C.fichas = []; C.fichasNo = true; assemble(); }));
+    // jugadores con ficha única (fase 1 del módulo Equipos)
+    unsub.push(B.listenCol('jugadores', d => { C.jug = d; C.jugNo = false; assemble(); }, () => { C.jug = []; C.jugNo = true; assemble(); }));
     if (isDT) unsub.push(B.listenCol('inbox', d => { C.inbox = d.map(x => Object.assign({ id: x.id }, x.data)).filter(x => x.estado !== 'hecho').sort((a, b) => b.ts - a.ts); if (window.SMB) window.SMB.render(); }));
     await pullPersonal();
     gate('');
@@ -211,6 +213,9 @@
         memberUids: C.state.memberUids || [], dtUids: C.state.dtUids || [], memberEmails: C.state.memberEmails || [],
         fichas: (C.fichas || []).map(x => Object.assign({ id: x.id }, x.data, dec(x.data) || {})),
         fichasNo: !!C.fichasNo,
+        eqUids: C.state.eqUids || {}, uidEqs: C.state.uidEqs || {},
+        jugadores: (C.jug || []).map(x => Object.assign({ id: x.id }, x.data)),
+        jugadoresNo: !!C.jugNo,
       });
       const PR = C.profiles || {};
       const byEmail = em => Object.entries(PR).find(([, p]) => norm(p.email) === norm(em)) || null;
@@ -252,10 +257,10 @@
     diff('tasks', next.tasks || [], t => t.id, prev.tasks);
     diff('historial', next.historial || [], h => String(h.id).replace(/[^\w.-]/g, '_'), prev.historial);
     diff('liga', next.liga || [], j => 'j' + j.n, prev.liga);
-    const rest = Object.assign({}, next); ['tasks', 'historial', 'liga', 'memberUids', 'dtUids', 'memberEmails', 'amistosos', 'sesClub', 'ejClub', 'planClub'].forEach(k => delete rest[k]);
+    const rest = Object.assign({}, next); ['tasks', 'historial', 'liga', 'memberUids', 'dtUids', 'memberEmails', 'amistosos', 'sesClub', 'ejClub', 'planClub', 'fichas', 'fichasNo', 'jugadores', 'jugadoresNo', 'eqUids', 'uidEqs'].forEach(k => delete rest[k]);
     rest.coaches = (rest.coaches || []).map(c => (c.uid || c.email) ? Object.assign({ name: c.name, bonus: c.bonus || [] }, c.uid ? { uid: c.uid } : {}, c.email ? { email: c.email } : {}, c.nameSet ? { nameSet: c.nameSet } : {}) : (({ pizarra, ...x }) => x)(c));
     delete rest.memberEmails;
-    ops.push({ op: 'set', path: 'club/state', data: Object.assign(enc(rest), { memberUids: next.memberUids || prev.memberUids || [], memberEmails: next.memberEmails || prev.memberEmails || [], dtUids: next.dtUids || prev.dtUids || [me.uid] }) });
+    ops.push({ op: 'set', path: 'club/state', data: Object.assign(enc(rest), { memberUids: next.memberUids || prev.memberUids || [], memberEmails: next.memberEmails || prev.memberEmails || [], dtUids: next.dtUids || prev.dtUids || [me.uid], eqUids: next.eqUids || prev.eqUids || {}, uidEqs: next.uidEqs || prev.uidEqs || {} }) });
     await B.batch(ops);
   }
   async function importBank(j) {
@@ -403,6 +408,13 @@
       me: () => me && me.uid,
       put: async (k, localId, obj) => { const id = me.uid + '_' + k + '_' + String(localId).replace(/[^\w.-]/g, '_'); await B.set('shared/' + id, { uid: me.uid, k, autor: localStorage.getItem(LS.autor) || '', ts: Date.now(), j: JSON.stringify(obj) }); return id; },
       del: id => B.del('shared/' + id),
+    },
+    // jugadores: campos normales (no JSON) porque las reglas miran «eq» para saber quién puede tocarlo
+    jug: {
+      me: () => me && me.uid,
+      save: (id, obj) => B.set('jugadores/' + id, Object.assign({}, obj, { por: me.uid, ts: Date.now() })),
+      del: id => B.del('jugadores/' + id),
+      lote: list => B.batch(list.map(x => ({ op: 'set', path: 'jugadores/' + x.id, data: Object.assign({}, x.data, { por: me.uid, ts: Date.now() }) }))),
     },
     // fichas de partido
     ficha: {
