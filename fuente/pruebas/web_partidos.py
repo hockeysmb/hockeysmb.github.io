@@ -17,7 +17,7 @@ P = [{'id': f'be2-BenjamínD-{j}', 'eq': 'Benjamín D', 'cat': 'Benjamín 2ª', 
                                (9, '2026-12-12', '10:00', 'Rival Nueve', False, ''), (10, '2026-11-20', '19:00', 'Rival Diez', False, '')]]
 T = [{'n': f'Equipo {k}', 'pj': 5, 'g': 5 - k // 3, 'e': 0, 'p': k // 3, 'gf': 20 - k, 'gc': k, 'pts': 15 - k, 'smb': ''} for k in range(12)]
 T[7] = dict(T[7], n='Santa María la Blanca D', smb='Benjamín D'); T[3] = dict(T[3], n='Santa María la Blanca C', smb='Benjamín C')
-DATOS = {'fuente': 'x', 'actualizado': '2026-11-17', 'clasif': {'be2': {'cat': 'Benjamín 2ª', 'liga': '4857', 'tabla': T}}, 'partidos': P}
+DATOS = {'fuente': 'x', 'actualizado': '2026-11-17', 'clasif': {'be2': {'cat': 'Benjamín 2ª', 'liga': '4857', 'tabla': T, 'oficial': True}}, 'partidos': P}
 async def main():
   srv = subprocess.Popen(['python3', '-m', 'http.server', '8787', '-d', WEB], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   await asyncio.sleep(1)
@@ -51,6 +51,7 @@ async def main():
       if not any('corte' in r for r in filas): errs.append('con 12 equipos debería cortar la tabla')
       if not await pg.locator('#espacio summary', has_text='Ver la tabla entera').count(): errs.append('no se puede ver la tabla entera')
       if not await pg.locator('#espacio a[href*="liga=4857"]').count(): errs.append('falta el enlace a la federación')
+      if 'La de la federación' not in await pg.inner_text('#espacio'): errs.append('no dice que la clasificación es la oficial')
       vista = await pg.evaluate("[...document.querySelectorAll('#espacio .pt-list')].filter(u=>!u.closest('details')).map(u=>[...u.querySelectorAll('.pt-rival b')].map(b=>b.textContent))")
       print('listas a la vista:', vista)
       if vista != [['Rival Diez', 'Rival Seis', 'Rival Siete'], ['Rival Cinco', 'Rival Cuatro', 'Rival Tres']]: errs.append('las listas no están bien ordenadas o enseñan de más')

@@ -3318,19 +3318,19 @@ function openEquipo(t, sub, quieto) {
         : '<p class="sub">No quedan partidos en el calendario.</p>'));
       cajas.push(box('▤', 'Temporada', R.length
         ? `<div class="pt-bal"><span><b>${G}</b>ganados</span><span><b>${E}</b>empatados</span><span><b>${Pp}</b>perdidos</span></div>
-           <p class="sub eq-dato">${GF} goles a favor y ${GC} en contra${pos >= 0 ? ` · <b>${pos + 1}.º de ${C.tabla.length}</b>` : ''}.</p>`
+           <p class="sub eq-dato">${GF} goles a favor y ${GC} en contra${pos >= 0 ? ` · <b>${esc(C.tabla[pos].pos || pos + 1)}.º de ${C.tabla.length}</b>` : ''}.</p>`
         : '<p class="sub">Todavía sin resultados.</p>'));
       if (C) {
         const T = C.tabla, n = T.length;
         // con muchas filas, las de arriba y las de alrededor del equipo; la tabla entera, plegada
         const ver = n <= 8 ? T.map((_, k) => k) : [...new Set([0, 1, 2, pos - 1, pos, pos + 1].filter(k => k >= 0 && k < n))].sort((a, b) => a - b);
         const tr = k => { const x = T[k], yo = normName(x.smb) === normName(t), otro = !yo && x.smb;
-          return `<tr class="${yo ? 'yo' : otro ? 'smb' : ''}"><td>${k + 1}</td><td>${esc(x.n)}</td><td>${x.pj}</td><td>${x.g}</td><td>${x.e}</td><td>${x.p}</td><td>${x.gf - x.gc > 0 ? '+' : ''}${x.gf - x.gc}</td><td><b>${x.pts}</b></td></tr>`; };
+          return `<tr class="${yo ? 'yo' : otro ? 'smb' : ''}"><td>${esc(x.pos || k + 1)}</td><td>${esc(x.n)}</td><td>${x.pj}</td><td>${x.g}</td><td>${x.e}</td><td>${x.p}</td><td>${x.gf - x.gc > 0 ? '+' : ''}${x.gf - x.gc}</td><td><b>${x.pts}</b></td></tr>`; };
         const cab = '<thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>';
         const cortes = ver.map((k, z) => (z && k !== ver[z - 1] + 1 ? '<tr class="corte"><td colspan="8">···</td></tr>' : '') + tr(k)).join('');
         cajas.push(box('≡', `Clasificación <small>· ${esc(C.cat)}</small>`, `<div class="pt-clas"><table>${cab}<tbody>${cortes}</tbody></table></div>
           ${n > ver.length ? `<details class="dt-more"><summary>Ver la tabla entera · ${n} equipos</summary><div class="pt-clas"><table>${cab}<tbody>${T.map((_, k) => tr(k)).join('')}</tbody></table></div></details>` : ''}
-          <p class="sub eq-dato">Calculada con los resultados de la federación: 3 puntos la victoria y 1 el empate; a igualdad, diferencia de goles. La oficial puede variar por sanciones o desempates: <a href="https://www.hockeypatines.fmp.es/?liga=${esc(C.liga)}&vista=calendar" target="_blank" rel="noopener">ver en la federación</a>.</p>`, ' ancho'));
+          <p class="sub eq-dato">${C.oficial ? 'La de la federación' : 'Calculada con los resultados de la federación (3 puntos la victoria y 1 el empate; a igualdad, diferencia de goles), porque hoy no se ha podido leer la oficial'}${partidosAct ? ', al ' + esc(fmtShort(partidosAct)) : ''}. <a href="https://www.hockeypatines.fmp.es/?liga=${esc(C.liga)}&vista=clasificaciones" target="_blank" rel="noopener">Ver en la federación</a>.</p>`, ' ancho'));
       }
       if (fut.length) cajas.push(box('→', `Lo que viene <small>· ${fut.length}</small>`, lista(fut, 3, 'Ver los siguientes'), ' pt-caja'));
       if (jug.length) cajas.push(box('✓', `Jugados <small>· ${jug.length}</small>`, lista(jug, 3, 'Ver los anteriores'), ' pt-caja'));

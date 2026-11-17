@@ -242,6 +242,59 @@ def clasificacion(filas, equipos):
         grupos.append(sorted((T[x] for x in g), key=lambda x: (-x['pts'], -(x['gf'] - x['gc']), -x['gf'], x['n'])))
     return grupos
 
+# La oficial: la misma página que ve cualquiera (portada y, dentro de ella, ?liga=N&vista=clasificaciones).
+# Si se puede leer, manda; si no, se queda la calculada. Sondas del 17 nov: entrando directo por la URL la
+# página no carga la liga; hay que abrir la portada y cambiar de vista dentro, como hace al pulsar.
+LEER_CLASIF = """(idc) => [...document.querySelectorAll('section.sidgad-clasif-bloque')].map(sec => ({
+  titulo: ((sec.querySelector('.sidgad-clasif-titulo') || {}).textContent || '').trim(),
+  filas: [...sec.querySelectorAll('table.sidgad-clasif-tabla tbody tr')].map(tr => {
+    const td = [...tr.querySelectorAll('td')].map(x => x.textContent.trim());
+    const img = tr.querySelector('.sidgad-clasif-equipo img'), a = tr.querySelector('a.sidgad-team-link');
+    const m = img && (img.getAttribute('src') || '').match(/logos_clubes\\/(\\d+)/);
+    return { pos: td[0], n: ((tr.querySelector('.sidgad-clasif-nombre') || {}).textContent || '').trim(), club: m ? m[1] : '',
+             liga: a && (a.getAttribute('href') || '').includes('liga=' + idc), num: td.slice(2) };
+  })
+}))"""
+def oficiales(pagina, log, ver=False):
+    """Devuelve {idc: [bloques]} con la clasificación de la federación de cada liga que se pueda leer."""
+    out = {}
+    try:
+        pg = pagina()
+        pg.goto('https://www.hockeypatines.fmp.es/', wait_until='domcontentloaded', timeout=60000)
+        pg.wait_for_timeout(4000)
+    except Exception as e:
+        log.append(f'clasificaciones oficiales: no abre la portada ({e!r})'); return out
+    for idc, cat, pre, equipos in LIGAS:
+        try:
+            pg.evaluate("q => { history.pushState({}, '', '/?' + q); window.dispatchEvent(new PopStateEvent('popstate')); }", f'liga={idc}&vista=clasificaciones')
+            bloques = []
+            for _ in range(30):   # hasta 15 s a que pinte la tabla de esta liga (no la de la anterior)
+                pg.wait_for_timeout(500)
+                bloques = pg.evaluate(LEER_CLASIF, idc)
+                if bloques and all(f['liga'] for b in bloques for f in b['filas']) and any(b['filas'] for b in bloques): break
+            else: bloques = []
+            if bloques: out[idc] = bloques
+            if ver: print(f'  clasificación oficial {idc}: {sum(len(b["filas"]) for b in bloques)} filas en {len(bloques)} bloques')
+        except Exception as e:
+            log.append(f'{cat}: no se ha podido leer la clasificación oficial ({e!r})')
+    return out
+
+def tabla_oficial(bloques, equipos):
+    """Los bloques de la federación con equipos nuestros, en la forma de la app."""
+    res = []
+    for b in bloques:
+        T = []
+        for f in b['filas']:
+            num = [int(x) if re.match(r'^-?\d+$', x or '') else 0 for x in f['num']] + [0] * 8
+            pts, pj, g, e, p, gf, gc = num[:7]
+            smb = ''
+            if f['club'] == CLUB_SMB or re.search(r'BLANCA', f['n'], re.I):
+                letra = (re.search(r'\b([A-E])$', f['n'].strip()) or [None, ''])[1]
+                smb = equipos.get(letra, '')
+            T.append({'pos': f['pos'], 'n': bonito(f['n']), 'pj': pj, 'g': g, 'e': e, 'p': p, 'gf': gf, 'gc': gc, 'pts': pts, 'smb': smb})
+        if any(x['smb'] for x in T): res.append((b['titulo'], T))
+    return res
+
 def main():
     args = sys.argv[1:]
     seco, ver = '--seco' in args, '--ver' in args
@@ -306,6 +359,20 @@ def main():
                 nuevos.append({'id': pid, 'eq': x['eq'], 'cat': cat, 'j': x['j'], 'fecha': x['fecha'],
                                'hora': x['hora'], 'pista': x['pista'], 'rival': rival, 'casa': x['casa'], 'res': x['res']})
             log.append(f'{cat}: {len(L)} partidos')
+        # la clasificación oficial manda sobre la calculada
+        if True:
+            O = oficiales(pagina, log, ver)
+            for idc, cat, pre, equipos in LIGAS:
+                if solo and idc != solo: continue
+                if idc not in O: 
+                    if pre in SIN_CLASIF: continue
+                    log.append(f'{cat}: sin clasificación oficial; se usa la calculada'); continue
+                grupos = tabla_oficial(O[idc], equipos)
+                if not grupos: continue
+                for k in [k for k in clasif if k == pre or k.startswith(pre + '-g')]: del clasif[k]
+                for n, (tit, tabla) in enumerate(grupos, 1):
+                    gr = '' if re.search(r'GENERAL', tit, re.I) or not tit else ' · ' + tit.capitalize()
+                    clasif[pre if len(grupos) == 1 else f'{pre}-g{n}'] = {'cat': cat + gr, 'liga': idc, 'tabla': tabla, 'oficial': True}
     finally:
         if nav['p']:
             try: nav['p'].stop()
