@@ -3070,7 +3070,8 @@ const iniciales = n => (String(n).trim().split(/\s+/).slice(0, 2).map(x => x[0] 
 // Los lee femenino/partidos.json, que actualiza fuente/partidos_fmp.py cada mañana.
 let partidos = null, partidosAct = '', clasifs = {};
 // la clasificación de la liga de un equipo (la calcula fuente/partidos_fmp.py con los resultados de la federación)
-const clasifDe = t => Object.values(clasifs || {}).find(c => (c.tabla || []).some(x => x.smb && normName(x.smb) === normName(t))) || null;
+const clasifsDe = t => Object.values(clasifs || {}).filter(c => (c.tabla || []).some(x => x.smb && normName(x.smb) === normName(t)));
+const clasifDe = t => clasifsDe(t)[0] || null;
 // partidos.json lo escribe fuente/partidos_fmp.py con todos los equipos. Si todavía no está (o se lee
 // una copia vieja), se tira del de las jugadoras, que solo trae las tres competiciones femeninas.
 const PART_EQ = { 'Sub-15': 'Sub15', 'Sub-17': 'Sub17', '1ª Autonómica': 'Senior Fem' };
@@ -3320,8 +3321,8 @@ function openEquipo(t, sub, quieto) {
         ? `<div class="pt-bal"><span><b>${G}</b>ganados</span><span><b>${E}</b>empatados</span><span><b>${Pp}</b>perdidos</span></div>
            <p class="sub eq-dato">${GF} goles a favor y ${GC} en contra${pos >= 0 ? ` · <b>${esc(C.tabla[pos].pos || pos + 1)}.º de ${C.tabla.length}</b>` : ''}.</p>`
         : '<p class="sub">Todavía sin resultados.</p>'));
-      if (C) {
-        const T = C.tabla, n = T.length;
+      clasifsDe(t).forEach(C => {
+        const T = C.tabla, n = T.length, pos = T.findIndex(x => normName(x.smb) === normName(t));
         // con muchas filas, las de arriba y las de alrededor del equipo; la tabla entera, plegada
         const ver = n <= 8 ? T.map((_, k) => k) : [...new Set([0, 1, 2, pos - 1, pos, pos + 1].filter(k => k >= 0 && k < n))].sort((a, b) => a - b);
         const tr = k => { const x = T[k], yo = normName(x.smb) === normName(t), otro = !yo && x.smb;
@@ -3331,7 +3332,7 @@ function openEquipo(t, sub, quieto) {
         cajas.push(box('≡', `Clasificación <small>· ${esc(C.cat)}</small>`, `<div class="pt-clas"><table>${cab}<tbody>${cortes}</tbody></table></div>
           ${n > ver.length ? `<details class="dt-more"><summary>Ver la tabla entera · ${n} equipos</summary><div class="pt-clas"><table>${cab}<tbody>${T.map((_, k) => tr(k)).join('')}</tbody></table></div></details>` : ''}
           <p class="sub eq-dato">${C.oficial ? 'La de la federación' : 'Calculada con los resultados de la federación (3 puntos la victoria y 1 el empate; a igualdad, diferencia de goles), porque hoy no se ha podido leer la oficial'}${partidosAct ? ', al ' + esc(fmtShort(partidosAct)) : ''}. <a href="https://www.hockeypatines.fmp.es/?liga=${esc(C.liga)}&vista=clasificaciones" target="_blank" rel="noopener">Ver en la federación</a>.</p>`, ' ancho'));
-      }
+      });
       if (fut.length) cajas.push(box('→', `Lo que viene <small>· ${fut.length}</small>`, lista(fut, 3, 'Ver los siguientes'), ' pt-caja'));
       if (jug.length) cajas.push(box('✓', `Jugados <small>· ${jug.length}</small>`, lista(jug, 3, 'Ver los anteriores'), ' pt-caja'));
       cuerpo = `<div class="eq-grid">${cajas.join('')}</div>

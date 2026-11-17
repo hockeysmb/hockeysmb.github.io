@@ -279,6 +279,15 @@ def oficiales(pagina, log, ver=False):
             log.append(f'{cat}: no se ha podido leer la clasificación oficial ({e!r})')
     return out
 
+def limpio(t):
+    """«CTO AUT BENJAMÍN - 2ª DIVISIÓN - 1ª FASE - GRUPO A» -> «1ª fase · Grupo A»; la general no lleva nombre."""
+    if not t or re.search(r'GENERAL', t, re.I): return ''
+    partes = [x.strip() for x in t.split(' - ') if x.strip()]
+    k = [x for x in partes if re.search(r'FASE|GRUPO', x, re.I)]
+    s = ' · '.join(k) if k else partes[-1]
+    s = s.lower(); s = s[:1].upper() + s[1:]
+    return re.sub(r'grupo ([a-z0-9])\b', lambda m: 'Grupo ' + m.group(1).upper(), s)
+
 def tabla_oficial(bloques, equipos):
     """Los bloques de la federación con equipos nuestros, en la forma de la app."""
     res = []
@@ -372,7 +381,7 @@ def main():
                 if not grupos: continue
                 for k in [k for k in clasif if k == pre or k.startswith(pre + '-g')]: del clasif[k]
                 for n, (tit, tabla) in enumerate(grupos, 1):
-                    gr = '' if re.search(r'GENERAL', tit, re.I) or not tit else ' · ' + tit.capitalize()
+                    gr = limpio(tit); gr = ' · ' + gr if gr else ''
                     clasif[pre if len(grupos) == 1 else f'{pre}-g{n}'] = {'cat': cat + gr, 'liga': idc, 'tabla': tabla, 'oficial': True}
     finally:
         if nav['p']:
