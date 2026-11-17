@@ -39,24 +39,37 @@ async def main():
       print('ficha de:', ' '.join(cab.split())[:70])
       secciones = await pg.evaluate("[...document.querySelectorAll('#espacio .h-sec')].map(h=>h.textContent)")
       print('secciones:', secciones)
-      for q in ('Convocatoria', 'Antes', 'Descanso', 'Después'):
+      for q in ('Convocatoria', 'El plan', 'Cómo fue', 'Uno a uno'):
         if q not in secciones: errs.append(f'falta la sección {q}')
-      huecos = await pg.evaluate("Object.fromEntries(['idea','corr','preg'].map(k=>[k,document.querySelectorAll(`[data-fh=\"${k}\"]`).length]))")
-      print('huecos:', huecos)
-      if huecos != {'idea': 2, 'corr': 2, 'preg': 3}: errs.append(f'los huecos no son 2/2/3: {huecos}')
+      # lo que cuenta es que no haya que escribir de entrada: los campos opcionales van plegados
+      escribir = await pg.evaluate("[...document.querySelectorAll('#espacio input[type=text], #espacio textarea')].filter(e=>!e.closest('details')).length")
+      tocar = await pg.evaluate("document.querySelectorAll('#espacio [data-fop], #espacio [data-ftag], #espacio [data-fj]').length")
+      print('campos de escribir a la vista:', escribir, '| cosas que tocar:', tocar)
+      if escribir: errs.append(f'hay {escribir} campos de texto sin plegar: esto era para tocar, no para escribir')
+      if tocar < 20: errs.append('hay muy poco que tocar')
 
       # convocar a todos de un toque
       await pg.locator('[data-fconvtodos]').first.click(); await pg.wait_for_timeout(500)
       conv = await pg.text_content('#cv-cuenta'); print('convocatoria:', conv)
       if '3' not in conv: errs.append('«convocar a todos» no marca a los tres')
-      # una sugerencia va al primer hueco libre
-      await pg.locator('[data-fsug="idea"]').first.click(); await pg.wait_for_timeout(400)
-      v0 = await pg.input_value('[data-fh="idea"][data-i="0"]')
-      await pg.locator('[data-fsug="idea"]').nth(1).click(); await pg.wait_for_timeout(400)
-      v1 = await pg.input_value('[data-fh="idea"][data-i="1"]')
-      print('ideas por sugerencia:', [v0, v1])
-      if not v0 or not v1 or v0 == v1: errs.append('las sugerencias no rellenan huecos distintos')
-      await pg.fill('[data-fh="preg"][data-i="0"]', '¿Quién tenía la ventaja ahí?')
+      # el plan: una idea con bola y una sin bola, de un toque
+      await pg.locator('[data-fop="ata"]').first.click(); await pg.wait_for_timeout(300)
+      await pg.locator('[data-fop="def"]').nth(1).click(); await pg.wait_for_timeout(300)
+      # solo puede quedar una elegida por grupo
+      await pg.locator('[data-fop="ata"]').nth(2).click(); await pg.wait_for_timeout(300)
+      marcadas = await pg.evaluate("[...document.querySelectorAll('[data-fop=\"ata\"].si')].length")
+      print('ideas de ataque marcadas a la vez:', marcadas)
+      if marcadas != 1: errs.append('se puede marcar más de una idea de ataque')
+      # cómo fue, etiquetas y uno a uno
+      await pg.locator('[data-fop="comofue"]').nth(3).click(); await pg.wait_for_timeout(300)
+      await pg.locator('[data-ftag]').first.click(); await pg.wait_for_timeout(300)
+      await pg.locator('[data-fj]').first.click(); await pg.wait_for_timeout(300)
+      await pg.locator('[data-fj]').nth(1).click(); await pg.wait_for_timeout(200)
+      await pg.locator('[data-fj]').nth(1).click(); await pg.wait_for_timeout(400)
+      estados = await pg.evaluate("[...document.querySelectorAll('[data-fj]')].map(e=>e.className.replace('fh-j','').trim())")
+      print('uno a uno:', estados)
+      if estados[0] != 'bien' or estados[1] != 'mej': errs.append(f'el toque del uno a uno no cicla bien: {estados}')
+      await pg.evaluate("document.querySelectorAll('.fh-mas').forEach(d=>d.open=true)")
       await pg.fill('[data-fh="salio"]', 'Lo vieron a la segunda.')
       await pg.wait_for_timeout(1500)
       msg = await pg.text_content('#fh-msg'); print('aviso:', msg.strip())
@@ -64,7 +77,7 @@ async def main():
       await pg.screenshot(path=O + 'ficha.png', full_page=True)
 
       # ha llegado a la nube y vuelve al recargar
-      guardado = await pg.evaluate("(window.SMB.getBank().fichas||[]).map(f=>({pid:f.pid,eq:f.eq,conv:(f.conv||[]).length,ideas:f.ideas,salio:f.salio}))")
+      guardado = await pg.evaluate("(window.SMB.getBank().fichas||[]).map(f=>({pid:f.pid,eq:f.eq,conv:(f.conv||[]).length,ata:f.ata,comofue:f.comofue,tags:f.tags,unoa:f.unoa,salio:f.salio}))")
       print('en la nube:', json.dumps(guardado, ensure_ascii=False)[:220])
       if not guardado: errs.append('la ficha no ha llegado a la nube')
       elif guardado[0]['conv'] != 3: errs.append('la convocatoria no se ha guardado')
@@ -76,6 +89,7 @@ async def main():
       print('partidos marcados «con ficha» tras recargar:', conficha)
       if conficha != 1: errs.append('la ficha no se ve al volver')
       await pg.locator('#espacio [data-fpart]').first.click(); await pg.wait_for_timeout(600)
+      await pg.evaluate("document.querySelectorAll('.fh-mas').forEach(d=>d.open=true)")
       vuelta = await pg.input_value('[data-fh="salio"]')
       print('lo que salió, al volver:', vuelta)
       if 'segunda' not in vuelta: errs.append('no recupera lo escrito')

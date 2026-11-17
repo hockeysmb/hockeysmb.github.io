@@ -231,7 +231,28 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .cv-mark { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
 .cv-row.si .cv-mark { border-color: var(--accent); background: var(--accent); }
 .cv-row.si .cv-mark::after { content: ''; width: 9px; height: 5px; border: 2px solid #fff; border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
-.cv-toca { color: var(--smb-ojo); font-weight: 700; }
+.cv-toca { color: var(--smb-bien); font-weight: 700; }
+.fh-mej { color: var(--smb-ojo); font-weight: 700; }
+/* elegir con el dedo: rejilla de opciones en vez de escribir */
+.fh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 148px), 1fr)); gap: var(--smb-aire-2); margin-bottom: var(--smb-aire-3); }
+.fh-op { min-height: 52px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--smb-r-control);
+         background: var(--surface); color: inherit; font: 600 13.5px/1.3 var(--font-body); text-align: left; cursor: pointer; }
+.fh-op.si { border-color: transparent; background: var(--accent); color: #fff; }
+.fh-op:focus-visible, .fh-eop:focus-visible, .fh-j:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* escalas: una fila de botones pegados */
+.fh-esc { display: flex; gap: 2px; margin-bottom: var(--smb-aire-3); border-radius: var(--smb-r-control); overflow: hidden; }
+.fh-eop { flex: 1; min-width: 0; min-height: var(--smb-tocar); padding: 6px 4px; border: 0; background: var(--fill);
+          color: inherit; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.fh-eop.si { background: var(--accent); color: #fff; }
+/* uno a uno: el nombre cambia de color al tocarlo */
+.fh-jug { display: flex; flex-wrap: wrap; gap: var(--smb-aire-2); }
+.fh-j { min-height: var(--smb-tocar-fila); padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px;
+        background: none; color: inherit; font: 600 13.5px/1 var(--font-body); cursor: pointer; }
+.fh-j.bien { border-color: transparent; background: var(--smb-bien-suave); color: var(--smb-bien); }
+.fh-j.mej { border-color: transparent; background: var(--smb-ojo-suave); color: var(--smb-ojo); }
+.fh-tags { margin-bottom: var(--smb-aire-3); }
+.fh-j.si { border-color: transparent; background: var(--accent); color: #fff; }
+.fh-mas { margin-bottom: var(--smb-aire-3); }
 .fh-msg { position: sticky; bottom: 0; padding: 10px 0; background: var(--bg); }
 .pt-res.grande { font-size: 24px; }
 /* los partidos de un equipo */
@@ -2866,13 +2887,16 @@ function convHist(equipo, salvoPid) {
   return { de: ult.length, por };
 }
 // Las cinco reglas del modelo, las de colgar en el banquillo: valen de idea y de corrección.
-const REGLAS = ['La bola no se tira nunca', 'Al perder la bola, un paso adelante',
-  'Si mi compañero viene a mi sitio, se lo dejo', 'Al recuperar, el de arriba corre hasta tocar área',
-  'No meto el stick si el rival me está mirando', 'Encimar antes de presionar',
-  'Nunca retroceder al área antes que ellos'];
-const PREGUNTAS = ['¿Quién tenía la ventaja ahí?', '¿A quién llevabas tú en el segundo gol?',
-  '¿Qué hicimos bien que quieras repetir?', '¿Qué otra opción tenías?', '¿A quién llevabas tú?',
-  '¿Qué has hecho hoy que quieras repetir?'];
+// Las ideas, para elegir con el dedo. Salen del modelo, pero aquí se tocan, no se escriben.
+const IDEAS = {
+  ata: ['La bola no se tira nunca', 'Aclarar: si viene a mi sitio, se lo dejo', 'Al recuperar, el de arriba corre',
+        'Recorrido completo antes de tirar', 'Buscar la ventaja antes que el tiro', 'Ataque directo'],
+  def: ['Al perder, un paso adelante', 'Encimar antes de presionar', 'No retroceder al área antes que ellos',
+        'No meter el stick si me está mirando', 'Presión alta', 'Cada uno con el suyo'],
+};
+// Qué pasó: lo que un entrenador quiere marcar y no escribir.
+const PASO = ['Salimos dormidos', 'Buen primer tiempo', 'Nos vinimos abajo', 'Remontamos', 'Mucha pérdida',
+  'Bien en defensa', 'Nos costó finalizar', 'Gran portero', 'Árbitro raro', 'Marcador a 10', 'Pocos jugadores'];
 
 function renderEquipos() {
   const H = horario(), L = equiposMap(H).filter(x => !/^porter/.test(deacc(x.t)));
@@ -2997,22 +3021,33 @@ function partidoAbrir(id) {
         <p class="sub">${H.de ? `Las cuentas son de los últimos ${H.de} partidos con convocatoria hecha. ` : ''}Asistencia, actitud, puntualidad, esfuerzo, evolución y contexto. Todos participan; no todos los mismos minutos.</p>`; })()
         : '<p class="sub">Este equipo todavía no tiene plantilla. Se pone en la pestaña Plantilla.</p>'}</section>
 
-    <section class="ses-sec"><h2 class="h-sec">Antes</h2>
-      <p class="sub">Dos ideas: una ofensiva y una defensiva. Ni una más.</p>
-      ${[...Array(N.ideas)].map((_, i) => hueco('idea', i, (f.ideas || [])[i], i ? 'La defensiva' : 'La ofensiva')).join('')}
-      <div class="fh-sug">${REGLAS.map(q => `<button class="chip sm" type="button" data-fsug="idea">${esc(q)}</button>`).join('')}</div></section>
+    <section class="ses-sec"><h2 class="h-sec">El plan</h2>
+      <p class="sub">Una idea en ataque y una en defensa. Toca; no hace falta escribir.</p>
+      <h3 class="h-sub">Con bola</h3>
+      <div class="fh-grid">${IDEAS.ata.map(o => `<button class="fh-op${f.ata === o ? ' si' : ''}" type="button" data-fop="ata" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+      <h3 class="h-sub">Sin bola</h3>
+      <div class="fh-grid">${IDEAS.def.map(o => `<button class="fh-op${f.def === o ? ' si' : ''}" type="button" data-fop="def" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+      <details class="dt-more"${f.otra ? ' open' : ''}><summary>Otra idea, con mis palabras</summary>
+        <label class="ses-f"><input type="text" data-fh="otra" value="${esc(f.otra || '')}" placeholder="La tuya" maxlength="90"></label></details></section>
 
-    <section class="ses-sec"><h2 class="h-sec">Descanso</h2>
-      <p class="sub">Dos correcciones. Se dicen, no se explican.</p>
-      ${[...Array(N.corr)].map((_, i) => hueco('corr', i, (f.corr || [])[i], 'Qué corregir')).join('')}
-      <div class="fh-sug">${REGLAS.map(q => `<button class="chip sm" type="button" data-fsug="corr">${esc(q)}</button>`).join('')}</div>
-      <details class="dt-more"><summary>Si la diferencia llega a 10</summary><p class="sub">El marcador se cierra, a favor o en contra, y el trabajo cambia: se exige algo concreto del modelo (finalizar desde zona 5 o 6, el recorrido completo antes de tirar, rotar posiciones). Ni bajar los brazos ni seguir goleando.</p></details></section>
+    <section class="ses-sec"><h2 class="h-sec">Cómo fue</h2>
+      <p class="sub">Para después del partido. Un toque en cada cosa.</p>
+      <h3 class="h-sub">¿Se vio el plan?</h3>
+      <div class="fh-esc">${['No', 'A ratos', 'Sí'].map(o => `<button class="fh-eop${f.visto === o ? ' si' : ''}" type="button" data-fop="visto" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+      <h3 class="h-sub">El partido</h3>
+      <div class="fh-esc">${['Muy mal', 'Mal', 'Normal', 'Bien', 'Muy bien'].map(o => `<button class="fh-eop${f.comofue === o ? ' si' : ''}" type="button" data-fop="comofue" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+      <h3 class="h-sub">Qué pasó</h3>
+      <div class="fh-jug fh-tags">${PASO.map(o => `<button class="fh-j${(f.tags || []).includes(o) ? ' si' : ''}" type="button" data-ftag="${esc(o)}">${esc(o)}</button>`).join('')}</div></section>
 
-    <section class="ses-sec"><h2 class="h-sec">Después</h2>
-      <p class="sub">Tres preguntas, no un discurso.</p>
-      ${[...Array(N.preg)].map((_, i) => hueco('preg', i, (f.preg || [])[i], 'La pregunta que hiciste')).join('')}
-      <div class="fh-sug">${PREGUNTAS.map(q => `<button class="chip sm" type="button" data-fsug="preg">${esc(q)}</button>`).join('')}</div>
-      <label class="ses-f">Lo que salió${jugado ? '' : ' (para después del partido)'}<textarea data-fh="salio" rows="3" placeholder="Qué contestaron, qué viste">${esc(f.salio || '')}</textarea></label></section>
+    <section class="ses-sec"><h2 class="h-sec">Uno a uno</h2>
+      <p class="sub">Opcional. Toca un nombre: una vez para <b class="cv-toca">bien</b>, otra para <b class="fh-mej">a mejorar</b>, otra para quitarlo.</p>
+      ${jug.length ? `<div class="fh-jug">${jug.map(j => `<button class="fh-j ${((f.unoa || {})[j.n]) || ''}" type="button" data-fj="${esc(j.n)}">${esc(j.n)}</button>`).join('')}</div>`
+        : '<p class="sub">Este equipo todavía no tiene plantilla.</p>'}</section>
+
+    <details class="dt-more fh-mas"><summary>Escribir algo más</summary>
+      <label class="ses-f">Lo que quieras recordar<textarea data-fh="salio" rows="3" placeholder="Una pregunta que hiciste y qué contestaron, algo que viste…">${esc(f.salio || '')}</textarea></label>
+      <p class="sub">Del modelo: tres preguntas, no un discurso. Por ejemplo «¿quién tenía la ventaja ahí?», «¿a quién llevabas tú en el segundo gol?», «¿qué hicimos bien que quieras repetir?».</p>
+      <p class="sub">Si la diferencia llega a 10 el marcador se cierra: se exige algo concreto del modelo, ni bajar los brazos ni seguir goleando.</p></details>
 
     <p class="sub fh-msg" id="fh-msg" role="status">${f.autor ? 'La empezó ' + esc(f.autor) + '. ' : ''}Se guarda solo.${bank.fichasNo ? ' Ojo: faltan las reglas de Firestore, así que de momento no se guarda.' : ''}</p>
     ${f.pid ? '<div class="actions"><button class="btn ghost" type="button" data-fborrar>Borrar la ficha</button></div>' : ''}`;
@@ -3021,15 +3056,20 @@ function partidoAbrir(id) {
 }
 function fichaRecoger() {
   const p = partidoPorId(fichaPid); if (!p) return null;
-  const N = FICHA, v = (c, i) => { const e = espBox.querySelector(`[data-fh="${c}"][data-i="${i}"]`); return e ? e.value.trim() : ''; };
-  const sal = espBox.querySelector('[data-fh="salio"]');
+  const sel = c => { const e = espBox.querySelector(`[data-fop="${c}"].si`); return e ? e.dataset.v : ''; };
+  const txt = c => { const e = espBox.querySelector(`[data-fh="${c}"]`); return e ? e.value.trim() : ''; };
+  const unoa = {};
+  espBox.querySelectorAll('.fh-j').forEach(e => { const v = e.classList.contains('bien') ? 'bien' : e.classList.contains('mej') ? 'mej' : ''; if (v) unoa[e.dataset.fj] = v; });
   const hay = espBox.querySelector('.cv-row');
   return { pid: fichaPid, eq: p.eq, fecha: p.fecha, rival: p.rival,
-    ideas: [...Array(N.ideas)].map((_, i) => v('idea', i)), corr: [...Array(N.corr)].map((_, i) => v('corr', i)),
-    preg: [...Array(N.preg)].map((_, i) => v('preg', i)), salio: sal ? sal.value.trim() : '',
+    ata: sel('ata'), def: sel('def'), otra: txt('otra'),
+    visto: sel('visto'), comofue: sel('comofue'),
+    tags: [...espBox.querySelectorAll('[data-ftag].si')].map(e => e.dataset.ftag),
+    unoa, salio: txt('salio'),
     conv: hay ? [...espBox.querySelectorAll('.cv-row.si')].map(e => e.dataset.fconv) : null };
 }
-const fichaVacia = f => !f || (!(f.conv || []).length && ![...f.ideas, ...f.corr, ...f.preg, f.salio].some(x => x));
+const fichaVacia = f => !f || (!(f.conv || []).length && !(f.tags || []).length && !Object.keys(f.unoa || {}).length
+  && ![f.ata, f.def, f.otra, f.visto, f.comofue, f.salio].some(x => x));
 // Se guarda sola: nada de botón de guardar, que es justo lo que da pereza.
 let fichaT = null;
 function fichaGuardar(yaMismo) {
@@ -3045,15 +3085,6 @@ function fichaGuardar(yaMismo) {
   };
   if (yaMismo) hacer(); else fichaT = setTimeout(hacer, 900);
 }
-// Una sugerencia va al primer hueco libre de su grupo; si están llenos, al último.
-function fichaSugerir(grupo, texto) {
-  const campos = [...espBox.querySelectorAll(`[data-fh="${grupo}"]`)];
-  const destino = campos.find(e => !e.value.trim()) || campos[campos.length - 1];
-  if (!destino) return;
-  destino.value = texto; destino.focus();
-  fichaGuardar();
-}
-
 // ---------- altas, bajas y cambios (16 nov) ----------
 // La plantilla vive en club/state, donde solo escribe la DT: por eso esto solo sale si canWriteBank.
 function plantGuardar(mapa, texto) {
@@ -3161,8 +3192,20 @@ espBox.addEventListener('click', e => {
   const fp = e.target.closest('[data-fpart]');
   if (fp) { const vengoDe = espEquipo; partidoAbrir(fp.dataset.fpart); fichaVuelta = vengoDe; return; }
   if (e.target.closest('[data-fvolver]')) { if (fichaVuelta) { const t = fichaVuelta; fichaVuelta = null; fichaPid = null; openEquipo(t, 'part'); } else closeCoach(); return; }
-  const sug = e.target.closest('[data-fsug]');
-  if (sug) { fichaSugerir(sug.dataset.fsug, sug.textContent.trim()); return; }
+  // elegir una opción: una sola por grupo, y volver a tocarla la quita
+  const op = e.target.closest('[data-fop]');
+  if (op) { const ya = op.classList.contains('si');
+    espBox.querySelectorAll(`[data-fop="${op.dataset.fop}"]`).forEach(b => b.classList.remove('si'));
+    if (!ya) op.classList.add('si');
+    fichaGuardar(); return; }
+  // etiquetas de «qué pasó»: las que quieras
+  const tg = e.target.closest('[data-ftag]');
+  if (tg) { tg.classList.toggle('si'); fichaGuardar(); return; }
+  // uno a uno: nada → bien → a mejorar → nada
+  const jj = e.target.closest('[data-fj]');
+  if (jj) { const n = jj.classList.contains('bien') ? 'mej' : jj.classList.contains('mej') ? '' : 'bien';
+    jj.classList.remove('bien', 'mej'); if (n) jj.classList.add(n);
+    fichaGuardar(); return; }
   const cv = e.target.closest('[data-fconv]');
   if (cv) { cv.classList.toggle('si'); cv.setAttribute('aria-pressed', cv.classList.contains('si')); fichaCuenta(); fichaGuardar(); return; }
   if (e.target.closest('[data-fconvtodos]') || e.target.closest('[data-fconvnadie]')) {
