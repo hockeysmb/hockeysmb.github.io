@@ -19,6 +19,7 @@
     if (s[0] === 'votes') return isMember(u);
     if (s[0] === 'shared') return isMember(u);
     if (s[0] === 'fichas') return isMember(u);
+    if (s[0] === 'jugadores') return isMember(u);
     if (s[0] === 'partidas') return isMember(u);
     if (s[0] === 'inbox') return isDT(u) || (isMember(u) && s.length === 2 && db[p] && db[p].uid === u.uid);
     return false;
@@ -32,6 +33,17 @@
     if (s[0] === 'shared') return db[p] ? (!!u && (db[p].uid === u.uid || isDT(u)) && (!data || data.uid === db[p].uid)) : (isMember(u) && !!data && data.uid === u.uid);
     // fichas de partido: las lee y las corrige cualquiera del cuerpo técnico; borrar, quien la hizo o la DT
     if (s[0] === 'fichas') return db[p] ? isMember(u) : (isMember(u) && !!data && data.uid === u.uid);
+    // jugadores: la DT, o quien lleva el equipo (el de ahora para cambiar o borrar; el nuevo para crear)
+    if (s[0] === 'jugadores') {
+      const st = db['club/state'] || {}, eqU = st.eqUids || {}, mis = (u && (st.uidEqs || {})[u.uid]) || [];
+      const lleva = t => !!u && (eqU[t] || []).includes(u.uid), toca = L => (L || []).some(t => mis.includes(t));
+      if (isDT(u)) return true; if (!isMember(u)) return false;
+      if (!db[p]) return !!data && lleva(data.eq);            // crear
+      if (!data) return lleva(db[p].eq);                       // borrar
+      if (lleva(db[p].eq)) return true;                        // cambiar, llevando su equipo principal
+      const cambia = [...new Set([...Object.keys(db[p]), ...Object.keys(data)])].filter(k => JSON.stringify(db[p][k]) !== JSON.stringify(data[k]));
+      return (toca(db[p].otros) || toca(data.otros)) && cambia.every(k => ['otros', 'por', 'ts'].includes(k));
+    }
     if (s[0] === 'inbox') return db[p] ? (isDT(u) || (isMember(u) && db[p].uid === u.uid)) : (isMember(u) && data && data.uid === u.uid);
     return false;
   }

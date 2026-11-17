@@ -47,9 +47,10 @@ async def main():
       # 2. la plantilla desde la zona Equipos
       await pg.click('[data-nav="equipos"]'); await pg.wait_for_timeout(400)
       await pg.locator('[data-equipo="Prebenjamín A"]:visible').first.click(); await pg.wait_for_timeout(400)
+      await pg.locator('[data-eqsub=\"plant\"]').first.click(); await pg.wait_for_timeout(300)
       pest = await pg.evaluate("[...document.querySelectorAll('[data-eqsub]')].map(b=>b.textContent)")
       print('pestañas:', pest)
-      if len(pest) != 3: errs.append('faltan pestañas en la página del equipo')
+      if len(pest) != 4: errs.append('faltan pestañas en la página del equipo')
       fichas = await pg.evaluate("[...document.querySelectorAll('.jg-row')].map(r=>r.innerText.replace(/\\n/g,' · '))")
       print('fichas:', fichas)
       if len(fichas) != 3: errs.append(f'esperaba 3 fichas en Prebenjamín A, hay {len(fichas)}')
@@ -66,6 +67,7 @@ async def main():
       # 3. "también en": Elsa Mora está en Benjamín D y en Sub15
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
       await pg.locator('[data-equipo="Benjamín D"]:visible').first.click(); await pg.wait_for_timeout(400)
+      await pg.locator('[data-eqsub=\"plant\"]').first.click(); await pg.wait_for_timeout(300)
       bd = await pg.evaluate("[...document.querySelectorAll('.jg-row')].map(r=>r.innerText.replace(/\\n/g,' · '))")
       print('Benjamín D:', bd)
       if not any('Sub15' in x for x in bd): errs.append('no dice que Elsa Mora está también en Sub15')
@@ -119,6 +121,7 @@ async def main():
       # baja
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
       await pg.locator('[data-equipo="Prebenjamín A"]:visible').first.click(); await pg.wait_for_timeout(500)
+      await pg.locator('[data-eqsub=\"plant\"]').first.click(); await pg.wait_for_timeout(300)
       await pg.locator('.jg-row', has_text='Gael Nuevo').first.click(); await pg.wait_for_timeout(300)
       await pg.click('#m-ed'); await pg.wait_for_timeout(300)
       await pg.click('#m-baja'); await pg.wait_for_timeout(400)
@@ -133,7 +136,7 @@ async def main():
       s15 = [x for x in tarjetas if 'Sub15' in x]
       print('equipos en la lista:', len(tarjetas), '| Sub15:', s15)
       if not s15: errs.append('Sub15 no sale en la lista de equipos')
-      elif 'sale de otros equipos' not in s15[0]: errs.append('Sub15 no explica que sale de otros equipos')
+      elif 'Sin franja propia' not in s15[0]: errs.append('Sub15 no explica que no tiene franja propia')
       await pg.screenshot(path=O + 'lista.png', full_page=True)
 
       print('errs', errs)

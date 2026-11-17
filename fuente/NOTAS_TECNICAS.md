@@ -682,3 +682,28 @@ Dos decisiones que conviene no deshacer sin pensarlo:
 
 1. **Sale solo de lo que guarden los entrenadores.** La federación no publica convocatorias; si nadie marca la convocatoria en la ficha, no hay dato. Por eso el texto dice «de los últimos N partidos **con convocatoria hecha**» y no «de los últimos N partidos».
 2. **No hay automatismo de «a este le toca».** El documento de Funcionamiento (7.6) dice que el reparto lo decide el entrenador y que un reparto exactamente igualitario no siempre es el más justo ni el más formativo. La app enseña el dato y no propone a nadie; convertir esto en una sugerencia automática iría contra ese criterio.
+
+## Módulo Equipos · fase 1: estructura (17 nov)
+
+El plan entero, con las cuatro fases y lo que choca con lo ya decidido, está en el proyecto de claude.ai: `claude/Plan_modulo_Equipos_nov2026.md`.
+
+**Una ficha por jugador.** Colección `jugadores/{id}` con campos normales (no JSON): `n`, `a`, `p` (booleano), `nt`, `eq` (equipo principal), `otros` (los demás: Sub13, Sub15…), `temp`, y `por`/`ts` que pone la nube. `limpiaJug()` es la forma exacta que se guarda; **hay que guardarla siempre igual**, porque la regla del entrenador de un equipo secundario compara campo a campo y cualquier diferencia (un `p: 1` en vez de `true`) le deniega.
+
+Mientras no se migra, todo sigue leyendo `club/state.plant` (`migrado()` lo decide). `plantillaDe(t)` devuelve lo mismo en los dos mundos.
+
+**Quién lleva cada equipo, para las reglas.** Las reglas no pueden leer dentro del JSON de `club/state`, pero ese documento ya tenía campos normales (`memberUids`, `memberEmails`, `dtUids`). Se añaden dos más: `eqUids` (equipo → cuentas) y `uidEqs` (cuenta → equipos). Los calcula `calcEq()` a partir del horario, de «Equipos y entrenadores» y de las cuentas enlazadas, **cada vez que la DT guarda** (`saveBank`). Si un entrenador entra por primera vez, sus permisos no existen hasta el siguiente guardado de la DT; por eso en DT → Equipos → Plantillas hay «Quién puede cambiar cada plantilla» con un botón **Actualizar**.
+
+**Permisos (firestore.rules y su copia en fakefb.js):**
+- La DT, todo.
+- Quien lleva el equipo principal: crea, cambia, mueve y borra.
+- Quien lleva uno de los `otros`: solo mete o saca a esa persona de su equipo (la regla comprueba que solo cambian `otros`, `por` y `ts`).
+
+**La migración** (DT → Equipos → Plantillas → «Revisar y pasar»): junta sola lo claro (mismo nombre, mismo año, un solo equipo de su categoría, que queda de principal); lo demás sale como duda que decide la DT: dos equipos de su categoría, solo selecciones, años distintos, o un nombre corto que puede ser el mismo que uno largo con el mismo año («Amelia» y «Amelia Passalenti»). Con los datos reales: 156 personas, 12 que se juntan solas y 9 dudas. **La plantilla vieja no se borra.** Primero guarda el banco (para que existan `eqUids`) y después escribe los jugadores en lote.
+
+**Tarjetas y Resumen.** Las tarjetas van agrupadas por categoría (`catDe`, orden de `CAT_EQ`), con próximo partido, último resultado y «fichas hechas de los últimos 4» (`estadoEq`). La primera pestaña de un equipo es **Resumen**. El tipo competición/formación lo pone la DT ahí mismo (`bank.eqTipo`); es solo informativo, la ficha de partido es igual para todos (decisión de Carlos del 16 nov).
+
+**Un fallo de ayer arreglado de paso:** al guardar el banco, `bank.fichas` (que viene de su colección) se colaba dentro del JSON de `club/state`. Ahora `fichas`, `jugadores`, `eqUids` y `uidEqs` están en la lista de lo que no se guarda ahí. La prueba `web_fase1` lo vigila.
+
+**Repintar.** La capa `#espacio` no la repinta `render()`. `repintarEquipo()` la redibuja cuando llegan datos de la nube, sin mover el scroll, y **nunca si hay una ficha de partido abierta**, porque borraría lo que se está escribiendo.
+
+**Prueba:** `web_fase1` (DT y un entrenador de verdad que entra con su cuenta; migración con las tres clases de duda; reglas comprobadas escribiendo directamente contra el Firebase falso, no solo mirando si sale el botón).

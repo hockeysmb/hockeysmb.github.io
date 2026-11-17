@@ -253,6 +253,18 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .fh-tags { margin-bottom: var(--smb-aire-3); }
 .fh-j.si { border-color: transparent; background: var(--accent); color: #fff; }
 .fh-mas { margin-bottom: var(--smb-aire-3); }
+/* tarjetas de equipo: tipo, seguimiento y categoría */
+.eq-cat { margin: var(--smb-aire-4) 0 var(--smb-aire-2); }
+.eq-tipo { font: 700 11px/1 var(--font-body); padding: 3px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); vertical-align: 2px; }
+.eq-seg { display: inline-block; font: 700 11.5px/1 var(--font-body); padding: 3px 7px; border-radius: 999px; background: var(--smb-ojo-suave); color: var(--smb-ojo); }
+.eq-seg.ok { background: var(--smb-bien-suave); color: var(--smb-bien); }
+.eq-seg.mal { background: var(--smb-mal-suave); color: var(--smb-mal); }
+.eq-res-part { display: grid; gap: 6px; margin-bottom: var(--smb-aire-3); }
+/* migración: la lista de dudas */
+.pl-mig { padding: var(--smb-aire-3); margin-bottom: var(--smb-aire-3); border-radius: var(--smb-r-control); background: var(--accent-soft); }
+.mg-lista { list-style: none; margin: 0 0 var(--smb-aire-3); padding: 0; display: grid; gap: var(--smb-aire-3); max-height: 55vh; overflow: auto; }
+.mg-duda p { margin: 0 0 6px; font-size: 14px; line-height: 1.4; }
+.fh-j:disabled { opacity: .45; cursor: default; }
 .fh-msg { position: sticky; bottom: 0; padding: 10px 0; background: var(--bg); }
 .pt-res.grande { font-size: 24px; }
 /* los partidos de un equipo */
@@ -2839,13 +2851,41 @@ let eqTab = 'equipos';
 const eqSigla = t => { const s = String(t || '').trim(), w = s.split(/\s+/).filter(Boolean);
   const sub = s.match(/^sub\s*-?(\d+)/i); if (sub) return sub[1];   // Sub15 → 15, no «SU»
   return (w.length > 1 ? w.map(x => x[0]).join('') : (w[0] || '??').slice(0, 2)).toUpperCase().slice(0, 3); };
-// ---------- plantillas: quién está en cada equipo (16 nov) ----------
-// Los nombres viven en Firestore (club/state.plant), nunca en el repositorio: son menores.
-const plantillaDe = t => ((bank.plant || {})[t] || []);
-const plantTotal = () => Object.values(bank.plant || {}).reduce((n, L) => n + L.length, 0);
-// En qué otros equipos está el mismo jugador (los Sub13/15/17 salen de Alevín, Infantil y Juvenil).
-const tambienEn = (nombre, salvo) => Object.entries(bank.plant || {})
-  .filter(([t, L]) => t !== salvo && L.some(p => normName(p.n) === normName(nombre))).map(([t]) => t);
+// ---------- plantillas: quién está en cada equipo ----------
+// Los nombres viven en Firestore, nunca en el repositorio: son menores.
+// Hasta el 17 nov: club/state.plant = { equipo: [{n, a, p, nt}] } (una ficha por equipo, la toca solo la DT).
+// Desde la fase 1 del módulo Equipos: colección «jugadores», una ficha por persona con su equipo
+// principal (eq) y los demás (otros), que cada entrenador toca en los equipos que lleva.
+// Mientras no se migre, todo sigue leyendo la plantilla vieja.
+const migrado = () => (bank.jugadores || []).length > 0;
+const TEMPORADA = '2026/27';
+const miUid = () => { const c = window.SMB_CLOUD; return (c && c.jug && c.jug.me && c.jug.me()) || ''; };
+const llevoEq = t => !!miUid() && ((bank.eqUids || {})[t] || []).includes(miUid());
+const puedoPlantilla = t => canWriteBank || (migrado() && llevoEq(t));
+const plantillaDe = t => migrado()
+  ? bank.jugadores.filter(j => j.eq === t || (j.otros || []).includes(t)).sort((a, b) => String(a.n).localeCompare(String(b.n), 'es'))
+  : ((bank.plant || {})[t] || []);
+const plantTotal = () => migrado() ? bank.jugadores.length : Object.values(bank.plant || {}).reduce((n, L) => n + L.length, 0);
+const equiposConPlantilla = () => migrado()
+  ? [...new Set(bank.jugadores.flatMap(j => [j.eq, ...(j.otros || [])]).filter(Boolean))]
+  : Object.keys(bank.plant || {});
+// En qué otros equipos está (los Sub13/15/17 salen de Alevín, Infantil y Juvenil). Acepta la ficha o el nombre.
+const tambienEn = (p, salvo) => {
+  if (p && typeof p === 'object' && p.id && migrado()) return [p.eq, ...(p.otros || [])].filter(t => t && t !== salvo);
+  const nombre = typeof p === 'string' ? p : (p || {}).n;
+  return Object.entries(bank.plant || {}).filter(([t, L]) => t !== salvo && L.some(x => normName(x.n) === normName(nombre))).map(([t]) => t);
+};
+// Quién lleva cada equipo, en las dos direcciones, para que lo lean las reglas de Firestore.
+// Se calcula del horario (y de lo que haya cambiado la DT en «Equipos y entrenadores») cada vez que la DT guarda.
+function calcEq(b) {
+  const eqUids = {}, uidEqs = {};
+  const cs = (b.coaches || []).filter(c => c.uid);
+  equiposMap(b.horario || HORARIO_2627, b.equipos || {}).forEach(x => {
+    const us = [...new Set(x.coaches.flatMap(n => cs.filter(c => isMe(n, c.name)).map(c => c.uid)))];
+    if (us.length) { eqUids[x.t] = us; us.forEach(u => (uidEqs[u] = uidEqs[u] || []).push(x.t)); }
+  });
+  return { eqUids, uidEqs };
+}
 const iniciales = n => (String(n).trim().split(/\s+/).slice(0, 2).map(x => x[0] || '').join('') || '?').toUpperCase();
 
 // ---------- partidos de la federación (16 nov) ----------
@@ -2898,10 +2938,27 @@ const IDEAS = {
 const PASO = ['Salimos dormidos', 'Buen primer tiempo', 'Nos vinimos abajo', 'Remontamos', 'Mucha pérdida',
   'Bien en defensa', 'Nos costó finalizar', 'Gran portero', 'Árbitro raro', 'Marcador a 10', 'Pocos jugadores'];
 
+// ---------- lo que se ve de un equipo de un vistazo (fase 1) ----------
+const CAT_EQ = [[/^prebenjam/, 'Prebenjamín'], [/^benjam/, 'Benjamín'], [/^alev/, 'Alevín'], [/^infantil/, 'Infantil'],
+  [/^junior/, 'Júnior'], [/^(sub|senior fem)/, 'Femenino'], [/./, 'Sénior']];
+const catDe = t => (CAT_EQ.find(([r]) => r.test(deacc(t))) || [, ''])[1];
+const TIPO = { comp: 'Competición', form: 'Formación' };
+const tipoDe = t => (bank.eqTipo || {})[t] || '';
+// Próximo partido, último resultado y cuántos de los últimos jugados tienen ficha.
+function estadoEq(t) {
+  const PT = partidosDe(t), hoy = isoToday();
+  const prox = PT.find(p => p.fecha >= hoy && !p.res) || null;
+  const jug = PT.filter(p => p.fecha < hoy || p.res);
+  const ult = jug[jug.length - 1] || null;
+  const ult4 = jug.slice(-4), conFicha = ult4.filter(p => fichaDe(p.id)).length;
+  return { prox, ult, seg: ult4.length ? { hechas: conFicha, de: ult4.length } : null };
+}
+const resTxt = p => { if (!p || !p.res) return ''; const [a, b] = p.res.split('-').map(Number); return (a > b ? 'Ganado' : a < b ? 'Perdido' : 'Empate') + ' ' + p.res; };
+
 function renderEquipos() {
   const H = horario(), L = equiposMap(H).filter(x => !/^porter/.test(deacc(x.t)));
   // Equipos que solo salen de la plantilla (Sub13, Sub15): no tienen franja propia en el horario.
-  Object.keys(bank.plant || {}).forEach(t => { if (!L.some(x => x.t === t)) L.push({ t, franjas: [], coaches: [], todos: [], solo: [], raros: [] }); });
+  equiposConPlantilla().forEach(t => { if (!L.some(x => x.t === t)) L.push({ t, franjas: [], coaches: [], todos: [], solo: [], raros: [] }); });
   L.sort((a, b) => eqRank(a.t) - eqRank(b.t) || a.t.localeCompare(b.t, 'es'));
   const box = document.getElementById('v-equipos');
   const porEnt = new Map();
@@ -2913,16 +2970,31 @@ function renderEquipos() {
         const co = coachOf(c) || (bank.coaches || []).find(x => isMe(c, x.name));
         return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, co ? levelOf(clubPoints(co.name)) : 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b><small>${esc(T.join(' · '))}</small></span><span aria-hidden="true">→</span></button></li>`;
       }).join('')}</ul>`
-    : `<ul class="eq-cards">${L.map(x => `<li><button class="eq-card" type="button" data-equipo="${esc(x.t)}"><span class="eq-esc" aria-hidden="true">${esc(eqSigla(x.t))}</span><span class="eq-txt"><b>${esc(x.t)}</b><small>${x.coaches.length ? esc(x.coaches.join(' · ')) : (x.franjas.length ? 'Sin entrenador en el horario' : 'Sin franja propia: sale de otros equipos')}</small><small>${esc(x.franjas.map(fr).join(' · ')) || (plantillaDe(x.t).length ? plantillaDe(x.t).length + ' fichas' : '')}</small></span><span aria-hidden="true">→</span></button></li>`).join('')}</ul>`;
-  box.innerHTML = `<div class="vhead"><div><h1>Equipos ${infoBtn('equipos')}</h1><p class="sub">Los equipos del club y quién lleva cada uno. Toca para ver lo suyo.</p></div></div>
+    : (() => {
+        const tarjeta = x => { const E = estadoEq(x.t), n = plantillaDe(x.t).length, tp = tipoDe(x.t);
+          const seg = E.seg ? `<span class="eq-seg ${E.seg.hechas === E.seg.de ? 'ok' : E.seg.hechas ? '' : 'mal'}" title="Fichas de partido hechas">${E.seg.hechas}/${E.seg.de} fichas</span>` : '';
+          return `<li><button class="eq-card" type="button" data-equipo="${esc(x.t)}"><span class="eq-esc" aria-hidden="true">${esc(eqSigla(x.t))}</span>
+            <span class="eq-txt"><b>${esc(x.t)}${tp ? ` <span class="eq-tipo">${TIPO[tp]}</span>` : ''}</b>
+              <small>${x.coaches.length ? esc(x.coaches.join(' · ')) : (x.franjas.length ? 'Sin entrenador en el horario' : 'Sin franja propia')}${n ? ' · ' + n + (n === 1 ? ' jugador' : ' jugadores') : ''}</small>
+              <small>${E.prox ? `Próximo: ${esc(fmtShort(E.prox.fecha))}${E.prox.hora ? ' ' + esc(E.prox.hora) : ''} ${E.prox.casa ? 'vs' : 'en'} ${esc(E.prox.rival)}` : 'Sin partidos próximos'}</small>
+              ${E.ult || seg ? `<small>${E.ult ? esc(resTxt(E.ult)) + ' · ' + esc(E.ult.rival) : ''} ${seg}</small>` : ''}</span><span aria-hidden="true">→</span></button></li>`; };
+        const ordenCat = c => CAT_EQ.findIndex(([, n]) => n === c);
+        const cats = [...new Set(L.map(x => catDe(x.t)))].sort((a, b) => ordenCat(a) - ordenCat(b));
+        return cats.map(c => `<h2 class="h-sub eq-cat">${esc(c)}</h2><ul class="eq-cards">${L.filter(x => catDe(x.t) === c).map(tarjeta).join('')}</ul>`).join('');
+      })();
+  box.innerHTML = `<div class="vhead"><div><h1>Equipos ${infoBtn('equipos')}</h1><p class="sub">Temporada ${TEMPORADA}. Toca un equipo para ver lo suyo.</p></div></div>
     ${tabs}${cuerpo}`;
 }
 document.getElementById('v-equipos').addEventListener('click', e => {
   const t = e.target.closest('[data-eqtab]'); if (t) { eqTab = t.dataset.eqtab; render(); return; }
   const q = e.target.closest('[data-equipo]'); if (q) openEquipo(q.dataset.equipo);
 });
-let espEquipo = null, eqSub = 'plant';
-function openEquipo(t, sub) {
+let espEquipo = null, eqSub = 'resumen';
+function repintarEquipo() {
+  if (typeof espBox === 'undefined' || espBox.hidden || !espEquipo || fichaPid || !modal.hidden) return;
+  const y = espBox.scrollTop; openEquipo(espEquipo, null, true); espBox.scrollTop = y;
+}
+function openEquipo(t, sub, quieto) {
   const L = equiposMap(horario());
   // Sub13 y Sub15 no tienen franja propia en el horario: salen de Alevín e Infantil.
   const x = L.find(y => y.t === t) || ((plantillaDe(t).length || partidosDe(t).length) ? { t, franjas: [], coaches: [] } : null);
@@ -2931,22 +3003,37 @@ function openEquipo(t, sub) {
   const P = plantillaDe(t), PT = partidosDe(t);
   const ses = (bank.sesClub || []).filter(y => normName(y.s.equipo || '') === normName(t)).sort((a, b) => (b.ts || 0) - (a.ts || 0));
   const fr = g => `${DIA_C[g.dia]} ${g.ini}–${g.fin || ''}`;
-  const tabs = [['plant', `Plantilla${P.length ? ' · ' + P.length : ''}`], ['part', `Partidos${PT.length ? ' · ' + PT.length : ''}`], ['entr', `Entrenos${ses.length ? ' · ' + ses.length : ''}`]];
+  const tabs = [['resumen', 'Resumen'], ['plant', `Plantilla${P.length ? ' · ' + P.length : ''}`], ['part', `Partidos${PT.length ? ' · ' + PT.length : ''}`], ['entr', `Entrenos${ses.length ? ' · ' + ses.length : ''}`]];
 
   let cuerpo = '';
-  if (eqSub === 'plant') cuerpo = P.length
-    ? `<ul class="jg-list">${P.map((p, i) => { const otros = tambienEn(p.n, t);
+  if (eqSub === 'resumen') {
+    const E = estadoEq(t), tp = tipoDe(t), H = convHist(t);
+    const sinIr = [...H.por.entries()].filter(([, v]) => v.seguidos >= 2);
+    const filaP = (p, rot) => p ? `<button class="pt-row" type="button" data-fpart="${esc(p.id)}"><span class="pt-cuando"><small>${rot}</small><b>${esc(fmtShort(p.fecha))}</b></span><span class="pt-rival"><b>${esc(p.rival)}</b><small>${p.casa ? 'En casa' : 'Fuera'}${p.hora ? ' · ' + esc(p.hora) : ''}${fichaDe(p.id) ? ' · con ficha' : ''}</small></span><span class="pt-res">${p.res ? esc(p.res) : ''}</span><span aria-hidden="true">→</span></button>` : '';
+    cuerpo = `<ul class="pts-list">
+        <li><span>Categoría</span><span>${esc(catDe(t))} · ${TEMPORADA}</span></li>
+        <li><span>Entrenadores</span><span>${x.coaches.length ? esc(x.coaches.join(' y ')) : 'Sin asignar'}</span></li>
+        <li><span>Jugadores</span><span>${P.length}${P.filter(p => p.p).length ? ' · ' + P.filter(p => p.p).length + ' portero' : ''}</span></li>
+        ${E.seg ? `<li><span>Fichas de partido</span><span>${E.seg.hechas} de los últimos ${E.seg.de}</span></li>` : ''}</ul>
+      <h2 class="h-sub">Tipo</h2>
+      ${canWriteBank ? `<div class="fh-esc">${[['', 'Sin definir'], ['comp', 'Competición'], ['form', 'Formación']].map(([v, l]) => `<button class="fh-eop${tp === v ? ' si' : ''}" type="button" data-eqtipo="${v}">${l}</button>`).join('')}</div>`
+        : `<p class="sub">${tp ? TIPO[tp] : 'Sin definir'}. Lo pone la Dirección Técnica.</p>`}
+      ${E.prox || E.ult ? `<h2 class="h-sub">Partidos</h2><div class="eq-res-part">${filaP(E.prox, 'Próximo')}${filaP(E.ult, 'Último')}</div>` : ''}
+      ${sinIr.length ? `<h2 class="h-sub">Convocatorias</h2><p class="sub">${sinIr.map(([n, v]) => `<b class="fh-mej">${esc(n)}</b> lleva ${v.seguidos} sin ir`).join(' · ')}.</p>` : ''}`;
+  }
+  else if (eqSub === 'plant') cuerpo = P.length
+    ? `<ul class="jg-list">${P.map((p, i) => { const otros = tambienEn(p, t);
         return `<li><button class="jg-row" type="button" data-pjug="${i}"><span class="jg-ini" aria-hidden="true">${esc(iniciales(p.n))}</span><span class="jg-txt"><b>${esc(p.n)}</b><small>${[p.a ? (p.a === 'Senior' ? 'Senior' : p.a) : '', p.p ? 'Portero' : '', otros.length ? 'También en ' + otros.join(' y ') : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small></span><span aria-hidden="true">→</span></button></li>`;
       }).join('')}</ul>
-      ${canWriteBank ? '<div class="actions"><button class="btn" type="button" data-palta>Añadir jugador</button></div>' : ''}
-      <p class="sub">${P.filter(p => p.p).length ? P.filter(p => p.p).length + ' portero. ' : ''}Toca un nombre para ver su ficha${canWriteBank ? ' o cambiarlo' : ''}.</p>
+      ${puedoPlantilla(t) ? '<div class="actions"><button class="btn" type="button" data-palta>Añadir jugador</button></div>' : ''}
+      <p class="sub">${P.filter(p => p.p).length ? P.filter(p => p.p).length + ' portero. ' : ''}Toca un nombre para ver su ficha${puedoPlantilla(t) ? ' o cambiarlo' : ''}.</p>
       ${(() => { const H = convHist(t); if (!H.de) return '';
         const L = [...H.por.entries()].sort((a, b) => a[1].n - b[1].n || b[1].seguidos - a[1].seguidos);
         const sin = L.filter(([, x]) => x.seguidos >= 2);
         return `<details class="dt-more"${sin.length ? ' open' : ''}><summary>Convocatorias · últimos ${H.de} partidos${sin.length ? ` · ${sin.length} sin ir desde hace 2 o más` : ''}</summary>
           <ul class="pts-list">${L.map(([n, x]) => `<li><span>${esc(n)}</span><span>${x.n} de ${H.de}${x.seguidos >= 2 ? ` · <b class="cv-toca">${x.seguidos} seguidos sin ir</b>` : ''}</span></li>`).join('')}</ul>
           <p class="sub">Sale de las convocatorias que habéis guardado en las fichas de partido.</p></details>`; })()}`
-    : `<p class="sub">Todavía no hay plantilla de este equipo.</p>${canWriteBank ? '<div class="actions"><button class="btn primary" type="button" data-palta>Añadir el primer jugador</button></div><p class="sub">O impórtala entera desde el panel de la Dirección Técnica, en Equipos.</p>' : '<p class="sub">La pone la Dirección Técnica.</p>'}`;
+    : `<p class="sub">Todavía no hay plantilla de este equipo.</p>${puedoPlantilla(t) ? '<div class="actions"><button class="btn primary" type="button" data-palta>Añadir el primer jugador</button></div>' : '<p class="sub">La pone quien lleva el equipo o la Dirección Técnica.</p>'}`;
 
   else if (eqSub === 'part') {
     if (!PT.length) cuerpo = `<p class="sub">${partidos ? 'Este equipo no tiene partidos en el calendario de la federación.' : 'Todavía no se han podido leer los partidos de la federación.'}</p>`;
@@ -2974,20 +3061,22 @@ function openEquipo(t, sub) {
       <div><h1>${esc(t)}</h1><p class="sub">${x.coaches.length ? esc(x.coaches.join(' · ')) : (x.franjas.length ? 'Sin entrenador en el horario' : 'Sin franja propia: sale de otros equipos')}</p></div></div>
     <div class="seg" role="tablist" aria-label="Qué ver del equipo">${tabs.map(([k, l]) => `<button type="button" data-eqsub="${k}" aria-pressed="${eqSub === k}">${l}</button>`).join('')}</div>
     <section class="ses-sec">${cuerpo}</section>`;
-  espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
+  espBox.hidden = false; document.body.style.overflow = 'hidden';
+  if (quieto) return;
+  espBox.scrollTop = 0;
   const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
 }
 
 // La ficha de un jugador: lo que sabemos de él y en qué equipos está.
 function jugadorModal(t, i) {
   const p = plantillaDe(t)[i]; if (!p) return;
-  const otros = tambienEn(p.n, t), datos = [['Año', p.a || 'sin año'], ['Puesto', p.p ? 'Portero' : 'Jugador de pista']];
+  const otros = tambienEn(p, t), datos = [['Año', p.a || 'sin año'], ['Puesto', p.p ? 'Portero' : 'Jugador de pista']];
   if (otros.length) datos.push(['También en', otros.join(' · ')]);
   if (p.nt) datos.push(['Nota del listado', p.nt]);
   openModal(`<div class="esp-head"><span class="jg-ini grande" aria-hidden="true">${esc(iniciales(p.n))}</span><div><h1>${esc(p.n)}</h1><p class="sub">${esc(t)}</p></div></div>
     <ul class="pts-list">${datos.map(([k, v]) => `<li><span>${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>
-    <p class="sub">Las anotaciones de cada jugador (lo deportivo, la asistencia y la actitud) todavía no están hechas.</p>
-    <div class="row">${canWriteBank ? '<button class="btn primary" id="m-ed" type="button">Cambiar</button>' : ''}<button class="btn" id="m-no" type="button">Cerrar</button></div>`);
+    <p class="sub">${puedeFicha(p, t) ? '' : `La cambia quien lleva ${esc(migrado() ? p.eq : t)}${migrado() ? '' : ' (de momento, solo la Dirección Técnica)'}. `}Las evaluaciones llegan en la fase 3.</p>
+    <div class="row">${puedeFicha(p, t) ? '<button class="btn primary" id="m-ed" type="button">Cambiar</button>' : ''}<button class="btn" id="m-no" type="button">Cerrar</button></div>`);
   modalCard.querySelector('#m-no').onclick = closeModal;
   const ed = modalCard.querySelector('#m-ed'); if (ed) ed.onclick = () => jugadorEditar(t, i);
 }
@@ -3097,49 +3186,105 @@ function plantGuardar(mapa, texto) {
 const equiposParaPlantilla = () => [...new Set([...equiposMap(horario()).map(x => x.t).filter(t => !/^porter/.test(deacc(t))),
   ...Object.keys(bank.plant || {})])].sort((a, b) => eqRank(a) - eqRank(b) || a.localeCompare(b, 'es'));
 
+// Quién puede abrir «Cambiar»: la DT siempre; tras la migración, quien lleva su equipo principal
+// (todo) o uno de sus otros equipos (solo meterlo o sacarlo del suyo).
+const puedeFicha = (p, t) => canWriteBank || (migrado() && (llevoEq(p.eq) || (p.otros || []).some(llevoEq)));
+const nuevoId = () => 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
 function jugadorEditar(t, i) {
-  const nuevo = i < 0, p = nuevo ? { n: '', a: '', p: 0 } : plantillaDe(t)[i];
+  const nuevo = i < 0, p = nuevo ? { n: '', a: '', p: 0, eq: t, otros: [] } : plantillaDe(t)[i];
   if (!p) return;
   const eqs = equiposParaPlantilla();
+  const M = migrado();
+  // con fichas únicas: quien lleva el principal (o la DT) lo cambia todo; quien solo lleva uno de
+  // los otros equipos solo puede meterlo o sacarlo del suyo
+  const todo = canWriteBank || nuevo || (M && llevoEq(p.eq));
+  const principal = M ? (p.eq || t) : t;
+  const otrosIni = M ? (p.otros || []) : [];
+  const chips = M ? eqs.filter(e => e !== principal).map(e => {
+    const puedo = todo || llevoEq(e), on = otrosIni.includes(e);
+    return `<button class="fh-j${on ? ' si' : ''}" type="button" data-pjo="${esc(e)}"${puedo ? '' : ' disabled'} aria-pressed="${on}">${esc(e)}</button>`;
+  }).join('') : '';
+  const ro = todo ? '' : ' disabled';
   openModal(`<h2>${nuevo ? 'Añadir jugador' : 'Cambiar jugador'}</h2><p class="sub">${esc(t)}</p>
-    <label class="ses-f">Nombre<input type="text" id="pj-n" value="${esc(p.n)}" autocomplete="off" placeholder="Nombre y apellido"></label>
+    <label class="ses-f">Nombre<input type="text" id="pj-n" value="${esc(p.n)}" autocomplete="off" placeholder="Nombre y apellido"${ro}></label>
     <div class="pj-fila">
-      <label class="ses-f">Año de nacimiento<input type="text" id="pj-a" value="${esc(p.a || '')}" inputmode="numeric" placeholder="2016 o Senior"></label>
-      <label class="ses-f">Equipo<select id="pj-eq">${eqs.map(e => `<option value="${esc(e)}"${e === t ? ' selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
+      <label class="ses-f">Año de nacimiento<input type="text" id="pj-a" value="${esc(p.a || '')}" inputmode="numeric" placeholder="2016 o Senior"${ro}></label>
+      <label class="ses-f">${M ? 'Equipo principal' : 'Equipo'}<select id="pj-eq"${ro}>${eqs.map(e => `<option value="${esc(e)}"${e === principal ? ' selected' : ''}>${esc(e)}</option>`).join('')}</select></label>
     </div>
-    <label class="pj-check"><input type="checkbox" id="pj-p"${p.p ? ' checked' : ''}> Es portero</label>
-    <label class="ses-f">Nota corta (opcional)<input type="text" id="pj-nt" value="${esc(p.nt || '')}" maxlength="60" placeholder="Lo que haga falta recordar"></label>
+    <label class="pj-check"><input type="checkbox" id="pj-p"${p.p ? ' checked' : ''}${ro}> Es portero</label>
+    ${M ? `<h3 class="h-sub">También juega en</h3><div class="fh-jug pj-otros">${chips}</div>` : ''}
+    <label class="ses-f">Nota corta (opcional)<input type="text" id="pj-nt" value="${esc(p.nt || '')}" maxlength="60" placeholder="Lo que haga falta recordar"${ro}></label>
+    ${todo ? '' : `<p class="sub">Su ficha la cambia quien lleva ${esc(p.eq)}. Tú puedes meterlo o sacarlo de tu equipo.</p>`}
     <p class="sub" id="pj-msg" role="status"></p>
-    <div class="row">${nuevo ? '' : '<button class="btn ghost" id="m-baja" type="button">Dar de baja</button>'}<button class="btn" id="m-no" type="button">Cancelar</button><button class="btn primary" id="m-ok" type="button">Guardar</button></div>`);
+    <div class="row">${nuevo ? '' : '<button class="btn ghost" id="m-baja" type="button">Quitar de ' + esc(t) + '</button>'}<button class="btn" id="m-no" type="button">Cancelar</button><button class="btn primary" id="m-ok" type="button">Guardar</button></div>`);
   const v = id => (modalCard.querySelector(id).value || '').trim();
+  const msg = modalCard.querySelector('#pj-msg');
   modalCard.querySelector('#m-no').onclick = closeModal;
-  modalCard.querySelector('#pj-n').focus();
+  modalCard.querySelectorAll('[data-pjo]').forEach(b => b.onclick = () => { b.classList.toggle('si'); b.setAttribute('aria-pressed', b.classList.contains('si')); });
+  if (todo) modalCard.querySelector('#pj-n').focus();
+
   modalCard.querySelector('#m-ok').onclick = () => {
-    const nombre = v('#pj-n'), msg = modalCard.querySelector('#pj-msg');
+    const nombre = v('#pj-n');
     if (!nombre) { msg.textContent = 'Le falta el nombre.'; modalCard.querySelector('#pj-n').focus(); return; }
-    const destino = v('#pj-eq') || t;
-    const ficha = { n: nombre };
-    const anio = v('#pj-a'); if (anio) ficha.a = anio;
-    if (modalCard.querySelector('#pj-p').checked) ficha.p = 1;
-    const nota = v('#pj-nt'); if (nota) ficha.nt = nota;
-    const repe = (plantillaDe(destino) || []).some((y, j) => normName(y.n) === normName(nombre) && !(destino === t && j === i));
-    if (repe) { msg.textContent = `${nombre} ya está en ${destino}.`; return; }
-    const mapa = clone(bank.plant || {});
-    if (!nuevo) mapa[t] = (mapa[t] || []).filter((_, j) => j !== i);
-    mapa[destino] = (mapa[destino] || []).concat([ficha]);
+    const destino = v('#pj-eq') || principal;
+    if (!M) {   // plantilla vieja: solo la DT, como hasta ahora
+      const ficha = { n: nombre }; const anio = v('#pj-a'); if (anio) ficha.a = anio;
+      if (modalCard.querySelector('#pj-p').checked) ficha.p = 1; const nota = v('#pj-nt'); if (nota) ficha.nt = nota;
+      const repe = plantillaDe(destino).some((y, j) => normName(y.n) === normName(nombre) && !(destino === t && j === i));
+      if (repe) { msg.textContent = `${nombre} ya está en ${destino}.`; return; }
+      const mapa = clone(bank.plant || {});
+      if (!nuevo) mapa[t] = (mapa[t] || []).filter((_, j) => j !== i);
+      mapa[destino] = (mapa[destino] || []).concat([ficha]);
+      closeModal();
+      plantGuardar(mapa, nuevo ? `${nombre}, añadido a ${destino}.` : destino === t ? `${nombre}, cambiado.` : `${nombre} pasa a ${destino}.`);
+      return;
+    }
+    const otros = [...modalCard.querySelectorAll('[data-pjo].si')].map(b => b.dataset.pjo).filter(e => e !== destino);
+    const repe = bank.jugadores.some(y => y.id !== p.id && normName(y.n) === normName(nombre) && [y.eq, ...(y.otros || [])].some(e => e === destino || otros.includes(e)));
+    if (repe) { msg.textContent = `Ya hay un ${nombre} en ese equipo.`; return; }
+    const doc = todo
+      ? { n: nombre, a: v('#pj-a'), p: modalCard.querySelector('#pj-p').checked, nt: v('#pj-nt'), eq: destino, otros, temp: p.temp || TEMPORADA }
+      : Object.assign({}, limpiaJug(p), { otros });   // solo cambia «otros»: lo demás, tal cual
     closeModal();
-    plantGuardar(mapa, nuevo ? `${nombre}, añadido a ${destino}.`
-      : destino === t ? `${nombre}, cambiado.` : `${nombre} pasa a ${destino}.`);
+    jugGuardar(nuevo ? nuevoId() : p.id, doc, nuevo ? `${nombre}, añadido a ${destino}.` : destino !== principal ? `${nombre} pasa a ${destino}.` : `${nombre}, guardado.`);
   };
+
   const baja = modalCard.querySelector('#m-baja');
   if (baja) baja.onclick = () => {
     closeModal();
-    confirmModal(`¿Dar de baja a ${p.n}?`, `Sale de ${t}. ${tambienEn(p.n, t).length ? 'Sigue en ' + tambienEn(p.n, t).join(' y ') + '.' : 'No está en ningún otro equipo.'}`, 'Dar de baja', () => {
-      const mapa = clone(bank.plant || {});
-      mapa[t] = (mapa[t] || []).filter((_, j) => j !== i);
-      plantGuardar(mapa, `${p.n}, de baja en ${t}.`);
-    });
+    if (!M) {
+      const resto = tambienEn(p, t);
+      confirmModal(`¿Quitar a ${p.n} de ${t}?`, resto.length ? `Sigue en ${resto.join(' y ')}.` : 'No está en ningún otro equipo.', 'Quitar', () => {
+        const mapa = clone(bank.plant || {}); mapa[t] = (mapa[t] || []).filter((_, j) => j !== i);
+        plantGuardar(mapa, `${p.n}, fuera de ${t}.`);
+      });
+      return;
+    }
+    const otros = (p.otros || []).filter(e => e !== t);
+    if (t !== p.eq) {   // sale de uno de sus otros equipos
+      confirmModal(`¿Quitar a ${p.n} de ${t}?`, `Sigue en ${[p.eq, ...otros].join(' y ')}.`, 'Quitar',
+        () => jugGuardar(p.id, Object.assign({}, limpiaJug(p), { otros }), `${p.n}, fuera de ${t}.`));
+    } else if (otros.length) {   // sale de su equipo principal pero sigue en otros: el primero pasa a principal
+      confirmModal(`¿Quitar a ${p.n} de ${t}?`, `Sigue en ${otros.join(' y ')}; su equipo principal pasa a ser ${otros[0]}.`, 'Quitar',
+        () => jugGuardar(p.id, Object.assign({}, limpiaJug(p), { eq: otros[0], otros: otros.slice(1) }), `${p.n}, fuera de ${t}.`));
+    } else {
+      confirmModal(`¿Dar de baja a ${p.n}?`, 'No está en ningún otro equipo: se borra su ficha.', 'Dar de baja',
+        () => jugBorrar(p.id, `${p.n}, de baja.`));
+    }
   };
+}
+// Lo que se guarda de un jugador: campos normales, sin el id ni lo que pone la nube.
+const limpiaJug = p => ({ n: p.n || '', a: p.a || '', p: !!p.p, nt: p.nt || '', eq: p.eq || '', otros: p.otros || [], temp: p.temp || TEMPORADA });
+function jugGuardar(id, doc, texto) {
+  const CL = window.SMB_CLOUD;
+  if (!CL || !CL.jug) { toast('La copia de claude.ai no guarda jugadores; la web sí.'); return Promise.resolve(false); }
+  return Promise.resolve(CL.jug.save(id, doc)).then(() => { toast(texto); return true; })
+    .catch(e => { toast(bank.jugadoresNo ? 'Faltan las reglas de Firestore de los jugadores.' : 'No se ha podido guardar: no llevas ese equipo.'); return false; });
+}
+function jugBorrar(id, texto) {
+  const CL = window.SMB_CLOUD; if (!CL || !CL.jug) return Promise.resolve(false);
+  return Promise.resolve(CL.jug.del(id)).then(() => { toast(texto); return true; }).catch(() => { toast('No se ha podido borrar.'); return false; });
 }
 
 // ================= el espacio de cada entrenador (16 nov) =================
@@ -3152,7 +3297,7 @@ function openCoach(name) {
   espName = name; espEquipo = null; drawCoach(); espBox.hidden = false; document.body.style.overflow = 'hidden'; espBox.scrollTop = 0;
   const b = espBox.querySelector('[data-espclose]'); if (b) b.focus();
 }
-function closeCoach() { espBox.hidden = true; espName = null; espEquipo = null; if (detail.hidden && editor.hidden && sesBox.hidden) document.body.style.overflow = ''; }
+function closeCoach() { espBox.hidden = true; espName = null; espEquipo = null; fichaPid = null; if (detail.hidden && editor.hidden && sesBox.hidden) document.body.style.overflow = ''; }
 function drawCoach() {
   const n = espName; if (!n) return;
   const c = coachOf(n) || (bank.coaches || []).find(x => isMe(n, x.name));
@@ -3184,6 +3329,10 @@ function drawCoach() {
 espBox.addEventListener('input', e => { if (e.target.closest('[data-fh]')) fichaGuardar(); });
 espBox.addEventListener('click', e => {
   if (e.target.closest('[data-espclose]')) { closeCoach(); return; }
+  const tp = e.target.closest('[data-eqtipo]');
+  if (tp && espEquipo && canWriteBank) { const t = espEquipo, v = tp.dataset.eqtipo, m = Object.assign({}, bank.eqTipo || {});
+    if (v) m[t] = v; else delete m[t];
+    saveBankExtra_({ eqTipo: m }, `${t}: ${v ? TIPO[v].toLowerCase() : 'tipo sin definir'}.`); return; }
   const st = e.target.closest('[data-eqsub]');
   if (st && espEquipo) { eqSub = st.dataset.eqsub; openEquipo(espEquipo); return; }
   const pj = e.target.closest('[data-pjug]');
@@ -3191,7 +3340,7 @@ espBox.addEventListener('click', e => {
   if (e.target.closest('[data-palta]') && espEquipo) { jugadorEditar(espEquipo, -1); return; }
   const fp = e.target.closest('[data-fpart]');
   if (fp) { const vengoDe = espEquipo; partidoAbrir(fp.dataset.fpart); fichaVuelta = vengoDe; return; }
-  if (e.target.closest('[data-fvolver]')) { if (fichaVuelta) { const t = fichaVuelta; fichaVuelta = null; fichaPid = null; openEquipo(t, 'part'); } else closeCoach(); return; }
+  if (e.target.closest('[data-fvolver]')) { if (fichaVuelta) { const t = fichaVuelta; fichaVuelta = null; fichaPid = null; openEquipo(t); } else closeCoach(); return; }
   // elegir una opción: una sola por grupo, y volver a tocarla la quita
   const op = e.target.closest('[data-fop]');
   if (op) { const ya = op.classList.contains('si');
@@ -3527,6 +3676,7 @@ async function saveBank(tasks, okText, msgEl, extra) {
   const before = new Set(bank.tasks.map(t => t.id));
   tasks = tasks.map(t => !before.has(t.id) && t.source !== 'oller' && !t.alta ? Object.assign({}, t, { alta: isoToday() }) : t);
   const next = Object.assign({}, bank, { updated: new Date().toISOString().slice(0, 10), tasks }, extra || {});
+  if (canWriteBank) { try { Object.assign(next, calcEq(next)); } catch (e) {} }
   try {
     await artifactApi.publish({ 'data/banco.json': JSON.stringify(next) });
     bank = next; render(); show('ok', okText); return true;
@@ -6505,10 +6655,11 @@ const INFO = {
     <li><b>Monedas:</b> cada punto es una moneda, y ganas más con misiones, amistosos, entrenos en pista y cofres. Se gastan en la tienda del personaje.</li>
     <li>Lo de <b>«De broma»</b> es carísimo a propósito: hay que ahorrar.</li></ul>`],
   equipos: () => ['Equipos', `<ul><li>Los equipos salen del <b>horario</b>: quien aparece en una franja es su entrenador.</li>
-    <li>Toca un equipo para ver cuándo entrena, quién lo lleva y las sesiones que se han compartido de ese equipo.</li>
-    <li>Toca una persona para ver lo suyo: sus equipos, cómo va en la liga, sus sesiones y sus ejercicios.</li></ul>`],
+    <li>Cada tarjeta dice el próximo partido, el último resultado y cuántas <b>fichas de partido</b> se han hecho de los últimos cuatro.</li>
+    <li>Dentro de un equipo: <b>Resumen</b>, <b>Plantilla</b> (cada entrenador cambia la de sus equipos), <b>Partidos</b> y <b>Entrenos</b>.</li>
+    <li>Toca una persona, en Entrenadores, para ver lo suyo: sus equipos, cómo va en la liga, sus sesiones y sus ejercicios.</li></ul>`],
   misiones: () => ['Misiones de hoy', `<ul><li>Cada día salen 3 misiones distintas.</li><li>+${PTS_MISION} monedas por cada una y, si haces las tres, +${PTS_MISIONES} y un cofre.</li><li>Se marcan solas al hacerlas.</li></ul>`],
-  agenda: () => ['Tu semana', `<ul><li>Los entrenos salen del horario del club, con tus equipos; los partidos, del calendario de la federación.</li><li>En un partido, <b>Prepararlo</b> abre su ficha: convocatoria, las ideas de antes, las correcciones del descanso y las preguntas de después. Se guarda sola.</li><li><b>Prepararla</b> abre una sesión nueva con el equipo, la fecha y, si lo has planificado, lo que querías trabajar.</li>
+  agenda: () => ['Tu semana', `<ul><li>Los entrenos salen del horario del club, con tus equipos; los partidos, del calendario de la federación.</li><li>En un partido, <b>Prepararlo</b> abre su ficha: convocatoria, el plan, cómo fue y uno a uno. Casi todo es tocar, y se guarda sola.</li><li><b>Prepararla</b> abre una sesión nueva con el equipo, la fecha y, si lo has planificado, lo que querías trabajar.</li>
     <li>Cuenta como preparada cuando hay una sesión con ese equipo y esa fecha (tuya o de un compañero del mismo grupo).</li></ul>`],
   planificar: () => ['Planificar', `<p>Tu mesociclo: qué quieres trabajar en cada entreno del mes.</p><ul><li>Escribe el foco y marca la fase del juego (y, si quieres, contenidos del modelo de juego).</li>
     <li>Se guarda solo y lo puedes cambiar cuando quieras. «Copiar la semana anterior» rellena una semana con la previa.</li><li>Al pulsar «Preparar la sesión», la sesión sale con esto puesto.</li></ul>`],
@@ -7770,8 +7921,8 @@ const hzTeams = g => (g.eq || []).flatMap(e => String(e).split(/\s*[,+]\s*/)).ma
 const EQ_ORD = ['prebenjam', 'benjam', 'alev', 'infantil', 'sub', 'juvenil', 'junior', 'senior', 'auton', 'porter'];
 const eqRank = t => { const d = deacc(t), i = EQ_ORD.findIndex(k => d.startsWith(k)); return (i < 0 ? 99 : i) * 100 + (d.charCodeAt(d.length - 1) || 0); };
 const DIA_C = ['', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-function equiposMap(H) {
-  const M = new Map(), asig = bank.equipos || {};
+function equiposMap(H, asigIn) {
+  const M = new Map(), asig = asigIn || bank.equipos || {};
   (H.g || []).forEach(g => { const T = hzTeams(g); T.forEach(t => { if (!M.has(t)) M.set(t, { t, franjas: [], solo: [], todos: [] }); const x = M.get(t); x.franjas.push(g); g.ent.forEach(e => { if (!x.todos.includes(e)) x.todos.push(e); if (T.length === 1 && !x.solo.includes(e)) x.solo.push(e); }); }); });
   M.forEach(x => {
     const own = x.franjas.filter(g => hzTeams(g).length === 1), cnt = new Map();
@@ -7795,17 +7946,124 @@ function dtEquiposHTML() {
 }
 // Las plantillas: se importan aquí y se guardan en Firestore, nunca en el repositorio.
 function dtPlantillasHTML() {
-  const P = bank.plant || {}, T = Object.keys(P), n = plantTotal();
+  const M = migrado(), T = equiposConPlantilla().sort((a, b) => eqRank(a) - eqRank(b)), n = plantTotal();
+  const fila = t => { const L = plantillaDe(t), pt = L.filter(p => p.p).length;
+    return `<li class="dt-row"><span class="dt-txt"><b>${esc(t)}</b><small>${L.length} ${L.length === 1 ? 'jugador' : 'jugadores'}${pt ? ' · ' + pt + ' portero' : ''}</small></span><button class="btn small ghost" type="button" data-pl="ver" data-team="${esc(t)}">Ver</button></li>`; };
+  const plan = !M && Object.keys(bank.plant || {}).length ? migrarPlan() : null;
   return `<section class="ses-sec" id="pl-sec"><h2 class="h-sec">Plantillas</h2>
     <p class="sub">Quién está en cada equipo. Los nombres se guardan solo en la nube del club, nunca en el repositorio, porque son menores.</p>
-    ${n ? `<ul class="dt-list">${T.sort((a, b) => eqRank(a) - eqRank(b)).map(t => `<li class="dt-row"><span class="dt-txt"><b>${esc(t)}</b><small>${P[t].length} ${P[t].length === 1 ? 'ficha' : 'fichas'}${P[t].some(p => p.p) ? ' · ' + P[t].filter(p => p.p).length + ' portero' : ''}</small></span><button class="btn small ghost" type="button" data-pl="ver" data-team="${esc(t)}">Ver</button></li>`).join('')}</ul>
-      <p class="sub">${n} fichas en ${T.length} ${T.length === 1 ? 'equipo' : 'equipos'}.</p>` : '<p class="sub">Todavía no hay ninguna plantilla.</p>'}
-    <details class="dt-more"><summary>Importar las plantillas</summary>
+    ${plan ? `<div class="pl-mig"><h3 class="h-sub">Pasar a una ficha por jugador</h3>
+      <p class="sub">Ahora quien está en dos equipos tiene dos fichas. Al pasar, cada persona tiene una sola, con su equipo principal y los demás, y <b>cada entrenador puede cambiar las plantillas de sus equipos</b>.</p>
+      <p class="sub">${plan.personas} personas. ${plan.juntadas} ${plan.juntadas === 1 ? 'repetida se junta sola' : 'repetidas se juntan solas'}. ${plan.dudas.length ? `<b>${plan.dudas.length} dudas</b> las decides tú antes de pasar.` : 'Ninguna duda.'} La plantilla de ahora se guarda como copia.</p>
+      <div class="actions"><button class="btn primary" type="button" data-pl="migrar">Revisar y pasar</button></div></div>` : ''}
+    ${M ? `<p class="sub">Una ficha por jugador desde el ${esc(fmtShort(bank.plantMigrada || isoToday()))}: ${n} personas. Cada entrenador cambia las de sus equipos.</p>
+      <details class="dt-more"><summary>Quién puede cambiar cada plantilla</summary>
+        <ul class="pts-list">${(() => { const E = calcEq(bank).eqUids, nom = u => ((bank.coaches || []).find(c => c.uid === u) || {}).name || 'cuenta sin nombre';
+          return T.map(t => `<li><span>${esc(t)}</span><span>${(E[t] || []).map(nom).map(esc).join(', ') || 'solo la DT'}</span></li>`).join(''); })()}</ul>
+        <p class="sub">Sale del horario y de las cuentas de cada entrenador. Si alguien entra por primera vez o cambias quién lleva un equipo, se actualiza al guardar; si no, dale aquí.</p>
+        <div class="actions"><button class="btn small" type="button" data-pl="permisos">Actualizar</button></div></details>` : ''}
+    ${n ? `<ul class="dt-list">${T.map(fila).join('')}</ul>` : '<p class="sub">Todavía no hay ninguna plantilla.</p>'}
+    ${M ? '' : `<details class="dt-more"><summary>Importar las plantillas</summary>
       <p class="sub">Pega el código de las plantillas (o elige el archivo). Sustituye las que haya.</p>
       <label class="ses-f">Archivo (.json)<input type="file" id="pl-file" accept=".json,application/json"></label>
       <label class="ses-f">Código<textarea id="pl-code" rows="4" placeholder="{&quot;Benjamín A&quot;: [{&quot;n&quot;: &quot;Nombre&quot;, &quot;a&quot;: &quot;2016&quot;}]}"></textarea></label>
       <div class="actions"><button class="btn primary" type="button" data-pl="import">Importar</button>${n ? '<button class="btn ghost" type="button" data-pl="borrar">Borrar todas</button>' : ''}</div>
-      <p class="sub" id="pl-msg" role="status"></p></details></section>`;
+      <p class="sub" id="pl-msg" role="status"></p></details>`}</section>`;
+}
+
+// ---------- la migración: de una ficha por equipo a una ficha por persona (fase 1) ----------
+// Junta solo lo que está claro (mismo nombre, mismo año, un solo equipo de su categoría). Lo demás
+// no se adivina: sale como duda y lo decide la DT.
+const EQ_BASE = /^(prebenjam|benjam|alev|infantil|junior)/;
+function migrarPlan() {
+  const grupos = new Map();
+  Object.entries(bank.plant || {}).forEach(([t, L]) => L.forEach(p => {
+    const k = normName(p.n); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push({ t, p }); }));
+  const ficha = (es, principal) => { const ts = [...new Set(es.map(e => e.t))];
+    return { n: es.map(e => e.p.n).sort((a, b) => b.length - a.length)[0], a: es.map(e => e.p.a).filter(Boolean)[0] || '',
+      p: es.some(e => !!e.p.p), nt: es.map(e => e.p.nt).filter(Boolean)[0] || '', eq: principal, otros: ts.filter(t => t !== principal), temp: TEMPORADA }; };
+  const claras = new Map(), dudas = []; let juntadas = 0;
+  grupos.forEach((es, k) => {
+    const ts = [...new Set(es.map(e => e.t))].sort((a, b) => eqRank(a) - eqRank(b));
+    const anios = [...new Set(es.map(e => e.p.a).filter(Boolean))];
+    const base = ts.filter(t => EQ_BASE.test(deacc(t)));
+    if (es.length === 1) { claras.set(k, { es, principal: ts[0] }); return; }
+    if (anios.length > 1) { dudas.push({ k, tipo: 'anios', es, ops: ts }); return; }
+    if (base.length === 1) { claras.set(k, { es, principal: base[0] }); juntadas++; return; }
+    dudas.push({ k, tipo: base.length > 1 ? 'base' : 'sel', es, ops: base.length > 1 ? base : ts });
+  });
+  // un nombre corto que puede ser la misma persona que uno largo, con el mismo año
+  const anioDe = k => [...new Set((grupos.get(k) || []).map(e => e.p.a).filter(Boolean))];
+  const ks = [...grupos.keys()];
+  ks.forEach(a => ks.forEach(b => {
+    if (a === b || !b.startsWith(a + ' ')) return;
+    const ya = anioDe(a), yb = anioDe(b);
+    if (ya.length && yb.length && ya.some(x => yb.includes(x))) dudas.push({ k: a + '|' + b, tipo: 'misma', corto: a, largo: b });
+  }));
+  return { grupos, claras, dudas, ficha, juntadas, personas: grupos.size };
+}
+const DUDA_TXT = {
+  anios: d => `<b>${esc(d.es[0].p.n)}</b> sale con años distintos (${d.es.map(e => `${esc(e.t)}: ${esc(e.p.a || 'sin año')}`).join(', ')}). ¿Es la misma persona?`,
+  base: d => `<b>${esc(d.es[0].p.n)}</b> está en ${d.ops.map(esc).join(' y ')}. ¿Cuál es su equipo principal?`,
+  sel: d => `<b>${esc(d.es[0].p.n)}</b> está en ${d.ops.map(esc).join(', ')} y en ningún equipo de su categoría. ¿Cuál es su equipo principal?`,
+  misma: (d, P) => { const a = P.grupos.get(d.corto)[0], b = P.grupos.get(d.largo)[0];
+    return `¿<b>${esc(a.p.n)}</b> (${esc(a.t)}) y <b>${esc(b.p.n)}</b> (${esc(b.t)}) son la misma persona? Mismo año.`; },
+};
+function migrarAbrir() {
+  const P = migrarPlan(), dec = {};
+  const ops = d => d.tipo === 'misma' ? [['si', 'Sí, la misma'], ['no', 'No, son dos']]
+    : d.tipo === 'anios' ? [['dos', 'Son personas distintas'], ...d.ops.map(t => [t, `La misma; principal ${t}`])]
+    : [...d.ops.map(t => [t, t]), ...(d.tipo === 'base' ? [['dos', 'Son personas distintas']] : [])];
+  const pinta = () => {
+    const faltan = P.dudas.filter(d => !dec[d.k]).length;
+    modalCard.querySelector('#mg-lista').innerHTML = P.dudas.map(d => `<li class="mg-duda"><p>${DUDA_TXT[d.tipo](d, P)}</p>
+      <div class="fh-jug">${ops(d).map(([v, l]) => `<button class="fh-j${dec[d.k] === v ? ' si' : ''}" type="button" data-mgk="${esc(d.k)}" data-mgv="${esc(v)}">${esc(l)}</button>`).join('')}</div></li>`).join('');
+    const ok = modalCard.querySelector('#m-ok'); ok.disabled = faltan > 0;
+    ok.textContent = faltan ? `Faltan ${faltan}` : `Pasar ${P.personas} personas`;
+  };
+  openModal(`<h2>Pasar a una ficha por jugador</h2>
+    <p class="sub">${P.juntadas} ${P.juntadas === 1 ? 'repetida se junta sola' : 'repetidas se juntan solas'} (mismo nombre y año, y un solo equipo de su categoría, que queda como principal). ${P.dudas.length ? 'Estas no las adivino:' : ''}</p>
+    <ul class="mg-lista" id="mg-lista"></ul>
+    <p class="sub">La plantilla de ahora se queda guardada como copia. Después, cada entrenador cambia las plantillas de sus equipos.</p>
+    <p class="sub" id="mg-msg" role="status"></p>
+    <div class="row"><button class="btn" id="m-no" type="button">Cancelar</button><button class="btn primary" id="m-ok" type="button">Pasar</button></div>`);
+  pinta();
+  modalCard.querySelector('#m-no').onclick = closeModal;
+  modalCard.querySelector('#mg-lista').onclick = e => { const b = e.target.closest('[data-mgk]'); if (!b) return; dec[b.dataset.mgk] = b.dataset.mgv; pinta(); };
+  modalCard.querySelector('#m-ok').onclick = async () => {
+    const docs = migrarDocs(P, dec);
+    const msg = modalCard.querySelector('#mg-msg'), CL = window.SMB_CLOUD;
+    if (!CL || !CL.jug) { msg.textContent = 'La migración solo se hace desde la web.'; return; }
+    modalCard.querySelector('#m-ok').disabled = true; msg.textContent = `Pasando ${docs.length} personas…`;
+    try {
+      // primero quién lleva cada equipo (sale de guardar el banco), después los jugadores
+      await saveBankExtra_({ plantMigrada: isoToday() }, 'Plantillas pasadas a una ficha por jugador.');
+      await CL.jug.lote(docs);
+      closeModal(); toast(`${docs.length} jugadores con ficha única.`);
+    } catch (e) {
+      msg.textContent = bank.jugadoresNo ? 'Faltan las reglas de Firestore de los jugadores: pégalas en la consola y vuelve a intentarlo.' : 'No se ha podido terminar: ' + ((e && e.message) || 'error');
+      modalCard.querySelector('#m-ok').disabled = false;
+    }
+  };
+}
+// Las decisiones convertidas en fichas. Devuelve [{id, data}].
+function migrarDocs(P, dec) {
+  const fichas = new Map();   // clave de persona -> ficha
+  P.claras.forEach((c, k) => fichas.set(k, P.ficha(c.es, c.principal)));
+  P.dudas.filter(d => d.tipo !== 'misma').forEach(d => {
+    const v = dec[d.k];
+    if (v === 'dos') d.es.forEach((e, i) => fichas.set(d.k + '#' + i, P.ficha([e], e.t)));
+    else fichas.set(d.k, P.ficha(d.es, v));
+  });
+  // juntar las que la DT ha dicho que son la misma persona: se queda el nombre largo
+  P.dudas.filter(d => d.tipo === 'misma' && dec[d.k] === 'si').forEach(d => {
+    const a = fichas.get(d.corto), b = fichas.get(d.largo); if (!a || !b) return;
+    const ts = [...new Set([b.eq, ...b.otros, a.eq, ...a.otros])];
+    fichas.set(d.largo, Object.assign({}, b, { p: a.p || b.p, nt: b.nt || a.nt, otros: ts.filter(t => t !== b.eq) }));
+    fichas.delete(d.corto);
+  });
+  let i = 0;
+  return [...fichas.values()].map(f => ({ id: 'j' + Date.now().toString(36) + (i++).toString(36).padStart(3, '0'), data: limpiaJug(f) }));
 }
 function plantImportar(txt) {
   const msg = document.getElementById('pl-msg');
@@ -7888,6 +8146,8 @@ document.getElementById('v-dt').addEventListener('click', e => {
   const p = e.target.closest('[data-pl]');
   if (p) {
     if (p.dataset.pl === 'ver') openEquipo(p.dataset.team, 'plant');
+    else if (p.dataset.pl === 'migrar') migrarAbrir();
+    else if (p.dataset.pl === 'permisos') saveBankExtra_({}, 'Permisos de las plantillas actualizados.');
     else if (p.dataset.pl === 'import') plantImportar((document.getElementById('pl-code').value || '').trim());
     else if (p.dataset.pl === 'borrar') confirmModal('¿Borrar todas las plantillas?', 'Se van los nombres de todos los equipos. Habría que volver a importarlos.', 'Borrar', () => saveBankExtra_({ plant: {} }, 'Plantillas borradas.'));
     return;
@@ -8051,7 +8311,7 @@ window.SMB = {
   renameCoach: (uid, from, to, okText) => renameCoach(uid, from, to, okText),
   renameDeep: (v, from, to) => renameDeep(v, from, to),
   getBank: () => bank,
-  setBank: b => { bank = b; render(); },
+  setBank: b => { bank = b; render(); repintarEquipo(); },
   reloadLocal: () => { mine = loadMine(); sessions = loadSes(); game = loadGame(); plan = loadPlan(); render(); },
   render: () => render(),
   saveBankExtra: (extra, okText) => saveBank(bank.tasks, okText, null, extra),
