@@ -223,7 +223,23 @@ def clasificacion(filas, equipos):
             if gf > gc: x['g'] += 1; x['pts'] += 3
             elif gf == gc: x['e'] += 1; x['pts'] += 1
             else: x['p'] += 1
-    return sorted(T.values(), key=lambda x: (-x['pts'], -(x['gf'] - x['gc']), -x['gf'], x['n']))
+    # una competición con grupos trae todos en el mismo calendario: cada grupo es el conjunto de equipos
+    # que se enfrentan entre sí (contando también los partidos por jugar), y cada uno tiene su tabla
+    ady = {k: set() for k in T}
+    for f in filas:
+        if not f.get('local') or not f.get('visitante') or any('DESCANSO' in x.upper() for x in (f['local'], f['visitante'])): continue
+        a_, b_ = (re.sub(r'\s+', ' ', f[x].strip().upper()) for x in ('local', 'visitante'))
+        ady[a_].add(b_); ady[b_].add(a_)
+    grupos, visto = [], set()
+    for k in T:
+        if k in visto: continue
+        pila, g = [k], []
+        while pila:
+            x = pila.pop()
+            if x in visto: continue
+            visto.add(x); g.append(x); pila.extend(ady[x] - visto)
+        grupos.append(sorted((T[x] for x in g), key=lambda x: (-x['pts'], -(x['gf'] - x['gc']), -x['gf'], x['n'])))
+    return grupos
 
 def main():
     args = sys.argv[1:]
@@ -262,10 +278,12 @@ def main():
                     log.append(f'{cat}: tampoco con el navegador ({e!r})')
             if filas and pre not in SIN_CLASIF:
                 try:
-                    tabla = clasificacion(filas, equipos)
-                    if any(x['smb'] for x in tabla) and len(tabla) >= 2:
-                        clasif[pre] = {'cat': cat, 'liga': idc, 'tabla': tabla}
-                    else: log.append(f'{cat}: la clasificación no tiene al SMB; no se guarda')
+                    grupos = [g for g in clasificacion(filas, equipos) if any(x['smb'] for x in g) and len(g) >= 2]
+                    for k in [k for k in clasif if k == pre or k.startswith(pre + '-g')]: del clasif[k]
+                    for n, tabla in enumerate(grupos, 1):
+                        clasif[pre if len(grupos) == 1 else f'{pre}-g{n}'] = {'cat': cat + (' · su grupo' if len(grupos) > 1 else ''), 'liga': idc, 'tabla': tabla}
+                    if not grupos: log.append(f'{cat}: la clasificación no tiene al SMB; no se guarda')
+                    elif len(grupos) > 1: log.append(f'{cat}: {len(grupos)} grupos con equipos nuestros')
                 except Exception as e: log.append(f'{cat}: no se ha podido calcular la clasificación ({e!r})')
             try:
                 L = nuestros(filas, equipos, cat, log) if filas else []
