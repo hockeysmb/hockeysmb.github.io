@@ -707,3 +707,17 @@ Mientras no se migra, todo sigue leyendo `club/state.plant` (`migrado()` lo deci
 **Repintar.** La capa `#espacio` no la repinta `render()`. `repintarEquipo()` la redibuja cuando llegan datos de la nube, sin mover el scroll, y **nunca si hay una ficha de partido abierta**, porque borraría lo que se está escribiendo.
 
 **Prueba:** `web_fase1` (DT y un entrenador de verdad que entra con su cuenta; migración con las tres clases de duda; reglas comprobadas escribiendo directamente contra el Firebase falso, no solo mirando si sale el botón).
+
+## Equipos compacto: menos scroll (17 nov)
+
+Carlos pidió que no hubiera «pantallas eternas» y mandó como referencia un panel de escritorio (barra lateral, cifras arriba, lista de equipos y ficha del equipo en tarjetas). Se ha cogido lo que acorta de verdad, adaptado a que la app se usa sobre todo en el móvil:
+
+- **Lista de equipos:** filas de una línea (sigla, nombre, tipo, próximo partido y último resultado con color) dentro de **grupos por categoría plegables**. En el móvil salen abiertos solo los grupos con equipos tuyos; lo que abras o cierres a mano se respeta mientras estés en la app (`eqAbiertas`). Arriba, cifras que se deslizan y filtros: Todos · Mis equipos · Competición · Formación.
+- **Cifras: solo las que existen.** Equipos, jugadores, partidos esta semana y, cuando haya partidos jugados desde que existen las fichas (`FICHAS_DESDE`), el porcentaje con ficha. Las evaluaciones de la imagen no salen hasta la fase 3: **no se inventan datos para rellenar el panel.**
+- **Resultados de color:** `res-chip` verde si gana, ámbar si empata, rojo si pierde (`resCls`). Ojo: los partidos aplazados salen 0-0 desde la federación y se pintan como empate (ver «Lo que no sabemos distinguir»).
+- **Resumen del equipo en tarjetas** (`eq-grid`, `eq-box`): próximo partido, últimos tres, estado (barras de fichas hechas y de convocatorias al día), avisos de convocatoria y el tipo. Una columna en el móvil, dos o tres en pantalla ancha. Cabecera en una sola banda granate (`eq-cab`) y pestañas fijas arriba.
+- **Ficha de partido por pasos:** Convocar · Plan · Cómo fue · Uno a uno (`FH_PASOS`, `fichaPaso`). Un paso a la vez, con Anterior/Siguiente; si el partido ya se jugó, abre en «Cómo fue». Todo sigue en el DOM aunque esté oculto, así que el guardado no cambia.
+- **Pantalla ancha (≥ 1000 px) desde la zona Equipos:** la lista a la izquierda y el equipo a la derecha, sin taparse (`eqDock`, clase `eq-dock` en el body). La capa `#espacio` es la misma; solo cambia dónde se pinta. Si te vas a otra zona, se cierra.
+- **Sin fotos de jugadores.** La imagen de referencia tenía fotos; aquí van iniciales. Son menores y no recogemos imágenes suyas.
+
+**Para las pruebas:** las categorías pueden estar plegadas, así que antes de tocar un equipo hay que desplegar los grupos (`.eq-grupo` → `open`); la ficha va por pasos (`[data-fpaso]`), y el Resumen es `.eq-grid`, no `.ses-sec`.

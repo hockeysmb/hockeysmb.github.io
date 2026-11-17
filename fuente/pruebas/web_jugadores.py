@@ -46,6 +46,7 @@ async def main():
 
       # 2. la plantilla desde la zona Equipos
       await pg.click('[data-nav="equipos"]'); await pg.wait_for_timeout(400)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)"); await pg.wait_for_timeout(150)
       await pg.locator('[data-equipo="Prebenjamín A"]:visible').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-eqsub=\"plant\"]').first.click(); await pg.wait_for_timeout(300)
       pest = await pg.evaluate("[...document.querySelectorAll('[data-eqsub]')].map(b=>b.textContent)")
@@ -66,6 +67,7 @@ async def main():
 
       # 3. "también en": Elsa Mora está en Benjamín D y en Sub15
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)")
       await pg.locator('[data-equipo="Benjamín D"]:visible').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-eqsub=\"plant\"]').first.click(); await pg.wait_for_timeout(300)
       bd = await pg.evaluate("[...document.querySelectorAll('.jg-row')].map(r=>r.innerText.replace(/\\n/g,' · '))")
@@ -81,6 +83,7 @@ async def main():
       # o trae sus partidos de la federación o avisa de que no los hay: lo que no vale es salir en blanco
       if not bd_part and not vacio: errs.append('Benjamín D no enseña partidos ni avisa de que no tiene')
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)")
       await pg.locator('[data-equipo="Sub15"]:visible').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-eqsub="part"]').first.click(); await pg.wait_for_timeout(400)
       filas = await pg.evaluate("[...document.querySelectorAll('.pt-row')].map(r=>r.innerText.replace(/\\n/g,' · '))")
@@ -91,6 +94,7 @@ async def main():
 
       # 5. altas, cambios y bajas desde la misma pantalla (volviendo a Benjamín D)
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)")
       await pg.locator('[data-equipo="Benjamín D"]:visible').first.click(); await pg.wait_for_timeout(500)
       await pg.locator('[data-eqsub="plant"]').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-palta]').first.click(); await pg.wait_for_timeout(400)
@@ -120,6 +124,7 @@ async def main():
       if any('Gael' in x for x in bd3): errs.append('Gael sigue en Benjamín D después de cambiarlo')
       # baja
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)")
       await pg.locator('[data-equipo="Prebenjamín A"]:visible').first.click(); await pg.wait_for_timeout(500)
       await pg.locator('[data-eqsub=\"plant\"]').first.click(); await pg.wait_for_timeout(300)
       await pg.locator('.jg-row', has_text='Gael Nuevo').first.click(); await pg.wait_for_timeout(300)
@@ -130,13 +135,14 @@ async def main():
       print('Prebenjamín A tras la baja:', len(fin), '| queda Gael:', 'Gael Nuevo' in fin)
       if 'Gael Nuevo' in fin: errs.append('la baja no ha ido')
       await pg.click('[data-espclose]'); await pg.wait_for_timeout(300)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)")
 
       # 6. Sub15 sale en la lista de equipos aunque no tenga franja propia en el horario
       tarjetas = await pg.evaluate("[...document.querySelectorAll('[data-equipo]')].map(b=>b.innerText.replace(/\\n/g,' · '))")
       s15 = [x for x in tarjetas if 'Sub15' in x]
       print('equipos en la lista:', len(tarjetas), '| Sub15:', s15)
       if not s15: errs.append('Sub15 no sale en la lista de equipos')
-      elif 'Sin franja propia' not in s15[0]: errs.append('Sub15 no explica que no tiene franja propia')
+      elif ' vs ' not in s15[0] and ' en ' not in s15[0]: errs.append('la fila de Sub15 no enseña su próximo partido')
       await pg.screenshot(path=O + 'lista.png', full_page=True)
 
       print('errs', errs)

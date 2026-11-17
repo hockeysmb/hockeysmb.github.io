@@ -28,6 +28,7 @@ async def main():
 
       # entrar en un partido desde la pestaña Partidos del equipo
       await pg.click('[data-nav="equipos"]'); await pg.wait_for_timeout(500)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)"); await pg.wait_for_timeout(150)
       await pg.locator('[data-equipo="Sub15"]:visible').first.click(); await pg.wait_for_timeout(500)
       await pg.locator('[data-eqsub="part"]').first.click(); await pg.wait_for_timeout(500)
       n = await pg.evaluate("document.querySelectorAll('#espacio [data-fpart]').length")
@@ -35,7 +36,7 @@ async def main():
       if not n: errs.append('no hay partidos donde entrar'); print('errs', errs); sys.exit(1)
       pid = await pg.evaluate("document.querySelector('#espacio [data-fpart]').dataset.fpart")
       await pg.locator('#espacio [data-fpart]').first.click(); await pg.wait_for_timeout(600)
-      cab = await pg.text_content('.esp-head')
+      cab = await pg.text_content('#espacio .eq-cab')
       print('ficha de:', ' '.join(cab.split())[:70])
       secciones = await pg.evaluate("[...document.querySelectorAll('#espacio .h-sec')].map(h=>h.textContent)")
       print('secciones:', secciones)
@@ -53,6 +54,7 @@ async def main():
       conv = await pg.text_content('#cv-cuenta'); print('convocatoria:', conv)
       if '3' not in conv: errs.append('«convocar a todos» no marca a los tres')
       # el plan: una idea con bola y una sin bola, de un toque
+      await pg.click('[data-fpaso="1"]'); await pg.wait_for_timeout(200)   # la ficha va por pasos
       await pg.locator('[data-fop="ata"]').first.click(); await pg.wait_for_timeout(300)
       await pg.locator('[data-fop="def"]').nth(1).click(); await pg.wait_for_timeout(300)
       # solo puede quedar una elegida por grupo
@@ -61,8 +63,10 @@ async def main():
       print('ideas de ataque marcadas a la vez:', marcadas)
       if marcadas != 1: errs.append('se puede marcar más de una idea de ataque')
       # cómo fue, etiquetas y uno a uno
+      await pg.click('[data-fpaso="2"]'); await pg.wait_for_timeout(200)
       await pg.locator('[data-fop="comofue"]').nth(3).click(); await pg.wait_for_timeout(300)
       await pg.locator('[data-ftag]').first.click(); await pg.wait_for_timeout(300)
+      await pg.click('[data-fpaso="3"]'); await pg.wait_for_timeout(200)
       await pg.locator('[data-fj]').first.click(); await pg.wait_for_timeout(300)
       await pg.locator('[data-fj]').nth(1).click(); await pg.wait_for_timeout(200)
       await pg.locator('[data-fj]').nth(1).click(); await pg.wait_for_timeout(400)
@@ -83,12 +87,14 @@ async def main():
       elif guardado[0]['conv'] != 3: errs.append('la convocatoria no se ha guardado')
       await pg.reload(); await pg.wait_for_timeout(2500)
       await pg.click('[data-nav="equipos"]'); await pg.wait_for_timeout(500)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)"); await pg.wait_for_timeout(150)
       await pg.locator('[data-equipo="Sub15"]:visible').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-eqsub="part"]').first.click(); await pg.wait_for_timeout(500)
       conficha = await pg.evaluate("[...document.querySelectorAll('#espacio [data-fpart]')].filter(b=>/con ficha/.test(b.innerText)).length")
       print('partidos marcados «con ficha» tras recargar:', conficha)
       if conficha != 1: errs.append('la ficha no se ve al volver')
       await pg.locator('#espacio [data-fpart]').first.click(); await pg.wait_for_timeout(600)
+      await pg.click('[data-fpaso="3"]'); await pg.wait_for_timeout(200)
       await pg.evaluate("document.querySelectorAll('.fh-mas').forEach(d=>d.open=true)")
       vuelta = await pg.input_value('[data-fh="salio"]')
       print('lo que salió, al volver:', vuelta)
@@ -112,6 +118,7 @@ async def main():
       }""")
       await pg.wait_for_timeout(1200)
       await pg.click('[data-nav="equipos"]'); await pg.wait_for_timeout(500)
+      await pg.evaluate("document.querySelectorAll('.eq-grupo').forEach(d=>d.open=true)"); await pg.wait_for_timeout(150)
       await pg.locator('[data-equipo="Sub15"]:visible').first.click(); await pg.wait_for_timeout(400)
       await pg.locator('[data-eqsub="part"]').first.click(); await pg.wait_for_timeout(500)
       await pg.locator('#espacio [data-fpart]').first.click(); await pg.wait_for_timeout(700)
