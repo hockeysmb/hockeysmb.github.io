@@ -721,3 +721,10 @@ Carlos pidió que no hubiera «pantallas eternas» y mandó como referencia un p
 - **Sin fotos de jugadores.** La imagen de referencia tenía fotos; aquí van iniciales. Son menores y no recogemos imágenes suyas.
 
 **Para las pruebas:** las categorías pueden estar plegadas, así que antes de tocar un equipo hay que desplegar los grupos (`.eq-grupo` → `open`); la ficha va por pasos (`[data-fpaso]`), y el Resumen es `.eq-grid`, no `.ses-sec`.
+
+## No guardar el banco con la copia vieja del dispositivo (17 nov)
+
+- Qué pasó: Firestore guarda en cada navegador una copia de los datos para funcionar sin conexión (`enablePersistence`). Al abrir la app, `club/state` llega primero de esa copia y después del servidor. El 17 nov a las 12:09 una sesión de DT abrió con una copia del 16 por la mañana; `lgSync` cerró la jornada 8 de la liga y publicó el banco entero (`artifactApi.publish`) con esa copia: se perdió la plantilla importada el 16 y cualquier otro cambio de `club/state` de esas horas. La liga, los perfiles y las fichas de partido no estaban en `club/state` y no se perdieron.
+- Arreglo (`cloud.js`): el listener de `club/state` usa `includeMetadataChanges` y guarda `C.stateCache` (`metadata.fromCache`). `saveBank` se niega (`code: 'offline'`) mientras `C.stateCache` sea cierto; la app dice «Sin conexión: no se ha guardado…». Vale para todo guardado del banco entero: el de la liga, `saveBankExtra`, importar copias.
+- Efecto en el uso: sin red, la DT ya no puede guardar cambios del banco (antes se encolaban y se escribían al volver la red, que es justo lo que pisaba datos). Las fichas de partido y de jugadores no cambian: se escriben documento a documento.
+- Prueba: `web_cache` (el Firebase falso tiene `window.__fakeStale` / `__fakeOnline()` para simular la copia del dispositivo). Sin el arreglo, la prueba borra la plantilla.

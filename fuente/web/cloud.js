@@ -33,7 +33,8 @@
       refresh: async () => { if (!auth.currentUser) return null; await auth.currentUser.reload(); await auth.currentUser.getIdToken(true); return user(auth.currentUser); },
       reset: email => auth.sendPasswordResetEmail(email),
       signOut: () => auth.signOut(),
-      listenDoc: (p, cb, er) => db.doc(p).onSnapshot(s => cb(s.exists ? s.data() : null), er),
+      // con meta, avisa también de si lo que llega es la copia guardada en el dispositivo (sin confirmar con el servidor)
+      listenDoc: (p, cb, er, meta) => meta ? db.doc(p).onSnapshot({ includeMetadataChanges: true }, s => cb(s.exists ? s.data() : null, { cache: s.metadata.fromCache }), er) : db.doc(p).onSnapshot(s => cb(s.exists ? s.data() : null), er),
       listenCol: (p, cb, er) => db.collection(p).onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, data: d.data() }))), er),
       getCol: p => db.collection(p).get().then(s => s.docs.map(d => ({ id: d.id, data: d.data() }))),
       getDoc: p => db.doc(p).get().then(s => s.exists ? s.data() : null),
@@ -134,14 +135,15 @@
     listenState();
   });
   function listenState() {
-    unsub.push(B.listenDoc('club/state', d => {
+    unsub.push(B.listenDoc('club/state', (d, m) => {
+      C.stateCache = !!(m && m.cache);
       C.state = d;
       if (d && Array.isArray(d.dtUids) && d.dtUids.includes(me.uid)) isDT = true;
       member = isDT || !!(d && ((d.memberUids || []).includes(me.uid) || (me.verified && (d.memberEmails || []).includes(norm(me.email)))));
       if (!d && isDT) { gate(bootHTML()); return; }
       if (!member) { gate(pendingHTML()); return; }
       onMember();
-    }, () => { gate(pendingHTML()); setTimeout(() => { if (me && !member) { unsub.forEach(f => { try { f(); } catch (e) {} }); unsub = []; listenState(); } }, 20000); }));
+    }, () => { gate(pendingHTML()); setTimeout(() => { if (me && !member) { unsub.forEach(f => { try { f(); } catch (e) {} }); unsub = []; listenState(); } }, 20000); }, true));
   }
   async function onMember() {
     if (memberStarted) { assemble(); return; }
@@ -247,6 +249,9 @@
   // ---------- banco: escribir (lo llama la app a través de artifact.publish) ----------
   async function saveBank(next) {
     if (!isDT) { const e = new Error('not_writer'); e.code = 'not_writer'; throw e; }
+    // club/state se escribe entero: si lo que hay en pantalla es la copia vieja del dispositivo (sin conexión
+    // o recién abierta), escribirlo pisaría lo que otros han guardado después. El 17 nov se perdió así la plantilla.
+    if (C.stateCache) { const e = new Error('offline'); e.code = 'offline'; throw e; }
     const prev = lastBank || { tasks: [], historial: [], liga: [] }, ops = [];
     const diff = (col, list, idOf, prevList) => {
       const old = new Map((prevList || []).map((t, i) => [idOf(t), JSON.stringify(t) + '#' + i]));

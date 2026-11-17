@@ -3827,6 +3827,7 @@ async function saveBank(tasks, okText, msgEl, extra) {
       canWriteBank = false; render(); show('err', 'Esta vista es de solo lectura: solo la Dirección Técnica puede guardar en el banco.');
     } else if (code === 'conflict') show('err', 'Alguien ha guardado el banco a la vez. La página se está actualizando; vuelve a intentarlo.');
     else if (code === 'rate_limited') show('err', 'Demasiados guardados seguidos. Espera un momento y vuelve a guardar.');
+    else if (code === 'offline') show('err', 'Sin conexión: no se ha guardado. Vuelve a guardar cuando tengas internet.');
     else show('err', 'No se ha podido guardar. Inténtalo de nuevo en un momento.');
     return false;
   }

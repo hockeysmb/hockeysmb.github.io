@@ -59,6 +59,14 @@
   }
   function listen(kind, p, cb, er) {
     const sb = { kind, p, cb, er, last: undefined };
+    // como Firestore con la copia del dispositivo: primero llega lo viejo (cache) y lo del servidor cuando hay red
+    const st = window.__fakeStale && window.__fakeStale[p];
+    if (kind === 'doc' && st) {
+      delete window.__fakeStale[p];
+      setTimeout(() => cb(JSON.parse(JSON.stringify(st)), { cache: true }), 5);
+      window.__fakeOnline = () => { subs.push(sb); notify(); };
+      return () => { sb.dead = true; };
+    }
     setTimeout(() => {
       const ok = kind === 'col' ? (canRead(p + '/x', cur) || (p === 'inbox' && isDT(cur))) : canRead(p, cur);
       if (!ok) { sb.dead = true; er && er(perm()); return; }
