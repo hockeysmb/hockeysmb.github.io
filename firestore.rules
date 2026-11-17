@@ -62,6 +62,19 @@ service cloud.firestore {
       allow update: if isDT() || (isMember() && (llevo(resource.data.eq)
         || ((resource.data.get('otros', []).hasAny(misEqs()) || request.resource.data.get('otros', []).hasAny(misEqs()))
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['otros', 'por', 'ts']))));
+
+      // Seguimiento de cada jugador: evaluaciones, objetivos y apuntes. Solo sus entrenadores
+      // (equipo principal o cualquiera de los otros) y la DT. Cada uno cambia o borra lo suyo.
+      function suyo() {
+        let j = get(/databases/$(database)/documents/jugadores/$(id)).data;
+        return llevo(j.eq) || j.get('otros', []).hasAny(misEqs());
+      }
+      match /seg/{e} {
+        allow read: if isDT() || (isMember() && suyo());
+        allow create: if (isDT() || (isMember() && suyo())) && request.resource.data.uid == request.auth.uid;
+        allow update: if isDT() || (isMember() && suyo() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid);
+        allow delete: if isDT() || (isMember() && suyo() && resource.data.uid == request.auth.uid);
+      }
     }
 
     // Fichas de partido: el antes, el descanso y el después de cada partido.

@@ -11,6 +11,11 @@
   const perm = () => Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
   const isDT = u => !!u && DT.includes(u.uid);
   const isMember = u => !!u && (isDT(u) || ((db['club/state'] || {}).memberUids || []).includes(u.uid) || (u.verified && ((db['club/state'] || {}).memberEmails || []).includes(String(u.email).toLowerCase())));
+  function suyo(jid, u) {
+    const j = db['jugadores/' + jid]; if (!j || !u) return false;
+    const st = db['club/state'] || {}, mis = (st.uidEqs || {})[u.uid] || [];
+    return ((st.eqUids || {})[j.eq] || []).includes(u.uid) || (j.otros || []).some(t => mis.includes(t));
+  }
   function canRead(p, u) {
     const s = p.split('/');
     if (['club', 'tasks', 'historial', 'liga'].includes(s[0])) return isMember(u);
@@ -19,6 +24,7 @@
     if (s[0] === 'votes') return isMember(u);
     if (s[0] === 'shared') return isMember(u);
     if (s[0] === 'fichas') return isMember(u);
+    if (s[0] === 'jugadores' && s.length > 2) return isDT(u) || (isMember(u) && suyo(s[1], u));
     if (s[0] === 'jugadores') return isMember(u);
     if (s[0] === 'partidas') return isMember(u);
     if (s[0] === 'inbox') return isDT(u) || (isMember(u) && s.length === 2 && db[p] && db[p].uid === u.uid);
@@ -33,6 +39,11 @@
     if (s[0] === 'shared') return db[p] ? (!!u && (db[p].uid === u.uid || isDT(u)) && (!data || data.uid === db[p].uid)) : (isMember(u) && !!data && data.uid === u.uid);
     // fichas de partido: las lee y las corrige cualquiera del cuerpo técnico; borrar, quien la hizo o la DT
     if (s[0] === 'fichas') return db[p] ? isMember(u) : (isMember(u) && !!data && data.uid === u.uid);
+    // seguimiento de un jugador: sus entrenadores (principal u otros) y la DT; cada uno cambia lo suyo
+    if (s[0] === 'jugadores' && s.length > 2) {
+      if (isDT(u)) return true; if (!isMember(u) || !suyo(s[1], u)) return false;
+      return db[p] ? db[p].uid === u.uid && (!data || data.uid === u.uid) : !!data && data.uid === u.uid;
+    }
     // jugadores: la DT, o quien lleva el equipo (el de ahora para cambiar o borrar; el nuevo para crear)
     if (s[0] === 'jugadores') {
       const st = db['club/state'] || {}, eqU = st.eqUids || {}, mis = (u && (st.uidEqs || {})[u.uid]) || [];

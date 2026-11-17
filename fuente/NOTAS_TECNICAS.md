@@ -728,3 +728,12 @@ Carlos pidió que no hubiera «pantallas eternas» y mandó como referencia un p
 - Arreglo (`cloud.js`): el listener de `club/state` usa `includeMetadataChanges` y guarda `C.stateCache` (`metadata.fromCache`). `saveBank` se niega (`code: 'offline'`) mientras `C.stateCache` sea cierto; la app dice «Sin conexión: no se ha guardado…». Vale para todo guardado del banco entero: el de la liga, `saveBankExtra`, importar copias.
 - Efecto en el uso: sin red, la DT ya no puede guardar cambios del banco (antes se encolaban y se escribían al volver la red, que es justo lo que pisaba datos). Las fichas de partido y de jugadores no cambian: se escriben documento a documento.
 - Prueba: `web_cache` (el Firebase falso tiene `window.__fakeStale` / `__fakeOnline()` para simular la copia del dispositivo). Sin el arreglo, la prueba borra la plantilla.
+
+## Perfil de cada jugador (17 nov)
+
+- Desde la plantilla de un equipo, tocar un jugador abre su perfil en `#espacio` (`jugadorPerfil(id, equipo)`), en vez del modal de antes (que sigue para la plantilla sin migrar).
+- **Resumen** (lo ve todo el cuerpo técnico): convocado n de m, uno a uno (bien / a mejorar) y últimos partidos, todo sacado de `fichas` de todos sus equipos (`jugStats`); su ficha y «Cambiar» si puede.
+- **Evaluación y Apuntes** (solo sus entrenadores, de cualquiera de sus equipos, y la DT): en `jugadores/{id}/seg/{entrada}`, con `tipo` `ev` | `obj` | `nota`, `uid`, `autor`, `ts`. Evaluación con los instrumentos del Plan de acción, línea 5: situaciones del foco de su categoría (`SEG_SIT`; Sub13 = Alevín, Sub15 = Infantil, Sub17 / Senior Fem / Junior / Autonómica = juego completo) con decide / ejecuta 1–3, rúbrica técnica 1–3 (`SEG_RUB`) y la matriz de qué entrenar (`SEG_MATRIZ`; «bien» = media por encima de 2). Tres tomas: inicio, enero y junio. Objetivos: dos activos como mucho, con fecha de revisión; se cierran como logrado o aparcado. Apuntes: texto libre; cada uno borra los suyos, la DT cualquiera.
+- **Detrás de `bank.segOn`.** No se ve hasta que la DT pulsa «Activar» en el perfil de cualquier jugador, que pide confirmar antes que el colegio cubre estos datos de menores y cuánto se guardan. Necesita las reglas nuevas (`match /seg/{e}` dentro de `jugadores`).
+- `repintarEquipo` repinta el perfil (sin perder lo que se está escribiendo) si está abierto; `perfilSoltar()` deja de escuchar al salir.
+- Pruebas: `web_perfil` (y los casos de `seg` en `reglas.test.mjs`, que corren en GitHub Actions).
