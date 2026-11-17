@@ -191,6 +191,40 @@ def nuestros(filas, equipos, cat, log):
     for s in sorted(sueltos): log.append(f'{cat}: «{s}» no sé de qué equipo nuestro es')
     return P
 
+# --- clasificación -----------------------------------------------------------
+# El portal no da la clasificación sin su token (sondas del 17 nov: la página no la pinta fuera de un
+# navegador de verdad y las rutas antiguas dan 403). El calendario sí trae todos los partidos de la
+# competición con su resultado, así que la tabla se calcula: 3 puntos la victoria, 1 el empate, 0 la
+# derrota; a igualdad, diferencia de goles y goles a favor. La oficial (con sanciones y desempate
+# particular) es la de la federación, y la app lo dice. Las ligas XS puntúan por tiempos (reglamento
+# Hockey XS 25/26: un punto por tiempo ganado), así que no se calculan.
+SIN_CLASIF = {'pxs'}
+def clasificacion(filas, equipos):
+    hoy = datetime.date.today().isoformat()
+    T = {}
+    def fila(nombre, club):
+        k = re.sub(r'\s+', ' ', nombre.strip().upper())
+        if k not in T: T[k] = {'n': bonito(nombre.strip()), 'pj': 0, 'g': 0, 'e': 0, 'p': 0, 'gf': 0, 'gc': 0, 'pts': 0, 'smb': ''}
+        if club == CLUB_SMB or re.search(r'BLANCA', nombre, re.I):
+            letra = (re.search(r'\b([A-E])$', nombre.strip()) or [None, ''])[1]
+            T[k]['smb'] = equipos.get(letra, '') or T[k]['smb']
+        return T[k]
+    for f in filas:
+        if not f.get('local') or not f.get('visitante'): continue
+        if any('DESCANSO' in x.upper() for x in (f['local'], f['visitante'])): continue
+        a, b = fila(f['local'], f.get('cLocal', '')), fila(f['visitante'], f.get('cVisit', ''))
+        d, m, y = (f.get('dia', '').split('/') + ['', '', ''])[:3]
+        if not (y and m and d) or f'{y}-{m}-{d}' > hoy: continue   # lo que todavía no se ha jugado no cuenta
+        g = re.match(r'^\s*(\d+)\s*[:\-]\s*(\d+)\s*$', f.get('res') or '')
+        if not g: continue
+        ga, gb = int(g.group(1)), int(g.group(2))
+        for x, gf, gc in ((a, ga, gb), (b, gb, ga)):
+            x['pj'] += 1; x['gf'] += gf; x['gc'] += gc
+            if gf > gc: x['g'] += 1; x['pts'] += 3
+            elif gf == gc: x['e'] += 1; x['pts'] += 1
+            else: x['p'] += 1
+    return sorted(T.values(), key=lambda x: (-x['pts'], -(x['gf'] - x['gc']), -x['gf'], x['n']))
+
 def main():
     args = sys.argv[1:]
     seco, ver = '--seco' in args, '--ver' in args
@@ -211,6 +245,7 @@ def main():
         return nav['pg']
 
     nuevos, log = [], []
+    clasif = dict(viejo.get('clasif') or {})   # si una liga no se lee, se queda la tabla de antes
     try:
         for idc, cat, pre, equipos in LIGAS:
             if solo and idc != solo: continue
@@ -225,6 +260,13 @@ def main():
                     filas = abrir(pagina(), idc, ver); como = 'navegador'
                 except Exception as e:
                     log.append(f'{cat}: tampoco con el navegador ({e!r})')
+            if filas and pre not in SIN_CLASIF:
+                try:
+                    tabla = clasificacion(filas, equipos)
+                    if any(x['smb'] for x in tabla) and len(tabla) >= 2:
+                        clasif[pre] = {'cat': cat, 'liga': idc, 'tabla': tabla}
+                    else: log.append(f'{cat}: la clasificación no tiene al SMB; no se guarda')
+                except Exception as e: log.append(f'{cat}: no se ha podido calcular la clasificación ({e!r})')
             try:
                 L = nuestros(filas, equipos, cat, log) if filas else []
                 if ver and filas: print(f'  {idc} ({como}): {len(filas)} filas, {len(L)} del SMB')
@@ -251,7 +293,8 @@ def main():
             except Exception: pass
 
     if solo:
-        print('\n'.join(log)); print(json.dumps(nuevos, ensure_ascii=False, indent=1)); return
+        print('\n'.join(log)); print(json.dumps(nuevos, ensure_ascii=False, indent=1))
+        print(json.dumps(clasif, ensure_ascii=False, indent=1)); return
 
     orden = {pre: i for i, (_, _, pre, _) in enumerate(LIGAS)}
     nuevos.sort(key=lambda x: (orden.get(x['id'].split('-')[0], 99), x['fecha'], x['hora']))
@@ -264,6 +307,7 @@ def main():
             if d: cambios.append(f'{x["id"]} ' + ', '.join(d))
     for k in antes:
         if k not in {x['id'] for x in nuevos}: cambios.append(f'quitado {k}')
+    if clasif != (viejo.get('clasif') or {}): cambios.append('clasificaciones: ' + ', '.join(v['cat'] for k, v in clasif.items() if (viejo.get('clasif') or {}).get(k) != v))
     print('Estados que trae la federación:', ', '.join(sorted(_estados)) or 'ninguno')
     print('\n'.join(log)); print('\n'.join(cambios[:60]) or 'Sin cambios')
     if len(cambios) > 60: print(f'... y {len(cambios) - 60} cambios más')
@@ -291,7 +335,7 @@ def main():
                 'Se actualiza solo dos veces al día (fuente/partidos_fmp.py).')
         fuente = 'Federación Madrileña de Patinaje (hockeypatines.fmp.es)'
         if cambios:
-            guardar(JSON_TODOS, {'fuente': fuente, 'actualizado': hoy, 'nota': nota}, nuevos)
+            guardar(JSON_TODOS, {'fuente': fuente, 'actualizado': hoy, 'nota': nota, 'clasif': clasif}, nuevos)
             print(f'Guardados {len(nuevos)} partidos de {len({x["eq"] for x in nuevos})} equipos.')
         if femin and cambioF:
             fem_viejo.update({'fuente': fuente, 'actualizado': hoy, 'nota': nota})

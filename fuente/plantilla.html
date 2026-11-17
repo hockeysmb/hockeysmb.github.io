@@ -376,6 +376,23 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .pf-h .linkb { justify-self: start; font-size: 12.5px; }
 /* equipo: tabla de evolución individual y rúbrica */
 .eq-box.ancho { grid-column: 1 / -1; }
+/* partidos del equipo: balance y clasificación */
+.pt-bal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+.pt-bal span { display: grid; gap: 2px; padding: 8px 4px; border-radius: var(--smb-r-control); background: var(--fill); font-size: 12px; color: var(--muted); }
+.pt-bal b { font-size: 20px; color: var(--fg); font-variant-numeric: tabular-nums; }
+.pt-clas { overflow-x: auto; }
+.pt-clas table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+.pt-clas th, .pt-clas td { padding: 6px 5px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.pt-clas th:nth-child(2), .pt-clas td:nth-child(2) { text-align: left; white-space: normal; min-width: 9em; }
+.pt-clas thead th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.pt-clas tr.yo td { background: var(--accent-soft); font-weight: 700; color: var(--accent); }
+.pt-clas tr.smb td:nth-child(2) { font-weight: 600; }
+.pt-clas tr.corte td { color: var(--muted); padding: 2px; border-bottom: 0; }
+.eq-box a { color: var(--accent); }
+.pt-caja .pt-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.pt-caja .pt-row { width: 100%; box-sizing: border-box; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.pt-caja .pt-row.hecho { border: 1px solid var(--line); }
+.pt-caja .dt-more { margin: 4px 0 0; }
 .eq-ind { overflow-x: auto; }
 .eq-ind table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
 .eq-ind th, .eq-ind td { padding: 6px 6px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
@@ -3051,13 +3068,16 @@ const iniciales = n => (String(n).trim().split(/\s+/).slice(0, 2).map(x => x[0] 
 
 // ---------- partidos de la federación (16 nov) ----------
 // Los lee femenino/partidos.json, que actualiza fuente/partidos_fmp.py cada mañana.
-let partidos = null, partidosAct = '';
+let partidos = null, partidosAct = '', clasifs = {};
+// la clasificación de la liga de un equipo (la calcula fuente/partidos_fmp.py con los resultados de la federación)
+const clasifDe = t => Object.values(clasifs || {}).find(c => (c.tabla || []).some(x => x.smb && normName(x.smb) === normName(t))) || null;
 // partidos.json lo escribe fuente/partidos_fmp.py con todos los equipos. Si todavía no está (o se lee
 // una copia vieja), se tira del de las jugadoras, que solo trae las tres competiciones femeninas.
 const PART_EQ = { 'Sub-15': 'Sub15', 'Sub-17': 'Sub17', '1ª Autonómica': 'Senior Fem' };
 const cargarPartidos = ruta => fetch(ruta, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
   if (!j || !Array.isArray(j.partidos) || !j.partidos.length) return false;
   partidosAct = j.actualizado || '';
+  clasifs = j.clasif || {};
   partidos = j.partidos.map(p => Object.assign({}, p, { eq: p.eq || PART_EQ[p.cat] || p.cat }));
   if (!espBox.hidden && espEquipo) openEquipo(espEquipo);
   return true;
@@ -3276,12 +3296,46 @@ function openEquipo(t, sub, quieto) {
   else if (eqSub === 'part') {
     if (!PT.length) cuerpo = `<p class="sub">${partidos ? 'Este equipo no tiene partidos en el calendario de la federación.' : 'Todavía no se han podido leer los partidos de la federación.'}</p>`;
     else {
-      const hoy = isoToday(), pas = PT.filter(p => p.fecha < hoy), fut = PT.filter(p => p.fecha >= hoy);
+      // lo que viene primero, por fecha y hora; lo jugado, del más reciente al más antiguo; de cada uno, solo
+      // unos pocos a la vista y el resto plegado
+      const hoy = isoToday(), clave = p => p.fecha + ' ' + (p.hora || '99:99');
+      const fut = PT.filter(p => !p.res && p.fecha >= hoy).sort((a, b) => clave(a).localeCompare(clave(b)));
+      const jug = PT.filter(p => p.res || p.fecha < hoy).sort((a, b) => clave(b).localeCompare(clave(a)));
       const fila = p => { const f = fichaDe(p.id);
-        return `<li><button class="pt-row${p.fecha >= hoy ? '' : ' hecho'}" type="button" data-fpart="${esc(p.id)}"><span class="pt-cuando"><b>${esc(fmtShort(p.fecha))}</b><small>${p.hora ? esc(p.hora) : 'sin hora'}</small></span><span class="pt-rival"><b>${esc(p.rival)}</b><small>${p.casa ? 'En casa' : 'Fuera'}${p.j ? ' · jornada ' + p.j : ''}${f ? ' · con ficha' : ''}</small></span>${p.res ? `<span class="res-chip ${resCls(p)}">${esc(p.res)}</span>` : ''}<span aria-hidden="true">›</span></button></li>`; };
-      cuerpo = `${fut.length ? `<h2 class="h-sec">Lo que viene</h2><ul class="pt-list">${fut.map(fila).join('')}</ul>` : ''}
-        ${pas.length ? `<details class="dt-more"${fut.length ? '' : ' open'}><summary>Jugados · ${pas.length}</summary><ul class="pt-list">${pas.reverse().map(fila).join('')}</ul></details>` : ''}
-        <p class="sub">De la federación${partidosAct ? ', al ' + esc(fmtShort(partidosAct)) : ''}. Los horarios los cambia la federación sin avisar: antes de un partido, confírmalo.</p>`;
+        return `<li><button class="pt-row${p.res || p.fecha < hoy ? ' hecho' : ''}" type="button" data-fpart="${esc(p.id)}"><span class="pt-cuando"><b>${esc(fmtShort(p.fecha))}</b><small>${p.hora ? esc(p.hora) : 'sin hora'}</small></span><span class="pt-rival"><b>${esc(p.rival)}</b><small>${p.casa ? 'En casa' : 'Fuera'}${p.j ? ' · J' + p.j : ''}${f ? ' · con ficha' : ''}</small></span>${p.res ? `<span class="res-chip ${resCls(p)}">${esc(p.res)}</span>` : p.fecha < hoy ? '<span class="res-chip">—</span>' : ''}<span aria-hidden="true">›</span></button></li>`; };
+      const lista = (L, n, mas) => `<ul class="pt-list">${L.slice(0, n).map(fila).join('')}</ul>${L.length > n ? `<details class="dt-more"><summary>${mas} · ${L.length - n}</summary><ul class="pt-list">${L.slice(n).map(fila).join('')}</ul></details>` : ''}`;
+      const box = (ico, tit, html, extra = '') => `<section class="eq-box${extra}"><h3><span aria-hidden="true">${ico}</span>${tit}</h3>${html}</section>`;
+      const R = jug.filter(p => p.res).map(p => p.res.split('-').map(Number));
+      const G = R.filter(([a, b]) => a > b).length, E = R.filter(([a, b]) => a === b).length, Pp = R.filter(([a, b]) => a < b).length;
+      const GF = R.reduce((n, [a]) => n + a, 0), GC = R.reduce((n, [, b]) => n + b, 0);
+      const C = clasifDe(t), pos = C ? C.tabla.findIndex(x => normName(x.smb) === normName(t)) : -1;
+      const cajas = [];
+      const pr = fut[0];
+      cajas.push(box('◷', 'Próximo partido', pr
+        ? `<button class="eq-prox" type="button" data-fpart="${esc(pr.id)}"><b>${pr.casa ? 'vs' : 'en'} ${esc(pr.rival)}</b>
+            <small>${esc(fmtShort(pr.fecha))}${pr.hora ? ' · ' + esc(pr.hora) : ' · sin hora'} · ${pr.casa ? 'en casa' : 'fuera'}${pr.j ? ' · J' + pr.j : ''}</small>
+            <span class="eq-prox-act">${fichaDe(pr.id) ? 'Ver ficha' : 'Prepararlo'} ›</span></button>`
+        : '<p class="sub">No quedan partidos en el calendario.</p>'));
+      cajas.push(box('▤', 'Temporada', R.length
+        ? `<div class="pt-bal"><span><b>${G}</b>ganados</span><span><b>${E}</b>empatados</span><span><b>${Pp}</b>perdidos</span></div>
+           <p class="sub eq-dato">${GF} goles a favor y ${GC} en contra${pos >= 0 ? ` · <b>${pos + 1}.º de ${C.tabla.length}</b>` : ''}.</p>`
+        : '<p class="sub">Todavía sin resultados.</p>'));
+      if (C) {
+        const T = C.tabla, n = T.length;
+        // con muchas filas, las de arriba y las de alrededor del equipo; la tabla entera, plegada
+        const ver = n <= 8 ? T.map((_, k) => k) : [...new Set([0, 1, 2, pos - 1, pos, pos + 1].filter(k => k >= 0 && k < n))].sort((a, b) => a - b);
+        const tr = k => { const x = T[k], yo = normName(x.smb) === normName(t), otro = !yo && x.smb;
+          return `<tr class="${yo ? 'yo' : otro ? 'smb' : ''}"><td>${k + 1}</td><td>${esc(x.n)}</td><td>${x.pj}</td><td>${x.g}</td><td>${x.e}</td><td>${x.p}</td><td>${x.gf - x.gc > 0 ? '+' : ''}${x.gf - x.gc}</td><td><b>${x.pts}</b></td></tr>`; };
+        const cab = '<thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>';
+        const cortes = ver.map((k, z) => (z && k !== ver[z - 1] + 1 ? '<tr class="corte"><td colspan="8">···</td></tr>' : '') + tr(k)).join('');
+        cajas.push(box('≡', `Clasificación <small>· ${esc(C.cat)}</small>`, `<div class="pt-clas"><table>${cab}<tbody>${cortes}</tbody></table></div>
+          ${n > ver.length ? `<details class="dt-more"><summary>Ver la tabla entera · ${n} equipos</summary><div class="pt-clas"><table>${cab}<tbody>${T.map((_, k) => tr(k)).join('')}</tbody></table></div></details>` : ''}
+          <p class="sub eq-dato">Calculada con los resultados de la federación: 3 puntos la victoria y 1 el empate; a igualdad, diferencia de goles. La oficial puede variar por sanciones o desempates: <a href="https://www.hockeypatines.fmp.es/?liga=${esc(C.liga)}&vista=calendar" target="_blank" rel="noopener">ver en la federación</a>.</p>`, ' ancho'));
+      }
+      if (fut.length) cajas.push(box('→', `Lo que viene <small>· ${fut.length}</small>`, lista(fut, 3, 'Ver los siguientes'), ' pt-caja'));
+      if (jug.length) cajas.push(box('✓', `Jugados <small>· ${jug.length}</small>`, lista(jug, 3, 'Ver los anteriores'), ' pt-caja'));
+      cuerpo = `<div class="eq-grid">${cajas.join('')}</div>
+        <p class="sub">De la federación${partidosAct ? ', al ' + esc(fmtShort(partidosAct)) : ''}; se actualiza solo dos veces al día. Los horarios los cambia la federación sin avisar: antes de un partido, confírmalo.</p>`;
     }
   }
 
@@ -3298,7 +3352,7 @@ function openEquipo(t, sub, quieto) {
     <div class="eq-cab"><span class="eq-esc grande" aria-hidden="true">${esc(eqSigla(t))}</span>
       <div><h1>${esc(t)}</h1><p class="sub">${[tipoDe(t) ? TIPO[tipoDe(t)] : '', catDe(t), P.length ? P.length + (P.length === 1 ? ' jugador' : ' jugadores') : '', x.coaches.length ? x.coaches.join(' y ') : (x.franjas.length ? 'sin entrenador' : 'sin franja propia')].filter(Boolean).map(esc).join(' · ')}</p></div></div>
     <div class="seg eq-tabs" role="tablist" aria-label="Qué ver del equipo">${tabs.map(([k, l]) => `<button type="button" data-eqsub="${k}" aria-pressed="${eqSub === k}">${l}</button>`).join('')}</div>
-    ${eqSub === 'resumen' ? cuerpo : `<section class="ses-sec">${cuerpo}</section>`}`;
+    ${eqSub === 'resumen' || (eqSub === 'part' && PT.length) ? cuerpo : `<section class="ses-sec">${cuerpo}</section>`}`;
   const dock = view.zone === 'equipos' && anchoEq();
   eqDock(dock);
   espBox.hidden = false; document.body.style.overflow = dock ? '' : 'hidden';
