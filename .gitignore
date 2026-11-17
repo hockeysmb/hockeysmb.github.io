@@ -3,3 +3,4 @@ fuente/_artifact/
 fuente/_capturas/
 __pycache__/
 *.pyc
+node_modules/
