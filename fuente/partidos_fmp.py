@@ -218,6 +218,7 @@ def clasificacion(filas, equipos):
         g = re.match(r'^\s*(\d+)\s*[:\-]\s*(\d+)\s*$', f.get('res') or '')
         if not g: continue
         ga, gb = int(g.group(1)), int(g.group(2))
+        if f'{y}-{m}-{d}' == hoy and ga == gb == 0: continue   # la federación pone 0:0 a lo que aún no se ha jugado
         for x, gf, gc in ((a, ga, gb), (b, gb, ga)):
             x['pj'] += 1; x['gf'] += gf; x['gc'] += gc
             if gf > gc: x['g'] += 1; x['pts'] += 3
