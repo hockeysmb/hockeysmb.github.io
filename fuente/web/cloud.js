@@ -425,6 +425,7 @@
     // Solo lo leen sus entrenadores y la DT; cada entrada lleva quién la hizo.
     seg: {
       listen: (jid, cb) => B.listenCol('jugadores/' + jid + '/seg', d => cb(d.map(x => Object.assign({ id: x.id }, x.data))), () => cb([])),
+      get: jid => B.getCol('jugadores/' + jid + '/seg').then(d => d.map(x => Object.assign({ id: x.id }, x.data))),
       save: (jid, id, obj) => B.set('jugadores/' + jid + '/seg/' + id, Object.assign({}, obj, { uid: me.uid, ts: Date.now() })),
       del: (jid, id) => B.del('jugadores/' + jid + '/seg/' + id),
     },

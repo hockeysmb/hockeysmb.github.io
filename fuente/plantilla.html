@@ -330,6 +330,65 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 /* perfil del jugador: evaluación por toques */
 .fh-bien { color: var(--smb-bien); font-weight: 700; }
 .btn.danger { background: var(--smb-ojo); border-color: transparent; color: #fff; }
+/* perfil del jugador: cabecera corta y tarjetas densas */
+.pf-cab { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow); }
+.pf-cab > div { min-width: 0; flex: 1; }
+.pf-cab h1 { margin: 0; font-size: 22px; line-height: 1.15; }
+.pf-cab .sub { margin: 2px 0 0; font-size: 13px; }
+.pf-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; }
+.pf-chips span { padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: 600 11.5px/1.2 var(--font-body); }
+.pf-evaluar { flex: none; }
+.eq-box h3 small { font-weight: 500; color: var(--muted); }
+.pf-mas { margin-left: auto; border: 0; background: none; color: var(--accent); font: 700 12.5px/1 var(--font-body); cursor: pointer; padding: 4px; }
+.pf-barras { display: grid; gap: 6px; }
+.pf-b { display: grid; grid-template-columns: 7.5em 1fr 2.2em; align-items: center; gap: 8px; font-size: 13px; }
+.pf-b i { height: 7px; border-radius: 99px; background: var(--fill); position: relative; overflow: hidden; }
+.pf-b i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p); background: var(--accent); border-radius: 99px; }
+.pf-b b { text-align: right; font-variant-numeric: tabular-nums; }
+.pf-obj { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; }
+.pf-obj small { display: block; color: var(--muted); font-size: 12px; }
+.pf-nota { margin: 0; font-size: 13.5px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.pf-evol { width: 100%; max-width: 520px; height: auto; display: block; }
+.pf-evol line.ej { stroke: var(--line); stroke-width: 1; }
+.pf-evol text { fill: var(--muted); font: 11px var(--font-body); }
+.pf-evol polyline { fill: none; stroke-width: 2.5; }
+.pf-evol .l-d { stroke: var(--accent); fill: var(--accent); } .pf-evol polyline.l-d { fill: none; }
+.pf-evol .l-e { stroke: var(--smb-ojo); fill: var(--smb-ojo); } .pf-evol polyline.l-e { fill: none; }
+.pf-evol .l-t { stroke: var(--smb-bien); fill: var(--smb-bien); } .pf-evol polyline.l-t { fill: none; stroke-dasharray: 5 4; }
+.pf-ley { display: flex; gap: 14px; margin: 4px 0 0; font-size: 12.5px; }
+.pf-ley span::before { content: ''; display: inline-block; width: 12px; height: 3px; margin-right: 5px; vertical-align: middle; border-radius: 2px; }
+.pf-ley .l-d::before { background: var(--accent); } .pf-ley .l-e::before { background: var(--smb-ojo); } .pf-ley .l-t::before { background: var(--smb-bien); }
+.pf-tabla { overflow-x: auto; margin: 12px 0; }
+.pf-tabla table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.pf-tabla th, .pf-tabla td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.pf-tabla tbody th { text-align: left; font-weight: 600; }
+.pf-tabla thead th small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+.pf-fl { margin-left: 4px; font-size: 12px; color: var(--muted); } .pf-fl.sube { color: var(--smb-bien); } .pf-fl.baja { color: var(--smb-ojo); }
+.pf-sit { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; font-size: 13.5px; }
+.pf-sit li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pf-apunte { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+.pf-hist { list-style: none; margin: 8px 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: grid; gap: 12px; }
+.pf-h { position: relative; display: grid; gap: 2px; }
+.pf-h::before { content: ''; position: absolute; left: -20px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--fill); border: 2px solid var(--line); }
+.pf-h.ev::before { background: var(--accent); border-color: var(--accent); } .pf-h.nota::before { background: var(--surface); border-color: var(--accent); }
+.pf-h.obj::before { background: var(--smb-bien); border-color: var(--smb-bien); }
+.pf-h small { color: var(--muted); font-size: 12px; } .pf-h p { margin: 0; font-size: 13.5px; line-height: 1.45; }
+.pf-h .linkb { justify-self: start; font-size: 12.5px; }
+/* equipo: tabla de evolución individual y rúbrica */
+.eq-box.ancho { grid-column: 1 / -1; }
+.eq-ind { overflow-x: auto; }
+.eq-ind table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+.eq-ind th, .eq-ind td { padding: 6px 6px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.eq-ind th:first-child, .eq-ind td:first-child { text-align: left; }
+.eq-ind thead th { font-weight: 600; color: var(--muted); font-size: 12px; }
+.eq-ind td button { border: 0; background: none; padding: 0; color: inherit; font: 600 13px/1.2 var(--font-body); cursor: pointer; text-align: left; }
+.est { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.est.ok { background: var(--smb-bien-suave); color: var(--smb-bien); } .est.no { background: var(--smb-ojo-suave); color: var(--smb-ojo); }
+.eq-radar { width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto; }
+.eq-radar polygon.red { fill: none; stroke: var(--line); } .eq-radar polygon.val { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+.eq-radar text { fill: var(--muted); font: 11px var(--font-body); }
+.eq-focos { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.eq-focos li { display: flex; justify-content: space-between; gap: 8px; } .eq-focos b { font-variant-numeric: tabular-nums; color: var(--smb-ojo); }
 .sg-h { margin: 14px 0 6px; font: 700 14px/1.2 var(--font-body); }
 .sg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .sg-fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 8px 10px; border-radius: var(--smb-r-control); background: var(--surface); }
@@ -353,6 +412,7 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
   body.eq-dock #espacio { top: var(--eq-top, 60px); left: calc(max(0px, calc(50vw - 660px)) + 400px); right: max(0px, calc(50vw - 660px));
     border-left: 1px solid var(--line); padding-top: 12px; z-index: 30; }
   body.eq-dock #espacio .esp-top { display: none; }
+  body.eq-dock #espacio .esp-top.pf-top { display: block; margin-bottom: 8px; }   /* desde un jugador sí hace falta volver al equipo */
 }
 /* migración: la lista de dudas */
 .pl-mig { padding: var(--smb-aire-3); margin-bottom: var(--smb-aire-3); border-radius: var(--smb-r-control); background: var(--accent-soft); }
@@ -3127,6 +3187,7 @@ function eqDock(on) {
 }
 function openEquipo(t, sub, quieto) {
   if (typeof perfilSoltar === 'function') perfilSoltar();
+  if (!quieto) segEq = { t: null, por: null, cargando: false };
   const L = equiposMap(horario());
   // Sub13 y Sub15 no tienen franja propia en el horario: salen de Alevín e Infantil.
   const x = L.find(y => y.t === t) || ((plantillaDe(t).length || partidosDe(t).length) ? { t, franjas: [], coaches: [] } : null);
@@ -3159,6 +3220,43 @@ function openEquipo(t, sub, quieto) {
     cajas.push(caja('◆', 'Tipo', canWriteBank
       ? `<div class="fh-esc">${[['', 'Sin definir'], ['comp', 'Competición'], ['form', 'Formación']].map(([v, l]) => `<button class="fh-eop${tp === v ? ' si' : ''}" type="button" data-eqtipo="${v}">${l}</button>`).join('')}</div>`
       : `<p class="sub">${tp ? TIPO[tp] : 'Sin definir'}. Lo pone la Dirección Técnica.</p>`));
+    // jugadores del equipo en una tabla, y lo que dicen sus evaluaciones (si se ven)
+    const actEq = segActivo() && (canWriteBank || llevoEq(t)), PJ = P.filter(j => j.id);
+    if (actEq && PJ.length) segEqCargar(t);
+    const SE = actEq && segEq.t === t && segEq.por ? segEq.por : null;
+    const ultEv = j => SE ? ((SE[j.id] || []).filter(x => x.tipo === 'ev').sort((a, b) => (b.ts || 0) - (a.ts || 0))[0] || null) : null;
+    if (PJ.length) {
+      const FT = (bank.fichas || []).filter(f => f.eq === t && Array.isArray(f.conv));
+      const fila = j => { const nn = normName(j.n), fue = FT.filter(f => f.conv.some(x => normName(x) === nn)).length;
+        const ua = v => FT.filter(f => Object.entries(f.unoa || {}).some(([k, w]) => normName(k) === nn && w === v)).length;
+        const ev = ultEv(j), n = ev && evNums(ev);
+        return `<tr><td><button type="button" data-pjugid="${esc(j.id)}">${esc(j.n)}</button></td><td>${FT.length ? fue + '/' + FT.length : '—'}</td><td>${ua('bien') || ua('mej') ? `<span class="fh-bien">${ua('bien')}</span> · <span class="fh-mej">${ua('mej')}</span>` : '—'}</td>
+          ${SE ? `<td>${n ? coma(n.d) : '—'}</td><td>${n ? coma(n.e) : '—'}</td><td>${n ? coma(n.tec) : '—'}</td><td>${ev && ev.ven === segVenHoy() ? '<span class="est ok">Al día</span>' : '<span class="est no">Pendiente</span>'}</td>` : ''}</tr>`; };
+      cajas.push(caja('☰', 'Jugadores', `<div class="eq-ind"><table><thead><tr><th>Jugador</th><th>Convocado</th><th>Uno a uno</th>${SE ? '<th>Decide</th><th>Ejecuta</th><th>Técnica</th><th>Evaluación</th>' : ''}</tr></thead><tbody>${PJ.map(fila).join('')}</tbody></table></div>
+        <p class="sub eq-dato">Convocado: de los partidos con ficha. Uno a uno: veces bien · a mejorar.${SE ? ` Evaluación de ${esc(venDe(segVenHoy()).toLowerCase())}.` : actEq ? ' Cargando evaluaciones…' : ''} Toca un nombre para ver su perfil.</p>`, ' ancho'));
+    }
+    if (SE) {
+      const evs = PJ.map(ultEv).filter(Boolean);
+      if (evs.length) {
+        const prom = k => media(evs.map(ev => (ev.rub || {})[k]).filter(Boolean));
+        const CORTO = { patin: 'Patín', cond: 'Conducción', pase: 'Pase', disp: 'Disparo', uno: '1c1' };
+        const ax = SEG_RUB.map(([k]) => [CORTO[k], prom(k)]), C = 150, R = 72, ang = i => -Math.PI / 2 + 2 * Math.PI * i / ax.length;
+        const pt = (i, r) => [C + r * Math.cos(ang(i)), 110 + r * Math.sin(ang(i))].map(v => v.toFixed(1)).join(',');
+        const radar = ax.some(([, v]) => v != null) ? `<svg class="eq-radar" viewBox="0 0 300 220" role="img" aria-label="Rúbrica técnica media del equipo">
+          ${[1, 2, 3].map(v => `<polygon class="red" points="${ax.map((_, i) => pt(i, R * v / 3)).join(' ')}"/>`).join('')}
+          <polygon class="val" points="${ax.map(([, v], i) => pt(i, R * (v || 0) / 3)).join(' ')}"/>
+          ${ax.map(([l, v], i) => { const [x, y] = pt(i, R + 16).split(',').map(Number); return `<text x="${x}" y="${y + 4}" text-anchor="${Math.abs(x - C) < 8 ? 'middle' : x < C ? 'end' : 'start'}">${esc(l)}${v != null ? ' ' + coma(v) : ''}</text>`; }).join('')}</svg>` : '';
+        if (radar) cajas.push(caja('⬠', 'Técnica del equipo', `${radar}<p class="sub eq-dato">Media de la última evaluación de ${evs.length} ${evs.length === 1 ? 'jugador' : 'jugadores'}, de 1 a 3.</p>`));
+        // qué reforzar: lo más bajo del equipo, de las situaciones y de la técnica
+        const items = new Map();
+        evs.forEach(ev => { (ev.sit || []).forEach(x => { [['d', 'decide'], ['e', 'ejecuta']].forEach(([k, l]) => { if (x[k]) { const key = x.s + ' · ' + l; items.set(key, [...(items.get(key) || []), x[k]]); } }); });
+          SEG_RUB.forEach(([k, l]) => { const v = (ev.rub || {})[k]; if (v) items.set(l, [...(items.get(l) || []), v]); }); });
+        const bajos = [...items.entries()].map(([k, L]) => [k, media(L)]).filter(([, v]) => v != null && v <= 2).sort((a, b) => a[1] - b[1]).slice(0, 3);
+        cajas.push(caja('↗', 'Qué reforzar', bajos.length ? `<ul class="eq-focos">${bajos.map(([k, v]) => `<li><span>${esc(k)}</span><b>${coma(v)}</b></li>`).join('')}</ul><p class="sub eq-dato">Lo más bajo de las últimas evaluaciones: lo que se evalúa es lo que se entrena.</p>` : '<p class="sub">Nada por debajo de 2 en las últimas evaluaciones.</p>'));
+      }
+    }
+    // el tipo, al final: se pone una vez y ya
+    const it = cajas.findIndex(c => c.includes('</span>Tipo</h3>')); if (it >= 0) cajas.push(cajas.splice(it, 1)[0]);
     cuerpo = `<div class="eq-grid">${cajas.join('')}</div>`;
   }
   else if (eqSub === 'plant') cuerpo = P.length
@@ -3254,6 +3352,16 @@ function segMatriz(sit) {
   return { d, e, txt: SEG_MATRIZ[(d > 2 ? 'b' : 'm') + (e > 2 ? 'b' : 'm')] };
 }
 const segActivo = () => !!bank.segOn && !!(window.SMB_CLOUD && window.SMB_CLOUD.seg);
+// lo de todos los jugadores de un equipo, para la tabla y la rúbrica del Resumen (se recarga al abrir el equipo)
+let segEq = { t: null, por: null, cargando: false };
+function segEqCargar(t) {
+  if (segEq.t === t && (segEq.por || segEq.cargando)) return;
+  segEq = { t, por: null, cargando: true };
+  const P = plantillaDe(t).filter(j => j.id);
+  Promise.all(P.map(j => window.SMB_CLOUD.seg.get(j.id).then(L => [j.id, L]).catch(() => [j.id, []])))
+    .then(R => { if (segEq.t !== t) return; segEq = { t, por: Object.fromEntries(R), cargando: false };
+      if (espEquipo === t && !perfilJid && !fichaPid && eqSub === 'resumen' && !espBox.hidden) { const y = espBox.scrollTop; openEquipo(t, null, true); espBox.scrollTop = y; } });
+}
 // el seguimiento de un jugador lo ven sus entrenadores (de cualquiera de sus equipos) y la DT; igual que las reglas
 const segMio = j => segActivo() && (canWriteBank || [j.eq, ...(j.otros || [])].some(llevoEq));
 // lo que ha jugado esta temporada en todos sus equipos, sacado de las fichas
@@ -3280,6 +3388,29 @@ function segNueva() { return { ven: segVenHoy(), sit: {}, rub: {}, quede: '' }; 
 let segEscuchando = '';
 function segEscucharSiCambia() { const j = (bank.jugadores || []).find(x => x.id === perfilJid), k = j && segMio(j) ? perfilJid : '';
   if (k !== segEscuchando) { segEscuchando = k; segEscuchar(perfilJid); } }
+// lo que dice una evaluación, en números: decide y ejecuta (media de las situaciones) y cada punto de la rúbrica
+function evNums(ev) {
+  const m = segMatriz(ev.sit) || {}, R = ev.rub || {};
+  return { d: m.d ?? null, e: m.e ?? null, txt: m.txt || '', tec: media(Object.values(R)), ...Object.fromEntries(SEG_RUB.map(([k]) => [k, R[k] || null])) };
+}
+const EV_FILAS = [['d', 'Decide'], ['e', 'Ejecuta'], ...SEG_RUB];
+const venDe = v => (SEG_VEN.find(x => x[0] === v) || [, v || ''])[1];
+const fechaTs = ts => fmtShort(new Date(ts || Date.now()).toISOString().slice(0, 10));
+// barras de 1 a 3, como las de la imagen pero con la escala del club
+const barras3 = (filas, n) => `<div class="pf-barras">${filas.filter(([k]) => n[k] != null).map(([k, l]) =>
+  `<div class="pf-b"><span>${esc(l)}</span><i style="--p:${Math.round(100 * n[k] / 3)}%"></i><b>${coma(n[k])}</b></div>`).join('')}</div>`;
+// evolución: una línea por cosa (decide, ejecuta, técnica) a lo largo de las tomas
+function evolSVG(EVc) {
+  if (EVc.length < 2) return '';
+  const W = 320, H = 150, L = 26, R = 10, T = 12, B = 30, x = i => L + (W - L - R) * i / (EVc.length - 1), y = v => T + (H - T - B) * (3 - v) / 2;
+  const serie = (k, cls) => { const pts = EVc.map((ev, i) => [x(i), evNums(ev)[k]]).filter(([, v]) => v != null);
+    return pts.length ? `<polyline class="${cls}" points="${pts.map(([a, v]) => a + ',' + y(v)).join(' ')}"/>${pts.map(([a, v]) => `<circle class="${cls}" cx="${a}" cy="${y(v)}" r="3.5"/>`).join('')}` : ''; };
+  return `<svg class="pf-evol" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de decide, ejecuta y técnica">
+    ${[1, 2, 3].map(v => `<line class="ej" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('')}
+    ${EVc.map((ev, i) => `<text x="${x(i)}" y="${H - 10}" text-anchor="middle">${esc(venDe(ev.ven).split(' ')[0])}</text>`).join('')}
+    ${serie('d', 'l-d')}${serie('e', 'l-e')}${serie('tec', 'l-t')}</svg>
+    <p class="pf-ley"><span class="l-d">Decide</span><span class="l-e">Ejecuta</span><span class="l-t">Técnica</span></p>`;
+}
 function jugadorPerfil(jid, t, quieto) {
   const j = (bank.jugadores || []).find(x => x.id === jid); if (!j) return;
   // lo que esté escribiendo no se pierde al repintar
@@ -3289,43 +3420,52 @@ function jugadorPerfil(jid, t, quieto) {
   const S = jugStats(j), act = segMio(j), puedo = puedeFicha(j, perfilEq);
   const I = segItems || [], EV = I.filter(x => x.tipo === 'ev').sort((a, b) => (b.ts || 0) - (a.ts || 0));
   const OB = I.filter(x => x.tipo === 'obj').sort((a, b) => (b.ts || 0) - (a.ts || 0)), NT = I.filter(x => x.tipo === 'nota').sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  const activos = OB.filter(o => o.estado === 'activo');
-  const tabs = [['resumen', 'Resumen'], ...(act ? [['eval', `Evaluación${EV.length ? ' · ' + EV.length : ''}`], ['notas', `Apuntes${NT.length ? ' · ' + NT.length : ''}`]] : [])];
-  if (!tabs.some(([k]) => k === perfilTab)) perfilTab = 'resumen';
-  const caja = (ico, tit, html, extra = '') => `<section class="eq-box${extra}"><h3><span aria-hidden="true">${ico}</span>${tit}</h3>${html}</section>`;
+  const activos = OB.filter(o => o.estado === 'activo'), cerrados = OB.filter(o => o.estado !== 'activo');
+  const tabs = [['resumen', 'Resumen'], ...(act ? [['evol', 'Evolución'], ['obj', `Objetivos${activos.length ? ' · ' + activos.length : ''}`], ['hist', 'Historial']] : [])];
+  if (perfilTab !== 'evaluar' && !tabs.some(([k]) => k === perfilTab)) perfilTab = 'resumen';
+  if (perfilTab === 'evaluar' && !act) perfilTab = 'resumen';
+  const caja = (ico, tit, html, extra = '', mas = '') => `<section class="eq-box${extra}"><h3><span aria-hidden="true">${ico}</span>${tit}${mas ? `<button class="pf-mas" type="button" data-ptab="${mas}">Ver ›</button>` : ''}</h3>${html}</section>`;
   const barra = (l, n, de) => `<div class="eq-barra"><span>${l}</span><b>${n} de ${de}</b><i style="--p:${de ? Math.round(100 * n / de) : 0}%"></i></div>`;
-  const quien = x => esc(x.autor || 'Sin nombre'), cuando = x => esc(fmtShort(new Date(x.ts || Date.now()).toISOString().slice(0, 10)));
+  const quien = x => esc(x.autor || 'Sin nombre');
+  const objLi = o => `<li><b>${esc(o.txt)}</b><small>revisar el ${esc(fmtShort(o.rev))}</small></li>`;
   let cuerpo = '';
   if (perfilTab === 'resumen') {
     const cajas = [];
-    cajas.push(caja('◷', 'Partidos', S.de
-      ? `${barra('Convocado', S.fue, S.de)}<p class="sub eq-dato">${S.seguidos >= 2 ? `<b class="cv-toca">Lleva ${S.seguidos} seguidos sin ir.</b> ` : ''}De los partidos con ficha de ${S.eqs.map(esc).join(', ')}.</p>`
-      : '<p class="sub">Todavía no hay fichas de partido con convocatoria en sus equipos.</p>'));
-    if (S.bien || S.mej) cajas.push(caja('◎', 'Uno a uno', `<p class="sub"><b class="fh-bien">${S.bien} bien</b> · <b class="fh-mej">${S.mej} a mejorar</b></p><p class="sub eq-dato">Lo marcado en el último paso de la ficha de partido.</p>`));
-    if (S.filas.length) cajas.push(caja('▤', 'Últimos partidos', `<ul class="eq-ult">${S.filas.slice(0, 6).map(x => `<li><button type="button" data-fpart="${esc(x.f.pid)}"><span>${esc(fmtShort(x.f.fecha))} · ${esc(x.f.rival || (x.p && x.p.rival) || '')}<small class="sub"> ${x.fue ? (x.ua === 'bien' ? '· bien' : x.ua === 'mej' ? '· a mejorar' : '· convocado') : '· no fue'}</small></span>${x.p && x.p.res ? `<span class="res-chip ${resCls(x.p)}">${esc(x.p.res)}</span>` : ''}</button></li>`).join('')}</ul>`));
-    const datos = [['Año', j.a || 'sin año'], ['Puesto', j.p ? 'Portero' : 'Jugador de pista'], ['Equipo principal', j.eq || '—'], ...((j.otros || []).length ? [['También en', j.otros.join(' · ')]] : []), ...(j.nt ? [['Nota del listado', j.nt]] : [])];
-    cajas.push(caja('◆', 'Ficha', `<ul class="pts-list">${datos.map(([k, v]) => `<li><span>${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>
-      ${puedo ? '<div class="row"><button class="btn" type="button" data-pcambiar>Cambiar</button></div>' : `<p class="sub eq-dato">La cambia quien lleva ${esc(j.eq)}.</p>`}`));
     if (act) {
-      const ult = EV[0], M = ult && segMatriz(ult.sit);
-      cajas.push(caja('↗', 'Cómo va', ult ? `<p class="sub"><b>${esc((SEG_VEN.find(v => v[0] === ult.ven) || [, ''])[1])}</b> · ${quien(ult)}, ${cuando(ult)}</p>${M ? `<p class="sub">${esc(M.txt)}</p>` : ''}` : '<p class="sub">Sin evaluar todavía.</p>'));
-      cajas.push(caja('◎', 'Objetivos', activos.length ? `<ul class="pts-list">${activos.map(o => `<li><span>${esc(o.txt)}</span><span>revisar ${esc(fmtShort(o.rev))}</span></li>`).join('')}</ul>` : '<p class="sub">Ninguno activo.</p>'));
-    } else if (canWriteBank && !segActivo()) {
-      cajas.push(caja('!', 'Evaluación y apuntes', segForm && segForm.activar
-        ? `<p class="sub">Actívalo solo si el colegio ha confirmado que su política de privacidad cubre las evaluaciones deportivas y los apuntes de jugadores menores, y cuánto tiempo se guardan. Necesita las reglas nuevas de Firestore pegadas en la consola.</p>
-           <div class="row"><button class="btn" type="button" data-segon="no">Todavía no</button><button class="btn primary" type="button" data-segon="si">Está confirmado: activar</button></div>`
-        : `<p class="sub">Preparados y sin activar. Solo lo ves tú.</p><div class="row"><button class="btn" type="button" data-segon="ver">Activar</button></div>`, ' aviso'));
+      const ult = EV[0], n = ult && evNums(ult);
+      cajas.push(caja('✓', `Evaluación${ult ? ` <small>· ${esc(venDe(ult.ven).toLowerCase())}, ${esc(fechaTs(ult.ts))}</small>` : ''}`, ult
+        ? `${barras3(EV_FILAS, n)}${n.txt ? `<p class="sg-matriz">${esc(n.txt)}</p>` : ''}<button class="btn" type="button" data-ptab="evaluar">Nueva evaluación</button>`
+        : `<p class="sub">Sin evaluar todavía. Se evalúa con las situaciones de su categoría: decide y ejecuta, de 1 a 3, y la técnica.</p><button class="btn primary" type="button" data-ptab="evaluar">Evaluar</button>`, ' pf-ev', ult ? 'evol' : ''));
+      cajas.push(caja('◎', 'Objetivos activos', activos.length ? `<ul class="pf-obj">${activos.map(objLi).join('')}</ul>` : '<p class="sub">Ninguno. Como mucho, dos a la vez.</p>', '', 'obj'));
     }
+    cajas.push(caja('◷', 'Temporada', S.de
+      ? `${barra('Convocado', S.fue, S.de)}
+         <p class="sub eq-dato">${S.bien || S.mej ? `Uno a uno: <b class="fh-bien">${S.bien} bien</b> · <b class="fh-mej">${S.mej} a mejorar</b>. ` : ''}${S.seguidos >= 2 ? `<b class="cv-toca">Lleva ${S.seguidos} seguidos sin ir.</b>` : ''}</p>
+         <ul class="eq-ult">${S.filas.slice(0, 3).map(x => `<li><button type="button" data-fpart="${esc(x.f.pid)}"><span>${esc(x.f.rival || (x.p && x.p.rival) || '')}<small class="sub"> · ${esc(fmtShort(x.f.fecha))} · ${x.fue ? (x.ua === 'bien' ? 'bien' : x.ua === 'mej' ? 'a mejorar' : 'convocado') : 'no fue'}</small></span>${x.p && x.p.res ? `<span class="res-chip ${resCls(x.p)}">${esc(x.p.res)}</span>` : ''}</button></li>`).join('')}</ul>`
+      : '<p class="sub">Todavía no hay fichas de partido con convocatoria en sus equipos.</p>'));
+    if (act) cajas.push(caja('✎', 'Último apunte', NT[0] ? `<p class="pf-nota">${esc(NT[0].txt)}</p><p class="sub eq-dato">${quien(NT[0])}, ${esc(fechaTs(NT[0].ts))}</p>` : '<p class="sub">Ninguno todavía.</p>', '', 'hist'));
+    cajas.push(caja('◆', 'Ficha', `<ul class="pts-list">${[['Año', j.a || 'sin año'], ['Puesto', j.p ? 'Portero' : 'Jugador de pista'], ['Equipo principal', j.eq || '—'], ...((j.otros || []).length ? [['También en', j.otros.join(' · ')]] : []), ...(j.nt ? [['Nota del listado', j.nt]] : [])].map(([k, v]) => `<li><span>${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>
+      ${puedo ? '<button class="btn" type="button" data-pcambiar>Cambiar</button>' : `<p class="sub eq-dato">La cambia quien lleva ${esc(j.eq)}.</p>`}`));
+    if (canWriteBank && !segActivo()) cajas.push(caja('!', 'Evaluación y apuntes', segForm && segForm.activar
+      ? `<p class="sub">Actívalo solo si el colegio ha confirmado que su política de privacidad cubre las evaluaciones deportivas y los apuntes de jugadores menores, y cuánto tiempo se guardan. Necesita las reglas nuevas de Firestore pegadas en la consola.</p>
+         <div class="row"><button class="btn" type="button" data-segon="no">Todavía no</button><button class="btn primary" type="button" data-segon="si">Está confirmado: activar</button></div>`
+      : `<p class="sub">Preparados y sin activar. Solo lo ves tú.</p><div class="row"><button class="btn" type="button" data-segon="ver">Activar</button></div>`, ' aviso'));
     cuerpo = `<div class="eq-grid">${cajas.join('')}</div>`;
-  } else if (perfilTab === 'eval') {
+  } else if (perfilTab === 'evol') {
+    const EVc = EV.slice().reverse();
+    const cols = EVc.slice(-4);
+    cuerpo = EVc.length ? `${EVc.length > 1 ? `<section class="eq-box">${evolSVG(EVc)}</section>` : '<p class="sub">Con una sola evaluación todavía no hay evolución: sale a partir de la segunda toma.</p>'}
+      <div class="pf-tabla"><table><thead><tr><th></th>${cols.map(ev => `<th>${esc(venDe(ev.ven).split(' ')[0])}<small>${esc(fechaTs(ev.ts))}</small></th>`).join('')}</tr></thead>
+      <tbody>${EV_FILAS.map(([k, l]) => `<tr><th>${esc(l)}</th>${cols.map((ev, i) => { const v = evNums(ev)[k], a = i ? evNums(cols[i - 1])[k] : null;
+        return `<td>${coma(v)}${v != null && a != null ? `<span class="pf-fl ${v > a ? 'sube' : v < a ? 'baja' : ''}">${v > a ? '↑' : v < a ? '↓' : '='}</span>` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+      <h2 class="h-sec">Situación por situación, la última vez</h2>
+      <ul class="pf-sit">${(EV[0].sit || []).map(x => `<li><span>${esc(x.s)}</span><span>decide <b>${x.d || '—'}</b> · ejecuta <b>${x.e || '—'}</b></span></li>`).join('') || '<li><span class="sub">Sin situaciones puntuadas.</span></li>'}</ul>
+      <p class="sub">Escala del club: 1 ${SEG_ESC[0].toLowerCase()} · 2 ${SEG_ESC[1].toLowerCase()} · 3 ${SEG_ESC[2].toLowerCase()}. Sin nota final ni comparaciones con otros.</p>`
+      : `<p class="sub">Todavía no hay evaluaciones.</p><button class="btn primary" type="button" data-ptab="evaluar">Evaluar</button>`;
+  } else if (perfilTab === 'evaluar') {
     const K = segCat(j.eq || perfilEq), SIT = SEG_SIT[K], F = segForm;
     const tres = (attr, val) => `<div class="fh-esc">${[1, 2, 3].map(v => `<button class="fh-eop${val === v ? ' si' : ''}" type="button" ${attr}="${v}" aria-pressed="${val === v}" title="${SEG_ESC[v - 1]}">${v}</button>`).join('')}</div>`;
     const sitArr = SIT.s.map((n, i) => Object.assign({ s: n }, F.sit[i] || {})).filter(x => x.d || x.e), M = segMatriz(sitArr);
-    const hist = EV.map((ev, k) => { const m = segMatriz(ev.sit), r = media(Object.values(ev.rub || {})), prev = EV[k + 1], mp = prev && segMatriz(prev.sit);
-      const flecha = (a, b) => a == null || b == null ? '' : a > b ? ' ↑' : a < b ? ' ↓' : ' =';
-      return `<li class="sg-ev"><div><b>${esc((SEG_VEN.find(v => v[0] === ev.ven) || [, ev.ven])[1])}</b><small> · ${quien(ev)}, ${cuando(ev)}</small></div>
-        <p class="sub">Decide ${coma(m && m.d)}${flecha(m && m.d, mp && mp.d)} · Ejecuta ${coma(m && m.e)}${flecha(m && m.e, mp && mp.e)} · Técnica ${coma(r)}</p>
-        ${m ? `<p class="sub">${esc(m.txt)}</p>` : ''}${ev.quede ? `<p class="sub">«${esc(ev.quede)}»</p>` : ''}</li>`; }).join('');
     cuerpo = `<h2 class="h-sec">Nueva evaluación</h2>
       <div class="fh-esc">${SEG_VEN.map(([v, l]) => `<button class="fh-eop${F.ven === v ? ' si' : ''}" type="button" data-sgven="${v}" aria-pressed="${F.ven === v}">${l}</button>`).join('')}</div>
       <p class="sub">Foco de ${esc(catDe(j.eq || perfilEq) || 'su categoría')}: ${esc(SIT.foco)} Puntúa solo lo que hayas visto. 1 ${SEG_ESC[0].toLowerCase()} · 2 ${SEG_ESC[1].toLowerCase()} · 3 ${SEG_ESC[2].toLowerCase()}.</p>
@@ -3336,28 +3476,35 @@ function jugadorPerfil(jid, t, quieto) {
       <h3 class="sg-h">Técnica</h3>
       <ul class="sg-list">${SEG_RUB.map(([k, l]) => `<li class="sg-fila"><span>${esc(l)}</span><span class="sg-par">${tres(`data-sgr="${k}" data-v`, F.rub[k])}</span></li>`).join('')}</ul>
       <details class="fh-mas"${F.quede ? ' open' : ''}><summary>Añadir una frase</summary><input type="text" maxlength="160" data-sgq value="${esc(F.quede)}" placeholder="Qué entrenar con él, en una línea"></details>
-      <div class="actions"><button class="btn primary" type="button" data-sgguardar${sitArr.length || Object.keys(F.rub).length ? '' : ' disabled'}>Guardar evaluación</button></div>
-      <p class="sub" id="sg-msg" role="status"></p>
-      <h2 class="h-sec">Objetivos</h2>
-      ${activos.length ? `<ul class="sg-list">${activos.map(o => `<li class="sg-obj"><span><b>${esc(o.txt)}</b><small>revisar el ${esc(fmtShort(o.rev))} · ${quien(o)}</small></span><span class="row"><button class="btn" type="button" data-sgobj="${esc(o.id)}" data-est="logrado">Logrado</button><button class="btn" type="button" data-sgobj="${esc(o.id)}" data-est="aparcado">Aparcar</button></span></li>`).join('')}</ul>` : '<p class="sub">Ninguno activo.</p>'}
+      <div class="fh-nav"><button class="btn" type="button" data-ptab="resumen">Cancelar</button><button class="btn primary" type="button" data-sgguardar${sitArr.length || Object.keys(F.rub).length ? '' : ' disabled'}>Guardar evaluación</button></div>
+      <p class="sub" id="sg-msg" role="status"></p>`;
+  } else if (perfilTab === 'obj') {
+    cuerpo = `${activos.length ? `<ul class="sg-list">${activos.map(o => `<li class="sg-obj"><span><b>${esc(o.txt)}</b><small>revisar el ${esc(fmtShort(o.rev))} · ${quien(o)}</small></span><span class="row"><button class="btn" type="button" data-sgobj="${esc(o.id)}" data-est="logrado">Logrado</button><button class="btn" type="button" data-sgobj="${esc(o.id)}" data-est="aparcado">Aparcar</button></span></li>`).join('')}</ul>` : '<p class="sub">Ninguno activo.</p>'}
       ${activos.length < 2 ? `<div class="sg-nuevo"><input type="text" maxlength="120" id="sg-objtxt" placeholder="Un objetivo concreto y que se vea en pista"><label class="sub">Revisar el <input type="date" id="sg-objrev" value="${esc(new Date(Date.now() + 42 * 864e5).toISOString().slice(0, 10))}"></label><button class="btn" type="button" data-sgobjnuevo>Añadir objetivo</button></div>` : '<p class="sub">Dos activos como mucho: cierra uno para abrir otro.</p>'}
-      ${OB.filter(o => o.estado !== 'activo').length ? `<details class="dt-more"><summary>Cerrados · ${OB.filter(o => o.estado !== 'activo').length}</summary><ul class="pts-list">${OB.filter(o => o.estado !== 'activo').map(o => `<li><span>${esc(o.txt)}</span><span>${o.estado === 'logrado' ? 'logrado' : 'aparcado'}</span></li>`).join('')}</ul></details>` : ''}
-      <h2 class="h-sec">Historial</h2>
-      ${hist ? `<ul class="sg-list">${hist}</ul>` : '<p class="sub">Todavía no hay evaluaciones.</p>'}
-      <p class="sub">Lo ven solo sus entrenadores y la Dirección Técnica. No es una nota: sirve para decidir qué entrenar.</p>`;
-  } else {
-    cuerpo = `<h2 class="h-sec">Nuevo apunte</h2>
-      <textarea id="sg-nota" rows="3" maxlength="600" placeholder="Algo que hayas visto: en pista, en un partido, con el grupo"></textarea>
-      <div class="actions"><button class="btn primary" type="button" data-sgnota>Guardar apunte</button></div>
       <p class="sub" id="sg-msg" role="status"></p>
-      ${NT.length ? `<ul class="sg-list">${NT.map(x => `<li class="sg-nota"><p>${esc(x.txt)}</p><small class="sub">${quien(x)}, ${cuando(x)}</small>
-        ${x.uid === miUid() || canWriteBank ? (segBorrar === x.id ? `<span class="row"><button class="btn" type="button" data-sgborrar="">No</button><button class="btn danger" type="button" data-sgborrar="${esc(x.id)}" data-ya>Sí, borrar</button></span>` : `<button class="linkb" type="button" data-sgborrar="${esc(x.id)}">Borrar</button>`) : ''}</li>`).join('')}</ul>` : '<p class="sub">Todavía no hay apuntes.</p>'}
+      ${cerrados.length ? `<h2 class="h-sec">Cerrados</h2><ul class="pts-list">${cerrados.map(o => `<li><span>${esc(o.txt)}</span><span>${o.estado === 'logrado' ? 'logrado' : 'aparcado'}${o.cerrado ? ' · ' + esc(fmtShort(o.cerrado)) : ''}</span></li>`).join('')}</ul>` : ''}`;
+  } else {
+    // historial: todo lo de este jugador en una línea de tiempo, con los apuntes
+    const T = [...EV.map(x => ({ ts: x.ts, k: 'ev', x })), ...NT.map(x => ({ ts: x.ts, k: 'nota', x })), ...OB.map(x => ({ ts: x.ts, k: 'obj', x })),
+      ...S.filas.map(f => ({ ts: new Date(f.f.fecha + 'T12:00').getTime(), k: 'part', x: f }))].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const li = ({ k, x, ts }) => {
+      if (k === 'ev') { const n = evNums(x); return `<li class="pf-h ev"><small>${esc(fechaTs(ts))} · evaluación · ${quien(x)}</small><p>${esc(venDe(x.ven))}: decide ${coma(n.d)}, ejecuta ${coma(n.e)}, técnica ${coma(n.tec)}.${x.quede ? ` «${esc(x.quede)}»` : ''}</p></li>`; }
+      if (k === 'obj') return `<li class="pf-h obj"><small>${esc(fechaTs(ts))} · objetivo · ${quien(x)}</small><p>${esc(x.txt)}${x.estado !== 'activo' ? ` <b>(${x.estado === 'logrado' ? 'logrado' : 'aparcado'})</b>` : ''}</p></li>`;
+      if (k === 'part') return `<li class="pf-h part"><small>${esc(fmtShort(x.f.fecha))} · partido</small><p>${esc(x.f.rival || '')}: ${x.fue ? (x.ua === 'bien' ? 'convocado, bien' : x.ua === 'mej' ? 'convocado, a mejorar' : 'convocado') : 'no fue'}${x.p && x.p.res ? ` · ${esc(x.p.res)}` : ''}</p></li>`;
+      return `<li class="pf-h nota"><small>${esc(fechaTs(ts))} · apunte · ${quien(x)}</small><p>${esc(x.txt)}</p>
+        ${x.uid === miUid() || canWriteBank ? (segBorrar === x.id ? `<span class="row"><button class="btn" type="button" data-sgborrar="">No</button><button class="btn danger" type="button" data-sgborrar="${esc(x.id)}" data-ya>Sí, borrar</button></span>` : `<button class="linkb" type="button" data-sgborrar="${esc(x.id)}">Borrar</button>`) : ''}</li>`;
+    };
+    cuerpo = `<div class="pf-apunte"><textarea id="sg-nota" rows="2" maxlength="600" placeholder="Nuevo apunte: algo que hayas visto en pista, en un partido o con el grupo"></textarea><button class="btn primary" type="button" data-sgnota>Guardar</button></div>
+      <p class="sub" id="sg-msg" role="status"></p>
+      ${T.length ? `<ul class="pf-hist">${T.map(li).join('')}</ul>` : '<p class="sub">Todavía no hay nada.</p>'}
       <p class="sub">Lo ven solo sus entrenadores y la Dirección Técnica. Escribe lo que viste, no etiquetas: «pierde la bola cuando le presionan en la salida» dice más que «le falta técnica». Nada de salud ni de la familia.</p>`;
   }
-  espBox.innerHTML = `<div class="esp-top"><button class="pb-back" type="button" data-pvolver><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(perfilEq || 'Volver')}</button></div>
-    <div class="eq-cab"><span class="jg-ini grande" aria-hidden="true">${esc(iniciales(j.n))}</span>
-      <div><h1>${esc(j.n)}</h1><p class="sub">${[j.a, j.p ? 'Portero' : '', j.eq, ...(j.otros || []).map(x => 'también ' + x)].filter(Boolean).map(esc).join(' · ')}</p></div></div>
-    ${tabs.length > 1 ? `<div class="seg eq-tabs" role="tablist" aria-label="Qué ver del jugador">${tabs.map(([k, l]) => `<button type="button" data-ptab="${k}" aria-pressed="${perfilTab === k}">${l}</button>`).join('')}</div>` : ''}
+  espBox.innerHTML = `<div class="esp-top pf-top"><button class="pb-back" type="button" data-pvolver><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(perfilEq || 'Volver')}</button></div>
+    <div class="pf-cab"><span class="jg-ini grande" aria-hidden="true">${esc(iniciales(j.n))}</span>
+      <div><h1>${esc(j.n)}</h1><p class="sub">${[j.eq, j.a].filter(Boolean).map(esc).join(' · ')}</p>
+        <p class="pf-chips"><span>${j.p ? 'Portero' : 'Jugador de pista'}</span>${(j.otros || []).map(x => `<span>También ${esc(x)}</span>`).join('')}</p></div>
+      ${act && perfilTab !== 'evaluar' ? '<button class="btn primary pf-evaluar" type="button" data-ptab="evaluar">Evaluar</button>' : ''}</div>
+    ${tabs.length > 1 && perfilTab !== 'evaluar' ? `<div class="seg eq-tabs" role="tablist" aria-label="Qué ver del jugador">${tabs.map(([k, l]) => `<button type="button" data-ptab="${k}" aria-pressed="${perfilTab === k}">${l}</button>`).join('')}</div>` : ''}
     ${perfilTab === 'resumen' ? cuerpo : `<section class="ses-sec">${cuerpo}</section>`}`;
   guarda.forEach(([q, v]) => { const el = espBox.querySelector(q); if (el) el.value = v; });
   espBox.hidden = false;
@@ -3394,17 +3541,17 @@ function perfilClick(e) {
     const q = espBox.querySelector('[data-sgq]'); if (q) F.quede = q.value.trim();
     const sit = SIT.s.map((s, i) => ({ s, d: (F.sit[i] || {}).d || 0, e: (F.sit[i] || {}).e || 0 })).filter(x => x.d || x.e);
     segGuardar({ tipo: 'ev', ven: F.ven, eq: j.eq, sit, rub: Object.assign({}, F.rub), quede: F.quede, fecha: isoToday() }, 'Evaluación guardada.')
-      .then(ok => { if (ok) { segForm = segNueva(); jugadorPerfil(perfilJid, perfilEq, true); } });
+      .then(ok => { if (ok) { segForm = segNueva(); perfilTab = 'resumen'; jugadorPerfil(perfilJid, perfilEq); } });
     return true; }
   if (e.target.closest('[data-sgobjnuevo]')) {
     const txt = (document.getElementById('sg-objtxt').value || '').trim(), rev = document.getElementById('sg-objrev').value || isoToday();
     if (!txt) { document.getElementById('sg-msg').textContent = 'Escribe el objetivo.'; return true; }
-    segGuardar({ tipo: 'obj', txt, rev, estado: 'activo', fecha: isoToday() }, 'Objetivo añadido.'); return true; }
+    segGuardar({ tipo: 'obj', txt, rev, estado: 'activo', fecha: isoToday() }, 'Objetivo añadido.').then(ok => { const el = document.getElementById('sg-objtxt'); if (ok && el) el.value = ''; }); return true; }
   const ob = e.target.closest('[data-sgobj]');
   if (ob) { const o = (segItems || []).find(x => x.id === ob.dataset.sgobj); if (o) segGuardar(Object.assign({}, o, { estado: ob.dataset.est, cerrado: isoToday() }), ob.dataset.est === 'logrado' ? 'Objetivo logrado.' : 'Objetivo aparcado.'); return true; }
   if (e.target.closest('[data-sgnota]')) {
     const txt = (document.getElementById('sg-nota').value || '').trim(); if (!txt) return true;
-    segGuardar({ tipo: 'nota', txt, fecha: isoToday() }, 'Apunte guardado.'); return true; }
+    segGuardar({ tipo: 'nota', txt, fecha: isoToday() }, 'Apunte guardado.').then(ok => { const el = document.getElementById('sg-nota'); if (ok && el) el.value = ''; }); return true; }
   const br = e.target.closest('[data-sgborrar]');
   if (br) { const id = br.dataset.sgborrar;
     if (br.hasAttribute('data-ya')) { window.SMB_CLOUD.seg.del(perfilJid, id).then(() => toast('Apunte borrado.')).catch(() => { const m = document.getElementById('sg-msg'); if (m) m.textContent = 'No se ha podido borrar.'; }); segBorrar = null; }
@@ -3677,6 +3824,7 @@ espBox.addEventListener('input', e => { if (e.target.closest('[data-fh]')) ficha
 espBox.addEventListener('click', e => {
   if (e.target.closest('[data-espclose]')) { closeCoach(); return; }
   if (perfilClick(e)) return;
+  const pji = e.target.closest('[data-pjugid]'); if (pji && espEquipo) { jugadorPerfil(pji.dataset.pjugid, espEquipo); return; }
   const tp = e.target.closest('[data-eqtipo]');
   if (tp && espEquipo && canWriteBank) { const t = espEquipo, v = tp.dataset.eqtipo, m = Object.assign({}, bank.eqTipo || {});
     if (v) m[t] = v; else delete m[t];
