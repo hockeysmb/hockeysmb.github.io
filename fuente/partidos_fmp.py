@@ -261,7 +261,7 @@ def oficiales(pagina, log, ver=False):
     try:
         pg = pagina()
         pg.goto('https://www.hockeypatines.fmp.es/', wait_until='domcontentloaded', timeout=60000)
-        pg.wait_for_timeout(4000)
+        pg.wait_for_timeout(5000)
     except Exception as e:
         log.append(f'clasificaciones oficiales: no abre la portada ({e!r})'); return out
     for idc, cat, pre, equipos in LIGAS:
@@ -309,8 +309,9 @@ def main():
         if nav['pg'] is None:
             from playwright.sync_api import sync_playwright
             nav['p'] = sync_playwright().start()
-            b = nav['p'].chromium.launch()
-            nav['pg'] = b.new_context(locale='es-ES', viewport={'width': 1400, 'height': 1000}).new_page()
+            # con el navegador «de robot» por defecto la federación no carga los datos de la liga (sondas del 17 nov)
+            b = nav['p'].chromium.launch(args=['--disable-blink-features=AutomationControlled'])
+            nav['pg'] = b.new_context(locale='es-ES', viewport={'width': 1400, 'height': 1000}, user_agent=UA).new_page()
             print('  (abriendo el navegador)')
         return nav['pg']
 
