@@ -1,7 +1,7 @@
 <title>Banco de situaciones SMB</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap">
 <style>
 /* @sistema */
 /* Layout: cabecera con filtros; tarjetas de tarea (gráfico + normas); editor a pantalla completa con herramientas, pista y texto. Cromo de la página en granate del club; el gráfico copia la simbología del libro de Oller. */
@@ -1964,6 +1964,140 @@ html { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-are
 .arc-card h3 { margin: 0 0 2px; font-size: 16px; } .arc-card p { margin: 0 0 8px; font-size: 13px; color: var(--muted, #6f6365); }
 .arc-rec { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted, #6f6365); margin-bottom: 10px; } .arc-rec b { color: var(--ink, #241c1d); font-variant-numeric: tabular-nums; }
 .arc-top { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; } .arc-top li { display: flex; justify-content: space-between; gap: 8px; } .arc-top li b { font-variant-numeric: tabular-nums; }
+/* @retransmision-inicio */
+/* ================= Retransmisión (18 nov) =================
+   Dirección 1 del lienzo «Rediseño app SMB», elegida por la DT. Solo estética: no cambia ningún comportamiento.
+   La tele deportiva: blanco, tinta, granate y dorado; títulos de marcador (Big Shoulders Display); botones
+   rectangulares; secciones separadas por una raya de tinta en vez de tarjetas con sombra; pestañas subrayadas
+   en dorado. La zona de juego (Liga, vestuario, cofres, directo) sigue con su relieve: es la frontera trabajo/juego. */
+:root {
+  --rt-tinta: #141518; --rt-dorado: var(--smb-dorado); --rt-dorado-osc: #b88a0e; --rt-marcador: #141518; --rt-marcador-txt: #ffffff;
+  --rt-sel: #141518; --rt-sel-txt: #ffffff; --rt-hoy: #fff8dc; --rt-campo: #c9cbd0;
+  --bg: #ffffff; --surface: #ffffff; --fill: #f1f2f4; --line: #e3e4e7; --muted: #55575d; --fg: #141518;
+  --accent: var(--smb-granate); --accent-2: var(--smb-granate-osc); --accent-soft: #f6e9eb;
+  --fill-accent: var(--smb-granate); --fill-accent-2: var(--smb-granate-osc);
+  --shadow: none; --shadow-up: none;
+  --r-card: 4px; --r-ctl: 4px;
+  --font-title: "Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --rt-tinta: #f2f2f3; --rt-marcador: #000000; --rt-sel: #f2f2f3; --rt-sel-txt: #141518; --rt-hoy: #2b2610; --rt-campo: #4a4d55;
+    --bg: #111214; --surface: #111214; --fill: #1f2024; --line: #2e3035; --muted: #a4a6ad; --fg: #f2f2f3;
+    --accent: var(--smb-rosa); --accent-soft: #3a2328; --fill-accent: var(--smb-granate-vivo); --fill-accent-2: #8e2435;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --rt-tinta: #f2f2f3; --rt-marcador: #000000; --rt-sel: #f2f2f3; --rt-sel-txt: #141518; --rt-hoy: #2b2610; --rt-campo: #4a4d55;
+  --bg: #111214; --surface: #111214; --fill: #1f2024; --line: #2e3035; --muted: #a4a6ad; --fg: #f2f2f3;
+  --accent: var(--smb-rosa); --accent-soft: #3a2328; --fill-accent: var(--smb-granate-vivo); --fill-accent-2: #8e2435;
+  color-scheme: dark;
+}
+body { font-family: var(--font-body); letter-spacing: 0; background: var(--bg); }
+
+/* títulos de marcador */
+h1, .vhead h1, .hello h1 { font-family: var(--font-title); font-weight: 800; letter-spacing: .005em; line-height: 1; }
+.vhead h1 { font-size: clamp(38px, 9vw, 52px); }
+.hello h1 { font-size: clamp(40px, 10vw, 56px); }
+h2, .h-sec, .ses-sec > h3, .ses-sec h3:first-child { font-family: var(--font-title); font-weight: 800; letter-spacing: .005em; color: var(--fg); }
+.h-sec { font-size: 26px; line-height: 1.05; }
+.ses-sec > h3 { font-size: 24px; line-height: 1.05; color: var(--fg); }
+.eyebrow, .nx-k, .fgroup > span, .fsel label, .hello .h-date { font-family: var(--font-display); letter-spacing: .03em; }
+.hello .h-date { font-size: 15px; color: var(--muted); }
+
+/* cabecera: blanca con la raya dorada debajo */
+.appbar { border-bottom: 0; }
+.appbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--rt-dorado); pointer-events: none; }
+.appbar::before { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.brand-t { font: 800 22px/1 var(--font-title); letter-spacing: .01em; }
+
+/* secciones: sin tarjeta ni sombra, una raya de tinta arriba */
+.ses-sec, .panel, .filters, .fbar, .ed-side, .legend {
+  background: var(--surface); border: 0; border-top: 2px solid var(--rt-tinta); border-radius: 0; box-shadow: none; padding-left: 0; padding-right: 0;
+}
+.modal-card { border-radius: 4px; box-shadow: 0 0 0 2px var(--rt-tinta), 0 18px 40px rgba(0, 0, 0, .25); }
+.tcard { border: 1px solid var(--line); border-top: 2px solid var(--rt-tinta); border-radius: 0; box-shadow: none; }
+.tcard:hover, .tcard:focus-visible { border-color: var(--rt-tinta); box-shadow: inset 0 -4px 0 var(--rt-dorado); }
+.tile { border-radius: 0; box-shadow: none; }
+
+/* filas: planas, separadas por una línea */
+.lt-row, .ag-row, .step-list li, .env-list li, .dt-todo li, .dt-row, .pick-list li, .sg-row, .old-j, .jug-legend li, .cand, .ses-jump, .pz-item, .pk-item {
+  background: transparent; border-radius: 0; border: 0; border-bottom: 1px solid var(--line);
+}
+.pk-item { border: 1px solid var(--line); border-top: 2px solid var(--rt-tinta); }
+.lt-row:hover, .lt-row:focus-visible, .pk-item:hover, .pk-item:focus-visible { box-shadow: inset 0 -4px 0 var(--rt-dorado); }
+.lt-row svg, .tile svg { border-radius: 4px; background: var(--rt-marcador); color: var(--rt-dorado); }
+.lt-row:nth-child(2) svg, .lt-row:nth-child(3) svg, .tile:nth-child(2) svg, .tile:nth-child(3) svg { background: var(--rt-marcador); }
+.ag-row.mine { box-shadow: inset 4px 0 0 var(--accent); }
+.notice { border-radius: 0; background: var(--rt-hoy); border-left: 4px solid var(--rt-dorado); }
+
+/* botones: rectangulares; el principal, dorado con tinta */
+.btn { border-radius: 4px; font: 700 17px/1.1 var(--font-display); letter-spacing: .01em; background: var(--surface); color: var(--fg); box-shadow: inset 0 0 0 2px var(--rt-tinta); }
+.btn:hover { background: var(--fill); box-shadow: inset 0 0 0 2px var(--rt-tinta); }
+.ses-sec .btn:not(.primary), .task .btn:not(.primary), .modal-card .btn:not(.primary), .fbar .btn:not(.primary), .panel .btn:not(.primary), .ed-side .btn:not(.primary), .filters .btn:not(.primary) { background: var(--surface); box-shadow: inset 0 0 0 2px var(--rt-tinta); }
+.ses-sec .btn:not(.primary):hover, .modal-card .btn:not(.primary):hover, .fbar .btn:not(.primary):hover { background: var(--fill); }
+.btn.small { border-radius: 4px; font-size: 15.5px; box-shadow: inset 0 0 0 1.5px var(--rt-tinta); }
+.btn.primary, .btn.primary:hover, .ses-sec .btn.primary { background: var(--rt-dorado); color: #141518; box-shadow: none; }
+.btn.primary:hover { background: #ffd84d; }
+.btn.primary:active { background: #f2c21f; }
+.btn.ghost, .btn.ghost:hover, .ses-sec .btn.ghost, .modal-card .btn.ghost { background: transparent; box-shadow: none; color: var(--fg); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+.btn.danger, .ses-sec .btn.danger { box-shadow: inset 0 0 0 2px var(--smb-mal); color: var(--smb-mal); background: var(--surface); }
+.btn.big { border-radius: 4px; font-size: 20px; }
+.btn:focus-visible, .chip:focus-visible, .seg button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* chips: rectángulos; elegido, marcador con filo dorado */
+.chip, .chip.sm { border-radius: 4px; background: var(--fill); color: var(--fg); font-weight: 600; }
+.chip[aria-pressed="true"], .chip.sm[aria-pressed="true"] { background: var(--rt-sel); color: var(--rt-sel-txt); box-shadow: inset 0 -3px 0 var(--rt-dorado); }
+
+/* pestañas: subrayadas, sin cápsula */
+.seg { background: transparent; padding: 0; border-radius: 0; box-shadow: inset 0 -1px 0 var(--line); gap: 0; }
+.seg button, div.seg button { border-radius: 0; background: transparent; color: var(--muted); font: 700 17px/1.1 var(--font-display); letter-spacing: .01em; padding: 10px 14px; }
+.seg button[aria-pressed="true"], div.seg button[aria-pressed="true"] { background: transparent; color: var(--fg); box-shadow: inset 0 -4px 0 var(--rt-dorado); }
+
+/* pasos de la sesión: barra de segmentos */
+.stepper .step { border-radius: 0; border: 0; background: transparent; box-shadow: inset 0 -4px 0 var(--line); padding: 8px 10px 10px 4px; font: 700 15px/1 var(--font-display); color: var(--muted); }
+.stepper .step-n { border-radius: 2px; }
+.stepper .step.on { background: transparent; color: var(--fg); box-shadow: inset 0 -4px 0 var(--rt-dorado); }
+.stepper .step.on .step-n { background: var(--rt-sel); border-color: var(--rt-sel); color: var(--rt-sel-txt); }
+.stepper .step.done { box-shadow: inset 0 -4px 0 var(--rt-tinta); }
+.paso-de { font: 800 22px/1 var(--font-title); color: var(--fg); }
+
+/* campos: planos, con borde fino que se oscurece al escribir */
+.cc input, .cc select, .search, .fsel select, .ses-f input, .ses-f textarea, .ses-f select, .ed-side input, .ed-side textarea, .modal-card input, .modal-card textarea, .row-in input, .pick-q, .pz-note {
+  border-radius: 4px; background: var(--surface); border: 1.5px solid var(--rt-campo);
+}
+.cc input:focus, .cc select:focus, .search:focus, .fsel select:focus, .ses-f input:focus, .ses-f textarea:focus, .ses-f select:focus, .ed-side input:focus, .ed-side textarea:focus, .modal-card input:focus, .modal-card textarea:focus, .row-in input:focus { border-color: var(--rt-tinta); background: var(--surface); }
+
+/* barra de abajo: la sección activa con el filo dorado arriba */
+.nav button[aria-current="page"] { color: var(--fg); }
+@media (max-width: 760px) {
+  .nav { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--line); }
+  .nav button { border-radius: 0; }
+  .nav button[aria-current="page"] { box-shadow: inset 0 4px 0 var(--rt-dorado); font-weight: 800; }
+}
+@media (min-width: 761px) { .nav button[aria-current="page"] { background: transparent; box-shadow: inset 0 -4px 0 var(--rt-dorado); border-radius: 0; } }
+
+/* cifras: números de marcador */
+.hc, .hc small { font-family: var(--font-display); }
+.hc { border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: 700; }
+.next-ses h2 { font-family: var(--font-title); }
+
+/* avisos flotantes: rótulo de marcador */
+.toast { background: var(--rt-marcador); color: #ffffff; border-radius: 4px; box-shadow: inset 4px 0 0 var(--rt-dorado), 0 8px 24px rgba(0, 0, 0, .3); padding-left: 20px; }
+/* calendario: casillas rectas; hoy, en dorado */
+.cal-cell { border-radius: 2px; }
+.cal-n { border-radius: 2px; }
+.cal-cell.today .cal-n { background: var(--rt-dorado); color: #141518; font-weight: 800; }
+.cal-cell.sel { border-color: var(--rt-tinta); box-shadow: inset 0 0 0 1px var(--rt-tinta); background: var(--rt-hoy); }
+/* iniciales y desplegables: esquinas rectas */
+.jg-ini { border-radius: 2px; }
+.eq-fila .eq-esc, .eq-esc.grande { border-radius: 2px; }
+.eq-esc { border-radius: 2px; background: var(--rt-marcador); color: var(--rt-dorado); font-family: var(--font-display); font-weight: 700; }
+details.ses-sec, .ses-sec details, .det, .eq-sec details { border-radius: 2px; }
+/* @retransmision-fin */
 </style>
 
 <div class="app" id="app">

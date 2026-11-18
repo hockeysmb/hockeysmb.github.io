@@ -768,3 +768,12 @@ Petición de la DT: poder añadir a mano contenidos o fundamentos al preparar la
 - **Filtro al elegir ejercicio:** fila «Que trabaje: Cualquiera / fundamentos del día» (`pick.fund`, `[data-pk-fund]`), con recuento. Un fundamento escrito a mano no está marcado en ningún ejercicio: el vacío lo explica.
 - **Ejercicios:** fila `#f-dia` con los fundamentos (de la lista del club) de tu próxima sesión con fecha, o de la última que tocaste (`fundProx()`). Un toque pone ese contenido en el filtro «Qué se trabaja»; otro lo quita.
 - **Prueba:** `art_contenidos`.
+
+## Estética «Retransmisión» (18 nov)
+
+Dirección 1 del lienzo «Rediseño app SMB», elegida por la DT («no me disgusta… no cambiemos nada más que el diseño»). Es solo estética: una capa de CSS al final del `<style>` de la plantilla, entre `/* @retransmision-inicio */` y `/* @retransmision-fin */`. No toca HTML ni JS, así que quitarla deja la app como estaba.
+- **Letras:** títulos con Big Shoulders Display (`--font-title`; añadida al enlace de Google Fonts), etiquetas y botones con Barlow Condensed (`--font-display`), texto con Barlow (`--font-body`). Inter queda solo de reserva.
+- **Color:** fondo blanco (`--bg` = `--surface`), tinta `#141518`, granate para enlaces y acentos, dorado para lo principal. Tokens propios `--rt-*` (tinta, dorado, marcador, selección, «hoy», borde de campo), redefinidos en los dos bloques de oscuro.
+- **Forma:** sin tarjetas ni sombras: las secciones (`.ses-sec`, `.panel`, `.fbar`…) llevan una raya de tinta de 2 px arriba; esquinas de 4 px (2 px en casillas e iniciales). Botón principal dorado con texto de tinta; secundario con borde de tinta de 2 px; `ghost` subrayado. Chips rectos; el elegido, negro con filo dorado abajo. Pestañas (`.seg`) subrayadas en dorado, sin cápsula. Pasos de la sesión como barra de segmentos. Barra de abajo con filo dorado arriba en la sección activa; cabecera con raya dorada (`.appbar::after`; un `box-shadow` no se ve porque el `::before` de la cabecera lo tapa). Avisos flotantes (`.toast`) como rótulo negro con filo dorado.
+- **Zona de juego** (`#v-liga`, `#v-vestuario`, cofres, directo): sin cambios, con su relieve. Sus reglas van por id y ganan a esta capa.
+- **Revisar capturas:** en este contenedor no se llega a Google Fonts; para ver las letras de verdad hay que servirlas en local (paquetes `@fontsource/*` y una ruta de Playwright que responda a `fonts.googleapis.com`).
