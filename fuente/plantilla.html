@@ -225,7 +225,7 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 /* la convocatoria: tocar para entrar y salir */
 .cv-list { list-style: none; margin: 0 0 var(--smb-aire-3); padding: 0; display: grid; gap: 6px; }
 .cv-row { width: 100%; display: flex; align-items: center; gap: var(--smb-aire-3); min-height: var(--smb-tocar); padding: 6px 12px;
-          border: 1px solid var(--line); border-radius: var(--smb-r-control); background: none; color: inherit; text-align: left; cursor: pointer; opacity: .62; }
+          border: 1px solid var(--line); border-radius: var(--smb-r-control); background: none; color: inherit; text-align: left; cursor: pointer;  }
 .cv-row.si { opacity: 1; border-color: transparent; background: var(--accent-soft); }
 .cv-row:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .cv-mark { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
@@ -373,9 +373,40 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .pf-h.ev::before { background: var(--accent); border-color: var(--accent); } .pf-h.nota::before { background: var(--surface); border-color: var(--accent); }
 .pf-h.obj::before { background: var(--smb-bien); border-color: var(--smb-bien); }
 .pf-h small { color: var(--muted); font-size: 12px; } .pf-h p { margin: 0; font-size: 13.5px; line-height: 1.45; }
-.pf-h .linkb { justify-self: start; font-size: 12.5px; }
+.pf-h .linkb { justify-self: start; font-size: 13px; min-height: var(--smb-tocar-fila); min-width: var(--smb-tocar); display: inline-flex; align-items: center; }
 /* equipo: tabla de evolución individual y rúbrica */
 .eq-box.ancho { grid-column: 1 / -1; }
+/* 18 nov · accesibilidad y acabado del módulo Equipos (medido con auditoria_equipos.py) */
+.seg button { min-height: var(--smb-tocar-fila); }
+.eq-tabs button, .fh-pasos button { min-height: var(--smb-tocar); }
+#espacio :is(button, a, summary, input, textarea, [tabindex]):focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+#espacio details > summary { min-height: var(--smb-tocar); display: flex; align-items: center; gap: 6px; list-style: none; }
+#espacio details > summary::-webkit-details-marker { display: none; }
+#espacio details > summary::before { content: '›'; flex: none; width: 14px; font-size: 20px; line-height: 1; color: var(--muted); transition: transform .15s; }
+#espacio details[open] > summary::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { #espacio details > summary::before { transition: none; } }
+.eq-ult button { min-height: var(--smb-tocar); }
+.pf-mas { order: 2; min-height: var(--smb-tocar); min-width: var(--smb-tocar); margin: -10px -6px -10px auto; padding: 0 6px; }
+.eq-box h3 { flex-wrap: wrap; }
+.eq-box h3 small { font-size: 12.5px; }
+.eq-box h3 small.meta { order: 3; flex-basis: 100%; padding-left: 32px; line-height: 1.3; }
+.est, .pf-chips span { font-size: 12.5px; }
+.pf-tabla thead th small { font-size: 12px; }
+.eq-ind td button { display: flex; align-items: center; min-height: var(--smb-tocar-fila); width: 100%; padding: 0; }
+.eq-ind tbody td { padding-block: 0; height: var(--smb-tocar-fila); }
+.eq-ind, .pt-clas, .pf-tabla { border-radius: 8px; }
+.chev { flex: none; font-size: 22px; line-height: 1; color: var(--muted); }
+.pt-caja .pt-rival b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.fh-eop.si { background: var(--fill-accent); }
+.btn.danger { background: var(--smb-mal-suave); color: var(--smb-mal); box-shadow: inset 0 0 0 1px currentColor; }
+.sg-lab { display: block; margin: 4px 0 -2px; font: 600 13px/1.3 var(--font-body); color: var(--muted); }
+#espacio :is(input[type=text], input[type=date], textarea) { width: 100%; box-sizing: border-box; min-height: var(--smb-tocar); padding: 10px 12px;
+  font: 15px/1.4 var(--font-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-ctl); }
+#espacio textarea { resize: vertical; }
+.pf-apunte { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.pf-apunte .btn { justify-self: end; }
+.sg-nuevo .btn { justify-self: start; }
+
 /* partidos del equipo: balance y clasificación */
 .pt-bal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
 .pt-bal span { display: grid; gap: 2px; padding: 8px 4px; border-radius: var(--smb-r-control); background: var(--fill); font-size: 12px; color: var(--muted); }
@@ -408,13 +439,15 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
 .eq-focos li { display: flex; justify-content: space-between; gap: 8px; } .eq-focos b { font-variant-numeric: tabular-nums; color: var(--smb-ojo); }
 .sg-h { margin: 14px 0 6px; font: 700 14px/1.2 var(--font-body); }
 .sg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.sg-fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 8px 10px; border-radius: var(--smb-r-control); background: var(--surface); }
-.sg-fila > span:first-child { font-weight: 600; font-size: 14px; }
-.sg-par { display: grid; grid-template-columns: 4.2em 1fr; align-items: center; gap: 6px; }
-.sg-par small { color: var(--muted); font-size: 12px; }
+.sg-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px 12px; border-radius: var(--smb-r-control); background: var(--surface); }
+.sg-fila > span:first-child { grid-column: 1 / -1; font-weight: 600; font-size: 14px; }
+.sg-par { display: grid; grid-template-columns: 1fr; gap: 3px; }
+.sg-par small { color: var(--muted); font-size: 12px; font-weight: 600; }
 .sg-par .fh-esc { margin: 0; }
-.sg-fila > .sg-par:only-of-type, .sg-fila .sg-par:not(:has(small)) { grid-template-columns: 1fr; }
-@media (min-width: 640px) { .sg-fila { grid-template-columns: minmax(0, 1fr) 200px 200px; align-items: center; } }
+/* la técnica: una sola escala, al lado del nombre */
+.sg-fila.rub { grid-template-columns: minmax(0, 1fr) minmax(150px, 46%); align-items: center; }
+.sg-fila.rub > span:first-child { grid-column: auto; }
+@media (min-width: 640px) { .sg-fila { grid-template-columns: minmax(0, 1fr) minmax(170px, 220px) minmax(170px, 220px); align-items: end; } .sg-fila > span:first-child { grid-column: auto; align-self: center; } .sg-fila.rub { grid-template-columns: minmax(0, 1fr) minmax(170px, 220px); align-items: center; } }
 .sg-matriz { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--smb-r-control); background: var(--accent-soft); font-weight: 600; font-size: 14px; }
 .sg-obj, .sg-nota, .sg-ev { padding: 10px 12px; border-radius: var(--smb-r-control); background: var(--surface); display: grid; gap: 6px; }
 .sg-obj > span:first-child { display: grid; gap: 2px; } .sg-obj small { color: var(--muted); font-size: 12.5px; }
@@ -429,7 +462,7 @@ h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1; color: var(--accent); fo
   body.eq-dock #espacio { top: var(--eq-top, 60px); left: calc(max(0px, calc(50vw - 660px)) + 400px); right: max(0px, calc(50vw - 660px));
     border-left: 1px solid var(--line); padding-top: 12px; z-index: 30; }
   body.eq-dock #espacio .esp-top { display: none; }
-  body.eq-dock #espacio .esp-top.pf-top { display: block; margin-bottom: 8px; }   /* desde un jugador sí hace falta volver al equipo */
+  body.eq-dock #espacio .esp-top.pf-top { display: block; margin-bottom: 8px; }   /* desde un jugador o un partido sí hace falta volver al equipo */
 }
 /* migración: la lista de dudas */
 .pl-mig { padding: var(--smb-aire-3); margin-bottom: var(--smb-aire-3); border-radius: var(--smb-r-control); background: var(--accent-soft); }
@@ -1339,6 +1372,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible, select:focus-visib
     --bg: #0f0d0e; --surface: #1d1a1b; --fill: #2a2628; --line: #342f31; --muted: #aaa0a2;
     --fill-accent: var(--smb-granate-vivo); --fill-accent-2: #8e2435; --fill-edge: rgba(255, 255, 255, .16);
     --accent: var(--smb-rosa); --accent-2: #b25a68; --accent-soft: #3a2328; --shadow: none; --shadow-up: 0 0 0 1px #3a3436; --g-edge: #3a3436;
+    --smb-bien: #86d3a3; --smb-bien-suave: #1d3326; --smb-ojo: #f1c46b; --smb-ojo-suave: #3a2e14; --smb-mal: #f4a097; --smb-mal-suave: #422220;
     color-scheme: dark;
   }
 }
@@ -1346,6 +1380,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible, select:focus-visib
   --bg: #0f0d0e; --surface: #1d1a1b; --fill: #2a2628; --line: #342f31; --muted: #aaa0a2;
   --fill-accent: var(--smb-granate-vivo); --fill-accent-2: #8e2435; --fill-edge: rgba(255, 255, 255, .16);
   --accent: var(--smb-rosa); --accent-2: #b25a68; --accent-soft: #3a2328; --shadow: none; --shadow-up: 0 0 0 1px #3a3436; --g-edge: #3a3436;
+    --smb-bien: #86d3a3; --smb-bien-suave: #1d3326; --smb-ojo: #f1c46b; --smb-ojo-suave: #3a2e14; --smb-mal: #f4a097; --smb-mal-suave: #422220;
   color-scheme: dark;
 }
 body { font-size: 15.5px; -webkit-font-smoothing: antialiased; letter-spacing: -.005em; }
@@ -3145,12 +3180,12 @@ function renderEquipos() {
   const box = document.getElementById('v-equipos');
   const porEnt = new Map();
   L.forEach(x => x.coaches.forEach(c => { if (!porEnt.has(c)) porEnt.set(c, []); porEnt.get(c).push(x.t); }));
-  const tabs = `<div class="seg" role="tablist" aria-label="Qué ver">${[['equipos', `Equipos · ${L.length}`], ['gente', `Entrenadores · ${porEnt.size}`]].map(([k, l]) => `<button type="button" data-eqtab="${k}" aria-pressed="${eqTab === k}">${l}</button>`).join('')}</div>`;
+  const tabs = `<div class="seg" role="group" aria-label="Qué ver">${[['equipos', `Equipos · ${L.length}`], ['gente', `Entrenadores · ${porEnt.size}`]].map(([k, l]) => `<button type="button" data-eqtab="${k}" aria-pressed="${eqTab === k}">${l}</button>`).join('')}</div>`;
   const fr = g => `${DIA_C[g.dia]} ${g.ini}`;
   const cuerpo = eqTab === 'gente'
     ? `<ul class="eq-cards">${[...porEnt.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, T]) => {
         const co = coachOf(c) || (bank.coaches || []).find(x => isMe(c, x.name));
-        return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, co ? levelOf(clubPoints(co.name)) : 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b><small>${esc(T.join(' · '))}</small></span><span aria-hidden="true">→</span></button></li>`;
+        return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, co ? levelOf(clubPoints(co.name)) : 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b><small>${esc(T.join(' · '))}</small></span><span class="chev" aria-hidden="true">›</span></button></li>`;
       }).join('')}</ul>`
     : (() => {
         // filas de una línea, agrupadas por categoría y plegables: la lista entera cabe en poco más de una pantalla
@@ -3173,7 +3208,7 @@ function renderEquipos() {
         const kpis = [[L.length, 'equipos'], [plantTotal(), 'jugadores'], [(partidos || []).filter(p => p.fecha >= hoy && p.fecha <= d7).length, 'partidos esta semana'],
           ...(jugados.length ? [[Math.round(100 * conFicha / jugados.length) + ' %', 'partidos con ficha']] : [])];
         const filtros = [['todos', 'Todos'], ...(mios.size ? [['mios', 'Mis equipos']] : []), ['comp', 'Competición'], ['form', 'Formación']];
-        return `<div class="eq-kpis">${kpis.map(([n, l]) => `<div class="eq-kpi"><b>${n}</b><small>${l}</small></div>`).join('')}</div>
+        return `<div class="eq-kpis" tabindex="0" role="region" aria-label="Cifras de los equipos">${kpis.map(([n, l]) => `<div class="eq-kpi"><b>${n}</b><small>${l}</small></div>`).join('')}</div>
           <div class="eq-filtros">${filtros.map(([k, l]) => `<button class="chip sm" type="button" data-eqfil="${k}" aria-pressed="${eqFiltro === k}">${l}</button>`).join('')}</div>
           ${cats.length ? cats.map(c => { const T = V.filter(x => catDe(x.t) === c), sem = T.filter(x => { const E = estadoEq(x.t); return E.prox && E.prox.fecha <= d7; }).length;
             return `<details class="eq-grupo" data-cat="${esc(c)}"${abierta(c) ? ' open' : ''}><summary><b>${esc(c)}</b><small>${T.length} ${T.length === 1 ? 'equipo' : 'equipos'}${sem ? ` · ${sem} ${sem === 1 ? 'juega' : 'juegan'} esta semana` : ''}</small></summary>
@@ -3245,6 +3280,7 @@ function openEquipo(t, sub, quieto) {
     const actEq = segActivo() && (canWriteBank || llevoEq(t)), PJ = P.filter(j => j.id);
     if (actEq && PJ.length) segEqCargar(t);
     const SE = actEq && segEq.t === t && segEq.por ? segEq.por : null;
+    const hayEv = !!SE && PJ.some(j => (SE[j.id] || []).some(x => x.tipo === 'ev'));
     const ultEv = j => SE ? ((SE[j.id] || []).filter(x => x.tipo === 'ev').sort((a, b) => (b.ts || 0) - (a.ts || 0))[0] || null) : null;
     if (PJ.length) {
       const FT = (bank.fichas || []).filter(f => f.eq === t && Array.isArray(f.conv));
@@ -3252,9 +3288,9 @@ function openEquipo(t, sub, quieto) {
         const ua = v => FT.filter(f => Object.entries(f.unoa || {}).some(([k, w]) => normName(k) === nn && w === v)).length;
         const ev = ultEv(j), n = ev && evNums(ev);
         return `<tr><td><button type="button" data-pjugid="${esc(j.id)}">${esc(j.n)}</button></td><td>${FT.length ? fue + '/' + FT.length : '—'}</td><td>${ua('bien') || ua('mej') ? `<span class="fh-bien">${ua('bien')}</span> · <span class="fh-mej">${ua('mej')}</span>` : '—'}</td>
-          ${SE ? `<td>${n ? coma(n.d) : '—'}</td><td>${n ? coma(n.e) : '—'}</td><td>${n ? coma(n.tec) : '—'}</td><td>${ev && ev.ven === segVenHoy() ? '<span class="est ok">Al día</span>' : '<span class="est no">Pendiente</span>'}</td>` : ''}</tr>`; };
-      cajas.push(caja('☰', 'Jugadores', `<div class="eq-ind"><table><thead><tr><th>Jugador</th><th>Convocado</th><th>Uno a uno</th>${SE ? '<th>Decide</th><th>Ejecuta</th><th>Técnica</th><th>Evaluación</th>' : ''}</tr></thead><tbody>${PJ.map(fila).join('')}</tbody></table></div>
-        <p class="sub eq-dato">Convocado: de los partidos con ficha. Uno a uno: veces bien · a mejorar.${SE ? ` Evaluación de ${esc(venDe(segVenHoy()).toLowerCase())}.` : actEq ? ' Cargando evaluaciones…' : ''} Toca un nombre para ver su perfil.</p>`, ' ancho'));
+          ${hayEv ? `<td>${n ? coma(n.d) : '—'}</td><td>${n ? coma(n.e) : '—'}</td><td>${n ? coma(n.tec) : '—'}</td><td>${ev && ev.ven === segVenHoy() ? '<span class="est ok">Al día</span>' : '<span class="est no">Pendiente</span>'}</td>` : ''}</tr>`; };
+      cajas.push(caja('☰', 'Jugadores', `<div class="eq-ind" tabindex="0" role="region" aria-label="Jugadores del equipo"><table><thead><tr><th>Jugador</th><th>Convocado</th><th>Uno a uno</th>${hayEv ? '<th>Decide</th><th>Ejecuta</th><th>Técnica</th><th>Evaluación</th>' : ''}</tr></thead><tbody>${PJ.map(fila).join('')}</tbody></table></div>
+        <p class="sub eq-dato">Convocado: de los partidos con ficha. Uno a uno: veces bien · a mejorar.${hayEv ? ` Evaluación de ${esc(venDe(segVenHoy()).toLowerCase())}.` : SE ? ' Todavía nadie evaluado.' : actEq ? ' Cargando evaluaciones…' : ''} Toca un nombre para ver su perfil.</p>`, ' ancho'));
     }
     if (SE) {
       const evs = PJ.map(ultEv).filter(Boolean);
@@ -3282,7 +3318,7 @@ function openEquipo(t, sub, quieto) {
   }
   else if (eqSub === 'plant') cuerpo = P.length
     ? `<ul class="jg-list">${P.map((p, i) => { const otros = tambienEn(p, t);
-        return `<li><button class="jg-row" type="button" data-pjug="${i}"><span class="jg-ini" aria-hidden="true">${esc(iniciales(p.n))}</span><span class="jg-txt"><b>${esc(p.n)}</b><small>${[p.a ? (p.a === 'Senior' ? 'Senior' : p.a) : '', p.p ? 'Portero' : '', otros.length ? 'También en ' + otros.join(' y ') : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small></span><span aria-hidden="true">→</span></button></li>`;
+        return `<li><button class="jg-row" type="button" data-pjug="${i}"><span class="jg-ini" aria-hidden="true">${esc(iniciales(p.n))}</span><span class="jg-txt"><b>${esc(p.n)}</b><small>${[p.a ? (p.a === 'Senior' ? 'Senior' : p.a) : '', p.p ? 'Portero' : '', otros.length ? 'También en ' + otros.join(' y ') : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small></span><span class="chev" aria-hidden="true">›</span></button></li>`;
       }).join('')}</ul>
       ${puedoPlantilla(t) ? '<div class="actions"><button class="btn" type="button" data-palta>Añadir jugador</button></div>' : ''}
       <p class="sub">${P.filter(p => p.p).length ? P.filter(p => p.p).length + ' portero. ' : ''}Toca un nombre para ver su ficha${puedoPlantilla(t) ? ' o cambiarlo' : ''}.</p>
@@ -3322,15 +3358,15 @@ function openEquipo(t, sub, quieto) {
            <p class="sub eq-dato">${GF} goles a favor y ${GC} en contra${pos >= 0 ? ` · <b>${esc(C.tabla[pos].pos || pos + 1)}.º de ${C.tabla.length}</b>` : ''}.</p>`
         : '<p class="sub">Todavía sin resultados.</p>'));
       clasifsDe(t).forEach(C => {
-        const T = C.tabla, n = T.length, pos = T.findIndex(x => normName(x.smb) === normName(t));
+        const T = C.tabla.filter(x => !/^descanso\b/i.test(String(x.n).trim())), n = T.length, pos = T.findIndex(x => normName(x.smb) === normName(t));
         // con muchas filas, las de arriba y las de alrededor del equipo; la tabla entera, plegada
         const ver = n <= 8 ? T.map((_, k) => k) : [...new Set([0, 1, 2, pos - 1, pos, pos + 1].filter(k => k >= 0 && k < n))].sort((a, b) => a - b);
         const tr = k => { const x = T[k], yo = normName(x.smb) === normName(t), otro = !yo && x.smb;
           return `<tr class="${yo ? 'yo' : otro ? 'smb' : ''}"><td>${esc(x.pos || k + 1)}</td><td>${esc(x.n)}</td><td>${x.pj}</td><td>${x.g}</td><td>${x.e}</td><td>${x.p}</td><td>${x.gf - x.gc > 0 ? '+' : ''}${x.gf - x.gc}</td><td><b>${x.pts}</b></td></tr>`; };
         const cab = '<thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>';
         const cortes = ver.map((k, z) => (z && k !== ver[z - 1] + 1 ? '<tr class="corte"><td colspan="8">···</td></tr>' : '') + tr(k)).join('');
-        cajas.push(box('≡', `Clasificación <small>· ${esc(C.cat)}</small>`, `<div class="pt-clas"><table>${cab}<tbody>${cortes}</tbody></table></div>
-          ${n > ver.length ? `<details class="dt-more"><summary>Ver la tabla entera · ${n} equipos</summary><div class="pt-clas"><table>${cab}<tbody>${T.map((_, k) => tr(k)).join('')}</tbody></table></div></details>` : ''}
+        cajas.push(box('≡', `Clasificación <small class="meta">${esc(C.cat)}</small>`, `<div class="pt-clas" tabindex="0" role="region" aria-label="Clasificación"><table>${cab}<tbody>${cortes}</tbody></table></div>
+          ${n > ver.length ? `<details class="dt-more"><summary>Ver la tabla entera · ${n} equipos</summary><div class="pt-clas" tabindex="0" role="region" aria-label="Clasificación completa"><table>${cab}<tbody>${T.map((_, k) => tr(k)).join('')}</tbody></table></div></details>` : ''}
           <p class="sub eq-dato">${C.oficial ? 'La de la federación' : 'Calculada con los resultados de la federación (3 puntos la victoria y 1 el empate; a igualdad, diferencia de goles), porque hoy no se ha podido leer la oficial'}${partidosAct ? ', al ' + esc(fmtShort(partidosAct)) : ''}. <a href="https://www.hockeypatines.fmp.es/?liga=${esc(C.liga)}&vista=clasificaciones" target="_blank" rel="noopener">Ver en la federación</a>.</p>`, ' ancho'));
       });
       if (fut.length) cajas.push(box('→', `Lo que viene <small>· ${fut.length}</small>`, lista(fut, 3, 'Ver los siguientes'), ' pt-caja'));
@@ -3344,7 +3380,7 @@ function openEquipo(t, sub, quieto) {
     <ul class="pts-list">${x.franjas.map(g => `<li><span>${esc(fr(g))}</span><span>${esc(hzTeams(g).join(' + '))}</span></li>`).join('') || '<li><span>No está en el horario.</span></li>'}</ul>
     <h2 class="h-sec">Entrenadores</h2>
     <ul class="eq-cards">${x.coaches.map(c => { const co = coachOf(c) || (bank.coaches || []).find(y => isMe(c, y.name));
-      return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b></span><span aria-hidden="true">→</span></button></li>`; }).join('') || '<li><p class="sub">Nadie asignado todavía.</p></li>'}</ul>
+      return `<li><button class="eq-card" type="button" data-coach="${esc(c)}"><span class="eq-av">${avatarSVG(co ? co.avatar : null, 0)}</span><span class="eq-txt"><b>${esc(co ? co.name : c)}</b></span><span class="chev" aria-hidden="true">›</span></button></li>`; }).join('') || '<li><p class="sub">Nadie asignado todavía.</p></li>'}</ul>
     <h2 class="h-sec">Sus sesiones</h2>
     ${ses.length ? `<div class="ses-rows mini">${ses.slice(0, 12).map(y => `<button class="ses-row" type="button" data-espses="${esc(y.id)}"><span class="ses-thumb">${(y.s.bloques || []).some(b => b && b.task) ? diagramSVG(((y.s.bloques || []).find(b => b && b.task) || {}).task.diagram, '') : '<span class="ses-empty">Sin ejercicio</span>'}</span><span class="ses-bn">${esc(y.autor || '')}</span><span>${esc(y.s.fecha ? fmtShort(y.s.fecha) : '')}</span></button>`).join('')}</div>`
       : '<p class="sub">Todavía no hay sesiones compartidas de este equipo.</p>'}`;
@@ -3352,7 +3388,7 @@ function openEquipo(t, sub, quieto) {
   espBox.innerHTML = `<div class="esp-top"><button class="pb-back" type="button" data-espclose><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Volver</button></div>
     <div class="eq-cab"><span class="eq-esc grande" aria-hidden="true">${esc(eqSigla(t))}</span>
       <div><h1>${esc(t)}</h1><p class="sub">${[tipoDe(t) ? TIPO[tipoDe(t)] : '', catDe(t), P.length ? P.length + (P.length === 1 ? ' jugador' : ' jugadores') : '', x.coaches.length ? x.coaches.join(' y ') : (x.franjas.length ? 'sin entrenador' : 'sin franja propia')].filter(Boolean).map(esc).join(' · ')}</p></div></div>
-    <div class="seg eq-tabs" role="tablist" aria-label="Qué ver del equipo">${tabs.map(([k, l]) => `<button type="button" data-eqsub="${k}" aria-pressed="${eqSub === k}">${l}</button>`).join('')}</div>
+    <div class="seg eq-tabs" role="group" aria-label="Qué ver del equipo">${tabs.map(([k, l]) => `<button type="button" data-eqsub="${k}" aria-pressed="${eqSub === k}">${l}</button>`).join('')}</div>
     ${eqSub === 'resumen' || (eqSub === 'part' && PT.length) ? cuerpo : `<section class="ses-sec">${cuerpo}</section>`}`;
   const dock = view.zone === 'equipos' && anchoEq();
   eqDock(dock);
@@ -3488,7 +3524,7 @@ function jugadorPerfil(jid, t, quieto) {
     const cajas = [];
     if (act) {
       const ult = EV[0], n = ult && evNums(ult);
-      cajas.push(caja('✓', `Evaluación${ult ? ` <small>· ${esc(venDe(ult.ven).toLowerCase())}, ${esc(fechaTs(ult.ts))}</small>` : ''}`, ult
+      cajas.push(caja('✓', `Evaluación${ult ? ` <small class="meta">${esc(venDe(ult.ven))}, ${esc(fechaTs(ult.ts))}</small>` : ''}`, ult
         ? `${barras3(EV_FILAS, n)}${n.txt ? `<p class="sg-matriz">${esc(n.txt)}</p>` : ''}<button class="btn" type="button" data-ptab="evaluar">Nueva evaluación</button>`
         : `<p class="sub">Sin evaluar todavía. Se evalúa con las situaciones de su categoría: decide y ejecuta, de 1 a 3, y la técnica.</p><button class="btn primary" type="button" data-ptab="evaluar">Evaluar</button>`, ' pf-ev', ult ? 'evol' : ''));
       cajas.push(caja('◎', 'Objetivos activos', activos.length ? `<ul class="pf-obj">${activos.map(objLi).join('')}</ul>` : '<p class="sub">Ninguno. Como mucho, dos a la vez.</p>', '', 'obj'));
@@ -3510,7 +3546,7 @@ function jugadorPerfil(jid, t, quieto) {
     const EVc = EV.slice().reverse();
     const cols = EVc.slice(-4);
     cuerpo = EVc.length ? `${EVc.length > 1 ? `<section class="eq-box">${evolSVG(EVc)}</section>` : '<p class="sub">Con una sola evaluación todavía no hay evolución: sale a partir de la segunda toma.</p>'}
-      <div class="pf-tabla"><table><thead><tr><th></th>${cols.map(ev => `<th>${esc(venDe(ev.ven).split(' ')[0])}<small>${esc(fechaTs(ev.ts))}</small></th>`).join('')}</tr></thead>
+      <div class="pf-tabla" tabindex="0" role="region" aria-label="Evolución por toma"><table><thead><tr><th></th>${cols.map(ev => `<th>${esc(venDe(ev.ven).split(' ')[0])}<small>${esc(fechaTs(ev.ts))}</small></th>`).join('')}</tr></thead>
       <tbody>${EV_FILAS.map(([k, l]) => `<tr><th>${esc(l)}</th>${cols.map((ev, i) => { const v = evNums(ev)[k], a = i ? evNums(cols[i - 1])[k] : null;
         return `<td>${coma(v)}${v != null && a != null ? `<span class="pf-fl ${v > a ? 'sube' : v < a ? 'baja' : ''}">${v > a ? '↑' : v < a ? '↓' : '='}</span>` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
       <h2 class="h-sec">Situación por situación, la última vez</h2>
@@ -3529,13 +3565,13 @@ function jugadorPerfil(jid, t, quieto) {
         return `<li class="sg-fila"><span>${esc(n)}</span><span class="sg-par"><small>Decide</small>${tres(`data-sgd="${i}" data-v`, x.d)}</span><span class="sg-par"><small>Ejecuta</small>${tres(`data-sge="${i}" data-v`, x.e)}</span></li>`; }).join('')}</ul>
       ${M ? `<p class="sg-matriz">${esc(M.txt)}</p>` : ''}
       <h3 class="sg-h">Técnica</h3>
-      <ul class="sg-list">${SEG_RUB.map(([k, l]) => `<li class="sg-fila"><span>${esc(l)}</span><span class="sg-par">${tres(`data-sgr="${k}" data-v`, F.rub[k])}</span></li>`).join('')}</ul>
+      <ul class="sg-list">${SEG_RUB.map(([k, l]) => `<li class="sg-fila rub"><span>${esc(l)}</span><span class="sg-par">${tres(`data-sgr="${k}" data-v`, F.rub[k])}</span></li>`).join('')}</ul>
       <details class="fh-mas"${F.quede ? ' open' : ''}><summary>Añadir una frase</summary><input type="text" maxlength="160" data-sgq value="${esc(F.quede)}" placeholder="Qué entrenar con él, en una línea"></details>
       <div class="fh-nav"><button class="btn" type="button" data-ptab="resumen">Cancelar</button><button class="btn primary" type="button" data-sgguardar${sitArr.length || Object.keys(F.rub).length ? '' : ' disabled'}>Guardar evaluación</button></div>
       <p class="sub" id="sg-msg" role="status"></p>`;
   } else if (perfilTab === 'obj') {
     cuerpo = `${activos.length ? `<ul class="sg-list">${activos.map(o => `<li class="sg-obj"><span><b>${esc(o.txt)}</b><small>revisar el ${esc(fmtShort(o.rev))} · ${quien(o)}</small></span><span class="row"><button class="btn" type="button" data-sgobj="${esc(o.id)}" data-est="logrado">Logrado</button><button class="btn" type="button" data-sgobj="${esc(o.id)}" data-est="aparcado">Aparcar</button></span></li>`).join('')}</ul>` : '<p class="sub">Ninguno activo.</p>'}
-      ${activos.length < 2 ? `<div class="sg-nuevo"><input type="text" maxlength="120" id="sg-objtxt" placeholder="Un objetivo concreto y que se vea en pista"><label class="sub">Revisar el <input type="date" id="sg-objrev" value="${esc(new Date(Date.now() + 42 * 864e5).toISOString().slice(0, 10))}"></label><button class="btn" type="button" data-sgobjnuevo>Añadir objetivo</button></div>` : '<p class="sub">Dos activos como mucho: cierra uno para abrir otro.</p>'}
+      ${activos.length < 2 ? `<div class="sg-nuevo"><label class="sg-lab" for="sg-objtxt">Nuevo objetivo</label><input type="text" maxlength="120" id="sg-objtxt" placeholder="Concreto y que se vea en pista"><label class="sg-lab" for="sg-objrev">Revisarlo el</label><input type="date" id="sg-objrev" value="${esc(new Date(Date.now() + 42 * 864e5).toISOString().slice(0, 10))}"><button class="btn" type="button" data-sgobjnuevo>Añadir objetivo</button></div>` : '<p class="sub">Dos activos como mucho: cierra uno para abrir otro.</p>'}
       <p class="sub" id="sg-msg" role="status"></p>
       ${cerrados.length ? `<h2 class="h-sec">Cerrados</h2><ul class="pts-list">${cerrados.map(o => `<li><span>${esc(o.txt)}</span><span>${o.estado === 'logrado' ? 'logrado' : 'aparcado'}${o.cerrado ? ' · ' + esc(fmtShort(o.cerrado)) : ''}</span></li>`).join('')}</ul>` : ''}`;
   } else {
@@ -3549,7 +3585,7 @@ function jugadorPerfil(jid, t, quieto) {
       return `<li class="pf-h nota"><small>${esc(fechaTs(ts))} · apunte · ${quien(x)}</small><p>${esc(x.txt)}</p>
         ${x.uid === miUid() || canWriteBank ? (segBorrar === x.id ? `<span class="row"><button class="btn" type="button" data-sgborrar="">No</button><button class="btn danger" type="button" data-sgborrar="${esc(x.id)}" data-ya>Sí, borrar</button></span>` : `<button class="linkb" type="button" data-sgborrar="${esc(x.id)}">Borrar</button>`) : ''}</li>`;
     };
-    cuerpo = `<div class="pf-apunte"><textarea id="sg-nota" rows="2" maxlength="600" placeholder="Nuevo apunte: algo que hayas visto en pista, en un partido o con el grupo"></textarea><button class="btn primary" type="button" data-sgnota>Guardar</button></div>
+    cuerpo = `<div class="pf-apunte"><label class="sg-lab" for="sg-nota">Nuevo apunte</label><textarea id="sg-nota" rows="3" maxlength="600" placeholder="Algo que hayas visto en pista, en un partido o con el grupo"></textarea><button class="btn primary" type="button" data-sgnota>Guardar apunte</button></div>
       <p class="sub" id="sg-msg" role="status"></p>
       ${T.length ? `<ul class="pf-hist">${T.map(li).join('')}</ul>` : '<p class="sub">Todavía no hay nada.</p>'}
       <p class="sub">Lo ven solo sus entrenadores y la Dirección Técnica. Escribe lo que viste, no etiquetas: «pierde la bola cuando le presionan en la salida» dice más que «le falta técnica». Nada de salud ni de la familia.</p>`;
@@ -3559,7 +3595,7 @@ function jugadorPerfil(jid, t, quieto) {
       <div><h1>${esc(j.n)}</h1><p class="sub">${[j.eq, j.a].filter(Boolean).map(esc).join(' · ')}</p>
         <p class="pf-chips"><span>${j.p ? 'Portero' : 'Jugador de pista'}</span>${(j.otros || []).map(x => `<span>También ${esc(x)}</span>`).join('')}</p></div>
       ${act && perfilTab !== 'evaluar' ? '<button class="btn primary pf-evaluar" type="button" data-ptab="evaluar">Evaluar</button>' : ''}</div>
-    ${tabs.length > 1 && perfilTab !== 'evaluar' ? `<div class="seg eq-tabs" role="tablist" aria-label="Qué ver del jugador">${tabs.map(([k, l]) => `<button type="button" data-ptab="${k}" aria-pressed="${perfilTab === k}">${l}</button>`).join('')}</div>` : ''}
+    ${tabs.length > 1 && perfilTab !== 'evaluar' ? `<div class="seg eq-tabs" role="group" aria-label="Qué ver del jugador">${tabs.map(([k, l]) => `<button type="button" data-ptab="${k}" aria-pressed="${perfilTab === k}">${l}</button>`).join('')}</div>` : ''}
     ${perfilTab === 'resumen' ? cuerpo : `<section class="ses-sec">${cuerpo}</section>`}`;
   guarda.forEach(([q, v]) => { const el = espBox.querySelector(q); if (el) el.value = v; });
   espBox.hidden = false;
@@ -3637,12 +3673,12 @@ function partidoAbrir(id) {
   const hueco = (clase, i, val, ph) => `<label class="ses-f"><input type="text" data-fh="${clase}" data-i="${i}" value="${esc(val || '')}" placeholder="${esc(ph)}" maxlength="90"></label>`;
   const jugado = p.fecha < hoy || p.res;
   espName = null; espEquipo = null;
-  espBox.innerHTML = `<div class="esp-top"><button class="pb-back" type="button" data-fvolver><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Volver</button></div>
+  espBox.innerHTML = `<div class="esp-top pf-top"><button class="pb-back" type="button" data-fvolver><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Volver</button></div>
     <div class="eq-cab"><span class="eq-esc grande" aria-hidden="true">${esc(eqSigla(p.eq))}</span>
       <div><h1>${esc(p.casa ? 'vs ' : 'en ')}${esc(p.rival)}</h1>
         <p class="sub">${esc(p.eq)} · ${esc(fmtShort(p.fecha))}${p.hora ? ' · ' + esc(p.hora) : ' · sin hora'} · ${p.casa ? 'en casa' : 'fuera'}${p.j ? ' · jornada ' + p.j : ''}</p></div>
       ${p.res ? `<span class="res-chip grande ${resCls(p)}">${esc(p.res)}</span>` : ''}</div>
-    <div class="seg fh-pasos" role="tablist" aria-label="Pasos de la ficha">${FH_PASOS.map((l, i) => `<button type="button" data-fpaso="${i}">${l}</button>`).join('')}</div>
+    <div class="seg fh-pasos" role="group" aria-label="Pasos de la ficha">${FH_PASOS.map((l, i) => `<button type="button" data-fpaso="${i}">${l}</button>`).join('')}</div>
 
     <section class="ses-sec fh-paso" data-paso="0"><div class="lt-head"><h2 class="h-sec">Convocatoria</h2><span class="sub" id="cv-cuenta">${conv ? conv.length + ' convocados' : jug.length + ' en la plantilla'}</span></div>
       ${jug.length ? (() => { const H = convHist(p.eq, id);
@@ -3985,7 +4021,7 @@ function renderDT() {
     const subs = [['equipos', 'Equipos'], ['seg', 'Seguimiento'], ...(CL ? [['acceso', 'Acceso']] : []), ['vest', 'Vestuario']];
     if (!subs.some(x => x[0] === dtSub)) dtSub = 'equipos';
     const cuerpo = dtSub === 'equipos' ? dtEquiposHTML() : dtSub === 'seg' ? dtSeguimientoHTML() : dtSub === 'acceso' ? (CL ? CL.accessHTML() : '') : dtVestHTML();
-    h = `<div class="seg dt-sub" role="tablist" aria-label="Cuerpo técnico">${subs.map(([k, l]) => `<button type="button" data-dtsub="${k}" aria-pressed="${dtSub === k}">${l}</button>`).join('')}</div>${cuerpo}`;
+    h = `<div class="seg dt-sub" role="group" aria-label="Cuerpo técnico">${subs.map(([k, l]) => `<button type="button" data-dtsub="${k}" aria-pressed="${dtSub === k}">${l}</button>`).join('')}</div>${cuerpo}`;
   }
   else if (dtTab === 'horario') h = dtHorarioHTML();
   box.innerHTML = h + '<p class="msg" id="dt-msg" aria-live="polite"></p>';
@@ -6760,7 +6796,7 @@ function pabellonHTML(N) {
 }
 function pbCabecera(N) {
   const cur = PB_DE[ligaTab], room = PB_ROOMS.find(r => r[0] === 'lgtab:' + cur) || PB_ROOMS[0], E = pbEstado(N), web = !!window.SMB_CLOUD;
-  const sub = cur === 'hoy' ? `<div class="seg lg-tabs" role="tablist" aria-label="En la pista">${[['hoy', 'Hoy'], ['calendario', 'Calendario'], ['clasificacion', 'Clasificación'], ['amistosos', 'Amistosos']].map(([k, l]) => `<button type="button" data-lgtab="${k}" aria-pressed="${ligaTab === k}">${l}</button>`).join('')}</div>` : '';
+  const sub = cur === 'hoy' ? `<div class="seg lg-tabs" role="group" aria-label="En la pista">${[['hoy', 'Hoy'], ['calendario', 'Calendario'], ['clasificacion', 'Clasificación'], ['amistosos', 'Amistosos']].map(([k, l]) => `<button type="button" data-lgtab="${k}" aria-pressed="${ligaTab === k}">${l}</button>`).join('')}</div>` : '';
   return `<div class="pb-top"><button class="pb-back" type="button" data-lgtab="pabellon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Pabellón</button><div class="vhead"><div><h1>${room[1]} ${cur === 'hoy' ? infoBtn('liga') : ''}</h1>${cur === 'hoy' ? `<p class="sub">${esc(lgSubTxt(N))}</p>` : ''}</div></div></div>
     <div class="pb-mini" role="group" aria-label="Ir a otra sala">${PB_ROOMS.filter(r => r[2] !== 'recreativa' || web).map(([to, n, art]) => { const [k, v] = to.split(':'), st = E[art]; return `<button type="button" data-${k}="${v}" aria-label="${n}" aria-pressed="${k === 'lgtab' && v === cur}"><span class="pm-fig">${PB_ART[art](E._taq || 0)}${pbImg(art)}${st && st[1] ? '<i></i>' : ''}</span><span class="pm-n">${esc(n)}</span></button>`; }).join('')}</div>${sub}`;
 }
@@ -7600,7 +7636,7 @@ function drawClub() {
       <h3 class="h-sub">Tus ofertas</h3>${mine.length ? `<div class="pl-list">${mine.map(o => clCard(o.p, { forma: false, foot: `<div class="pl-foot"><span class="pl-price">${o.price} a ${esc(o.seller)}</span><span class="pl-tag">Esperando respuesta</span><button class="btn small" type="button" data-clcancel="${esc(o.id)}">Retirar</button></div>` })).join('')}</div>` : '<p class="sub">No has hecho ofertas. Las monedas de una oferta quedan reservadas hasta que te contesten.</p>'}`;
   }
   el.innerHTML = `<div class="club-in"><div class="cf-top"><b>Tu plantilla</b><span>${s ? `Ataque ${s.atk} · defensa ${s.def}` : ''}</span><button class="lv-x" type="button" data-club="x" aria-label="Cerrar">×</button></div>
-    <div class="seg wrap" role="tablist">${tabs.map(([k, l]) => `<button type="button" data-cltab="${k}" aria-pressed="${clTab === k}">${l}</button>`).join('')}</div>
+    <div class="seg wrap" role="group">${tabs.map(([k, l]) => `<button type="button" data-cltab="${k}" aria-pressed="${clTab === k}">${l}</button>`).join('')}</div>
     ${clMsg ? `<p class="msg ok">${clMsg}</p>` : ''}${body}</div>`;
 }
 function onClubClick(e) {

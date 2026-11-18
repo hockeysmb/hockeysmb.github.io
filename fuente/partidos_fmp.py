@@ -294,6 +294,7 @@ def tabla_oficial(bloques, equipos):
     for b in bloques:
         T = []
         for f in b['filas']:
+            if re.match(r'^\s*DESCANSO\b', f['n'], re.I): continue   # el hueco de las ligas impares
             num = [int(x) if re.match(r'^-?\d+$', x or '') else 0 for x in f['num']] + [0] * 8
             pts, pj, g, e, p, gf, gc = num[:7]
             smb = ''
