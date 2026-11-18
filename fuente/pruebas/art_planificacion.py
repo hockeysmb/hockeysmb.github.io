@@ -24,7 +24,7 @@ async def main():
       print('tras copiar', await pg.evaluate("Object.keys(JSON.parse(localStorage.getItem('smb-banco-plan'))).length"))
       await pg.screenshot(path=f't5/plan{W}.png', full_page=True)
       await pg.locator('.pl-row [data-ag="prep"]:visible').first.click(); await pg.wait_for_timeout(300)
-      print('sesión', await pg.input_value('[data-f="equipo"]'), '|', await pg.input_value('[data-f="fundamento"]'), '|', await pg.inner_text('.ses-f .opts') if await pg.query_selector('.ses-f .opts') else '')
+      print('sesión', await pg.input_value('[data-f="equipo"]'), '|', await pg.evaluate("(document.querySelector('[data-f=fundamento]')||{}).value||''"), '|', await pg.inner_text('.ses-f .opts') if await pg.query_selector('.ses-f .opts') else '')
       await pg.click('#ses-close'); 
       if await pg.query_selector('#m-drop'): await pg.click('#m-drop')
       await pg.click('[data-nav="inicio"]'); await pg.wait_for_timeout(200)
