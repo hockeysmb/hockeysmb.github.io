@@ -1,6 +1,6 @@
 {
   "fuente": "Federación Madrileña de Patinaje (hockeypatines.fmp.es)",
-  "actualizado": "2026-11-21",
+  "actualizado": "2026-11-22",
   "nota": "res = goles del SMB - goles del rival. hora vacía = la federación todavía no la ha puesto. Se actualiza solo dos veces al día (fuente/partidos_fmp.py).",
   "partidos": [
     {"id": "s15-1", "cat": "Sub-15", "j": 1, "fecha": "2026-10-17", "hora": "13:30", "rival": "Tres Cantos PC", "casa": false, "res": "8-1"},
@@ -35,7 +35,7 @@
     {"id": "af-1", "cat": "1ª Autonómica", "j": 1, "fecha": "2026-10-20", "hora": "20:15", "rival": "CP Alcobendas", "casa": true, "res": "0-2"},
     {"id": "af-2", "cat": "1ª Autonómica", "j": 2, "fecha": "2026-10-24", "hora": "19:30", "rival": "CP Rivas las Lagunas", "casa": false, "res": "0-2"},
     {"id": "af-3", "cat": "1ª Autonómica", "j": 3, "fecha": "2026-11-08", "hora": "16:30", "rival": "CP Alcorcón", "casa": false, "res": "3-5"},
-    {"id": "af-4", "cat": "1ª Autonómica", "j": 4, "fecha": "2026-11-22", "hora": "13:15", "rival": "Coslada RH", "casa": true, "res": ""},
+    {"id": "af-4", "cat": "1ª Autonómica", "j": 4, "fecha": "2026-11-22", "hora": "13:15", "rival": "Coslada RH", "casa": true, "res": "0-2"},
     {"id": "af-5", "cat": "1ª Autonómica", "j": 5, "fecha": "2026-11-29", "hora": "15:00", "rival": "CP las Rozas", "casa": false, "res": ""},
     {"id": "af-6", "cat": "1ª Autonómica", "j": 6, "fecha": "2026-12-19", "hora": "", "rival": "Santa María del Pilar", "casa": true, "res": ""},
     {"id": "af-8", "cat": "1ª Autonómica", "j": 8, "fecha": "2027-01-23", "hora": "", "rival": "CP Alcobendas", "casa": false, "res": ""},
