@@ -1,6 +1,6 @@
 {
   "fuente": "Federación Madrileña de Patinaje (hockeypatines.fmp.es)",
-  "actualizado": "2026-11-22",
+  "actualizado": "2026-11-23",
   "nota": "res = goles del SMB - goles del rival. hora vacía = la federación todavía no la ha puesto. Se actualiza solo dos veces al día (fuente/partidos_fmp.py).",
   "partidos": [
     {"id": "s15-1", "cat": "Sub-15", "j": 1, "fecha": "2026-10-17", "hora": "13:30", "rival": "Tres Cantos PC", "casa": false, "res": "8-1"},
@@ -22,7 +22,7 @@
     {"id": "s17-3", "cat": "Sub-17", "j": 3, "fecha": "2026-10-27", "hora": "19:00", "rival": "Tres Cantos PC", "casa": false, "res": "3-1"},
     {"id": "s17-4", "cat": "Sub-17", "j": 4, "fecha": "2026-11-08", "hora": "10:15", "rival": "CP Rivas las Lagunas", "casa": true, "res": "3-5"},
     {"id": "s17-5", "cat": "Sub-17", "j": 5, "fecha": "2026-11-14", "hora": "11:30", "rival": "Coslada RH", "casa": false, "res": "5-2"},
-    {"id": "s17-6", "cat": "Sub-17", "j": 6, "fecha": "2026-11-28", "hora": "10:15", "rival": "CP Alcobendas", "casa": true, "res": ""},
+    {"id": "s17-6", "cat": "Sub-17", "j": 6, "fecha": "2026-11-28", "hora": "09:45", "rival": "CP Alcobendas", "casa": true, "res": ""},
     {"id": "s17-7", "cat": "Sub-17", "j": 7, "fecha": "2026-12-13", "hora": "15:00", "rival": "CP las Rozas", "casa": false, "res": ""},
     {"id": "s17-8", "cat": "Sub-17", "j": 8, "fecha": "2026-12-19", "hora": "", "rival": "Tres Cantos PC", "casa": true, "res": ""},
     {"id": "s17-9", "cat": "Sub-17", "j": 9, "fecha": "2027-01-09", "hora": "", "rival": "CP Rivas las Lagunas", "casa": false, "res": ""},
