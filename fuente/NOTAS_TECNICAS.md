@@ -1,6 +1,6 @@
 # Notas técnicas del Banco SMB
 
-Mapa del código de `fuente/plantilla.html` y `fuente/web/cloud.js`: qué hace cada parte y con qué funciones. Los nombres de prueba antiguos entre paréntesis (`t5/...`, `lg/test_web.py`, etc.) corresponden ahora a `fuente/pruebas/` (ver la tabla del README de `fuente/`).
+Mapa del código de la app de entrenadores (`fuente/app/`, que hasta el 25 nov era un solo archivo, `fuente/plantilla.html`; ver «Estructura de la app» al final) y `fuente/web/cloud.js`: qué hace cada parte y con qué funciones. Los nombres de prueba antiguos entre paréntesis (`t5/...`, `lg/test_web.py`, etc.) corresponden ahora a `fuente/pruebas/` (ver la tabla del README de `fuente/`).
 
 - **Web publicada:** el repositorio `hockeysmb/hockeysmb.github.io`.
   - Se conecta con add_repo; la app de Claude está instalada en la organización, así que se puede hacer push.
@@ -546,7 +546,7 @@ De `claude/Soluciones_diseno_apps_nov2026.md`. Tres cosas de la crítica se reti
 
 Las dos apps comparten paleta, tipografía y forma. El archivo es **`fuente/sistema.css`** y es el único sitio donde se tocan los colores.
 
-- **App de entrenadores:** `construir_web.py` y `construir_artifact.py` pegan el archivo dentro de `plantilla.html`, donde pone la marca `@sistema` (un comentario de CSS al principio del `<style>`).
+- **App de entrenadores:** `construir_web.py` y `construir_artifact.py` pegan el archivo dentro de la página (`fuente/app/estilos/base/01-base.css`), donde pone la marca `@sistema` (un comentario de CSS al principio del `<style>`).
 - **App de jugadoras:** el build lo copia a `femenino/sistema.css`, que `index.html` carga con un `<link>`. La app sigue sin paso de construcción: el archivo está publicado en el repositorio, y si alguien lo cambia a mano funciona igual.
 - **Cada app conserva sus nombres de variables** (`--bg`, `--accent`, `--good`…) y los apunta a los del sistema (`--smb-granate`, `--smb-bien`…). Así hay una sola paleta sin reescribir cientos de reglas.
 - **Cuidado con los comentarios:** los de CSS no se anidan. Escribir `/* @sistema */` dentro del comentario de cabecera de `sistema.css` cortaba el comentario en seco y rompía todo el bloque de tokens. La marca se nombra sin los delimitadores.
@@ -777,3 +777,54 @@ Dirección 1 del lienzo «Rediseño app SMB», elegida por la DT («no me disgus
 - **Forma:** sin tarjetas ni sombras: las secciones (`.ses-sec`, `.panel`, `.fbar`…) llevan una raya de tinta de 2 px arriba; esquinas de 4 px (2 px en casillas e iniciales). Botón principal dorado con texto de tinta; secundario con borde de tinta de 2 px; `ghost` subrayado. Chips rectos; el elegido, negro con filo dorado abajo. Pestañas (`.seg`) subrayadas en dorado, sin cápsula. Pasos de la sesión como barra de segmentos. Barra de abajo con filo dorado arriba en la sección activa; cabecera con raya dorada (`.appbar::after`; un `box-shadow` no se ve porque el `::before` de la cabecera lo tapa). Avisos flotantes (`.toast`) como rótulo negro con filo dorado.
 - **Zona de juego** (`#v-liga`, `#v-vestuario`, cofres, directo): sin cambios, con su relieve. Sus reglas van por id y ganan a esta capa.
 - **Revisar capturas:** en este contenedor no se llega a Google Fonts; para ver las letras de verdad hay que servirlas en local (paquetes `@fontsource/*` y una ruta de Playwright que responda a `fonts.googleapis.com`).
+
+## Estructura de la app (25 nov): `fuente/plantilla.html` partido por zonas
+
+El archivo único de 9.200 líneas se ha partido en `fuente/app/` sin cambiar nada de lo que se publica: lo que sale de juntar las partes es idéntico, byte a byte, a la antigua `plantilla.html`, y la web y el artifact construidos son iguales (salvo el sello de versión de cada build). Lo junta **`fuente/plantilla.py`** (función `plantilla()`), que usan `construir_web.py` y `construir_artifact.py`.
+
+- **Orden:** los archivos se juntan por su número `NN`, sin mirar la carpeta de zona. En el CSS manda lo último y en el JS una `const` tiene que estar definida antes de usarse al cargar, así que el número es el orden de verdad. No se pueden repetir números (`plantilla.py` lo comprueba y se para). Para meter una parte nueva entre dos, renumera las siguientes.
+- **Lo que pone `plantilla.py`, no las partes:** `<style>…</style>`, las dos etiquetas de `__AVATAR_LIB__` y `__BANK__`, y la función que envuelve todo el JS (`(() => { 'use strict'; … })();`). Cada `.js` es un trozo de esa función: no se puede cargar suelto, y lo que es `const` en uno se ve en todos los demás.
+- **Buscar:** `grep -rn nombreDeFuncion fuente/app`. **Ver la página entera:** `python3 fuente/plantilla.py /tmp/plantilla.html`.
+- Las zonas son orientativas: hay código de la DT en `trabajo/07-entrenadores-dt.js` (el panel) y en `trabajo/05-dt-revisar.js` (resumen, banco y revisar), porque el original estaba así ordenado y mover funciones cambia el orden de carga.
+
+| Parte | Qué hay |
+|---|---|
+| `cabecera.html` | Título y fuentes de Google |
+| `cuerpo.html` | Armazón: barra, navegación, vistas vacías, capas (ficha, editor, sesión, elegir ejercicio, modal) |
+| `estilos/base/01-base.css` | Marca `@sistema`, tokens de la app y componentes básicos |
+| `estilos/pizarra/02-editor.css` | Editor de ejercicio |
+| `estilos/trabajo/03-equipos.css` | Equipos, plantilla, perfil del jugador, ficha de partido |
+| `estilos/base/04-armazon-inicio.css` | Barra, navegación, vistas e Inicio |
+| `estilos/trabajo/05-ejercicios-sesiones-dt.css` | Ejercicios, ficha, sesiones paso a paso, Dirección Técnica |
+| `estilos/juego/06-partido-cofres.css` | Juego v3: jugadas, poderes, rarezas y cofres |
+| `estilos/trabajo/07-modo-pista.css` | Modo pista |
+| `estilos/juego/08-vestuario.css` | Vestuario y personaje |
+| `estilos/base/09-perfil-avisos-bandeja.css` | Perfil en el avatar, avisos, bandeja |
+| `estilos/juego/10-amistosos.css` | Amistosos y directo |
+| `estilos/base/11-lavado.css` | Capa «Lavado B + C» (oct) |
+| `estilos/juego/12-juego-efectos.css` | Piel de juego (C), efectos de gol y penalti, pabellón, recreativa |
+| `estilos/pizarra/13-pizarra-revision.css` | Pizarra a pantalla completa, panel del ordenador, revisión de ejercicios |
+| `estilos/juego/14-plantilla-liga.css` | Plantilla, liga diaria, alineación |
+| `estilos/base/15-retransmision.css` | Capa «Retransmisión» (18 nov): la estética de la parte de trabajo |
+| `js/datos/01-estado.js` | Constantes (tipos, fases, técnica), estado, contenidos del club, semáforo de ejercicios |
+| `js/pizarra/02-dibujo.js` | Dibujo de la pista con la simbología del libro (`diagramSVG`) y leyenda |
+| `js/trabajo/03-ejercicios.js` | Listado, filtros y ficha de un ejercicio |
+| `js/base/04-navegacion-inicio.js` | `navigate`, `render`, Inicio, copias de seguridad, añadir a una sesión |
+| `js/trabajo/05-dt-revisar.js` | DT: resumen, banco, revisar, contenidos nuevos |
+| `js/trabajo/06-equipos.js` | Equipos, plantillas, jugadores, perfil y seguimiento, partidos y ficha de partido |
+| `js/trabajo/07-entrenadores-dt.js` | Espacio de cada entrenador, seguimiento, `renderDT`, validar en serie |
+| `js/base/08-modales-banco.js` | Ver en grande, modales, códigos, envíos, `saveBank` |
+| `js/pizarra/09-editor-pizarra.js` | Editor de ejercicio y pizarra |
+| `js/trabajo/10-sesiones.js` | Sesiones, editor paso a paso, elegir ejercicio, PDF, modo pista |
+| `js/juego/11-vestuario-personaje.js` | Vestuario: personaje, puntos, tienda |
+| `js/juego/12-jornada-motor.js` | Votación de la semana y motor del partido (`playDuel`) |
+| `js/juego/13-liga-pabellon.js` | Liga, pabellón, recreativa |
+| `js/juego/14-amistosos.js` | Amistosos |
+| `js/datos/15-dibujos-fluent.js` | `FLU3D` y `FLU`: dibujos Fluent incrustados (unos 570 KB) |
+| `js/juego/16-fichas-directo.js` | Fichas de la pista, planetas, directo |
+| `js/juego/17-info-cofres.js` | Botón «i» (`INFO`) y cofres |
+| `js/juego/18-plantilla-ciudad.js` | Plantilla del juego, fichajes, ciudad deportiva |
+| `js/juego/19-liga-diaria.js` | Liga diaria |
+| `js/trabajo/20-agenda-horario.js` | Agenda, horario, partidos de la semana |
+| `js/trabajo/21-planificacion-misiones.js` | Planificación, pizarra del plan, misiones, renombrar |
+| `js/base/22-arranque.js` | Ganchos para la web (`window.SMB`) y arranque |

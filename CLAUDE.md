@@ -5,7 +5,7 @@ App web del cuerpo técnico de hockey sobre patines del Colegio Santa María la 
 ## Dónde está cada cosa
 
 - Raíz del repositorio = **lo publicado** en GitHub Pages (https://hockeysmb.github.io). No se edita a mano: se genera.
-- `fuente/plantilla.html` = **el código de la app** (HTML, CSS y JS en un solo archivo, con las imágenes incrustadas). Genera la web y el artifact de claude.ai.
+- `fuente/app/` = **el código de la app**, partido por zonas: `cabecera.html`, `cuerpo.html`, `estilos/<zona>/NN-*.css` y `js/<zona>/NN-*.js` (zonas: base, datos, trabajo, pizarra y juego). `fuente/plantilla.py` lo junta en una sola página por el número `NN` (el orden importa); de ahí salen la web y el artifact de claude.ai. Las imágenes van incrustadas (las de Fluent, en `js/datos/15-dibujos-fluent.js`). Antes era un solo archivo, `fuente/plantilla.html`, que ya no existe.
 - `fuente/web/` = capa web: `cloud.js` (Firebase: cuentas, datos, perfiles, compartido), `cloud.css`, `sw.js`, manifiesto e iconos.
 - `fuente/lib/` = librería de personajes (DiceBear Avataaars, ya empaquetada) y logo.
 - `fuente/pruebas/` = pruebas con Playwright, un Firebase falso (`fakefb.js`) y un banco inventado.
@@ -14,7 +14,7 @@ App web del cuerpo técnico de hockey sobre patines del Colegio Santa María la 
 
 ## Cómo trabajar
 
-1. Cambiar `fuente/plantilla.html` o `fuente/web/*`.
+1. Cambiar la parte que toque de `fuente/app/` o `fuente/web/*`. Para encontrar algo: `grep -rn nombreDeFuncion fuente/app`. Para ver la página entera junta: `python3 fuente/plantilla.py /tmp/plantilla.html`.
 2. Probar: `python3 fuente/pruebas/correr.py` (todas) o `python3 fuente/pruebas/correr.py web_liga art_agenda` (algunas). Construye la web en `fuente/_web/` y el artifact en `fuente/_artifact/` y deja capturas en `fuente/_capturas/`. Mira las capturas cuando cambies algo visual.
 3. Publicar: `python3 fuente/construir_web.py` (escribe en la raíz), commit y push a `main`. GitHub Pages tarda uno o dos minutos; `sw.js` cambia de versión en cada build y los móviles se actualizan solos.
 4. Si cambias algo que afecte a otra persona (cómo se usa una pantalla, datos que se guardan), apúntalo en `fuente/NOTAS_TECNICAS.md`.

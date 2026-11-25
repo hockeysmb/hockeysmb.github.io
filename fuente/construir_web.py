@@ -1,4 +1,4 @@
-"""Construye la web (GitHub Pages) a partir de la plantilla.
+"""Construye la web (GitHub Pages) a partir de la app de entrenadores (fuente/app/, juntada por fuente/plantilla.py).
 Uso: python3 fuente/construir_web.py [carpeta_salida]   (por defecto, la raíz del repositorio)
 No sobrescribe firebase-config.js ni firestore.rules si ya existen en la salida."""
 import json, base64, sys, shutil, os, time
@@ -8,7 +8,9 @@ W = F + 'web/'
 OUT = (sys.argv[1].rstrip('/') + '/') if len(sys.argv) > 1 else ROOT
 FB = '12.19.0'
 os.makedirs(OUT, exist_ok=True)
-s = open(F + 'plantilla.html').read()
+sys.path.insert(0, F)
+from plantilla import plantilla   # la app está partida por zonas en fuente/app/ (ver fuente/plantilla.py)
+s = plantilla()
 # el sistema de diseño vive en fuente/sistema.css y se pega aquí (ver ese archivo)
 s = s.replace('/* @sistema */', open(F + 'sistema.css').read(), 1)
 logo = 'data:image/jpeg;base64,' + base64.b64encode(open(F + 'lib/logo_s.jpg', 'rb').read()).decode()

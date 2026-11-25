@@ -4,7 +4,7 @@ App del cuerpo técnico de hockey del CHP Santa María la Blanca: banco de ejerc
 
 ## Cómo está hecho
 
-- **Una sola plantilla** (`fuente/plantilla.html`) genera las dos versiones:
+- **Una sola app** (`fuente/app/`, partida por zonas y juntada por `fuente/plantilla.py`) genera las dos versiones:
   - `fuente/construir_artifact.py` → el artifact de claude.ai (banco en `data/banco.json`, votos en la base de datos del artifact).
   - `fuente/construir_web.py` → esta web (GitHub Pages + Firebase).
 - El código fuente, las pruebas y cómo trabajar están en `fuente/` y en `CLAUDE.md`.
@@ -31,7 +31,7 @@ Reglas en `firestore.rules`. `DT_UID` se sustituye por el código de usuario de 
 
 ## Publicar un cambio
 
-1. Cambiar `fuente/plantilla.html` (o `fuente/web/cloud.js`).
+1. Cambiar la parte que toque de `fuente/app/` (o `fuente/web/cloud.js`).
 2. `python3 fuente/pruebas/correr.py` (backend simulado `fakefb.js`, banco inventado).
 3. `python3 fuente/construir_web.py`, commit y push. GitHub Pages publica en uno o dos minutos.
 4. `sw.js` lleva la versión en el nombre de la caché: cada build nuevo se actualiza solo en los móviles.

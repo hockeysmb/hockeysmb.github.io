@@ -2,7 +2,8 @@
 
 | Archivo | Qué es |
 |---|---|
-| `plantilla.html` | La app entera. `__BANK__`, `__AVATAR_LIB__` y `__LOGO__` se rellenan al construir. |
+| `app/` | La app entera, partida por zonas: `cabecera.html`, `cuerpo.html`, `estilos/<zona>/NN-*.css` y `js/<zona>/NN-*.js`. |
+| `plantilla.py [salida]` | Junta `app/` en una sola página, por el número `NN` de cada archivo. `__BANK__`, `__AVATAR_LIB__`, `__LOGO__` y `/* @sistema */` se rellenan al construir. |
 | `construir_web.py [carpeta]` | Genera la web (por defecto, en la raíz del repositorio). Lleva un banco vacío: el de verdad está en Firestore. |
 | `construir_artifact.py [banco.json] [salida]` | Genera la página del artifact con un banco dentro (por defecto, el de prueba). |
 | `web/` | `cloud.js` (Firebase), `cloud.css`, `sw.js`, manifiesto e iconos. |
