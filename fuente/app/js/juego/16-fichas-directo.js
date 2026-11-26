@@ -41,7 +41,7 @@ function rinkSVG(fa, fb) {
 // ---------- retar: 3 retos gratis al día; luego cuesta monedas ----------
 function retosHoy() { const r = game.retos || {}; return r.d === isoToday() ? r.n || 0 : 0; }
 function retar(rival) {
-  const me = readAuthor(); if (!me) { toast('Antes, pon tu nombre en Mi perfil.'); navigate('vestuario'); return; }
+  const me = readAuthor(); if (!me) { toast('Antes, pon tu nombre en Mi cuenta.'); navigate('perfil'); return; }
   if (normName(rival) === normName(me)) return;
   const n = retosHoy(), go = () => { game.retos = { d: isoToday(), n: n + 1 }; saveGame(); startReto(rival); };
   if (n < RETOS_GRATIS) { go(); return; }

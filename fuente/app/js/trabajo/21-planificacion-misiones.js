@@ -1,7 +1,6 @@
 // ================= planificación: qué se quiere trabajar en cada entreno (mesociclo) =================
 // Se guarda por entreno (clave fecha|franja). Lo de cada uno va en su cuenta; en la web lo ve también el cuerpo técnico.
 const LS_PLAN = 'smb-banco-plan';
-const FASE_TXT = { 'Defensa': 'Defensa', 'Recuperación': 'Transición ofensiva', 'Ataque': 'Ataque', 'Pérdida': 'Transición defensiva', 'Situaciones especiales': 'Situaciones especiales' };
 function loadPlan() { try { return JSON.parse(localStorage.getItem(LS_PLAN) || '{}') || {}; } catch (e) { return {}; } }
 let plan = loadPlan();
 let planT = null;
@@ -40,7 +39,7 @@ function planHTML() {
     <div class="cal-head"><button class="btn small" type="button" data-pm="-1" aria-label="Mes anterior">←</button><h2 class="h-sec">${esc(monthName)}</h2><button class="btn small" type="button" data-pm="1" aria-label="Mes siguiente">→</button></div>
     <p class="sub">Qué quieres trabajar en cada entreno. ${infoBtn('planificar')}${L.length ? ` Planificados: ${done} de ${L.length}.` : ''}</p>
     ${teams.length > 1 ? `<div class="fgroup ses-teams" role="group" aria-label="Equipo"><button class="chip" type="button" data-pteam="" aria-pressed="${!planTeam}">Todos</button>${teams.map(x => `<button class="chip team-chip tc${teamIdx(x)}" type="button" data-pteam="${esc(x)}" aria-pressed="${planTeam === x}">${esc(x)}</button>`).join('')}</div>` : ''}
-    ${!readAuthor() ? '<p>Pon tu nombre en Mi perfil para ver tus entrenos.</p>' : !L.length ? `<p class="sub">${all.length ? 'No hay entrenos de este equipo este mes.' : 'Este mes no tienes entrenos en el horario del club. Si debería haberlos, avisa a la Dirección Técnica para que te ponga en el horario.'}</p>` : ''}
+    ${!readAuthor() ? '<p>Pon tu nombre en Mi cuenta para ver tus entrenos.</p>' : !L.length ? `<p class="sub">${all.length ? 'No hay entrenos de este equipo este mes.' : 'Este mes no tienes entrenos en el horario del club. Si debería haberlos, avisa a la Dirección Técnica para que te ponga en el horario.'}</p>` : ''}
     ${(() => { const t = isoToday(), ks = Object.keys(weeks).sort(), past = ks.filter(wk => weeks[wk].every(it => it.fecha < t)), wkHTML = wk => `<div class="pl-week"><div class="lt-head"><h3 class="h-sub">Semana del ${esc(fmtShort(wk))}</h3><button class="btn small ghost" type="button" data-pcopy="${esc(wk)}">Copiar la semana anterior</button></div>
       <ul class="pl-list">${weeks[wk].map(planRowHTML).join('')}</ul></div>`;
       return (past.length ? `<details class="pl-past"><summary>Semanas pasadas (${past.length})</summary>${past.map(wkHTML).join('')}</details>` : '') + ks.filter(wk => !past.includes(wk)).map(wkHTML).join(''); })()}
@@ -74,14 +73,11 @@ function pizarraHTML() {
   const P = pzNorm(game.pizarra) || { at: '', de: '', desesp: true };
   const opt = (k, j) => `<button class="pz-opt" type="button" data-pz="${k}" data-v="${j.id}" aria-pressed="${P[k] === j.id}">${jugIcon(j.ic)}<b>${esc(j.n)}</b><span class="dz">${esc(j.dado)}</span></button>`;
   return `<section class="ses-sec pizarra"><div class="lt-head"><h2 class="h-sec">Tu pizarra ${infoBtn('pizarra')}</h2><span class="sub">${game.pizarra && game.pizarra.ts ? 'Guardada' : 'Sin preparar'}</span></div>
-    <p class="sub">Lo que juega tu personaje en la jornada y cuando te retan y no estás. Con bola eliges cómo atacas; sin bola, cómo defiendes. Gol si tu ataque supera su defensa. ${infoBtn('partido')}</p>
+    <p class="sub">Lo que juega tu personaje cuando no estás. ${infoBtn('partido')}</p>
     <h3 class="h-min">Con bola</h3><div class="pz-opts">${ATAQUES.filter(j => !j.last).map(j => opt('at', j)).join('')}</div>
     <h3 class="h-min">Sin bola</h3><div class="pz-opts">${DEFENSAS.map(j => opt('de', j)).join('')}</div>
     <h3 class="h-min">Si vas perdiendo al final</h3><div class="opts"><button class="chip" type="button" data-pz="desesp" data-v="1" aria-pressed="${P.desesp !== false}">A la desesperada</button><button class="chip" type="button" data-pz="desesp" data-v="0" aria-pressed="${P.desesp === false}">Seguir igual</button></div>
     <p class="sub"><button class="linkb" type="button" data-info="jugadas">Qué hace cada jugada</button></p></section>`;
-}
-function jugLegendHTML() {
-  return `<details class="dt-more"><summary>Qué hace cada jugada</summary><ul class="jug-legend">${[...ATAQUES, ...DEFENSAS].map(j => `<li>${jugIcon(j.ic)}<b>${esc(j.n)}</b><span class="dz">${ATAQUES.includes(j) ? 'Con bola' : 'Sin bola'} · ${esc(j.dado)}</span><small>${esc(j.d)}</small></li>`).join('')}</ul></details>`;
 }
 document.getElementById('v-liga').addEventListener('click', e => {
   const b = e.target.closest('[data-pz]'); if (!b) return;
@@ -106,12 +102,16 @@ function misionesHoy() {
   while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
   return out;
 }
-function misionesHTML() {
-  if (!readAuthor()) return '';
+function misionesSync() {
+  if (!readAuthor()) return;
   const L = misionesHoy(), t = isoToday();
   L.forEach(m => { if (m.ok()) award(`mis:${t}:${m.id}`, PTS_MISION, 'Misión del día: ' + m.n); });
-  const done = L.filter(m => m.ok()).length;
-  if (done === L.length) { award(`mis:${t}:todas`, PTS_MISIONES, 'Las tres misiones del día'); if (cofreGrant('mis:' + t, 'las tres misiones')) saveGame(); }
+  if (L.every(m => m.ok())) { award(`mis:${t}:todas`, PTS_MISIONES, 'Las tres misiones del día'); if (cofreGrant('mis:' + t, 'las tres misiones')) saveGame(); }
+}
+function misionesHTML() {
+  if (!readAuthor()) return '';
+  misionesSync();
+  const L = misionesHoy(), done = L.filter(m => m.ok()).length;
   return `<section class="ses-sec misiones"><div class="lt-head"><h2 class="h-sec">Misiones de hoy ${infoBtn('misiones')}</h2><span class="sub">${done} de ${L.length} · +${PTS_MISION} cada una · las tres: +${PTS_MISIONES} y un cofre</span></div>
     <div class="mis-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${L.length}" aria-valuenow="${done}"><i style="width:${Math.round(done / L.length * 100)}%"></i></div>
     <ul class="mis-list">${L.map(m => `<li class="${m.ok() ? 'ok' : ''}"><span class="mis-c" aria-hidden="true">${m.ok() ? '✓' : ''}</span><span>${esc(m.n)}</span></li>`).join('')}</ul></section>`;

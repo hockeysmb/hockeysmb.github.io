@@ -27,7 +27,7 @@ function dtResumenHTML(X) {
   // 13 nov: fuera las doce pastillas de «Qué puedes hacer». Repetían las pestañas de arriba y obligaban
   // a leer doce etiquetas iguales. Quedan los tres atajos del lunes y el resto está en su pestaña.
   return `<section class="ses-sec"><h2 class="h-sec">Te toca ${infoBtn('resumen')}</h2>${items.length ? `<ul class="dt-todo">${items.join('')}</ul>` : '<p class="dt-ok">Todo al día.</p>'}
-      <div class="actions">${B('new', 'Crear un ejercicio', true)}${B('jornada', 'Jugar la jornada')}</div>
+      <div class="actions">${B('new', 'Crear un ejercicio', true)}</div>
     </section>
     <section class="ses-sec"><h2 class="h-sec">Lo de siempre</h2><div class="actions">${B('code', 'Pegar un código')}${B('backup', 'Descargar copia del banco')}${B('puntos', 'Dar puntos')}${B('alta', X.CL ? 'Dar de alta a un entrenador' : 'Añadir entrenador al vestuario')}${B('hz-add', 'Añadir un entreno')}
       <a class="btn" id="dt-fem" href="https://hockeysmb.github.io/femenino/" target="_blank" rel="noopener">App de jugadoras</a></div></section>`;
@@ -71,7 +71,7 @@ function dtRevisarHTML() {
   const row = x => `<li><button class="rv-row${x.k === rvSel ? ' on' : ''}" type="button" data-rv="sel" data-k="${esc(x.k)}">${rvDot(x.r)}<b>${esc(x.t.title || 'Sin nombre')}</b><small>${x.kind === 'coach' ? 'Propuesta de ' + esc(x.t.author || 'un entrenador') + (x.corrected ? ' · corregida' : '') : 'Banco · ' + (!x.t.tipo ? 'sin clasificar' : 'sin validar')}</small></button></li>`;
   const wait = Q.waiting.length ? `<details class="dt-more rv-wait"><summary>${Q.waiting.length} ${Q.waiting.length === 1 ? 'devuelto, esperando' : 'devueltos, esperando'} a que su autor lo cambie</summary><ul class="dt-list">${Q.waiting.map(({ t, nt }) => `<li class="dt-row"><span class="dt-txt"><b>${esc(t.title || 'Sin nombre')}</b><small>${esc(t.author || '')} · «${esc(rvShort(nt.txt))}»</small></span><button class="btn small ghost" type="button" data-rv="unnote" data-tid="${esc(t.id)}">Quitar la nota</button></li>`).join('')}</ul></details>` : '';
   if (!cur) return `<section class="ses-sec rv"><h2 class="h-sec">Revisar</h2><p class="sub">No hay nada pendiente: todo el banco está validado y no hay propuestas nuevas.</p>${wait}</section>`;
-  const t = cur.t, m = t.smb || {}, tags = [tipoName(t.tipo), ...(t.fases || []), ...(t.cats || []).map(catName)].filter(Boolean);
+  const t = cur.t, m = t.smb || {}, tags = [tipoName(t.tipo), ...(t.fases || []).map(faseTxt), ...(t.cats || []).map(catName)].filter(Boolean);
   const txt = (lab, v) => v ? `<dt>${lab}</dt><dd>${esc(v)}</dd>` : `<dt>${lab}</dt><dd class="rv-empty">—</dd>`;
   const sugg = cur.r.items.map(x => '· ' + x.txt).join('\n');
   const acts = cur.kind === 'bank'
@@ -99,10 +99,10 @@ function ccPend() {
 }
 function dtContHTML() {
   const L = ccPend(), club = bank.contClub || [], no = Object.entries(bank.contNo || {});
-  const grupos = `<option value="">Dónde va…</option><optgroup label="Táctica (fase del juego)">${FASE_NAMES.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('')}</optgroup><optgroup label="Técnica (fundamento)">${TEC_NAMES.map(f => `<option value="tec:${esc(f)}">${esc(f)}</option>`).join('')}</optgroup>`;
+  const grupos = `<option value="">Dónde va…</option><optgroup label="Táctica (fase del juego)">${FASE_NAMES.map(f => `<option value="${esc(f)}">${esc(faseTxt(f))}</option>`).join('')}</optgroup><optgroup label="Técnica (fundamento)">${TEC_NAMES.map(f => `<option value="tec:${esc(f)}">${esc(f)}</option>`).join('')}</optgroup>`;
   const quien = x => [...x.quien].slice(0, 3).join(', ') + (x.quien.size > 3 ? ' y ' + (x.quien.size - 3) + ' más' : '');
-  return `<section class="ses-sec cc"><h2 class="h-sec">Contenidos nuevos${L.length ? ' · ' + L.length : ''}</h2>
-    <p class="sub">Los que el cuerpo técnico escribe a mano en sus sesiones porque no están en la lista. Si pasas uno a la lista del club, sale a todos al preparar sesiones y planificar, y se puede marcar en los ejercicios.</p>
+  return `<section class="ses-sec cc"><h2 class="h-sec">Contenidos nuevos${L.length ? ' · ' + L.length : ''} ${infoBtn('contenidos')}</h2>
+    <p class="sub">Los escritos a mano en las sesiones. Pásalos a la lista del club.</p>
     ${L.length ? `<ul class="dt-list">${L.map(x => `<li class="cc-row"><span class="dt-txt"><b>${esc(x.c)}</b><small>${esc(quien(x) || 'Sin autor')} · ${x.n} ${x.n === 1 ? 'sesión' : 'sesiones'}</small></span>
       <span class="actions"><select aria-label="Dónde va «${esc(x.c)}»">${grupos}</select><button class="btn primary small" type="button" data-cc="add" data-c="${esc(x.c)}">Pasar a la lista</button><button class="btn ghost small" type="button" data-cc="no" data-c="${esc(x.c)}">Ocultar</button></span></li>`).join('')}</ul>`
       : '<p class="sub">No hay ninguno pendiente.</p>'}

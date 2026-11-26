@@ -1,10 +1,5 @@
 // ================= Liga: la parte lúdica en su propia pestaña =================
 const TROPHY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 6H4.5v1.5A3 3 0 0 0 7.5 10.5M17 6h2.5v1.5a3 3 0 0 1-3 3M12 14v3.5M8.5 20.5h7M9.5 17.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-function nextJornadaTxt() {
-  const n = liga().length + 1;
-  if (thisWeekPlayed()) { const d = new Date(mondayISO()); d.setDate(d.getDate() + 7); return `Jornada ${n}: el ${fmtDay(d.toISOString().slice(0, 10))}`; }
-  return `Jornada ${n}: pendiente, la juega la Dirección Técnica el lunes`;
-}
 function standings() {
   const T = {};
   (bank.coaches || []).forEach(c => { T[normName(c.name)] = { name: c.name, pj: 0, g: 0, p: 0, gf: 0, gc: 0 }; });
@@ -183,7 +178,7 @@ function vestibuloHTML(N) {
       <img class="vb-bg" src="pabellon/vestibulo.webp" alt="El vestíbulo del pabellón" decoding="async" onerror="this.closest('.vb').classList.add('sin')">
       <div class="vb-sign vhead"><span class="vb-av">${me ? avatarSVG(game.av, myLevel()) : ''}</span><span><b>Pabellón ${esc(me ? me.split(' ')[0] : 'SMB')}</b><small class="sub">${esc(lgSubTxt(N))}</small></span></div>
       ${zonas}
-    </div><ul class="vb-chips">${chips}</ul></div>`;
+    </div><ul class="vb-chips">${chips}${me ? '<li><button type="button" data-liga="personaje"><b>Mi personaje</b><small>Colección, poderes y puntos</small></button></li>' : ''}</ul></div>`;
 }
 const VB_SUB = { pista: 'Liga, calendario y amistosos', vestuario: 'Tu plantilla y la alineación', pizarra: 'Prepara el duelo y abre cofres', gimnasio: 'Entrena a tus jugadores', despacho: 'Fichajes y mercado', taquilla: 'Tu ciudad deportiva', recreativa: 'Cinco juegos de siempre' };
 function pabellonHTML(N) {
@@ -193,10 +188,10 @@ function pabellonHTML(N) {
     return `<button class="pb-room ${cls}" type="button" data-${k}="${v}">${PB_ART[art](E._taq || 0)}${pbImg(art)}${st ? `<span class="pb-st${st[1] ? ' on' : ''}">${esc(st[0])}</span>` : ''}<span class="pb-n">${n}</span></button>`; }).join('');
   if (web) return `<div class="pb"><div class="pb-roof img"><img class="pb-fach" src="pabellon/fachada.webp" alt="" onerror="this.closest('.pb-roof').classList.add('sin')">
       <div class="pb-sign vhead"><span class="pb-av">${me ? avatarSVG(game.av, myLevel()) : ''}</span><span><b>Pabellón ${esc(me ? me.split(' ')[0] : 'SMB')}</b><small class="sub">${esc(lgSubTxt(N))}</small></span></div></div>
-    <div class="pb-grid">${rooms}</div><div class="pb-base"><span></span><span></span><span></span></div></div>`;
+    <div class="pb-grid">${rooms}</div><div class="pb-base"><span></span><span></span><span></span></div></div>${me ? '<div class="actions"><button class="btn" type="button" data-liga="personaje">Mi personaje</button></div>' : ''}`;
   return `<div class="pb"><div class="pb-roof"><svg viewBox="0 0 360 74" preserveAspectRatio="none" aria-hidden="true"><path d="M0 74V46Q180 -26 360 46v28z" fill="#681825"/><path d="M0 50Q180 -22 360 50" fill="none" stroke="#ffcf33" stroke-width="3"/><path d="M0 60Q180 -8 360 60" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.4"/></svg>
       <div class="pb-sign vhead"><span class="pb-av">${me ? avatarSVG(game.av, myLevel()) : ''}</span><span><b>Pabellón ${esc(me ? me.split(' ')[0] : 'SMB')}</b><small class="sub">${esc(lgSubTxt(N))}</small></span></div></div>
-    <div class="pb-grid">${rooms}</div><div class="pb-base"><span></span><span></span><span></span></div></div>`;
+    <div class="pb-grid">${rooms}</div><div class="pb-base"><span></span><span></span><span></span></div></div>${me ? '<div class="actions"><button class="btn" type="button" data-liga="personaje">Mi personaje</button></div>' : ''}`;
 }
 function pbCabecera(N) {
   const cur = PB_DE[ligaTab], room = PB_ROOMS.find(r => r[0] === 'lgtab:' + cur) || PB_ROOMS[0], E = pbEstado(N), web = !!window.SMB_CLOUD;
@@ -209,11 +204,11 @@ function renderLiga() {
   const inc = clOffersIn().length;
   if (!(ligaTab in PB_DE)) ligaTab = 'pabellon';
   if (ligaTab === 'recreativa' && !window.SMB_CLOUD) ligaTab = 'pabellon';
-  if (ligaTab === 'pabellon') { box.innerHTML = pabellonHTML(N); lgScroll = false; return; }
+  if (ligaTab === 'pabellon') { box.innerHTML = pabellonHTML(N) + misionesHTML(); lgScroll = false; return; }   // 25 nov: las misiones, en el pabellón (antes en Inicio)
   let body = '';
   if (ligaTab === 'hoy') body = lgHoyHTML(N);
   else if (ligaTab === 'calendario') body = lgCalHTML(N);
-  else if (ligaTab === 'clasificacion') body = `${lgClasHTML(N)}${palmaresHTML()}`;
+  else if (ligaTab === 'clasificacion') body = `${lgClasHTML(N)}${palmaresHTML()}`.trim() || '<section class="ses-sec"><p class="sub">La clasificación sale cuando empiece la temporada.</p></section>';   // 25 nov: antes salía en blanco
   else if (ligaTab === 'equipo') { const al = alineacionHTML(); body = al || clubTeaserHTML(); }   // 13 nov: «Tu plantilla» repetía lo de Alineación; solo sale si no hay alineación
   else if (ligaTab === 'pizarra') body = `${pizarraHTML()}${myLigaHTML()}`;
   else if (ligaTab === 'amistosos') body = amHTML() || teamHTML();
@@ -246,7 +241,7 @@ function arcTop(modo) {
 }
 function recreativaHTML() {
   const me = readAuthor(), fmt = v => Math.round(v).toLocaleString('es-ES');
-  return `<section class="ses-sec"><h2 class="h-sec">Recreativa</h2><p class="sub">Cinco clásicos de recreativa con hockey. Partidas sin límite. No dan puntos ni monedas: solo el récord, y el top 3 lo ve todo el cuerpo técnico. Son los mismos juegos que tienen las jugadoras en su app.</p>
+  return `<section class="ses-sec"><p class="sub">Cinco juegos de hockey sin límite. Solo cuenta el récord. ${infoBtn('recreativa')}</p>
     <div class="arc-grid">${ARC.map(([k, n, d, ic]) => { const top = arcTop(k), mio = arcDe(me)[k] || 0;
       return `<article class="arc-card"><span class="arc-ic" aria-hidden="true">${ic}</span><div><h3>${esc(n)}</h3><p>${esc(d)}</p>
         <div class="arc-rec"><span>Tu récord <b>${mio ? fmt(mio) : '—'}</b></span></div>

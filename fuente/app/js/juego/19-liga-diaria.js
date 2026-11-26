@@ -130,7 +130,7 @@ function lgSync() {
     if (pos >= 0 && pos < 3) { game.log.push({ key: 'lgfin:' + S.s, pts: LG_PRIZE[pos], why: `Liga · temporada ${S.s}: ${['campeón', 'subcampeón', 'tercero'][pos]}`, date: isoToday() }); if (pos === 0) cofreGrant('lgfin:' + S.s, 'campeón de la liga'); news.push(`Temporada ${S.s}: ¡${['campeón', 'subcampeón', 'tercero'][pos]}! +${LG_PRIZE[pos]}`); }
     paid.add(key);
   });
-  if (news.length) { game.lgPaid = [...paid].slice(-120); saveGame(); if (sesBox.hidden && editor.hidden) toast(news.slice(-2).join(' · ')); }
+  if (news.length) { game.lgPaid = [...paid].slice(-120); saveGame(); news.slice(-2).forEach(avisoJuego); }
   // la DT congela en el club los equipos de cada temporada y los resultados ya jugados
   if (canWriteBank && window.SMB_CLOUD && artifactApi && !lgFreezing) {
     const F = JSON.parse(JSON.stringify(lgFrozen())); F.seasons = F.seasons || {}; F.res = F.res || {}; let ch = false;
@@ -162,11 +162,11 @@ function lgTableHTML(S, mini) {
     ${rows.map(({ r, i }) => `<tr class="${normName(r.name) === me ? 'me' : ''}${i === 0 && r.pj ? ' first' : ''}"><td>${i + 1}</td><td class="lg-tn"><button class="esp-link" type="button" data-coach="${esc(r.name)}">${miniAv(r.name)}<span>${esc(r.name)}</span></button></td><td>${r.pj}</td><td>${r.g}</td><td>${r.p}</td>${mini ? '' : `<td>${r.gf}</td><td>${r.gc}</td>`}<td>${r.gf - r.gc > 0 ? '+' : ''}${r.gf - r.gc}</td><td><b>${r.pts}</b></td>${mini ? '' : `<td class="lg-racha">${r.racha.slice(-5).map(x => `<i class="${x}">${x}</i>`).join('')}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 function lgHoyHTML(N) {
-  const me = readAuthor(); if (!me) return '<section class="ses-sec"><p>Pon tu nombre en Mi perfil para entrar en la liga.</p></section>';
+  const me = readAuthor(); if (!me) return '<section class="ses-sec"><p>Pon tu nombre en Mi cuenta para entrar en la liga.</p></section>';
   if (!N.cur) {
     const U = N.upcoming;
     return `<section class="ses-sec lg-hero"><span class="lg-k">${U ? `Temporada ${U.s}` : 'Liga'}</span><h2>${U ? `Empieza el ${esc(fmtDay(U.nextStart || U.start))}` : 'Muy pronto'}</h2>
-      <p class="sub">Un partido cada día a las ${LG_HOUR}:00 contra cada entrenador, a ida y vuelta. ${U && U.teams.length ? `Apuntados: ${U.teams.map(esc).join(', ')}.` : ''} Mientras, prepara tu plantilla y tu pizarra.</p>
+      <p class="sub">Un partido cada día a las ${LG_HOUR}:00. Prepara tu plantilla y tu pizarra. ${infoBtn('liga')}</p>${U && U.teams.length ? `<p class="sub">Apuntados: ${U.teams.map(esc).join(', ')}.</p>` : ''}
       <div class="row"><button class="btn" type="button" data-lgtab="pizarra">Pizarra y poder</button><button class="btn" type="button" data-lgtab="amistosos">Jugar un amistoso</button></div></section>${clubTeaserHTML()}${ciudadTeaserHTML()}`;
   }
   const inS = N.cur.teams.some(t => normName(t) === normName(me));
@@ -223,7 +223,7 @@ setInterval(() => {
 }, 30000);
 
 function lgSubTxt(N) {
-  if (!N.cur) { const U = N.upcoming; return U ? `Temporada ${U.s}: empieza el ${fmtDay(U.nextStart || U.start)} · un partido cada día a las ${LG_HOUR}:00` : `Un partido cada día a las ${LG_HOUR}:00`; }
+  if (!N.cur) { const U = N.upcoming; return U ? `Temporada ${U.s}: empieza el ${fmtDay(U.nextStart || U.start)}` : `Un partido cada día a las ${LG_HOUR}:00`; }
   if (!N.next) return `Temporada ${N.cur.s} terminada · la siguiente, el ${fmtDay(lgNextMonday(N.cur.end))}`;
   return `Temporada ${N.cur.s} · jornada ${N.next.k} de ${N.cur.L} · ${N.next.date === isoToday() ? 'hoy' : fmtDay(N.next.date)} a las ${LG_HOUR}:00`;
 }
@@ -245,7 +245,7 @@ function cofresSync() {
   const J = lastJornada(), d = J && J.duels.find(x => normName(x.a.name) === normName(me) || normName(x.b.name) === normName(me));
   if (d && normName(d.win) === normName(me) && cofreGrant('j' + J.n, 'jornada ' + J.n, true)) n++;
   bank.tasks.filter(t => t.source !== 'oller' && t.author && normName(t.author) === normName(me) && (t.alta || '') >= '2026-10-10').forEach(t => { if (cofreGrant('bk:' + t.id, 'ejercicio en el banco', true)) n++; });
-  if (n) { saveGame(); if (sesBox.hidden && editor.hidden) toast(n === 1 ? 'Tienes un cofre nuevo: tira el penalti.' : `Tienes ${n} cofres nuevos: tira los penaltis.`); }
+  if (n) { saveGame(); avisoJuego(n === 1 ? 'Tienes un cofre nuevo: tira el penalti.' : `Tienes ${n} cofres nuevos: tira los penaltis.`); }
 }
 const cofresN = () => (game.cofres || {}).n || 0;
 // penalti gratis cada 12 h y penalti de pago (10 oct)
@@ -261,12 +261,6 @@ function notasHomeHTML() {
   return `<button class="notice nota-n" type="button" data-nota="${esc(pend[0].tid)}">La DT te ha dejado ${pend.length === 1 ? `una nota en «${esc(pend[0].titulo || 'tu ejercicio')}»` : pend.length + ' notas en tus ejercicios'}: ábrelo <span aria-hidden="true">→</span></button>`;
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-nota]'); if (!b) return; const t = mine.find(x => x.id === b.dataset.nota); if (t) openEditor(clone(t), 'mine'); });
-function penNoticeHTML() {
-  const n = cofresN();
-  if (n) return `<button class="notice cofre-n" type="button" data-cofre>Tienes ${n === 1 ? 'un cofre' : n + ' cofres'}: tira el penalti <span aria-hidden="true">→</span></button>`;
-  if (penFree()) return `<button class="notice cofre-n" type="button" data-cofre>Penalti gratis listo: tíralo <span aria-hidden="true">→</span></button>`;
-  return `<button class="notice cofre-n wait" type="button" data-cofre><span>Próximo penalti gratis en <b data-pencd>${penCd(penFreeIn())}</b><small>o tíralo ya por ${PEN_PRICE} monedas</small></span><span aria-hidden="true">→</span></button>`;
-}
 const penBtnLabel = () => cofresN() ? `Tirar penalti · ${cofresN()} ${cofresN() === 1 ? 'cofre' : 'cofres'}` : penFree() ? 'Penalti gratis' : `Penalti gratis en <span data-pencd>${penCd(penFreeIn())}</span>`;
 setInterval(() => {
   const els = document.querySelectorAll('[data-pencd]'); if (!els.length) return;
@@ -310,7 +304,7 @@ function cfKeeperHead(c) {
   return '<circle cx="150" cy="74" r="15" class="cf-helmet"/><rect x="140" y="70" width="20" height="12" rx="3" class="cf-visor"/>';
 }
 function openCofre() {
-  if (!readAuthor()) { toast('Antes, pon tu nombre en Mi perfil.'); return; }
+  if (!readAuthor()) { toast('Antes, pon tu nombre en Mi cuenta.'); return; }
   const el = document.createElement('div'); el.className = 'cofre'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Cofre: tira el penalti');
   document.body.appendChild(el); document.body.style.overflow = 'hidden';
   let busy = false, gk = null, pique = '', pago = false;
@@ -406,7 +400,7 @@ function estPreview(it) {
 function coleccionHTML() {
   const E = game.estilo || {}, tot = ESTILOS.length, mine = ESTILOS.filter(x => estOwned(x.id)).length, n = cofresN();
   return `<div class="col-head"><div><b>${mine} de ${tot}</b><span class="sub"> en tu colección</span> ${infoBtn('coleccion')} ${infoBtn('cofres')}</div><button class="btn${n || penFree() ? ' primary' : ''}" type="button" data-cofre>${penBtnLabel()}</button></div>
-    <p class="sub">Se ven en tus partidos: tus fichas siempre; la pista y el balón cuando retas tú; la celebración y el efecto cuando marcas; el título bajo tu nombre.</p>
+    <p class="sub">Se ven en tus partidos. ${infoBtn('coleccion')}</p>
     ${EST_CATS.map(([c, l]) => `<h3 class="h-sub">${esc(l)}</h3><div class="col-grid">${ESTILOS.filter(x => x.c === c).map(x => estOwned(x.id)
       ? `<button class="col-it r-${x.r}" type="button" data-est="${x.id}" aria-pressed="${(E[c] || (x.base ? x.id : '')) === x.id || (!E[c] && x.base)}" aria-label="${esc(x.n)}">${estPreview(x)}${x.c === 'cel' || x.c === 'tit' ? '' : `<b>${esc(x.n)}</b>`}<small>${RAR[x.r].n}</small></button>`
       : `<div class="col-it locked r-${x.r}" aria-label="Sin conseguir, ${RAR[x.r].n.toLowerCase()}"><span class="col-q">?</span><small>${RAR[x.r].n}</small></div>`).join('')}${c === 'tit' ? `<button class="col-it" type="button" data-est="tit-none" aria-pressed="${!E.tit}"><span class="est-tit">—</span><b>Sin título</b><small>&nbsp;</small></button>` : ''}</div>`).join('')}

@@ -10,7 +10,7 @@ function taskCard(t, where) {
   const rules = (t.rules || []).filter(Boolean);
   return `<article class="task" id="card-${t.id}">
     <div class="task-head">
-      <div class="meta"><span class="badge">${esc(tipoName(t.tipo) || 'Sin clasificar')}</span><span class="tags">${(t.fases || []).map(f => `<span class="tag">${esc(f)}</span>`).join('')}</span>${t.source !== 'oller' ? `<span>De ${esc(authorOf(t))}</span>` : ''}</div>
+      <div class="meta"><span class="badge">${esc(tipoName(t.tipo) || 'Sin clasificar')}</span><span class="tags">${(t.fases || []).map(f => `<span class="tag">${esc(faseTxt(f))}</span>`).join('')}</span>${t.source !== 'oller' ? `<span>De ${esc(authorOf(t))}</span>` : ''}</div>
       <h2>${esc(num)}${esc(t.title || 'Sin nombre')}</h2>
       ${(t.contenidos || []).length ? `<p class="works"><b>Qué se trabaja:</b> ${t.contenidos.map(esc).join(' · ')}</p>` : ''}
       ${(t.tec || []).length ? `<p class="works"><b>Técnica y táctica individual:</b> ${t.tec.map(esc).join(' · ')}</p>` : ''}
@@ -68,7 +68,7 @@ function tcard(t, where) {
     <span class="tthumb">${diagramSVG(t.diagram || {}, t.title || '', { mini: true })}</span>
     <span class="tbadges">${t.destacado ? '<span class="badge star">★ Destacado</span>' : ''}${where === 'bank' && t.tipo ? '' : `<span class="badge">${esc(tipoName(t.tipo) || 'Sin clasificar')}</span>`}${where === 'mine' ? `<span class="badge mine">${t.borrador ? 'Borrador' : 'Mío'}</span>` : ''}${where === 'club' ? `<span class="badge mine">${esc(t.author || '')}</span>${inBank(t) ? '<span class="badge">En el banco</span>' : canWriteBank ? '<span class="badge warn">Nuevo</span>' : ''}` : ''}${warn ? '<span class="badge warn">Pendiente</span>' : ''}</span>
     <span class="ttitle">${esc((t.num ? 'nº ' + t.num + ' · ' : '') + (t.title || 'Sin nombre'))}</span>
-    ${orgShort(t.diagram) || (t.fases || []).length ? `<span class="tsub">${esc([orgShort(t.diagram), (t.fases || []).join(' · ')].filter(Boolean).join(' · '))}</span>` : ''}
+    ${orgShort(t.diagram) || (t.fases || []).length ? `<span class="tsub">${esc([orgShort(t.diagram), (t.fases || []).map(faseTxt).join(' · ')].filter(Boolean).join(' · '))}</span>` : ''}
   </button>`;
 }
 // ejercicios del resto del cuerpo técnico (web): los ve todo el mundo; la DT los mete en el banco
@@ -95,7 +95,7 @@ function renderGrid() {
   const cc = count('cont', t => worksOf(t));
   fillSelect('f-cont', 'Todo', view.cont, (view.fase ? [view.fase] : FASE_NAMES).map(f => {
     const items = FASES[f].filter(c => cc[c] || c === view.cont);
-    return items.length ? `<optgroup label="${esc(f)}">${items.map(c => `<option value="${esc(c)}">${esc(c)} (${cc[c] || 0})</option>`).join('')}</optgroup>` : '';
+    return items.length ? `<optgroup label="${esc(faseTxt(f))}">${items.map(c => `<option value="${esc(c)}">${esc(c)} (${cc[c] || 0})</option>`).join('')}</optgroup>` : '';
   }).join('') + (view.fase ? '' : TEC_NAMES.map(f => {
     const items = tecList(f).filter(c => cc[c] || c === view.cont);
     return items.length ? `<optgroup label="Técnica · ${esc(f)}">${items.map(c => `<option value="${esc(c)}">${esc(c)} (${cc[c] || 0})</option>`).join('')}</optgroup>` : '';
@@ -113,7 +113,7 @@ function renderGrid() {
   fillSelect('f-bloque', 'Todos', view.bloque, BLOQUES.filter(b => bc[b] || b === view.bloque).map(b => `<option value="${esc(b)}">${esc(b)} (${bc[b] || 0})</option>`).join(''));
   const more = [view.fase, view.cont, view.cat, view.autor, view.bloque].filter(Boolean).length;
   document.getElementById('f-more').textContent = more ? `Más filtros (${more})` : 'Más filtros';
-  const tags = [['tipo', view.tipo && tipoName(view.tipo)], ['fase', view.fase], ['cont', view.cont], ['cat', view.cat && catName(view.cat)], ['autor', view.autor], ['bloque', view.bloque && 'Libro: ' + view.bloque], ['q', view.q.trim() && '«' + view.q.trim() + '»']].filter(x => x[1]);
+  const tags = [['tipo', view.tipo && tipoName(view.tipo)], ['fase', view.fase && faseTxt(view.fase)], ['cont', view.cont], ['cat', view.cat && catName(view.cat)], ['autor', view.autor], ['bloque', view.bloque && 'Libro: ' + view.bloque], ['q', view.q.trim() && '«' + view.q.trim() + '»']].filter(x => x[1]);
   const shown = src.filter(t => matches(t));
   document.getElementById('factive').innerHTML = `<span class="count">${shown.length} ${shown.length === 1 ? 'ejercicio' : 'ejercicios'}</span>`
     + tags.map(([k, l]) => `<button class="ftag" type="button" data-clear="${k}" aria-label="Quitar filtro ${esc(l)}">${esc(l)} <span aria-hidden="true">×</span></button>`).join('')
@@ -136,7 +136,7 @@ function renderGrid() {
     box.appendChild(b);
   });
   const fb = document.getElementById('f-fase');
-  [{ v: '', n: 'Todas' }, ...FASE_NAMES.map(f => ({ v: f, n: f }))].forEach(o => {
+  [{ v: '', n: 'Todas' }, ...FASE_NAMES.map(f => ({ v: f, n: faseTxt(f) }))].forEach(o => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'chip sm'; b.textContent = o.n; b.dataset.v = o.v;
     b.addEventListener('click', () => { view.fase = o.v; view.cont = ''; render(); });
@@ -200,7 +200,7 @@ function drawDetail() {
   detail.innerHTML = `<div class="d-wrap">
     <div class="d-bar"><button class="btn" type="button" data-dclose>← Volver</button></div>
     <header class="d-head">
-      <div class="meta">${t.destacado ? `<span class="badge star">★ Destacado · ${esc(t.destacado)}</span>` : ''}<span class="badge">${esc(tipoName(t.tipo) || 'Sin clasificar')}</span>${where === 'mine' ? `<span class="badge mine">${t.borrador ? 'Borrador' : 'Mío'}</span>` : ''}${where === 'club' ? '<span class="badge mine">Del cuerpo técnico</span>' : ''}<span class="tags">${(t.fases || []).map(f => `<span class="tag">${esc(f)}</span>`).join('')}</span>${t.source !== 'oller' ? `<span>De ${esc(authorOf(t))}</span>` : ''}</div>
+      <div class="meta">${t.destacado ? `<span class="badge star">★ Destacado · ${esc(t.destacado)}</span>` : ''}<span class="badge">${esc(tipoName(t.tipo) || 'Sin clasificar')}</span>${where === 'mine' ? `<span class="badge mine">${t.borrador ? 'Borrador' : 'Mío'}</span>` : ''}${where === 'club' ? '<span class="badge mine">Del cuerpo técnico</span>' : ''}<span class="tags">${(t.fases || []).map(f => `<span class="tag">${esc(faseTxt(f))}</span>`).join('')}</span>${t.source !== 'oller' ? `<span>De ${esc(authorOf(t))}</span>` : ''}</div>
       <h2>${esc((t.num ? 'nº ' + t.num + ' · ' : '') + (t.title || 'Sin nombre'))}</h2>
       ${(t.contenidos || []).length ? `<p class="works"><b>Qué se trabaja:</b> ${t.contenidos.map(esc).join(' · ')}</p>` : ''}
       ${(t.tec || []).length ? `<p class="works"><b>Técnica y táctica individual:</b> ${t.tec.map(esc).join(' · ')}</p>` : ''}

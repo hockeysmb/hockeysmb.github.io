@@ -1,6 +1,16 @@
 // ================= botón «i»: poco texto a la vista y la explicación completa para quien la quiera =================
 const infoBtn = k => `<button class="info-b" type="button" data-info="${k}" aria-label="Más información">i</button>`;
 const INFO = {
+  // 25 nov: lo que antes iba a la vista, en una frase, y aquí entero
+  legal: () => ['Ejercicios del club', `<p>Los ejercicios y gráficos numerados son de Marc Oller, <i>365 exercicis d’hoquei patins</i> (2026), para uso interno del club. Las normas están traducidas del catalán; el original está en la pestaña «Normas» de cada ficha.</p>
+    <p>${window.SMB_CLOUD ? 'Lo que crea o cambia cada entrenador se guarda en su cuenta, en «Mis ejercicios», y lo ve el resto del cuerpo técnico.' : 'Lo que crea o cambia cada entrenador se guarda en su navegador, en «Mis ejercicios».'} Al banco del club solo llega lo que la Dirección Técnica añade.</p>`],
+  contenidos: () => ['Contenidos nuevos', `<p>Son los contenidos que el cuerpo técnico escribe a mano en sus sesiones porque no están en la lista.</p><p>Si pasas uno a la lista del club, sale a todos al preparar sesiones y planificar, y se puede marcar en los ejercicios. Si lo ocultas, deja de salir aquí.</p>`],
+  recreativa: () => ['Recreativa', `<p>Cinco clásicos de recreativa con hockey. Partidas sin límite.</p><p>No dan puntos ni monedas: solo el récord, y el top 3 lo ve todo el cuerpo técnico. Son los mismos juegos que tienen las jugadoras en su app.</p>`],
+  evaluacion: () => ['Evaluación y apuntes', `<p>Actívalo solo si el colegio ha confirmado que su política de privacidad cubre las evaluaciones deportivas y los apuntes de jugadores menores, y cuánto tiempo se guardan.</p><p>Necesita las reglas nuevas de Firestore pegadas en la consola.</p>`],
+  apuntes: () => ['Apuntes', `<p>Lo ven solo sus entrenadores y la Dirección Técnica.</p><p>Escribe lo que viste, no etiquetas: «pierde la bola cuando le presionan en la salida» dice más que «le falta técnica». Nada de salud ni de la familia.</p>`],
+  preguntas: () => ['Preguntas después del partido', `<p>Del modelo: tres preguntas, no un discurso. Por ejemplo:</p><ul><li>«¿Quién tenía la ventaja ahí?»</li><li>«¿A quién llevabas tú en el segundo gol?»</li><li>«¿Qué hicimos bien que quieras repetir?»</li></ul>`],
+  permisos: () => ['Quién puede cambiar cada plantilla', `<p>Sale del horario y de las cuentas de cada entrenador. Si alguien entra por primera vez o cambias quién lleva un equipo, se actualiza al guardar; si no, pulsa «Actualizar».</p>`],
+  coleccion: () => ['Tu colección', `<ul><li><b>Tus fichas</b> se ven siempre.</li><li><b>La pista y el balón</b>, cuando retas tú.</li><li><b>La celebración y el efecto</b>, cuando marcas.</li><li><b>El título</b>, bajo tu nombre.</li></ul>`],
   liga: () => ['Liga', `<p>Una liga entre todo el cuerpo técnico, a lo Online Soccer Manager: <b>un partido cada día a las ${LG_HOUR}:00</b>, contra cada entrenador a ida y vuelta.</p><ul><li><b>Antes de las ${LG_HOUR}:00</b> deja lista tu alineación, tu pizarra y tu poder (pestaña Equipo). Lo que tengas a esa hora es lo que juega.</li><li><b>Puntos:</b> victoria 3; si se decide en los penaltis, 2 al que gana y 1 al que pierde.</li><li><b>Monedas:</b> +${LG_WIN} por victoria (+${LG_WINP} en los penaltis, +${LG_LOSSP} si pierdes en los penaltis). Al acabar la temporada: ${LG_PRIZE.join(', ')} a los tres primeros y un cofre al campeón.</li><li><b>Temporada:</b> dura lo que tarda en jugar todos contra todos dos veces; la siguiente empieza el lunes. Entra todo el que haya abierto la liga antes de que empiece.</li><li><b>Amistosos:</b> cuando quieras, contra quien quieras, aparte de la liga.</li></ul>`],
   partido: () => ['Cómo es un partido', `<ul><li><b>8 posesiones</b>, 4 para cada uno, alternas.</li>
     <li><b>Con bola</b> eliges cómo atacar y <b>sin bola</b> cómo defender. Cada jugada tira su dado.</li>
@@ -104,7 +114,7 @@ const estOwned = id => { const x = estItem(id); return !!x && (x.base || (game.c
 function cofreGrant(key, why, quiet) {
   const C = game.cofres = game.cofres || { n: 0, keys: [] };
   if (C.keys.includes(key)) return false;
-  C.keys.push(key); C.n++; if (!quiet) toast(`+1 cofre · ${why}`);
+  C.keys.push(key); C.n++; if (!quiet) avisoJuego(`+1 cofre · ${why}`);
   return true;
 }
 // los que se ganan solos: bienvenida, cada nivel, ganar tu duelo de la jornada y cada ejercicio nuevo en el banco

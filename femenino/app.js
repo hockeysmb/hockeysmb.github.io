@@ -85,7 +85,6 @@
     for (const k of Object.keys(dias)) { const pd = ((dias[k] || {}).partidos || {})[x.id]; if (pd) return { k, pd }; }
     return { k: x.fecha, pd: null };
   }
-  const partTxt = x => `${x.cat} · ${x.rival} (${x.casa ? 'en casa' : 'fuera'})`;
   const PJUEGA = [['si', 'He jugado'], ['conv', 'Convocada, sin jugar']];
   // antes y después del partido (25 oct)
   const L10 = o => v => ({ 10: o[4], 8: o[3], 5: o[2], 3: o[1], 1: o[0] })[v];
@@ -412,14 +411,6 @@
   const diaHoy = () => U.dias[today()] || {};
   const draft = { antes: {}, ses: { tipo: 'entreno', rpe: null, min: 90, nota: '' }, sem: null, showDia: false };
 
-  function antesHTML() {
-    const a = diaHoy().antes;
-    if (a && !draft.editAntes) return `<section class="card done"><div class="card-h"><h2>Antes del entreno</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div>
-      <div class="faces">${WELL.map(w => { const v = Math.round(diez(a[w.k], a)); return `<span class="mf">${face(Math.ceil(v / 2))}<b>${esc(w.s)}</b><small>${v} de 10</small></span>`; }).join('')}</div>${a.nota ? `<p class="nota-p">«${esc(a.nota)}»</p>${vistoTag('d:' + today())}` : ''}<button class="btn small" type="button" data-a="editantes">Cambiar</button></section>`;
-    const n = WELL.filter(w => draft.antes[w.k] >= 1).length;
-    return `<section class="card" id="c-antes"><div class="card-h"><h2>Antes del entreno</h2><span class="sub">¿Cómo llegas hoy?</span></div>
-      <button class="btn primary big" type="button" data-a="startantes">${n ? `Seguir · ${n} de 5` : 'Empezar · 15 segundos'}</button></section>`;
-  }
   // antes del entreno: una pregunta por pantalla; al tocar pasa sola a la siguiente y guarda al acabar
   function antesFlowView() {
     const N = WELL.length, i = Math.min(draft.paso || 0, N), d = draft.antes, nota = i === N, w = WELL[i];
@@ -450,12 +441,6 @@
       <div class="row"><button class="btn primary" type="button" data-a="saveses">Guardar</button>${L.length || ayer ? '<button class="btn ghost" type="button" data-a="lessses">Cancelar</button>' : ''}</div></section>`;
   }
   // el después de ayer (26 oct, noche): contarlo hasta 24 h después sigue siendo fiable (Phibbs y otros, 2017)
-  function ayerHTML() {
-    const ay = addDays(today(), -1), d = U.dias[ay] || {};
-    if (!entrena(calJ(), ay) || (d.ses || []).some(z => !z.pid)) return '';
-    if (draft.sesFecha !== ay) return `<section class="card desp-mini"><div><h2>¿Y el entreno de ayer?</h2><p class="sub">No contaste el después. Todavía estás a tiempo.</p></div><button class="btn" type="button" data-a="ayerdesp">Contarlo</button></section>`;
-    return despuesHTML(ay);
-  }
   actions.noent = async b => { const f = b.dataset.f || today(), D = U.dias[f] || {}; U.dias[f] = Object.assign({}, D, { noent: true }); if (f !== today()) draft.sesFecha = null; render(); await B.merge(`registros/${me.uid}/dias/${f}`, { noent: true, ts: Date.now() }); toast('Apuntado: no fuiste al entreno.'); };
   actions.sient = async () => { const f = today(), D = U.dias[f] || {}; U.dias[f] = Object.assign({}, D, { noent: false }); render(); await B.merge(`registros/${me.uid}/dias/${f}`, { noent: false, ts: Date.now() }); };
   actions.ayerdesp = async () => { view = 'hoy'; draft.sesFecha = addDays(today(), -1); draft.openDesp = false; draft.ses = { tipo: 'entreno', rpe: null, min: eqMin(), nota: '' }; render(); };
@@ -477,11 +462,6 @@
   }
   // el diario es de cada día desde el 27 oct (antes era semanal): registros/{uid}/dias/{fecha}.diario = {tiempo, mejor, cambiar, como, ts}
   // el compromiso sigue siendo de la semana: registros/{uid}/semanas/{lunes} = {compromiso, area, cumplida (la de la semana anterior), ts}
-  function semanaMini() {
-    const x = diaHoy().diario;
-    if (x) return `<section class="card done"><div class="card-h"><h2>Tu diario de hoy</h2>${stHTML('ok').replace('Bien', 'Hecho')}</div><p class="sub dia-l">${wx(x.tiempo)}${esc(x.mejor || '')}</p></section>`;
-    return `<section class="card"><div class="card-h"><h2>Tu diario de hoy</h2><span class="sub">1 minuto</span></div><p class="sub">Tu día de hockey: qué tal, lo mejor y lo que cambiarías.</p><button class="btn primary" type="button" data-a="gosemana">Escribir mi diario</button></section>`;
-  }
   function rachaDia() { let n = 0, k = today(); if (!(U.dias[k] || {}).diario) k = addDays(k, -1); while ((U.dias[k] || {}).diario) { n++; k = addDays(k, -1); } return n; }
   const IC_MEJOR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
   const IC_RINCON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-7l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>';
@@ -683,14 +663,6 @@
   }
   const partVis = x => !noJuega(x) || !!(pdOf(x) || {}).pre || !!(pdOf(x) || {}).juega;
   // hoy: los partidos de hoy; ayer: solo los que tienen el antes hecho y falta el después (se cuenta al día siguiente)
-  function partidosHoyHTML() {
-    const t = today(), ayer = partDe(calJ(), addDays(t, -1)).filter(x => { const pd = pdOf(x); return pd && pd.pre && !pd.juega; });
-    return [...ayer, ...partDe(calJ(), t).filter(partVis)].map(partidoHTML).join('');
-  }
-  function proximoHTML() {
-    const t = today(), n = allPart(calJ()).filter(x => x.fecha > t).slice(0, 5);
-    return n.length ? `<section class="strip"><div class="strip-h"><h2>Próximos partidos</h2>${n.length > 1 ? '<span class="sub">Desliza</span>' : ''}</div><div class="tkts">${n.map(x => ticketHTML(x, '', `data-pp="${x.id}"`)).join('')}</div></section>` : '';
-  }
 
   actions.nojuego = async b => { const x = partById(b.dataset.id); ls.set(`smbf-nojuego-${me.uid}-${b.dataset.id}`, '1');
     if (x) { const D = U.dias[x.fecha] || {}, nojuego = Object.assign({}, D.nojuego || {}, { [x.id]: true }); U.dias[x.fecha] = Object.assign({}, D, { nojuego }); await B.merge(`registros/${me.uid}/dias/${x.fecha}`, { nojuego, ts: Date.now() }).catch(() => {}); } toast('Vale. Si al final juegas, apúntalo en «Después del entreno» como partido.'); render(); };
@@ -823,7 +795,7 @@
       <section class="card"><h2>Cómo se ganan puntos</h2><ul class="pts">
         <li><span>Responder antes del entreno</span><b>+${PTS.antes}</b></li><li><span>Responder después</span><b>+${PTS.despues}</b></li><li><span>Antes y después de cada partido</span><b>+${PTS.partido} y +${PTS.partido}</b></li>
         <li><span>Tu diario de cada día</span><b>+${PTS.diario}</b></li><li><span>Tu compromiso de la semana</span><b>+${PTS.semana}</b></li><li><span>Decir si lo cumpliste</span><b>+${PTS.revisar}</b></li></ul>
-        <p class="sub">Da igual lo que contestes: puntúa responder, no las notas. Cada nivel desbloquea ropa, gafas, fondos o marcos. Cada punto es también una moneda para la tienda.</p></section>`;
+        <p class="sub">Puntúa responder, no lo que contestas. Cada punto es una moneda.</p></section>`;
   }
   function evolHTML() {
     const t = today(), sem = Object.keys(U.semanas).sort().reverse().slice(0, 8);
@@ -1633,9 +1605,8 @@
       ${J.sinReglas ? `<section class="card aviso-reglas"><h2>${isAdmin() ? 'Faltan las reglas del reto' : 'El reto todavía no está listo'}</h2><p>${isAdmin() ? 'Firebase no deja guardar nada del juego (partidas, duelos, tienda ni tu personaje) porque las reglas nuevas no están publicadas. Ve a la consola de Firebase, Firestore → Reglas, pega el archivo <b>firestore.rules</b> y pulsa «Publicar».' : 'Puedes jugar, pero todavía no se guardan las partidas. Carlos lo activa en breve.'}</p></section>` : ''}
       ${resH}
       ${isAdmin() ? `<section class="card mis-mon"><span class="mm-ic">${fx('moneda')}</span><div><span class="kicker">Tus monedas</span><b class="num">${fmtInt(monedas())}</b></div>
-        <div class="mm-f"><label class="mm-in"><span>Darme</span><input type="text" id="darme-m" inputmode="numeric" autocomplete="off" placeholder="cuántas" aria-label="Cuántas monedas te das"></label><button class="btn primary small" type="button" data-a="darme">Añadir</button></div>
         <button class="btn big mm-pr" type="button" data-a="premiar">${fx('regalo', 'bt-ic')}Premiar a las jugadoras: monedas o puntos</button></section>
-        <button class="prox-l" type="button" data-av="mundo">${fx('corazon')}<span><small>Lo tuyo</small><b>Mi mundo: mascota, personaje y tienda</b></span>›</button>` : ''}
+` : ''}
       ${(() => { const f = today(), mh = (y.mis && y.mis.f === f) ? y.mis.h || [] : [], L = misionesHoy(f), pr = !(y.dias || {})[f];
         return `<section class="card rt-mis"><div class="card-h"><h2>Misiones de hoy</h2><span class="sub">${mh.length} de 3</span></div>
           <ul>${L.map(m => `<li class="${mh.includes(m.k) ? 'ok' : ''}"><i>${mh.includes(m.k) ? '✓' : ''}</i><span>${esc(m.t)}</span><b>+${m.p}</b></li>`).join('')}</ul>
@@ -1663,21 +1634,8 @@
   const nom1 = u => ((A.jug[u] || {}).nombre || '').split(' ')[0];
   const avDe = u => avatarSVG((A.jug[u] || {}).av, nivelDe(puntos(diasDe(u), semDe(u)) + ptsRegalo(A.acc[u])), nom1(u));
   const ORD = { bad: 0, warn: 1, none: 2, ok: 3 };
-  const top1 = e => e.R.slice().sort((a, b) => (ORD[a.lvl] ?? 4) - (ORD[b.lvl] ?? 4))[0];
   // medidor de 270°: cómo llegan, del 1 al 10, con una marca en lo normal
-  function gaugeSVG(v, base, label) {
-    const R = 50, cx = 64, cy = 62, a0 = Math.PI * 0.75, sp = Math.PI * 1.5, P = (f, r = R) => [cx + r * Math.cos(a0 + sp * f), cy + r * Math.sin(a0 + sp * f)];
-    const arc = (f0, f1) => { const [x0, y0] = P(f0), [x1, y1] = P(f1); return `M${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 ${(f1 - f0) * sp > Math.PI ? 1 : 0} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`; };
-    const lvl = v == null ? 'none' : v <= 4.5 ? 'bad' : base != null && v <= base - 1 ? 'warn' : 'ok', f = v == null ? 0 : Math.max(0.01, (v - 1) / 9);
-    const tick = base != null ? (([x0, y0], [x1, y1]) => `<line class="g-base" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`)(P((base - 1) / 9, R - 11), P((base - 1) / 9, R + 11)) : '';
-    return `<svg class="gauge ${lvl}" viewBox="0 0 128 112" role="img" aria-label="${esc(label)}: ${fmt1(v)} de 10${base != null ? ', suele ' + fmt1(base) : ''}"><path class="g-bg" d="${arc(0, 1)}"/>${v != null ? `<path class="g-v" d="${arc(0, f)}"/>` : ''}${tick}
-      <text x="64" y="68" class="g-n">${fmt1(v)}</text><text x="64" y="86" class="g-s">${base != null ? 'suele ' + fmt1(base) : 'de 10'}</text></svg>`;
-  }
   // anillo pequeño: una fracción (responden, diarios)
-  function ringSVG(fr, txt, label) {
-    const r = 19, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, fr || 0));
-    return `<svg class="ring" viewBox="0 0 48 48" role="img" aria-label="${esc(label)}"><circle class="r-bg" cx="24" cy="24" r="${r}"/><circle class="r-v" cx="24" cy="24" r="${r}" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 24 24)"/><text x="24" y="28">${esc(txt)}</text></svg>`;
-  }
   // color de una casilla del 1 al 10 (10 = lo mejor)
   const hcls = v => v == null ? 'h0' : v <= 3 ? 'h1' : v <= 5 ? 'h2' : v <= 6 ? 'h3' : v <= 8 ? 'h4' : 'h5';
   // mapa de los últimos días: una columna por día con respuesta, una fila por pregunta
@@ -1884,13 +1842,6 @@
       .sort((a, b) => a.rk - b.rk || (a.e.s ?? 99) - (b.e.s ?? 99) || nom1(a.u).localeCompare(nom1(b.u), 'es'));
   }
   const byOrd = (a, b) => (ORD[a.lvl] ?? (a.lvl === 'info' ? 2.5 : 4)) - (ORD[b.lvl] ?? (b.lvl === 'info' ? 2.5 : 4));
-  function impHTML({ u, e, pc }) {
-    const R = e.R.filter(r => r.lvl !== 'none' && !suave(r)).sort(byOrd), r0 = R[0], nota = ((diasDe(u)[today()] || {}).antes || {}).nota;
-    return `<button type="button" class="imp ${e.lvl}" data-jug="${u}"><span class="imp-av">${avDe(u)}</span>
-      <span class="imp-b"><span class="imp-t"><b>${esc(nom1(u))}</b>${pc.length ? `<span class="pc" title="Por contestar">${ric('nota')}${pc.length}</span>` : ''}</span>
-        ${r0 ? `<span class="imp-h ${r0.lvl}">${ric(r0.ic)}${esc(r0.c || r0.txt)}</span>` : `<span class="imp-h info">${ric('nota')}${pc.length === 1 ? 'Te ha escrito: contéstale' : `${pc.length} cosas por contestar`}</span>`}
-        ${R.length > 1 ? chipsHTML(R.slice(1)) : ''}${nota ? `<span class="imp-q">«${esc(nota)}»</span>` : ''}</span><span class="imp-go" aria-hidden="true">›</span></button>`;
-  }
   const irFicha = (u, from) => { A.sel = u; if (from) A.from = from; view = 'detalle'; render(); scrollTo({ top: 0 }); };
   function fichaVecina(d) { const L = ordenadas(today()).map(r => r.u), i = L.indexOf(A.sel); if (!L.length) return; irFicha(L[(i + d + L.length) % L.length]); }
   // datos de un entreno (30 oct): cómo llegaron (antes, las cinco) y cómo fue (después) ese día; sirve para Equipo y para el día del Calendario
@@ -2021,7 +1972,9 @@
         ${semanas.length ? `<div class="dweeks">${semanas.map(k => { const x = S[k]; return `<div class="dw"><div class="dw-h">${x.tiempo ? `<span class="dw-wx" title="${esc(TIEMPO[x.tiempo - 1][1])}">${wx(x.tiempo)}</span>` : ''}<span class="kicker">Semana del ${esc(fmtShort(k))}</span>${x.cumplida ? `<span class="stamp ${x.cumplida}">${esc(STAMP[x.cumplida] || '')}</span>` : ''}</div>
           ${x.mejor ? `<p class="dw-m"><span>Lo mejor</span>${esc(x.mejor)}</p>` : ''}${x.cambiar ? `<p class="dw-m"><span>Cambiaría</span>${esc(x.cambiar)}</p>` : ''}${x.como ? `<p class="dw-m"><span>Cómo lo hará</span>${esc(x.como)}</p>` : ''}${x.resp ? `<p class="dw-m"><span>${esc(x.pregunta || 'Respuesta')}</span>${esc(x.resp)}</p>` : ''}
           <div class="note dw-n"><span class="d">Se compromete a${x.area ? ' · ' + esc(x.area) : ''}</span><span class="t">${esc(compOf(x) || '—')}</span></div>${respBox(u, 's:' + k)}</div>`; }).join('')}</div>` : '<p class="sub">Todavía no se ha puesto ningún compromiso.</p>'}</section>
-      ${nx ? `<button class="btn big next-j" type="button" data-jnav="1"><span class="nj-av">${avDe(nx)}</span>Siguiente: ${esc(nom1(nx))} ›</button>` : ''}`, { nav: navA(), wide: true, right: fnav });
+      ${nx ? `<button class="btn big next-j" type="button" data-jnav="1"><span class="nj-av">${avDe(nx)}</span>Siguiente: ${esc(nom1(nx))} ›</button>` : ''}
+      <section class="card cuenta-j"><h2>Su cuenta</h2><p class="sub">${activas().includes(u) ? 'Activa. Desactivarla no borra nada.' : 'Desactivada: no puede entrar. Sus datos siguen guardados.'}</p>
+        <div class="row">${activas().includes(u) ? `<button class="btn small" type="button" data-a="desactivar" data-u="${u}">Desactivar</button>` : `<button class="btn small" type="button" data-a="reactivar" data-u="${u}">Activar otra vez</button>`}<button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></div></section>`, { nav: navA(), wide: true, right: fnav });
   }
   const respPart = (u, x) => pdAt(diasDe(u), x).pd;
   // quién ha contestado un partido: verde antes y después, ámbar solo el antes, gris nada
@@ -2053,7 +2006,7 @@
         ${off !== 0 ? '<button class="btn ghost small" type="button" data-esem="0">Volver a esta semana</button>' : ''}
         ${pas.length ? `<p class="sub">${pas.length === 1 ? '1 entreno' : pas.length + ' entrenos'}${off === 0 ? ' hasta hoy' : ''} · ${nA} de ${pas.length * us.length} antes · ${nD} de ${pas.length * us.length} después</p>` : ''}
         ${tks ? `${CAL_LEG}<div class="tkts col">${tks}</div>` : '<section class="card"><p class="sub">Esta semana no hay entrenos ni partidos.</p></section>'}
-        ${nunca.length ? `<p class="sub">Sin contestar ningún entreno esta semana: ${nunca.map(u => `<button type="button" class="lnk" data-jug="${u}">${esc(nom1(u))}</button>`).join(', ')}.</p>` : ''}
+        ${nunca.length ? `<p class="sub">Sin contestar ningún entreno esta semana: ${nunca.map(u => `<button type="button" class="lnk" data-jug="${u}">${esc(nom1(u))}</button>`).join(', ')}</p>` : ''}
         ${F.length ? `<p class="sub">Sin entreno (festivo): ${F.map(d => esc(fmtDay(d))).join(', ')}.</p>` : ''}`;
     } else {
       const mes = A.mes || t.slice(0, 7), [y, m] = mes.split('-').map(Number), nd = new Date(y, m, 0).getDate();
@@ -2224,25 +2177,19 @@
   actions.delsin = async b => { const c = calOf(A.cal); await saveCal({ dias: c.dias, sin: c.sin.filter(d => d !== b.dataset.d) }); };
   // ================= Mi perfil de la DT (28 oct): todo lo de administrar en un sitio =================
   function perfilView() {
-    const P = pendientes(), y = yoJ(), mas = y.mascota ? MSC().svg(y.mascota, 'msc', 'feliz') : fx('corazon');
+    const P = pendientes();
     const tile = (attrs, ic, t, sub, extra = '') => `<button type="button" class="ptile" ${attrs}><span class="pt-ic">${ic}</span><b>${t}</b><small>${sub}</small>${extra}</button>`;
     shell(`<button class="btn ghost small back" type="button" data-av="resumen">← Volver</button>
       <section class="pf-hero"><span class="pf-big">${avatarSVG(miAv(), 9, 'Tu personaje')}</span><div><span class="kicker">Dirección Técnica · ${esc(EQ_N)}</span><h1>${esc(miNombre())}</h1><span class="sub">${esc(me.email || '')}</span></div></section>
       <div class="ptiles">
         ${tile('data-av="acceso"', fx('llave'), 'Altas y cuentas', P.length ? `${P.length === 1 ? '1 espera' : P.length + ' esperan'} el alta` : `${activas().length} activas`, P.length ? `<i class="nbad">${P.length}</i>` : '')}
         ${tile('data-av="dias"', fx('calendario'), 'Días de entreno', calOf(A.cal).dias.map(n => (DOW.find(d => d[0] === n) || [])[2]).filter(Boolean).join(' · ') || 'Sin días puestos')}
-        ${tile('data-av="mundo"', mas, 'Mi mascota y personaje', 'Cuidarla, decorar, tienda')}
-        ${tile('data-a="editavdt"', fx('camiseta'), 'Cambiar mi personaje', 'Cómo te ven en la app')}
         ${tile('data-av="datosdt"', fx('archivo'), 'Datos de la temporada', 'Descargar o borrar')}
       </div>
       <button class="btn ghost big" type="button" data-a="out">Cerrar sesión</button>
       <p class="sub center">Versión de la app ${esc(APP_V)}${J.sinReglas ? ' · faltan las reglas del reto en Firebase' : ''}</p>`, { nav: navA() });
   }
-  actions.darme = async b => { const m = Math.round(+String((document.getElementById('darme-m') || {}).value || b.dataset.m || '').replace(/[^0-9]/g, '') || 0), y = yoJ();
-    if (!(m > 0)) { toast('Escribe cuántas monedas.'); return; } if (m > 1000000) { toast('Como mucho, un millón de golpe.'); return; }
-    const extra = (+y.extra || 0) + m; document.activeElement && document.activeElement.blur && document.activeElement.blur();
-    J.todos[me.uid] = Object.assign({}, y, { extra }); render(); await B.merge('juego/' + me.uid, Object.assign(perfilJ(), { extra })).catch(() => toast('No se ha podido guardar.')); toast(`+${fmtInt(m)} monedas para ti.`); };
-  function diasView() {
+    function diasView() {
     shell(`<button class="btn ghost small back" type="button" data-av="perfil">← Mi perfil</button><div><span class="kicker">Calendario</span><h1>Días de entreno</h1></div>${calHTML()}`, { nav: navA() });
   }
   function datosDtView() {
@@ -2258,8 +2205,8 @@
       <section class="card"><h2>Esperando a que las actives${P.length ? ' · ' + P.length : ''}</h2>
         <p class="sub">Actívala cuando tengas la hoja de consentimiento firmada${P.some(u => A.jug[u].menor) ? ' (en las menores, por la familia)' : ''}.</p>
         ${P.length ? `<ul class="list">${P.map(u => li(u, `<span class="row"><select id="c-${u}" aria-label="Quién ha firmado"><option value="${A.jug[u].menor ? 'familia' : 'jugadora'}">${A.jug[u].menor ? 'Firmado por la familia' : 'Firmado por ella'}</option><option value="${A.jug[u].menor ? 'jugadora' : 'familia'}">${A.jug[u].menor ? 'Firmado por ella' : 'Firmado por la familia'}</option></select><button class="btn primary small" type="button" data-a="activar" data-u="${u}">Activar</button></span>`)).join('')}</ul>` : '<p class="sub">Nadie esperando. Cuando una jugadora se da de alta, sale aquí.</p>'}</section>
-      <section class="card"><h2>Activas · ${act.length}</h2>${act.length ? `<ul class="list">${act.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-a="desactivar" data-u="${u}">Desactivar</button><button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></span>`)).join('')}</ul>` : '<p class="sub">Ninguna todavía.</p>'}</section>
-      ${des.length ? `<section class="card"><h2>Desactivadas · ${des.length}</h2><ul class="list">${des.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-a="reactivar" data-u="${u}">Activar otra vez</button><button class="btn small danger" type="button" data-a="borrarjug" data-u="${u}">Borrar sus datos</button></span>`)).join('')}</ul></section>` : ''}
+      <section class="card"><h2>Activas · ${act.length}</h2>${act.length ? `<ul class="list">${act.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-jug="${u}">Su ficha</button></span>`)).join('')}</ul><p class="sub">Desactivar o borrar sus datos, desde su ficha.</p>` : '<p class="sub">Ninguna todavía.</p>'}</section>
+      ${des.length ? `<section class="card"><h2>Desactivadas · ${des.length}</h2><ul class="list">${des.map(u => li(u, `<span class="row"><button class="btn small" type="button" data-a="reactivar" data-u="${u}">Activar otra vez</button><button class="btn small" type="button" data-jug="${u}">Su ficha</button></span>`)).join('')}</ul></section>` : ''}
       <p class="sub center">Versión de la app ${esc(APP_V)}${J.sinReglas ? ' · faltan las reglas del reto en Firebase' : ''}</p>`, { nav: navA() });
   }
   actions.activar = async b => { const u = b.dataset.u, tipo = $('#c-' + u).value; await B.set('acceso/' + u, { activa: true, equipo: EQ, consentimiento: { tipo, fecha: today() }, ts: Date.now() }); toast(`${A.jug[u].nombre} ya puede usar la app.`); };
@@ -2296,7 +2243,6 @@
     if (b.dataset.part) { A.part = b.dataset.part; A.editPart = false; view = 'partido'; render(); scrollTo({ top: 0 }); return; }
     if (b.dataset.avk && draft.av) { draft.av[b.dataset.avk] = b.dataset.avv; const y = scrollY; render(); scrollTo({ top: y }); return; }
     if (b.dataset.jnav) { fichaVecina(+b.dataset.jnav); return; }
-    if (b.dataset.etab) { A.etab = b.dataset.etab; render(); return; }
     if (b.dataset.esem) { A.esem = b.dataset.esem === '0' ? 0 : (A.esem || 0) + +b.dataset.esem; render(); return; }
     if (b.dataset.calt) { A.calt = b.dataset.calt; render(); return; }
     if (b.dataset.dia) { A.dia = b.dataset.dia; view = 'dia'; render(); scrollTo({ top: 0 }); return; }
@@ -2305,7 +2251,6 @@
     if (b.dataset.prk) { A.prK = b.dataset.prk; const y = scrollY, tx = (document.getElementById('pr-t') || {}).value; render(); scrollTo({ top: y }); if (tx) document.getElementById('pr-t').value = tx; return; }
     if (b.dataset.prsel) { const pm = +String((document.getElementById('pr-m') || {}).value || '').replace(/[^0-9]/g, ''); if (pm > 0) A.prM = Math.round(pm); const S0 = A.prSel || (A.prSel = new Set()); if (S0.has(b.dataset.prsel)) S0.delete(b.dataset.prsel); else S0.add(b.dataset.prsel); const y = scrollY, tx = (document.getElementById('pr-t') || {}).value; render(); scrollTo({ top: y }); if (tx) document.getElementById('pr-t').value = tx; return; }
     if (b.dataset.prm) { A.prM = +b.dataset.prm; const y = scrollY, tx = (document.getElementById('pr-t') || {}).value; render(); scrollTo({ top: y }); if (tx) document.getElementById('pr-t').value = tx; return; }
-    if (b.dataset.hb) { A.hb = A.hb === b.dataset.hb ? '' : b.dataset.hb; render(); return; }
     if (b.dataset.ytab) { draft.ytab = b.dataset.ytab; render(); return; }
     if (b.dataset.tmu) { tmMueble(b.dataset.tmu); return; }
     if (b.dataset.ptabs) { A.ptabs = b.dataset.ptabs; render(); return; }

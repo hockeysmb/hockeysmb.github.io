@@ -20,6 +20,9 @@ const FASES = {
   'Situaciones especiales': ['Bola parada a favor', 'Bola parada en contra', 'Superioridad', 'Inferioridad', 'Falta directa y penalti'],
 };
 const FASE_NAMES = Object.keys(FASES);
+// 25 nov: en pantalla, «Transición ofensiva/defensiva» (decisión de la DT). Por dentro se siguen guardando como «Recuperación» y «Pérdida»: no cambia ningún dato.
+const FASE_TXT = { 'Defensa': 'Defensa', 'Recuperación': 'Transición ofensiva', 'Ataque': 'Ataque', 'Pérdida': 'Transición defensiva', 'Situaciones especiales': 'Situaciones especiales' };
+const faseTxt = f => FASE_TXT[f] || f;
 // Técnica y táctica individual por categoría: del Excel «Objetivos por categoría» de la DT (14 oct)
 const CATS = [['pre', 'Prebenjamín'], ['ben', 'Benjamín'], ['ale', 'Alevín'], ['inf', 'Infantil y mayores']];
 const catName = k => (CATS.find(c => c[0] === k) || [])[1] || '';
@@ -65,7 +68,6 @@ const TEC_NAMES = Object.keys(TEC);
 // contenidos de un fundamento técnico para unas categorías (sin categorías: todas), sin repetir y en orden de etapa
 const tecList = (f, cats) => [...new Set(CATS.map(c => c[0]).filter(k => !cats || !cats.length || cats.includes(k)).flatMap(k => TEC[f][k] || []))];
 const TEC_ALL = new Set(TEC_NAMES.flatMap(f => tecList(f)));
-const tecFund = c => TEC_NAMES.find(f => tecList(f).includes(c)) || '';
 const worksOf = t => [...(t.contenidos || []), ...(t.tec || [])];
 // Contenidos que la DT añade a la lista del club (18 nov): bank.contClub [{c, g: fase | 'tec:' + fundamento, ts}].
 // Se suman a FASES y TEC al cargar el banco, así salen en la sesión, en la planificación, al clasificar ejercicios y en los filtros.
@@ -85,7 +87,7 @@ function contClubApply() {
 }
 const contKey = c => String(c || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const contOficial = c => { const k = contKey(c); return TEC_NAMES.some(f => tecList(f).some(x => contKey(x) === k)) || FASE_NAMES.some(f => FASES[f].some(x => contKey(x) === k)); };
-const contGrupo = g => FASES[g] ? 'Táctica · ' + g : /^tec:/.test(g || '') ? 'Técnica · ' + g.slice(4) : '';
+const contGrupo = g => FASES[g] ? 'Táctica · ' + faseTxt(g) : /^tec:/.test(g || '') ? 'Técnica · ' + g.slice(4) : '';
 // contenidos escritos a mano en unas sesiones (no están en la lista del club): [{c, n, quien: Set, ts}], los más recientes primero
 function contSueltos(list) {
   const m = new Map();

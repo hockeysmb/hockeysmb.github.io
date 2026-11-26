@@ -236,20 +236,6 @@ const ligaPlayed = name => liga().reduce((a, j) => a + j.duels.filter(d => normN
 function record(name) { const p = ligaPlayed(name), w = ligaWins(name); return p ? `${w} ${w === 1 ? 'victoria' : 'victorias'} · ${p - w} ${p - w === 1 ? 'derrota' : 'derrotas'}` : ''; }
 function scoreTxt(d) { return `${d.ga}–${d.gb}${d.pen ? ' (pen.)' : ''}`; }
 function miniAv(name) { const c = coachOf(name); return `<span class="duel-av">${avatarSVG(c ? c.avatar : defaultAvatar(), levelOf(clubPoints(name)))}</span>`; }
-function jornadaHTML() {
-  const J = lastJornada(), nC = (bank.coaches || []).length;
-  if (!J) return nC >= 2 ? `<section class="ses-sec jornada"><h2 class="h-sec">Jornada del vestuario ${infoBtn('jornada')}</h2><p class="sub">Cada lunes los personajes del cuerpo técnico juegan un partido de 8 posesiones con su pizarra. La primera jornada se juega el próximo lunes: elige tu poder en <button class="linkb" type="button" data-go="perfil">Mi perfil</button>.</p></section>` : '';
-  const me = normName(readAuthor());
-  return `<section class="ses-sec jornada"><div class="j-head"><h2 class="h-sec">Jornada ${J.n} del vestuario ${infoBtn('jornada')}</h2><span class="sub">${esc(fmtDay(J.fecha))}</span></div>
-    <ul class="duels">${J.duels.map((d, i) => { const mine = me && (normName(d.a.name) === me || normName(d.b.name) === me);
-      return `<li class="duel${mine ? ' mine' : ''}"><button type="button" data-wk="duel" data-j="${J.n}" data-i="${i}" aria-label="Ver el duelo ${esc(d.a.name)} contra ${esc(d.b.name)}">
-        <span class="duel-side${normName(d.win) === normName(d.a.name) ? ' w' : ''}">${miniAv(d.a.name)}<span>${esc(d.a.name)}</span></span>
-        <span class="duel-score">${scoreTxt(d)}<small>Ver</small></span>
-        <span class="duel-side r${normName(d.win) === normName(d.b.name) ? ' w' : ''}"><span>${esc(d.b.name)}</span>${miniAv(d.b.name)}</span></button></li>`; }).join('')}</ul>
-    ${J.rest.length ? `<p class="sub">Descansa: ${J.rest.map(esc).join(', ')}.</p>` : ''}
-    <p class="sub">Ganar un duelo: +${PTS_SEM.duelo} puntos del club. Tu poder y tu forma, en <button class="linkb" type="button" data-go="perfil">Mi perfil</button>.</p>
-  </section>`;
-}
 const EV_TXT = { azul: 'Tarjeta azul', falta: 'Falta directa', penalti: 'Penalti' };
 function evText(d, e) {
   const X = e.s === 'a' ? d.a : d.b, Y = e.s === 'a' ? d.b : d.a;

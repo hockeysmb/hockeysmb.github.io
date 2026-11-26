@@ -305,7 +305,7 @@ function renderSesStep(msgHtml, msgCls) {
     const sc = catOf(s.equipo);
     const tuyos = misCont().map(x => x.c).filter(c => !s.fundamentos.includes(c));
     const avail = (tuyos.length ? `<optgroup label="Tuyos (escritos a mano)">${tuyos.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` : '') + TEC_NAMES.map(f => { const it = tecList(f, sc ? [sc] : null).filter(c => !s.fundamentos.includes(c)); return it.length ? `<optgroup label="Técnica · ${esc(f)}${sc ? ' (' + esc(catName(sc)) + ')' : ''}">${it.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` : ''; }).join('')
-      + FASE_NAMES.map(f => { const it = FASES[f].filter(c => !s.fundamentos.includes(c)); return it.length ? `<optgroup label="Táctica · ${esc(f)}">${it.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` : ''; }).join('');
+      + FASE_NAMES.map(f => { const it = FASES[f].filter(c => !s.fundamentos.includes(c)); return it.length ? `<optgroup label="Táctica · ${esc(faseTxt(f))}">${it.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` : ''; }).join('');
     body = `<section class="ses-sec"><h3>Datos</h3><div class="ses-grid">
       <label class="ses-f">Equipo / categoría<input type="text" data-f="equipo" value="${esc(s.equipo)}" placeholder="Por ejemplo: Alevín B" autocapitalize="words" autocomplete="off" enterkeyhint="next"></label>
       <label class="ses-f">Fecha<input type="date" data-f="fecha" value="${esc(s.fecha)}"></label>
@@ -315,12 +315,12 @@ function renderSesStep(msgHtml, msgCls) {
     </div></section>
     <section class="ses-sec"><h3>Objetivos de la sesión</h3><p class="sub">Una sesión completa trabaja las cuatro dimensiones. Mínimo: un objetivo técnico y uno táctico. Si atacas, define qué defensa va enlazada (y viceversa).</p>
       <div class="ses-f">Fundamento(s) del día
-        <span class="sub">Uno técnico (de los objetivos de tu categoría) y uno táctico (del modelo de juego). Al elegir ejercicios salen primero los que los trabajan.</span>
+        <span class="sub">Uno técnico y uno táctico. Salen primero los ejercicios que los trabajan.</span>
         ${s.fundamentos.length ? `<div class="opts">${s.fundamentos.map(f => `<button class="chip sm" type="button" aria-pressed="true" data-unfund="${esc(f)}" aria-label="Quitar ${esc(f)}">${esc(f)} <span aria-hidden="true">×</span></button>`).join('')}</div>` : ''}
         <select id="ses-fund-add" aria-label="Añadir un fundamento del modelo"><option value="">+ Añadir un fundamento técnico o táctico…</option>${avail}</select>
         ${s.fundamento ? `<input type="text" data-f="fundamento" value="${esc(s.fundamento)}" placeholder="Otro (escríbelo si no está en la lista)" aria-label="Otro fundamento" autocapitalize="sentences" autocomplete="off" enterkeyhint="done">` : ''}
         <span class="ses-own"><input type="text" id="ses-fund-own" placeholder="¿No está? Escríbelo aquí" aria-label="Fundamento escrito a mano" autocapitalize="sentences" autocomplete="off" enterkeyhint="done" maxlength="80"><button class="btn" type="button" data-fund-own>Añadir</button></span>
-        <span class="sub">Lo que escribas a mano te vuelve a salir en la lista, en «Tuyos». La Dirección Técnica lo ve y puede pasarlo a la lista del club.</span>
+        <span class="sub">Te vuelve a salir en «Tuyos» y lo ve la Dirección Técnica.</span>
       </div>
       <div class="ses-f">Fase de juego priorizada<div class="opts"><button class="chip" type="button" data-fase-s="ataque" aria-pressed="${s.fase === 'ataque'}">Ataque</button><button class="chip" type="button" data-fase-s="defensa" aria-pressed="${s.fase === 'defensa'}">Defensa</button></div></div>
       <p class="sub">Los cinco son opcionales: rellena los que te sirvan.</p>
@@ -459,7 +459,7 @@ function drawPicker() {
     ${funds.length ? `<div class="pk-fund" role="group" aria-label="Que trabaje un fundamento del día"><span class="sub">Que trabaje:</span><button class="chip sm" type="button" data-pk-fund="" aria-pressed="${!pick.fund}">Cualquiera</button>${funds.map(f => `<button class="chip sm" type="button" data-pk-fund="${esc(f)}" aria-pressed="${pick.fund === f}">${esc(f)}</button>`).join('')}</div>` : ''}
     <p class="sub pk-n" aria-live="polite">${items.length} ${items.length === 1 ? 'ejercicio' : 'ejercicios'}</p>
     <div class="pk-grid">${items.length ? items.map(t => `<button class="pk-item" type="button" data-pk="${t.id}">
-      ${diagramSVG(t.diagram || {}, taskLabel(t))}${hits(t).length ? `<span class="match">Trabaja: ${esc(hits(t).join(', '))}</span>` : ''}<b>${esc(taskLabel(t))}</b><span class="src">${esc(tipoName(t.tipo) || 'Sin clasificar')}${(t.fases || []).length ? ' · ' + esc(t.fases.join(', ')) : ''}</span></button>`).join('')
+      ${diagramSVG(t.diagram || {}, taskLabel(t))}${hits(t).length ? `<span class="match">Trabaja: ${esc(hits(t).join(', '))}</span>` : ''}<b>${esc(taskLabel(t))}</b><span class="src">${esc(tipoName(t.tipo) || 'Sin clasificar')}${(t.fases || []).length ? ' · ' + esc(t.fases.map(faseTxt).join(', ')) : ''}</span></button>`).join('')
       : `<div class="empty">${vacio}</div>`}</div>
   </div>`;
 }

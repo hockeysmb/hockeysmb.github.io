@@ -47,7 +47,7 @@ function openEditor(task, mode, opts = {}) {
   (task.diagram.items || []).forEach(i => { if (!i.id) i.id = uid(); });
   (task.diagram.arrows || []).forEach(a => { if (!a.id) a.id = uid(); });
   ed = { task, mode, tool: 'select', sel: null, drawing: null, history: [], arrowTeam: 'atk', drag: null, fromSes: opts.fromSes ?? null };
-  document.getElementById('ed-title').textContent = opts.title || (mode === 'bank' ? 'Editar en el banco del club' : (mode === 'mine-new' ? 'Mi versión' : 'Editar mi versión'));
+  document.getElementById('ed-title').textContent = opts.title || (mode === 'bank' ? 'Editar en el banco del club' : (mode === 'mine-new' ? (task.basedOn ? 'Mi versión' : 'Nuevo ejercicio') : 'Editar mi versión'));
   document.getElementById('ed-save-mine').textContent = ed.fromSes != null ? 'Guardar en mis ejercicios y usar en la sesión' : 'Guardar en mis ejercicios';
   document.getElementById('ed-save-newbank').hidden = !(mode === 'mine-new' && canWriteBank);
   document.getElementById('ed-save-newbank').textContent = ed.fromSes != null ? 'Guardar en el banco y usar en la sesión' : 'Guardar en el banco del club';
@@ -84,9 +84,9 @@ function drawClass() {
     <div class="grp"><b>Tipo de tarea</b><p class="sub">La parte de la sesión en la que encaja, según la plantilla del club.</p><div class="opts">
       ${TIPOS.map(o => `<button class="chip tipo-opt" type="button" data-tipo="${o.v}" ${pressed(t.tipo === o.v)}>${esc(o.n)}<small>${esc(o.d)}</small></button>`).join('')}</div></div>
     <div class="grp"><b>Fase del juego</b><p class="sub">Puedes marcar más de una.</p><div class="opts">
-      ${FASE_NAMES.map(f => `<button class="chip sm" type="button" data-fase="${esc(f)}" ${pressed(t.fases.includes(f))}>${esc(f)}</button>`).join('')}</div></div>
+      ${FASE_NAMES.map(f => `<button class="chip sm" type="button" data-fase="${esc(f)}" ${pressed(t.fases.includes(f))}>${esc(faseTxt(f))}</button>`).join('')}</div></div>
     ${t.fases.length ? `<div class="grp"><b>Qué se trabaja</b><p class="sub">Del modelo de juego. Marca lo principal, no todo.</p>
-      ${t.fases.map(f => `<div class="opts" role="group" aria-label="${esc(f)}"><span class="sub">${esc(f)}:</span>${FASES[f].map(c => `<button class="chip sm" type="button" data-cont="${esc(c)}" data-cf="${esc(f)}" ${pressed(t.contenidos.includes(c))}>${esc(c)}</button>`).join('')}</div>`).join('')}</div>` : ''}
+      ${t.fases.map(f => `<div class="opts" role="group" aria-label="${esc(faseTxt(f))}"><span class="sub">${esc(faseTxt(f))}:</span>${FASES[f].map(c => `<button class="chip sm" type="button" data-cont="${esc(c)}" data-cf="${esc(f)}" ${pressed(t.contenidos.includes(c))}>${esc(c)}</button>`).join('')}</div>`).join('')}</div>` : ''}
     <div class="grp tec-grp"><b>Técnica y táctica individual</b><p class="sub">De los objetivos por categoría del club. Marca para qué categoría es y lo principal que se trabaja.</p>
       <div class="opts" role="group" aria-label="Categoría"><span class="sub">Categoría:</span>${CATS.map(([k, n]) => `<button class="chip sm" type="button" data-tcat="${k}" ${pressed(t.cats.includes(k))}>${esc(n)}</button>`).join('')}</div>
       <div class="opts" role="group" aria-label="Fundamento técnico"><span class="sub">Fundamento:</span>${TEC_NAMES.map(f => { const k = t.tec.filter(c => tecList(f).includes(c)).length; return `<button class="chip sm tf" type="button" data-tf="${esc(f)}" aria-expanded="${ed.tecOpen.includes(f)}">${esc(f)}${k ? ` · ${k}` : ''}</button>`; }).join('')}</div>

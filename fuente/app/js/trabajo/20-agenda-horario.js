@@ -111,14 +111,6 @@ function myWeekHTML() {
     <ul class="ag-list">${dentro.map(x => x.html).join('')}</ul>
     ${fuera.length ? `<details class="dt-more ag-more"><summary>Ver ${fuera.length} más</summary><ul class="ag-list">${fuera.map(x => x.html).join('')}</ul></details>` : ''}</section>`;
 }
-function dtSinPrepararHTML() {
-  const t = isoToday(), d = dateOf(t); d.setDate(d.getDate() + 6);
-  const L = entrenos(t, isoOf(d)).filter(it => !sesDe(it)); if (!L.length) return '';
-  const by = {}; L.forEach(it => { const k = prepOf(it) || entTxt(it.g); (by[k] = by[k] || []).push(it); });
-  return `<section class="ses-sec"><div class="lt-head"><h2 class="h-sec">Sin preparar en los próximos 7 días · ${L.length}</h2></div>
-    <p class="sub">Entrenos del horario sin sesión preparada. Se tachan solos en cuanto el entrenador guarda la sesión de ese equipo para ese día.</p>
-    ${Object.keys(by).sort((a, b) => a.localeCompare(b, 'es')).map(k => `<h3 class="h-sub">${esc(k)} · ${by[k].length}</h3><ul class="ag-list">${by[k].map(it => agRowHTML(it, false)).join('')}</ul>`).join('')}</section>`;
-}
 function agFind(key) { const [f] = key.split('|'); return entrenos(f, f).find(x => x.key === key) || null; }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-ag]'); if (!b) return;
@@ -198,14 +190,14 @@ function dtPlantillasHTML() {
   return `<section class="ses-sec" id="pl-sec"><h2 class="h-sec">Plantillas</h2>
     <p class="sub">Quién está en cada equipo. Los nombres se guardan solo en la nube del club, nunca en el repositorio, porque son menores.</p>
     ${plan ? `<div class="pl-mig"><h3 class="h-sub">Pasar a una ficha por jugador</h3>
-      <p class="sub">Ahora quien está en dos equipos tiene dos fichas. Al pasar, cada persona tiene una sola, con su equipo principal y los demás, y <b>cada entrenador puede cambiar las plantillas de sus equipos</b>.</p>
+      <p class="sub">Una ficha por persona, y <b>cada entrenador cambia las plantillas de sus equipos</b>.</p>
       <p class="sub">${plan.personas} personas. ${plan.juntadas} ${plan.juntadas === 1 ? 'repetida se junta sola' : 'repetidas se juntan solas'}. ${plan.dudas.length ? `<b>${plan.dudas.length} dudas</b> las decides tú antes de pasar.` : 'Ninguna duda.'} La plantilla de ahora se guarda como copia.</p>
       <div class="actions"><button class="btn primary" type="button" data-pl="migrar">Revisar y pasar</button></div></div>` : ''}
     ${M ? `<p class="sub">Una ficha por jugador desde el ${esc(fmtShort(bank.plantMigrada || isoToday()))}: ${n} personas. Cada entrenador cambia las de sus equipos.</p>
       <details class="dt-more"><summary>Quién puede cambiar cada plantilla</summary>
         <ul class="pts-list">${(() => { const E = calcEq(bank).eqUids, nom = u => ((bank.coaches || []).find(c => c.uid === u) || {}).name || 'cuenta sin nombre';
           return T.map(t => `<li><span>${esc(t)}</span><span>${(E[t] || []).map(nom).map(esc).join(', ') || 'solo la DT'}</span></li>`).join(''); })()}</ul>
-        <p class="sub">Sale del horario y de las cuentas de cada entrenador. Si alguien entra por primera vez o cambias quién lleva un equipo, se actualiza al guardar; si no, dale aquí.</p>
+        <p class="sub">Sale del horario y de las cuentas. ${infoBtn('permisos')}</p>
         <div class="actions"><button class="btn small" type="button" data-pl="permisos">Actualizar</button></div></details>` : ''}
     ${n ? `<ul class="dt-list">${T.map(fila).join('')}</ul>` : '<p class="sub">Todavía no hay ninguna plantilla.</p>'}
     ${M ? '' : `<details class="dt-more"><summary>Importar las plantillas</summary>

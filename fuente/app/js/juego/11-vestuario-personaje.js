@@ -244,7 +244,16 @@ const balance = () => clubPoints(readAuthor()) + localPoints() - game.spent;
 function award(key, pts, why) {
   if (game.log.some(x => x.key === key)) return;
   game.log.push({ key, pts, why, date: isoToday() }); saveGame();
-  toast(`+${pts} monedas · ${why}`);
+  avisoJuego(`+${pts} monedas · ${why}`);
+}
+// 25 nov: los avisos del juego (monedas, cofres, liga) solo salen en la Liga. Fuera, se guardan y salen al entrar.
+const avisosJuego = [];
+const enJuego = () => view.zone === 'liga' || view.zone === 'vestuario' || !!document.getElementById('club-ov');
+function avisoJuego(text) { if (enJuego()) toast(text); else { avisosJuego.push(text); if (avisosJuego.length > 8) avisosJuego.shift(); } }
+function avisosJuegoSoltar() {
+  if (!avisosJuego.length || !enJuego()) return;
+  const L = avisosJuego.splice(0), n = L.length - 2;
+  toast(L.slice(-2).join(' · ') + (n > 0 ? ` · y ${n} ${n === 1 ? 'aviso más' : 'avisos más'}` : ''));
 }
 function toast(text) {
   document.querySelectorAll('.toast').forEach(x => x.remove());
@@ -315,11 +324,14 @@ function syncHTML(name) {
   if (pjSentNow()) return '<p class="sync ok">✓ Enviado a la DT. Aparece en el vestuario en cuanto lo añada.</p>';
   return `<div class="sync warn"><span>${st === 'fuera' ? 'Todavía no estás en el vestuario del club. Manda tu personaje a la DT para entrar en la liga.' : 'Has cambiado tu personaje o tu poder. Mándalo otra vez para que lo vea el resto.'}</span><button class="btn small primary" type="button" data-vest="send">Mandar a la DT</button></div>`;
 }
-const PERFIL_TABS = [['personalizar', 'Personaje'], ['coleccion', 'Colección'], ['poderes', 'Poderes'], ['puntos', 'Puntos'], ['envios', 'Envíos'], ['datos', 'Mis datos']];
+// 25 nov: la cuenta (Mi cuenta, desde el personaje de arriba) va aparte del personaje y el juego (Mi personaje, desde la Liga)
+const PERFIL_TABS = [['personalizar', 'Personaje'], ['coleccion', 'Colección'], ['poderes', 'Poderes'], ['puntos', 'Puntos']];
+const CUENTA_TABS = [['datos', 'Mis datos'], ['envios', 'Envíos']];
+const esCuenta = () => CUENTA_TABS.some(([k]) => k === vest.tab);
 function renderVestuario() {
   const box = document.getElementById('v-vestuario'), name = readAuthor();
   if (!name) {
-    box.innerHTML = `<div class="vhead"><div><h1>Mi perfil</h1><p class="sub">Tu personaje, tus puntos y tus datos.</p></div></div><section class="ses-sec welcome"><p>Para tener tu personaje, primero dinos cómo te llamas. Es el mismo nombre que firma tus ejercicios.</p>
+    box.innerHTML = `<div class="vhead"><div><h1>Mi cuenta</h1><p class="sub">Tu nombre y tu cuenta.</p></div></div><section class="ses-sec welcome"><p>Para tener tu personaje, primero dinos cómo te llamas. Es el mismo nombre que firma tus ejercicios.</p>
       <div class="row-in"><input id="vest-name" type="text" placeholder="Tu nombre" aria-label="Tu nombre"><button class="btn primary" type="button" data-vest="name">Guardar</button></div>${window.SMB_CLOUD ? window.SMB_CLOUD.accountHTML() : ''}</section>`;
     return;
   }
@@ -355,7 +367,7 @@ function renderVestuario() {
     pane = `<div class="pts-cols">
       <section><h3 class="h-sub">Puntos · ${cp}</h3><p class="sub">Del club: los ve todo el cuerpo técnico y marcan tu nivel y el marco de tu personaje.</p>
         ${cl.length ? `<ul class="pts-list">${cl.map(x => `<li><span>${esc(x.why)}</span><b>+${x.pts}</b></li>`).join('')}</ul>` : `<p class="sub">Todavía ninguno. ${window.SMB_CLOUD ? 'Crea un ejercicio' : 'Manda un ejercicio a la Dirección Técnica'}: si entra en el banco, son ${PTS.banco}.</p>`}</section>
-      <section><h3 class="h-sub">Monedas · ${bal} ${infoBtn('monedas')}</h3><p class="sub">Para la tienda del personaje. Cada punto del club es también una moneda, y además ganas monedas con las misiones, los amistosos y los entrenos. Gastadas: ${game.spent}.</p>
+      <section><h3 class="h-sub">Monedas · ${bal} ${infoBtn('monedas')}</h3><p class="sub">Para la tienda del personaje. Gastadas: ${game.spent}.</p>
         ${lo.length ? `<ul class="pts-list">${lo.map(x => `<li><span>${esc(x.why)}</span><b>+${x.pts}</b></li>`).join('')}</ul>` : '<p class="sub">Todavía ninguna extra.</p>'}</section>
       </div>
       <section class="ses-sec"><h3 class="h-sub">Puntos del club</h3><ul class="pts-list">
@@ -369,14 +381,21 @@ function renderVestuario() {
         <li><span>Guardar copia de tus datos (una vez por semana)</span><b>+${PTS.copia}</b></li></ul>
         <h3 class="h-sub">Niveles</h3><ul class="pts-list">${LEVELS.map((L, i) => `<li><span>${esc(L.n)}${levelPerks(i) ? ' · ' + esc(levelPerks(i)) : ''}</span><b>${L.min}</b></li>`).join('')}</ul></section>`;
   }
-  box.innerHTML = `<div class="vhead"><div><h1>Mi perfil</h1><p class="sub">Tu personaje, tus puntos y tus datos.</p></div></div>
+  if (esCuenta()) {
+    box.innerHTML = `<div class="vhead"><div><h1>Mi cuenta</h1><p class="sub">Tu nombre, tu cuenta y lo que has propuesto.</p></div></div>
+    <div class="seg wrap" role="group" aria-label="Partes de la cuenta">${CUENTA_TABS.map(([k, l]) => `<button type="button" data-vtab="${k}" aria-pressed="${vest.tab === k}">${k === 'envios' && window.SMB_CLOUD ? 'Propuestas' : l}</button>`).join('')}</div>
+    <section class="ses-sec">${pane}</section>
+    <p class="sub"><button class="linkb" type="button" data-vtab="personalizar">Tu personaje y tus puntos están en la Liga</button></p>`;
+    return;
+  }
+  box.innerHTML = `<div class="pb-top"><button class="pb-back" type="button" data-go="liga"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>Pabellón</button><div class="vhead"><div><h1>Mi personaje</h1><p class="sub">Tu personaje, tus poderes y tus puntos.</p></div></div></div>
     <section class="ses-sec me">
       <div class="me-av">${avatarSVG(game.av, lvl)}</div>
       <div class="me-info"><h2>${esc(name)}</h2>${levelBar(cp)}
         <p class="me-bal"><b>${cp}</b> puntos · <b>${bal}</b> monedas</p>
         ${syncHTML(name)}</div>
     </section>
-    <div class="seg wrap" role="group" aria-label="Partes del perfil">${PERFIL_TABS.map(([k, l]) => `<button type="button" data-vtab="${k}" aria-pressed="${vest.tab === k}">${k === 'envios' && window.SMB_CLOUD ? 'Propuestas' : l}</button>`).join('')}</div>
+    <div class="seg wrap" role="group" aria-label="Partes del personaje">${PERFIL_TABS.map(([k, l]) => `<button type="button" data-vtab="${k}" aria-pressed="${vest.tab === k}">${l}</button>`).join('')}</div>
     <section class="ses-sec">${pane}</section>`;
 }
 function teamHTML() {

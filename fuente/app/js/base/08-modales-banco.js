@@ -63,7 +63,7 @@ function sendModal(o) {
   if (window.SMB_CLOUD) { window.SMB_CLOUD.send(o).then(() => { toast(o.kind === 'pj' ? 'Tu personaje ya está al día en el club.' : o.kind === 'ses' ? 'Propuesta enviada a la Dirección Técnica. Síguela en Mi perfil → Propuestas.' : 'Enviado a la Dirección Técnica. Síguelo en Mi perfil → Propuestas.'); render(); }, () => toast('No se ha podido enviar. Inténtalo en un momento.')); return; }
   const wa = encodeURIComponent(o.code).length < 7000 ? `https://wa.me/?text=${encodeURIComponent(o.code)}` : '';
   openModal(`<h2>${esc(o.head)}</h2><p>${esc(o.text)}</p>
-    <ol class="send-steps"><li>Copia el código.</li><li>Pégalo en un WhatsApp o un correo a la Dirección Técnica.</li><li>Sigue cómo va en Mi perfil → Envíos.</li></ol>
+    <ol class="send-steps"><li>Copia el código.</li><li>Pégalo en un WhatsApp o un correo a la Dirección Técnica.</li><li>Sigue cómo va en Mi cuenta → Envíos.</li></ol>
     <textarea class="code" id="m-code" readonly aria-label="Código para la Dirección Técnica">${esc(o.code)}</textarea>
     <p class="msg" id="m-msg" aria-live="polite"></p>
     <div class="row"><button class="btn" id="m-close" type="button">Cerrar</button>${wa ? `<a class="btn" href="${wa}" target="_blank" rel="noopener">Abrir WhatsApp</a>` : ''}<button class="btn primary" id="m-copy" type="button">Copiar código</button></div>`);

@@ -189,7 +189,6 @@ function dtDo(k) {
   else if (k === 'seg') goDT('equipo', null, false, 'seg');
   else if (k === 'alta') { if (CL) goDT('equipo', '#cl-pre-name', false, 'acceso'); else addCoachModal(); }
   else if (k === 'puntos') pickCoachModal();
-  else if (k === 'jornada') goDT('liga', '#dt-play');
   else if (k === 'hz-add') { goDT('horario'); hzModal(null); }
   else if (k === 'hz-sin') goDT('horario', '#hz-sd', true);
   else if (k === 'hz') goDT('horario');

@@ -828,3 +828,27 @@ El archivo único de 9.200 líneas se ha partido en `fuente/app/` sin cambiar na
 | `js/trabajo/20-agenda-horario.js` | Agenda, horario, partidos de la semana |
 | `js/trabajo/21-planificacion-misiones.js` | Planificación, pizarra del plan, misiones, renombrar |
 | `js/base/22-arranque.js` | Ganchos para la web (`window.SMB`) y arranque |
+
+## Pulido · bloque 1 (25 nov): limpieza sin funciones nuevas
+
+Sale de `claude/Auditoria_pulido_nov2026.md` (en el Proyecto). Prueba: `art_pulido`.
+- **Roto, arreglado:** «Tu plantilla» (`#club-ov`) medía 423 px en 390: `.club-in` con `grid-template-columns: minmax(0, 1fr)` y pestañas que se encogen. El editor se titula «Nuevo ejercicio» al crear (modo `mine-new` sin `basedOn`); «Mi versión» queda para «Hacer mi versión». Liga → Clasificación antes de empezar enseña un mensaje. El vacío de una rejilla (`.grid > .empty`) ocupa todo el ancho. En la app de jugadoras, fuera el punto suelto del Calendario.
+- **El juego fuera del trabajo:**
+  - Inicio ya no tiene el cofre ni las misiones. Las misiones salen en el pabellón (`renderLiga`) y se cuentan siempre en `render` (`misionesSync`).
+  - Los avisos del juego (`award`, `cofreGrant`, `lgSync`) pasan por `avisoJuego`: en la Liga, en Mi personaje o en «Tu plantilla» salen al momento; fuera se guardan (`avisosJuego`, ocho como mucho) y salen juntos al entrar en la Liga (`avisosJuegoSoltar`, al final de `render`).
+  - El resumen de la DT ya no tiene «Jugar la jornada»; se juega en DT → Liga.
+- **Mi cuenta y Mi personaje:** la misma vista (`#v-vestuario`) en dos modos, según `vest.tab`.
+  - `CUENTA_TABS` (datos, envíos) es «Mi cuenta», lo que abre el personaje de arriba (`navigate('perfil')` pone `datos` si venías del juego).
+  - `PERFIL_TABS` (personaje, colección, poderes, puntos) es «Mi personaje», con «‹ Pabellón». Se entra desde el pabellón («Mi personaje») o desde los enlaces `data-liga` de la Liga, y la Liga sale marcada abajo.
+  - `esCuenta()` decide.
+- **Fases:** en pantalla, «Transición ofensiva» y «Transición defensiva» (decisión de la DT) con `faseTxt(f)` / `FASE_TXT` (en `01-estado.js`). **Los datos no cambian:** `FASES`, `t.fases` y la planificación siguen guardando «Recuperación» y «Pérdida»; solo cambia lo que se pinta (filtros, editor, ficha, tarjetas, revisar, elegir ejercicio, contenidos del club).
+- **Textos:** regla de una frase corta en pantalla y el resto en la «i» (`INFO`: `legal`, `contenidos`, `recreativa`, `evaluacion`, `apuntes`, `preguntas`, `permisos`, `coleccion`). El pie de Ejercicios es una línea con «Más información».
+- **App de jugadoras, panel de la DT:**
+  - En Altas, cada jugadora solo tiene «Su ficha» (y «Activar otra vez» si está desactivada).
+  - «Desactivar», «Activar otra vez» y «Borrar sus datos» están en su ficha, en «Su cuenta» (`.cuenta-j`).
+  - Fuera «Darme» monedas (`actions.darme`) y los accesos a su mascota y personaje en Mi perfil; el personaje se sigue cambiando tocándolo en el Reto.
+  - Versión `20261125a`.
+- **Código quitado (sin llamadas):**
+  - Entrenadores: `jornadaHTML`, `nextJornadaTxt`, `penNoticeHTML`, `dtSinPrepararHTML`, `jugLegendHTML`, `tecFund`, `resTxt`, `ICO_COFRE` y el manejador `data-clxi`.
+  - Jugadoras: `antesHTML`, `ayerHTML`, `semanaMini`, `partidosHoyHTML`, `proximoHTML`, `gaugeSVG`, `ringSVG`, `impHTML`, `partTxt`, `top1` y los manejadores `data-etab` y `data-hb`.
+  - `setBig` se queda: lo usa `closeEditor`.

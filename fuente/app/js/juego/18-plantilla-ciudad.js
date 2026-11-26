@@ -249,7 +249,7 @@ function ciudadHTML(c) {
       <button class="btn cd-go" type="button" data-cd="cobrar"${T.base >= 1 ? '' : ' disabled'}>Cobrar ${(T.base * S.m).toLocaleString('es-ES')}${S.m > 1 ? ' · ×' + S.m : ''}</button></div>
     <div class="cd-sem"><div class="cd-sh"><b>Tu trabajo de esta semana</b><b class="cd-m">×${S.m}</b></div>
       <div class="cd-ch">${S.chips.map(([l, ok]) => `<span class="${ok ? 'ok' : ''}">${ok ? '✓' : '+1'} ${l}</span>`).join('')}</div>
-      <p class="sub">${S.m >= 4 ? 'Semana completa: la ciudad deportiva produce al máximo hasta el lunes.' : 'Cada cosa que haces esta semana suma ×1 a lo que cobras, hasta el lunes.'}</p></div>
+      <p class="sub">${S.m >= 4 ? 'Semana completa: la ciudad deportiva produce al máximo hasta el lunes.' : 'Cada cosa que haces esta semana sube 1 el multiplicador.'}</p></div>
     <h3 class="h-sub">Instalaciones</h3><p class="sub">Se mejoran con presupuesto. Las ventajas de la plantilla tienen tope.</p>
     <div class="cd-ins">${CD_INST.map(([k, n, I, txt]) => { const lv = d.i[k], max = I.max && lv >= I.max, p = cdCoste(k, d);
       return `<div class="cd-in"><span><b>${n}${lv ? ' · nivel ' + lv : ''}${I.max ? ` <small>de ${I.max}</small>` : ''}</b><small>${txt(lv)}</small></span>${max ? '<span class="pl-tag on">Al máximo</span>' : `<button class="btn small${d.p >= p ? ' primary' : ''}" type="button" data-cd="up" data-k="${k}"${d.p >= p ? '' : ' disabled'}>${p.toLocaleString('es-ES')}</button>`}</div>`; }).join('')}</div>
@@ -292,13 +292,13 @@ function drawClub() {
     const X = clXI(c), xi = new Map(X.slots.map((p, i) => p ? [p.id, X.roles[i]] : null).filter(Boolean));
     const row = p => clCard(p, { xi: xi.has(p.id), foot: `<div class="pl-foot"><span class="pl-tag${xi.has(p.id) ? ' on' : ''}">${xi.has(p.id) ? 'Titular · ' + CL_ROLES[xi.get(p.id)].n : 'Suplente'}</span>
       ${(c.venta || []).some(v => v.pid === p.id) ? `<span class="pl-tag">En venta por ${c.venta.find(v => v.pid === p.id).price}</span><button class="btn small" type="button" data-clunsell="${p.id}">Quitar de la venta</button>` : `<button class="btn small" type="button" data-clsell="${p.id}">Vender</button>`}</div>` });
-    body = `<p class="sub">Juegan 4 de pista y el portero. La alineación y la formación se cambian en la pista: <button class="linkb" type="button" data-lgtab="equipo">Liga → Equipo</button>.</p>
+    body = `<p class="sub">Juegan 4 de pista y el portero. Alineación: <button class="linkb" type="button" data-lgtab="equipo">Vestuario</button>.</p>
       <div class="club-stats big"><span><b>${s ? s.atk : '–'}</b><small>ataque de los titulares</small></span><span><b>${s ? s.def : '–'}</b><small>defensa (pista y portero)</small></span></div>
       <h3 class="h-sub">Portería</h3><div class="pl-list">${c.squad.filter(p => p.pos === 'gk').map(row).join('') || '<p class="sub">No tienes portero: ficha uno en el mercado.</p>'}</div>
       <h3 class="h-sub">Pista</h3><div class="pl-list">${c.squad.filter(p => p.pos !== 'gk').map(row).join('')}</div>`;
   } else if (clTab === 'entrenar') {
     const left = clTrainsLeft(c), doble = c.tr.n >= clTrainDay(c) && c.tr.extra > 0;
-    body = `<p class="sub">${clTrainDay(c) > 1 ? clTrainDay(c) + ' entrenamientos al día (gimnasio)' : 'Un entrenamiento al día'}. Si das tu entreno de verdad en el <b>modo pista</b>, ganas uno extra y doble. Cada jugador sube hasta su potencial, y todos recuperan forma.</p>
+    body = `<p class="sub">${clTrainDay(c) > 1 ? clTrainDay(c) + ' entrenamientos al día' : 'Un entrenamiento al día'}; con el <b>modo pista</b>, uno extra y doble. ${infoBtn('plantilla')}</p>
       <p class="club-left">${left ? `Te ${left === 1 ? 'queda' : 'quedan'} <b>${left}</b> ${left === 1 ? 'entrenamiento' : 'entrenamientos'} hoy${doble ? ' · <b>el siguiente es doble</b>' : (c.tr.extra ? ` · ${c.tr.extra} extra y doble por el modo pista` : '')}.` : 'Hoy ya has entrenado. Mañana más, o da tu entreno en el modo pista para uno extra.'}</p>
       <div class="cl-focos">${CL_FOCOS.map(([k, n, d]) => `<button class="cl-foco" type="button" data-cltrain="${k}"${left ? '' : ' disabled'}><b>${n}</b><small>${d}</small></button>`).join('')}</div>`;
   } else if (clTab === 'mercado') {
@@ -325,15 +325,6 @@ function onClubClick(e) {
   if (b.dataset.lgtab) { closeClub(); return; }
   if (b.dataset.cltab) { clTab = b.dataset.cltab; clMsg = ''; drawClub(); return; }
   if (b.dataset.cd) { cdClick(b, c, done); return; }
-  if (b.dataset.clxi) {
-    const p = c.squad.find(x => x.id === b.dataset.clxi); if (!p) return;
-    const { gk, f } = clXI(c), cur = [gk, ...f].filter(Boolean).map(x => x.id);
-    if (cur.includes(p.id)) { done('Ya es titular. Para sacarlo, mete a otro en su lugar.'); return; }
-    let next = cur.filter(id => { const q = c.squad.find(x => x.id === id); return q && q.pos !== p.pos; });
-    const same = cur.map(id => c.squad.find(x => x.id === id)).filter(q => q && q.pos === p.pos);
-    if (p.pos === 'gk') next = [...next, p.id]; else { same.sort((x, y) => clOvr(x) - clOvr(y)); same.shift(); next = [...next, ...same.map(q => q.id), p.id]; }
-    c.xi = next; done(`${p.n} entra de titular.`); return;
-  }
   if (b.dataset.clsell) {
     const p = c.squad.find(x => x.id === b.dataset.clsell); if (!p) return;
     const club = Math.round(clVal(p) * CL_VENTA_CLUB);

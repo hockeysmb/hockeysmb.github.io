@@ -72,7 +72,9 @@ async def main():
       await pg.click('#grid .tcard'); await pg.wait_for_timeout(300)
       print('4 ficha mía', (await pg.inner_text('.d-actions')).replace('\n',' | '))
       await pg.keyboard.press('Escape'); await pg.click('#me-btn'); await pg.wait_for_timeout(300)
+      await pg.click('[data-vtab="personalizar"]'); await pg.wait_for_timeout(300)   # 25 nov: el personaje está en Mi personaje (Liga), aparte de la cuenta
       print('4 sync', await pg.inner_text('.me .sync'))
+      await pg.click('#me-btn'); await pg.wait_for_timeout(300)
       await pg.screenshot(path=f'perfil{W}.png', full_page=True)
       await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1200)
       # 5. DT revisa la bandeja y lo mete en el banco
@@ -121,8 +123,8 @@ async def main():
       await pg.wait_for_selector('.lv-res', timeout=10000)
       print('5b res', await pg.inner_text('.lv-res')); await pg.click('.lv-act [data-lv="close"]'); await pg.wait_for_timeout(1500)
       prof=await pg.evaluate("window.__fake.db()['profiles/dtuid000000000000000000000001']"); print('5b amis en perfil', len(json.loads(prof['j']).get('amis',[])))
-      await pg.click('#me-btn'); await pg.wait_for_timeout(200); print('5b me sync', await pg.inner_text('.me .sync'), '| alert', await pg.evaluate("document.getElementById('me-btn').classList.contains('alert')"))
-      await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1200)
+      await pg.click('#me-btn'); await pg.wait_for_timeout(200); await pg.click('[data-vtab="personalizar"]'); await pg.wait_for_timeout(300); print('5b me sync', await pg.inner_text('.me .sync'), '| alert', await pg.evaluate("document.getElementById('me-btn').classList.contains('alert')"))
+      await pg.click('#me-btn'); await pg.wait_for_timeout(200); await pg.click('[data-vtab="datos"]'); await pg.click('[data-cl="out"]'); await pg.wait_for_timeout(1200)
       await pg.fill('#cl-email','lucas@smb.es'); await pg.fill('#cl-pass','hockey1'); await pg.click('[data-cl="in"]'); await pg.wait_for_timeout(1200)
       print('5c liga dot', await pg.evaluate("document.querySelector('[data-nav=liga]').classList.contains('has-dot')"), '| teaser', await pg.inner_text('.lt-row.hot') if await pg.query_selector('.lt-row.hot') else 'none')
       await pg.click('[data-nav="liga"]'); await pg.wait_for_timeout(300)

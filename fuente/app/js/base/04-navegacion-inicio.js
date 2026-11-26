@@ -2,7 +2,7 @@
 const ZONES = ['inicio', 'ejercicios', 'sesiones', 'equipos', 'liga', 'vestuario', 'dt'];
 view.zone = 'inicio';
 function navigate(z) {
-  if (z === 'perfil') z = 'vestuario';
+  if (z === 'perfil') { z = 'vestuario'; if (!esCuenta()) vest.tab = 'datos'; }   // el personaje de arriba abre la cuenta
   if (!ZONES.includes(z)) z = 'inicio';
   if (z === 'dt' && !canWriteBank) z = 'inicio';
   if (z !== 'equipos' && document.body.classList.contains('eq-dock')) closeCoach();   // el equipo abierto a la derecha no se queda encima de otra zona
@@ -15,6 +15,7 @@ function render() {
   try { if (readAuthor()) cofresSync(); } catch (e) {}
   try { if (readAuthor()) clubSync(); } catch (e) {}
   try { if (readAuthor()) lgSync(); } catch (e) {}
+  try { misionesSync(); } catch (e) {}
   document.querySelectorAll('[data-nav]').forEach(b => b.setAttribute('aria-current', b.dataset.nav === view.zone ? 'page' : 'false'));
   document.querySelector('[data-nav="dt"]').hidden = !canWriteBank;
   ZONES.forEach(z => { document.getElementById('v-' + z).hidden = z !== view.zone; });
@@ -27,13 +28,15 @@ function render() {
   else if (view.zone === 'dt') renderDT();
   if (detailState && !detail.hidden) drawDetail();
   updateChrome();
+  avisosJuegoSoltar();
 }
 let meKey = '';
 function updateChrome() {
   const mb = document.getElementById('me-btn'), name = readAuthor();
   const k = JSON.stringify(game.av) + myLevel();
   if (k !== meKey) { meKey = k; mb.querySelector('.me-btn-av').innerHTML = avatarSVG(game.av, myLevel()); }
-  mb.setAttribute('aria-current', view.zone === 'vestuario' ? 'page' : 'false');
+  mb.setAttribute('aria-current', view.zone === 'vestuario' && esCuenta() ? 'page' : 'false');
+  if (view.zone === 'vestuario' && !esCuenta()) { const lg = document.querySelector('[data-nav="liga"]'); if (lg) lg.setAttribute('aria-current', 'page'); }   // Mi personaje es de la Liga
   mb.classList.toggle('alert', !name || pjPending(name));
   document.querySelector('[data-nav="liga"]').classList.toggle('has-dot', view.zone !== 'liga' && amNew().length > 0);
   const dtb = document.querySelector('[data-nav="dt"]'), n = canWriteBank ? pendingDT().length + ejNuevos().length : 0;
@@ -86,7 +89,6 @@ function firstSteps() {
 }
 const fl3 = e => FLU3D[e] ? `<img src="${FLU3D[e]}" alt="" aria-hidden="true">` : '';
 // 16 nov: los dos avisos de Inicio que son iconos (cofre y borrador a medias)
-const ICO_COFRE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 9h19M12 9v11" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 9C10 5 8 4 6.6 4.8 5.3 5.6 5.6 8 8 9M12 9c2-4 4-5 5.4-4.2 1.3.8 1 3.2-1.4 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 const ICO_BORRADOR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10a2.1 2.1 0 0 0-3-3L5 17v3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 const HC_IC = { get lv() { return fl3('⭐'); }, get pt() { return fl3('🏆'); }, get mo() { return fl3('🪙'); }, get cf() { return fl3('🎁'); } };
 function renderHome() {
@@ -112,9 +114,8 @@ function renderHome() {
     pend ? `<button class="notice" type="button" data-go="dt">Tienes ${pend} ${pend === 1 ? 'cosa pendiente' : 'cosas pendientes'} en Dirección Técnica${ejNuevos().length ? ` (${ejNuevos().length} ${ejNuevos().length === 1 ? 'ejercicio nuevo' : 'ejercicios nuevos'} del cuerpo técnico)` : ''} <span aria-hidden="true">→</span></button>` : '',
     name ? notasHomeHTML() : '',
   ].filter(x => x && x.trim());
-  const nCof = typeof cofresN === 'function' ? cofresN() : 0;
-  const iconos = !name ? '' : `<div class="hicons">
-    <button class="hi${nCof || penFree() ? ' hot' : ''}" type="button" data-cofre aria-label="${nCof ? `Tienes ${nCof} ${nCof === 1 ? 'cofre' : 'cofres'}: tira el penalti` : penFree() ? 'Penalti gratis listo' : `Próximo penalti gratis en ${esc(penCd(penFreeIn()))}`}">${ICO_COFRE}${nCof ? `<i class="hi-n">${nCof}</i>` : ''}</button>
+  // 25 nov: el cofre y las misiones viven en la Liga; aquí solo lo de trabajo (los ejercicios a medias)
+  const iconos = !name || !drafts.length ? '' : `<div class="hicons">
     ${drafts.length ? `<button class="hi hot" type="button" data-home="draft" data-id="${esc(drafts[drafts.length - 1].id)}" aria-label="${drafts.length === 1 ? `Tienes un ejercicio a medias${drafts[0].title ? ': ' + esc(drafts[0].title) : ''}. Seguir` : `Tienes ${drafts.length} ejercicios a medias. Seguir`}">${ICO_BORRADOR}${drafts.length > 1 ? `<i class="hi-n">${drafts.length}</i>` : ''}</button>` : ''}
   </div>`;
   const avisoHTML = !avisos.length ? '' : avisos[0] + (avisos.length > 1
@@ -132,7 +133,7 @@ function renderHome() {
       <button class="tile" type="button" data-home="new-ex">${ICON.new}<b>Crear un ejercicio</b><span>${window.SMB_CLOUD ? 'Dibújalo en la pista. Lo ve todo el cuerpo técnico y la DT puede meterlo en el banco.' : 'Dibújalo en la pista y mándaselo a la Dirección Técnica.'}</span></button>
     </div>
     ${guide}
-    <div class="home-2">${misionesHTML()}${ligaTeaserHTML()}</div>
+    <div class="home-2">${ligaTeaserHTML()}</div>
 `;
 }
 document.getElementById('v-inicio').addEventListener('click', e => {

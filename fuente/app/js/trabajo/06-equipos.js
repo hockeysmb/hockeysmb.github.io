@@ -117,7 +117,6 @@ function estadoEq(t) {
   const ult4 = jug.slice(-4), conFicha = ult4.filter(p => fichaDe(p.id)).length;
   return { prox, ult, seg: ult4.length ? { hechas: conFicha, de: ult4.length } : null };
 }
-const resTxt = p => { if (!p || !p.res) return ''; const [a, b] = p.res.split('-').map(Number); return (a > b ? 'Ganado' : a < b ? 'Perdido' : 'Empate') + ' ' + p.res; };
 
 function renderEquipos() {
   const H = horario(), L = equiposMap(H).filter(x => !/^porter/.test(deacc(x.t)));
@@ -485,7 +484,7 @@ function jugadorPerfil(jid, t, quieto) {
     cajas.push(caja('◆', 'Ficha', `<ul class="pts-list">${[['Año', j.a || 'sin año'], ['Puesto', j.p ? 'Portero' : 'Jugador de pista'], ['Equipo principal', j.eq || '—'], ...((j.otros || []).length ? [['También en', j.otros.join(' · ')]] : []), ...(j.nt ? [['Nota del listado', j.nt]] : [])].map(([k, v]) => `<li><span>${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>
       ${puedo ? '<button class="btn" type="button" data-pcambiar>Cambiar</button>' : `<p class="sub eq-dato">La cambia quien lleva ${esc(j.eq)}.</p>`}`));
     if (canWriteBank && !segActivo()) cajas.push(caja('!', 'Evaluación y apuntes', segForm && segForm.activar
-      ? `<p class="sub">Actívalo solo si el colegio ha confirmado que su política de privacidad cubre las evaluaciones deportivas y los apuntes de jugadores menores, y cuánto tiempo se guardan. Necesita las reglas nuevas de Firestore pegadas en la consola.</p>
+      ? `<p class="sub">Solo si el colegio ha confirmado la privacidad. ${infoBtn('evaluacion')}</p>
          <div class="row"><button class="btn" type="button" data-segon="no">Todavía no</button><button class="btn primary" type="button" data-segon="si">Está confirmado: activar</button></div>`
       : `<p class="sub">Preparados y sin activar. Solo lo ves tú.</p><div class="row"><button class="btn" type="button" data-segon="ver">Activar</button></div>`, ' aviso'));
     cuerpo = `<div class="eq-grid">${cajas.join('')}</div>`;
@@ -535,7 +534,7 @@ function jugadorPerfil(jid, t, quieto) {
     cuerpo = `<div class="pf-apunte"><label class="sg-lab" for="sg-nota">Nuevo apunte</label><textarea id="sg-nota" rows="3" maxlength="600" placeholder="Algo que hayas visto en pista, en un partido o con el grupo"></textarea><button class="btn primary" type="button" data-sgnota>Guardar apunte</button></div>
       <p class="sub" id="sg-msg" role="status"></p>
       ${T.length ? `<ul class="pf-hist">${T.map(li).join('')}</ul>` : '<p class="sub">Todavía no hay nada.</p>'}
-      <p class="sub">Lo ven solo sus entrenadores y la Dirección Técnica. Escribe lo que viste, no etiquetas: «pierde la bola cuando le presionan en la salida» dice más que «le falta técnica». Nada de salud ni de la familia.</p>`;
+      <p class="sub">Lo que viste, no etiquetas. Nada de salud ni de la familia. ${infoBtn('apuntes')}</p>`;
   }
   espBox.innerHTML = `<div class="esp-top pf-top"><button class="pb-back" type="button" data-pvolver><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(perfilEq || 'Volver')}</button></div>
     <div class="pf-cab"><span class="jg-ini grande" aria-hidden="true">${esc(iniciales(j.n))}</span>
@@ -664,7 +663,7 @@ function partidoAbrir(id) {
 
     <details class="dt-more fh-mas fh-paso" data-paso="3"><summary>Escribir algo más</summary>
       <label class="ses-f">Lo que quieras recordar<textarea data-fh="salio" rows="3" placeholder="Una pregunta que hiciste y qué contestaron, algo que viste…">${esc(f.salio || '')}</textarea></label>
-      <p class="sub">Del modelo: tres preguntas, no un discurso. Por ejemplo «¿quién tenía la ventaja ahí?», «¿a quién llevabas tú en el segundo gol?», «¿qué hicimos bien que quieras repetir?».</p>
+      <p class="sub">Tres preguntas, no un discurso. ${infoBtn('preguntas')}</p>
       <p class="sub">Si la diferencia llega a 10 el marcador se cierra: se exige algo concreto del modelo, ni bajar los brazos ni seguir goleando.</p></details>
 
     <div class="fh-nav"><button class="btn" type="button" data-fpasomas="-1">‹ Anterior</button><button class="btn primary" type="button" data-fpasomas="1">Siguiente ›</button></div>
