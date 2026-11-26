@@ -1,0 +1,72 @@
+/* ---------- modo pista ---------- */
+.pista { position: fixed; inset: 0; z-index: 75; background: var(--bg); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; padding: calc(8px + env(safe-area-inset-top, 0px)) 14px calc(8px + env(safe-area-inset-bottom, 0px)); gap: 6px; }
+.pista-top { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); }
+.pz-ses { font: 600 14px/1 var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; }
+.pz-ses output { color: var(--fg); font-weight: 700; }
+.pz-ses output.over { color: var(--accent); }
+.pista-body { overflow-y: auto; display: grid; gap: 12px; align-content: start; padding: 4px 0; touch-action: pan-y; position: relative; }
+.pista-body h2 { font-size: clamp(21px, 3.4vw, 30px); line-height: 1.15; text-wrap: balance; }
+.pista-main { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .pista-main { grid-template-columns: minmax(0, 1fr); } }
+.pista-fig { display: grid; gap: 12px; }
+.pz-figbtn { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.pz-figbtn svg, .pista-fig > .ses-empty { width: 100%; height: auto; max-height: 52vh; display: block; border-radius: 6px; border: 1px solid var(--line); background: var(--g-paper); }
+.pz-zoom { position: absolute; right: 8px; bottom: 8px; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--surface); color: var(--fg); border: 1px solid var(--line); }
+.pista-timer { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.pista-timer.run { border-color: var(--accent); }
+.pz-clock { display: grid; gap: 2px; }
+.pz-clock output { font: 700 clamp(48px, 9vw, 72px)/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--fg); }
+.pz-clock output.soon { color: #b5651d; }
+.pz-clock output.over { color: var(--accent); animation: pzblink 1s steps(2, start) infinite; }
+@keyframes pzblink { to { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .pz-clock output.over { animation: none; } }
+.pz-clock small { color: var(--muted); font-size: 13px; }
+.pz-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; order: 3; }
+.pz-bar i { display: block; height: 100%; background: var(--accent); }
+.pz-tbtns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.pz-stopline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pz-stopbtn { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.pista-text { display: grid; gap: 10px; font-size: 16.5px; }
+.pista-text h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin: 0 0 6px; }
+.pq { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 12px; font-size: 18px; }
+.pz-qs { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.pista-text details, .pista-intro details { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--surface); }
+.pista-text summary, .pista-intro summary { cursor: pointer; font-weight: 700; }
+.pista-text p { margin: 6px 0 0; }
+.pz-note, .pista-intro textarea { width: 100%; margin-top: 8px; font: 16px/1.4 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+.pre { white-space: pre-wrap; }
+.pista-intro { display: grid; gap: 12px; max-width: 760px; width: 100%; justify-self: center; }
+.p-big { font-size: 19px; margin: 0; }
+.pz-line { margin: 0; }
+.pz-resume { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.pz-plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pz-plan button { width: 100%; display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font: inherit; cursor: pointer; }
+.pz-plan button:hover { border-color: var(--accent); }
+.pz-plan .pz-n { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.pz-plan b { display: block; } .pz-plan small { display: block; color: var(--muted); font-size: 13.5px; } .pz-plan .pz-org { font-size: 12.5px; }
+.pz-ok { color: var(--ok); font-weight: 700; }
+.pz-id { margin: 0; font-size: 13.5px; color: var(--muted); font-style: italic; }
+#p-vobs { min-height: 150px; } #p-vnota { min-height: 70px; }
+.pz-val { display: grid; gap: 6px; } .pz-val .opts { display: flex; gap: 8px; flex-wrap: wrap; } .pz-val .chip { padding: 9px 16px; font-size: 15px; }
+.pz-notes { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.btn.big { padding: 14px 20px; font-size: 17px; justify-self: start; }
+.pista-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.pz-mid { display: grid; justify-items: center; gap: 4px; min-width: 0; }
+.pz-mid small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.dots { display: flex; gap: 6px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.dot.done { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+.dot.on { background: var(--accent); }
+.pz-stopov, .pz-big { position: fixed; inset: 0; z-index: 80; background: var(--bg); display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.pz-stopin { display: grid; gap: 18px; max-width: 900px; width: 100%; }
+.pz-stopk { margin: 0; font: 700 16px/1 var(--font-display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.pz-stopk output { font-variant-numeric: tabular-nums; }
+.pz-bigqs { margin: 0; padding-left: 1.1em; display: grid; gap: 14px; font: 600 clamp(22px, 4.2vw, 36px)/1.25 var(--font-body); }
+.pz-big { grid-template-rows: minmax(0, 1fr) auto; gap: 10px; cursor: zoom-out; }
+.pz-big { overflow: hidden; }
+.pz-big svg { width: 100%; height: auto; max-height: calc(100vh - 90px); background: var(--g-paper); border-radius: 8px; }
+@media (orientation: portrait) { .pz-big svg { position: absolute; left: 50%; top: calc(50% - 28px); width: min(calc(100vh - 140px), calc((100vw - 32px) * 1.9)); max-width: none; max-height: none; transform: translate(-50%, -50%) rotate(90deg); } .pz-big .btn { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); } }
+.pz-stopin .btn.big { font-size: 20px; padding: 16px 30px; }
+.pz-big .btn { justify-self: center; }
+@media (max-width: 520px) { .pista-top { font-size: 13.5px; } .pista-timer { grid-template-columns: minmax(0, 1fr); } .pz-tbtns { justify-content: flex-start; } .pz-tbtns .btn.big { flex: 1; justify-content: center; } .pista-nav .btn { padding-inline: 10px; } }
+
