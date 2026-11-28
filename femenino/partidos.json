@@ -1,6 +1,6 @@
 {
   "fuente": "Federación Madrileña de Patinaje (hockeypatines.fmp.es)",
-  "actualizado": "2026-11-23",
+  "actualizado": "2026-11-28",
   "nota": "res = goles del SMB - goles del rival. hora vacía = la federación todavía no la ha puesto. Se actualiza solo dos veces al día (fuente/partidos_fmp.py).",
   "partidos": [
     {"id": "s15-1", "cat": "Sub-15", "j": 1, "fecha": "2026-10-17", "hora": "13:30", "rival": "Tres Cantos PC", "casa": false, "res": "8-1"},
@@ -9,7 +9,7 @@
     {"id": "s15-4", "cat": "Sub-15", "j": 4, "fecha": "2026-11-21", "hora": "13:00", "rival": "Alameda de Osuna", "casa": true, "res": "4-1"},
     {"id": "s15-5", "cat": "Sub-15", "j": 5, "fecha": "2026-11-29", "hora": "10:15", "rival": "CP Alcobendas", "casa": true, "res": ""},
     {"id": "s15-6", "cat": "Sub-15", "j": 6, "fecha": "2026-12-12", "hora": "16:00", "rival": "CP las Rozas", "casa": false, "res": ""},
-    {"id": "s15-7", "cat": "Sub-15", "j": 7, "fecha": "2026-12-19", "hora": "", "rival": "Coslada RH", "casa": true, "res": ""},
+    {"id": "s15-7", "cat": "Sub-15", "j": 7, "fecha": "2026-12-20", "hora": "09:00", "rival": "Coslada RH", "casa": true, "res": ""},
     {"id": "s15-8", "cat": "Sub-15", "j": 8, "fecha": "2027-01-16", "hora": "", "rival": "Tres Cantos PC", "casa": true, "res": ""},
     {"id": "s15-9", "cat": "Sub-15", "j": 9, "fecha": "2027-01-23", "hora": "", "rival": "CP Alcorcón", "casa": false, "res": ""},
     {"id": "s15-10", "cat": "Sub-15", "j": 10, "fecha": "2027-01-30", "hora": "", "rival": "Sanse Hockey", "casa": true, "res": ""},
